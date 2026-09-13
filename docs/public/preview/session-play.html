@@ -119,6 +119,24 @@
   .panel-title { font-size: 1.05rem; }
   .panel-sub { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 4px; }
 
+  /* ---------- tabs（場／手札を切り替えて同時に見える情報量を減らす） ---------- */
+  .tab-input { position: absolute; opacity: 0; pointer-events: none; }
+  .tab-bar { display: flex; gap: 22px; border-bottom: 1px solid rgba(184, 147, 90, 0.22); }
+  .tab-label {
+    padding-bottom: 10px;
+    font-family: "Zen Old Mincho", serif;
+    font-size: 1.0rem;
+    color: var(--parchment-text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tab-input:checked + .tab-label { color: var(--parchment-text); border-bottom-color: var(--focus); }
+  .tab-input:focus-visible + .tab-label { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .tab-panel { display: none; padding-top: 16px; }
+  #tab-field:checked ~ .tab-panels #panel-field { display: block; }
+  #tab-hand:checked ~ .tab-panels #panel-hand { display: block; }
+
   /* ---------- field cards ---------- */
   .row { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
   .field-card {
@@ -340,27 +358,6 @@
   <div class="stage">
     <div>
       <section class="panel">
-        <h2 class="panel-title">場</h2>
-        <p class="panel-sub">このシーンで公開されている情報。奥にはまだ内容の分からないカードが1枚ある。</p>
-        <div class="row">
-          <div class="field-card">
-            <span class="field-tag">場所</span>
-            <div class="field-name">地下回廊</div>
-            <div class="field-note">湿った空気と、遠くから響く音</div>
-          </div>
-          <div class="field-card">
-            <span class="field-tag">イベント</span>
-            <div class="field-name">奥の扉</div>
-            <div class="field-note">古びた扉を発見した</div>
-          </div>
-          <div class="field-card hidden">
-            <span class="field-mark">？</span>
-            <div class="field-note">何かが書かれた紙（内容不明）</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel">
         <h2 class="panel-title">提示されている選択肢</h2>
         <p class="panel-sub">この中から1枚を選んでプレイできる。</p>
         <div class="option-row">
@@ -395,24 +392,52 @@
       </section>
 
       <section class="panel">
-        <h2 class="panel-title">手札</h2>
-        <p class="panel-sub">所持しているカード。今回の選択肢（開ける・調べる・戻る・新たな選択肢を提案）はここには含めず、上に表示しています。</p>
-        <div class="hand-scroll">
-          <div class="hand-row">
-            <div class="hand-card">
-              <span class="hand-tag">アイテム</span>
-              <div class="hand-name">灯火のランタン</div>
-              <div class="hand-desc">暗い場所を照らす</div>
+        <input class="tab-input" type="radio" name="playtabs" id="tab-field" checked>
+        <input class="tab-input" type="radio" name="playtabs" id="tab-hand">
+        <div class="tab-bar">
+          <label class="tab-label" for="tab-field">場</label>
+          <label class="tab-label" for="tab-hand">手札</label>
+        </div>
+        <div class="tab-panels">
+          <div class="tab-panel" id="panel-field">
+            <p class="panel-sub">このシーンで公開されている情報。奥にはまだ内容の分からないカードが1枚ある。</p>
+            <div class="row">
+              <div class="field-card">
+                <span class="field-tag">場所</span>
+                <div class="field-name">地下回廊</div>
+                <div class="field-note">湿った空気と、遠くから響く音</div>
+              </div>
+              <div class="field-card">
+                <span class="field-tag">イベント</span>
+                <div class="field-name">奥の扉</div>
+                <div class="field-note">古びた扉を発見した</div>
+              </div>
+              <div class="field-card hidden">
+                <span class="field-mark">？</span>
+                <div class="field-note">何かが書かれた紙（内容不明）</div>
+              </div>
             </div>
-            <div class="hand-card">
-              <span class="hand-tag">特徴</span>
-              <div class="hand-name">夜目が利く</div>
-              <div class="hand-desc">暗所での判定に強い</div>
-            </div>
-            <div class="hand-card">
-              <span class="hand-tag">能力</span>
-              <div class="hand-name">先読み</div>
-              <div class="hand-desc">危険な仕掛けに気づきやすい</div>
+          </div>
+          <div class="tab-panel" id="panel-hand">
+            <p class="panel-sub">所持しているカード。今回の選択肢（開ける・調べる・戻る・新たな選択肢を提案）はここには含めず、上に表示しています。</p>
+            <div class="hand-scroll">
+              <div class="hand-row">
+                <div class="hand-card">
+                  <span class="hand-tag">アイテム</span>
+                  <div class="hand-name">灯火のランタン</div>
+                  <div class="hand-desc">暗い場所を照らす</div>
+                </div>
+                <div class="hand-card">
+                  <span class="hand-tag">特徴</span>
+                  <div class="hand-name">夜目が利く</div>
+                  <div class="hand-desc">暗所での判定に強い</div>
+                </div>
+                <div class="hand-card">
+                  <span class="hand-tag">能力</span>
+                  <div class="hand-name">先読み</div>
+                  <div class="hand-desc">危険な仕掛けに気づきやすい</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
