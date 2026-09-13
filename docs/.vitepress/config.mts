@@ -62,7 +62,8 @@ export default defineConfig({
           { text: 'プレイヤーのセッション選択', link: '/preview/session-browse.html', target: '_self' },
           { text: 'キャラクター作成', link: '/preview/character-create.html', target: '_self' },
           { text: 'シーン構築', link: '/preview/scene-builder.html', target: '_self' },
-          { text: 'シーン進行（GM視点）', link: '/preview/scene-play.html', target: '_self' }
+          { text: 'シーン進行（GM視点）', link: '/preview/scene-play.html', target: '_self' },
+          { text: '戦闘画面（PL視点）', link: '/preview/combat-play.html', target: '_self' }
         ]
       }
     ],
