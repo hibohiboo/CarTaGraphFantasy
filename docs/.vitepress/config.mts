@@ -43,6 +43,12 @@ export default defineConfig({
         items: [
           { text: '追加インタビュー (2025-09)', link: '/interviews/2025-09-追加インタビュー' }
         ]
+      },
+      {
+        text: '試作',
+        items: [
+          { text: 'カルタグラフ図鑑（閲覧サイト試作）', link: '/preview/cartagraph-zukan.html' }
+        ]
       }
     ],
 
