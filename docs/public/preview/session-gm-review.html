@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>カルタグラフ セッション試作：GM承認画面</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --felt: #1f2a24;
+    --felt-panel: #24322b;
+    --felt-panel-2: #1a241e;
+    --card: #efe7d8;
+    --card-edge: rgba(43, 36, 28, 0.22);
+    --ink: #2b241c;
+    --ink-soft: #55493a;
+    --parchment-text: #ddd3bf;
+    --parchment-text-dim: #a99f8c;
+    --seal: #a33227;
+    --seal-ink: #f3e9d8;
+    --thread: #b8935a;
+    --thread-dim: rgba(184, 147, 90, 0.38);
+    --focus: #d9b877;
+    --role-driver: #b8935a;
+    --role-navigator: #7f93a6;
+    --role-gm: #a33227;
+    --pending: #c9973f;
+    --approved: #6f8f6a;
+    --rejected: #8c4a41;
+    --neutral: #7f93a6;
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+
+  body {
+    margin: 0;
+    background: var(--felt);
+    color: var(--parchment-text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    line-height: 1.75;
+    padding-inline: clamp(16px, 4vw, 40px);
+  }
+
+  h1, h2, h3 {
+    font-family: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 600;
+    text-wrap: balance;
+    color: var(--parchment-text);
+    margin: 0;
+  }
+
+  a { color: var(--focus); }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible, input:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .wrap { max-width: 980px; margin-inline: auto; }
+
+  .proto-nav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding-block: 16px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(184, 147, 90, 0.18);
+    flex-wrap: wrap;
+  }
+  .proto-nav a { color: var(--parchment-text-dim); text-decoration: none; }
+  .proto-nav a[aria-current="page"] { color: var(--focus); border-bottom: 2px solid var(--focus); padding-bottom: 3px; }
+  .proto-nav .draft-pill { margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.7rem; padding: 3px 10px; border-radius: 999px; }
+
+  .session-head { padding-block: 22px 6px; }
+  .session-title { font-size: 1.4rem; }
+  .session-crumb { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 6px; }
+
+  .zone-strip {
+    margin-top: 14px;
+    font-size: 0.8rem;
+    color: var(--parchment-text-dim);
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .zone-strip strong { color: var(--parchment-text); font-weight: 500; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .badge-driver { color: var(--role-driver); }
+  .badge-navigator { color: var(--role-navigator); }
+  .badge-gm { color: var(--role-gm); }
+
+  /* ---------- stat tiles ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-block: 22px;
+  }
+  .stat {
+    background: var(--felt-panel);
+    border: 1px solid rgba(184, 147, 90, 0.16);
+    border-left: 3px solid var(--stat-color);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .stat .num { font-family: "Zen Old Mincho", serif; font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+  .stat .label { font-size: 0.8rem; color: var(--parchment-text-dim); margin-top: 2px; }
+  .stat.pending { --stat-color: var(--pending); }
+  .stat.approved { --stat-color: var(--approved); }
+  .stat.rejected { --stat-color: var(--rejected); }
+
+  /* ---------- ticket list ---------- */
+  .tickets { display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px; }
+  .ticket {
+    background: var(--felt-panel);
+    border: 1px solid rgba(184, 147, 90, 0.16);
+    border-left: 4px solid var(--stat-color, var(--thread-dim));
+    border-radius: 8px;
+    padding: 18px 20px;
+  }
+  .ticket-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .ticket-scene { font-size: 0.82rem; color: var(--parchment-text-dim); }
+  .ticket-time { font-size: 0.76rem; color: var(--parchment-text-dim); font-variant-numeric: tabular-nums; }
+  .ticket-text {
+    font-family: "Zen Old Mincho", serif;
+    font-size: 1.15rem;
+    margin-top: 12px;
+  }
+  .ticket-context { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    font-size: 0.74rem;
+    color: var(--parchment-text-dim);
+    border: 1px solid rgba(184,147,90,0.3);
+    border-radius: 999px;
+    padding: 2px 10px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.74rem;
+    padding: 3px 11px;
+    border-radius: 999px;
+  }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill-pending { color: var(--pending); border: 1px solid var(--pending); }
+  .pill-approved { color: var(--approved); border: 1px solid var(--approved); background: rgba(111,143,106,0.12); }
+  .pill-rejected { color: var(--rejected); border: 1px solid var(--rejected); background: rgba(140,74,65,0.12); }
+  .pill-neutral { color: var(--neutral); border: 1px solid var(--neutral); }
+
+  .ticket-action {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(184,147,90,0.22);
+  }
+  .ticket-action label {
+    font-size: 0.78rem;
+    color: var(--parchment-text-dim);
+  }
+  .ticket-action input[type="text"] {
+    flex: 1;
+    min-width: 160px;
+    background: var(--card);
+    color: var(--ink);
+    border: 1px solid var(--card-edge);
+    border-radius: 5px;
+    padding: 8px 10px;
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 0.9rem;
+  }
+  .btn {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 0.84rem;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .btn-approve { background: var(--approved); color: #16211a; font-weight: 500; }
+  .btn-reject { background: transparent; color: var(--rejected); border-color: var(--rejected); }
+
+  .ticket-resolution {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(184,147,90,0.22);
+    font-size: 0.86rem;
+    color: var(--parchment-text-dim);
+  }
+  .ticket-resolution .made-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--parchment-text);
+    font-family: "Zen Old Mincho", serif;
+  }
+  .ticket-resolution .made-card::before {
+    content: "";
+    width: 14px; height: 18px;
+    background: var(--card);
+    border: 1px solid var(--card-edge);
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="proto-nav">
+    <a href="cartagraph-zukan.html">図鑑</a>
+    <a href="session-play.html">プレイ画面</a>
+    <a href="session-gm-review.html" aria-current="page">GM承認</a>
+    <a href="session-chat.html">チャット</a>
+    <span class="draft-pill">試作</span>
+  </nav>
+
+  <header class="session-head">
+    <h1 class="session-title">提案の承認</h1>
+    <p class="session-crumb">シナリオ「灰色館の一夜」 ／ <span class="badge badge-gm">霧乃（GM）</span></p>
+    <p class="zone-strip">
+      <span>GM専用ゾーン <strong>3枚</strong>（PLには存在ごと非公開）</span>
+      <span>PL可視ゾーン <strong>6枚</strong></span>
+    </p>
+  </header>
+
+  <div class="stats">
+    <div class="stat pending"><div class="num">1</div><div class="label">承認待ち</div></div>
+    <div class="stat approved"><div class="num">1</div><div class="label">採用済み</div></div>
+    <div class="stat rejected"><div class="num">1</div><div class="label">却下</div></div>
+  </div>
+
+  <div class="tickets">
+
+    <article class="ticket" style="--stat-color: var(--pending);">
+      <div class="ticket-head">
+        <div>
+          <span class="badge badge-driver">迅（ドライバー）</span>
+          <div class="ticket-scene">シーン 3-2「奥の扉」</div>
+        </div>
+        <span class="ticket-time">9/13 08:12</span>
+      </div>
+      <p class="ticket-text">扉を壊してみたい</p>
+      <div class="ticket-context">
+        <span class="chip">提示中：開ける</span>
+        <span class="chip">調べる</span>
+        <span class="chip">戻る</span>
+      </div>
+      <span class="pill pill-pending">承認待ち</span>
+
+      <div class="ticket-action">
+        <label for="new-card-name">生成する選択肢カード名</label>
+        <input type="text" id="new-card-name" value="扉を破壊する">
+        <button class="btn btn-approve" type="button">採用してカード化</button>
+        <button class="btn btn-reject" type="button">却下</button>
+      </div>
+      <p class="ticket-resolution" style="border-top:none; padding-top:8px; margin-top:8px;">
+        迅は裁定を待たず、開ける・調べる・戻るを先に選ぶこともできる。その場合はこの提案は「今回は使われなかった」として記録される。
+      </p>
+    </article>
+
+    <article class="ticket" style="--stat-color: var(--neutral);">
+      <div class="ticket-head">
+        <div>
+          <span class="badge badge-driver">ルウ（ドライバー）</span>
+          <div class="ticket-scene">シーン 2-4「灯りの回廊」</div>
+        </div>
+        <span class="ticket-time">9/10 22:03</span>
+      </div>
+      <p class="ticket-text">灯りを消してみたい</p>
+      <div class="ticket-context">
+        <span class="chip">提示中：進む</span>
+        <span class="chip">戻る</span>
+      </div>
+      <span class="pill pill-neutral">採用済み・今回は未使用</span>
+      <div class="ticket-resolution">
+        <span class="made-card">灯りを消す</span> を生成して手札に加えたが、その前に「戻る」が選ばれたため、このシーンでは使われなかった。
+      </div>
+    </article>
+
+    <article class="ticket" style="--stat-color: var(--rejected);">
+      <div class="ticket-head">
+        <div>
+          <span class="badge badge-driver">迅（ドライバー）</span>
+          <div class="ticket-scene">シーン 3-1「地下回廊」</div>
+        </div>
+        <span class="ticket-time">9/12 19:47</span>
+      </div>
+      <p class="ticket-text">壁を叩いて音を確かめたい</p>
+      <div class="ticket-context">
+        <span class="chip">提示中：進む</span>
+        <span class="chip">調べる</span>
+      </div>
+      <span class="pill pill-rejected">却下</span>
+      <div class="ticket-resolution">
+        却下理由：このシーンには反応する仕掛けを用意していないため。却下も記録として残し、迅からも見える。
+      </div>
+    </article>
+
+  </div>
+
+</div>
+</body>
+</html>

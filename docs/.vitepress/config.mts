@@ -47,7 +47,10 @@ export default defineConfig({
       {
         text: '試作',
         items: [
-          { text: 'カルタグラフ図鑑（閲覧サイト試作）', link: '/preview/cartagraph-zukan.html' }
+          { text: 'カルタグラフ図鑑（閲覧サイト試作）', link: '/preview/cartagraph-zukan.html' },
+          { text: 'プレイ画面（ドライバー視点）', link: '/preview/session-play.html' },
+          { text: 'GM承認画面', link: '/preview/session-gm-review.html' },
+          { text: 'チャット（ドライバー/ナビゲーター/GM）', link: '/preview/session-chat.html' }
         ]
       }
     ],

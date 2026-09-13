@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>カルタグラフ セッション試作：プレイ画面</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --felt: #1f2a24;
+    --felt-panel: #24322b;
+    --felt-panel-2: #1a241e;
+    --card: #efe7d8;
+    --card-edge: rgba(43, 36, 28, 0.22);
+    --ink: #2b241c;
+    --ink-soft: #55493a;
+    --parchment-text: #ddd3bf;
+    --parchment-text-dim: #a99f8c;
+    --seal: #a33227;
+    --seal-ink: #f3e9d8;
+    --thread: #b8935a;
+    --thread-dim: rgba(184, 147, 90, 0.38);
+    --focus: #d9b877;
+    --role-driver: #b8935a;
+    --role-navigator: #7f93a6;
+    --role-gm: #a33227;
+    --pending: #c9973f;
+    --approved: #6f8f6a;
+    --rejected: #8c4a41;
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+
+  body {
+    margin: 0;
+    background: var(--felt);
+    color: var(--parchment-text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    line-height: 1.75;
+    padding-inline: clamp(16px, 4vw, 40px);
+  }
+
+  h1, h2, h3 {
+    font-family: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 600;
+    text-wrap: balance;
+    color: var(--parchment-text);
+    margin: 0;
+  }
+
+  a { color: var(--focus); }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  .wrap { max-width: 1180px; margin-inline: auto; }
+
+  /* ---------- proto nav (shared across preview pages) ---------- */
+  .proto-nav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding-block: 16px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(184, 147, 90, 0.18);
+    flex-wrap: wrap;
+  }
+  .proto-nav a { color: var(--parchment-text-dim); text-decoration: none; }
+  .proto-nav a[aria-current="page"] { color: var(--focus); border-bottom: 2px solid var(--focus); padding-bottom: 3px; }
+  .proto-nav .draft-pill { margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.7rem; padding: 3px 10px; border-radius: 999px; }
+
+  /* ---------- session header ---------- */
+  .session-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding-block: 22px 18px;
+    flex-wrap: wrap;
+  }
+  .session-title { font-size: 1.4rem; }
+  .session-crumb { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 6px; }
+  .session-meta { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .badge-driver { color: var(--role-driver); }
+  .badge-navigator { color: var(--role-navigator); }
+  .badge-gm { color: var(--role-gm); }
+  .badge-mode { color: var(--parchment-text-dim); border-style: dashed; }
+
+  /* ---------- layout ---------- */
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 22px;
+    padding-bottom: 28px;
+  }
+  .panel {
+    background: var(--felt-panel);
+    border: 1px solid rgba(184, 147, 90, 0.16);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .panel + .panel { margin-top: 20px; }
+  .panel-title { font-size: 1.05rem; }
+  .panel-sub { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 4px; }
+
+  /* ---------- field cards ---------- */
+  .row { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+  .field-card {
+    position: relative;
+    width: 148px;
+    min-height: 108px;
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 7px;
+    border: 1px solid var(--card-edge);
+    box-shadow: 3px 3px 0 rgba(10, 14, 11, 0.32);
+    padding: 12px 12px 10px;
+  }
+  .field-tag {
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    border: 1px solid var(--ink-soft);
+    border-radius: 4px;
+    padding: 1px 6px;
+    display: inline-block;
+  }
+  .field-name { font-family: "Zen Old Mincho", serif; font-size: 1rem; margin-top: 8px; }
+  .field-note { font-size: 0.74rem; color: var(--ink-soft); margin-top: 4px; }
+  .field-card.hidden {
+    background: repeating-linear-gradient(45deg, var(--felt-panel-2) 0 6px, #223027 6px 12px);
+    color: var(--parchment-text-dim);
+    border-color: rgba(184, 147, 90, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .field-card.hidden .field-mark { font-size: 1.6rem; color: var(--thread); font-family: "Zen Old Mincho", serif; }
+
+  /* ---------- options ---------- */
+  .option-row { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+  .option-card {
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 7px;
+    border: 2px solid transparent;
+    box-shadow: 3px 3px 0 rgba(10, 14, 11, 0.32);
+    padding: 14px 18px;
+    font-family: "Zen Old Mincho", serif;
+    font-size: 1.02rem;
+    min-width: 108px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .option-card.propose {
+    background: transparent;
+    color: var(--thread);
+    border: 2px dashed var(--thread);
+    box-shadow: none;
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 0.9rem;
+  }
+  .option-card.active {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px rgba(217, 184, 119, 0.25), 3px 3px 0 rgba(10,14,11,0.32);
+  }
+
+  .proposal-note {
+    position: relative;
+    margin-top: 18px;
+    max-width: 420px;
+    background: #e8dfc9;
+    color: var(--ink);
+    border: 1px dashed var(--ink-soft);
+    border-radius: 3px;
+    padding: 16px 18px 14px;
+    transform: rotate(-1deg);
+    font-size: 0.9rem;
+  }
+  .proposal-note::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 24px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--thread);
+    box-shadow: 0 0 0 2px var(--felt-panel);
+  }
+  .proposal-note .label { font-size: 0.72rem; color: var(--ink-soft); }
+  .proposal-note .text { margin-top: 6px; font-size: 0.98rem; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.74rem;
+    padding: 3px 11px;
+    border-radius: 999px;
+    margin-top: 12px;
+  }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill-pending { color: var(--pending); border: 1px solid var(--pending); }
+
+  .hint {
+    margin-top: 14px;
+    font-size: 0.8rem;
+    color: var(--parchment-text-dim);
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .hint svg { flex: none; margin-top: 3px; }
+
+  /* ---------- hand dock ---------- */
+  .hand-scroll { overflow-x: auto; padding-bottom: 6px; }
+  .hand-row { display: flex; gap: 12px; margin-top: 16px; width: max-content; }
+  .hand-card {
+    width: 112px;
+    min-height: 148px;
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 8px;
+    border: 1px solid var(--card-edge);
+    box-shadow: 3px 3px 0 rgba(10, 14, 11, 0.3);
+    padding: 10px 10px 8px;
+    transform: rotate(var(--r, 0deg));
+  }
+  .hand-card:nth-child(1) { --r: -2deg; }
+  .hand-card:nth-child(2) { --r: 1deg; }
+  .hand-card:nth-child(3) { --r: -1deg; }
+  .hand-tag { font-size: 0.65rem; color: var(--ink-soft); }
+  .hand-name { font-family: "Zen Old Mincho", serif; font-size: 0.92rem; margin-top: 20px; }
+  .hand-desc { font-size: 0.7rem; color: var(--ink-soft); margin-top: 6px; }
+
+  /* ---------- sidebar ---------- */
+  .side-panel {
+    background: var(--felt-panel-2);
+    border: 1px solid rgba(184, 147, 90, 0.2);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .side-panel + .side-panel { margin-top: 16px; }
+  .side-title { font-size: 0.95rem; }
+  .navigator-list { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .navigator-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+  }
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--felt-panel);
+    border: 1px solid var(--role-navigator);
+    color: var(--role-navigator);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem;
+    font-family: "Zen Old Mincho", serif;
+    flex: none;
+  }
+  .side-note { font-size: 0.78rem; color: var(--parchment-text-dim); margin-top: 10px; }
+  .side-link {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 0.82rem;
+    text-decoration: none;
+    color: var(--focus);
+    border-bottom: 1px solid var(--thread-dim);
+  }
+
+  @media (max-width: 820px) {
+    .stage { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="proto-nav">
+    <a href="cartagraph-zukan.html">図鑑</a>
+    <a href="session-play.html" aria-current="page">プレイ画面</a>
+    <a href="session-gm-review.html">GM承認</a>
+    <a href="session-chat.html">チャット</a>
+    <span class="draft-pill">試作</span>
+  </nav>
+
+  <header class="session-head">
+    <div>
+      <h1 class="session-title">灰色館の一夜</h1>
+      <p class="session-crumb">シーン 3-2「奥の扉」 ／ パーティー「迷い星」</p>
+    </div>
+    <div class="session-meta">
+      <span class="badge badge-driver">迅（ドライバー）</span>
+      <span class="badge badge-mode">軽量モード</span>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div>
+      <section class="panel">
+        <h2 class="panel-title">場</h2>
+        <p class="panel-sub">このシーンで公開されている情報。奥にはまだ内容の分からないカードが1枚ある。</p>
+        <div class="row">
+          <div class="field-card">
+            <span class="field-tag">場所</span>
+            <div class="field-name">地下回廊</div>
+            <div class="field-note">湿った空気と、遠くから響く音</div>
+          </div>
+          <div class="field-card">
+            <span class="field-tag">イベント</span>
+            <div class="field-name">奥の扉</div>
+            <div class="field-note">古びた扉を発見した</div>
+          </div>
+          <div class="field-card hidden">
+            <span class="field-mark">？</span>
+            <div class="field-note">何かが書かれた紙（内容不明）</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">提示されている選択肢</h2>
+        <p class="panel-sub">この中から1枚を選んでプレイできる。</p>
+        <div class="option-row">
+          <div class="option-card">開ける</div>
+          <div class="option-card">調べる</div>
+          <div class="option-card">戻る</div>
+          <div class="option-card propose active">＋ 新たな選択肢を提案</div>
+        </div>
+
+        <div class="proposal-note">
+          <div class="label">迅からの提案</div>
+          <div class="text">扉を壊してみたい</div>
+          <span class="pill pill-pending">GMの裁定待ち</span>
+        </div>
+
+        <p class="hint">
+          <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="#a99f8c" stroke-width="1.2"></circle><path d="M7,4 V7.5 L9,9" fill="none" stroke="#a99f8c" stroke-width="1.2"></path></svg>
+          裁定を待たずに、開ける・調べる・戻るは今すぐ選べます。
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">手札</h2>
+        <p class="panel-sub">所持しているカード。今回の選択肢（開ける・調べる・戻る・新たな選択肢を提案）はここには含めず、上に表示しています。</p>
+        <div class="hand-scroll">
+          <div class="hand-row">
+            <div class="hand-card">
+              <span class="hand-tag">アイテム</span>
+              <div class="hand-name">灯火のランタン</div>
+              <div class="hand-desc">暗い場所を照らす</div>
+            </div>
+            <div class="hand-card">
+              <span class="hand-tag">特徴</span>
+              <div class="hand-name">夜目が利く</div>
+              <div class="hand-desc">暗所での判定に強い</div>
+            </div>
+            <div class="hand-card">
+              <span class="hand-tag">能力</span>
+              <div class="hand-name">先読み</div>
+              <div class="hand-desc">危険な仕掛けに気づきやすい</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside>
+      <div class="side-panel">
+        <h3 class="side-title">パーティー「迷い星」</h3>
+        <div class="navigator-list">
+          <div class="navigator-item">
+            <span class="avatar">カ</span>
+            <span>カヤ<br><span style="color:var(--parchment-text-dim); font-size:0.76rem;">ナビゲーター</span></span>
+          </div>
+          <div class="navigator-item">
+            <span class="avatar">ル</span>
+            <span>ルウ<br><span style="color:var(--parchment-text-dim); font-size:0.76rem;">ナビゲーター</span></span>
+          </div>
+        </div>
+        <p class="side-note">ナビゲーターは会話・提案のみで、カードをプレイする権限はドライバー（迅）だけが持つ。</p>
+        <a class="side-link" href="session-chat.html">2人との会話を見る</a>
+      </div>
+
+      <div class="side-panel">
+        <h3 class="side-title">提案の状況</h3>
+        <p class="side-note" style="margin-top:0;">「扉を壊してみたい」はGMに送信済み。承認されると選択肢カードが手札に追加される。</p>
+        <a class="side-link" href="session-gm-review.html">GMの承認画面を見る</a>
+      </div>
+    </aside>
+  </div>
+
+</div>
+</body>
+</html>
