@@ -157,25 +157,41 @@
   /* ---------- options ---------- */
   .option-row { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
   .option-card {
+    position: relative;
+    width: 128px;
+    min-height: 168px;
     background: var(--card);
     color: var(--ink);
-    border-radius: 7px;
+    border-radius: 8px;
     border: 2px solid transparent;
     box-shadow: 3px 3px 0 rgba(10, 14, 11, 0.32);
-    padding: 14px 18px;
-    font-family: "Zen Old Mincho", serif;
-    font-size: 1.02rem;
-    min-width: 108px;
+    padding: 12px 12px 10px;
     text-align: center;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+  }
+  .option-card .field-tag { align-self: flex-start; }
+  .option-card .option-name {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Zen Old Mincho", serif;
+    font-size: 1.08rem;
+    line-height: 1.4;
+    padding-top: 6px;
   }
   .option-card.propose {
-    background: transparent;
+    background: var(--felt-panel-2);
     color: var(--thread);
     border: 2px dashed var(--thread);
     box-shadow: none;
+  }
+  .option-card.propose .field-tag { color: var(--thread); border-color: var(--thread); }
+  .option-card.propose .option-name {
     font-family: "Zen Kaku Gothic New", sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.86rem;
   }
   .option-card.active {
     border-color: var(--focus);
@@ -301,6 +317,10 @@
     <a href="session-play.html" aria-current="page">プレイ画面</a>
     <a href="session-gm-review.html">GM承認</a>
     <a href="session-chat.html">チャット</a>
+    <a href="session-gm-manage.html">GM管理</a>
+    <a href="scenario-manage.html">シナリオ管理</a>
+    <a href="session-browse.html">セッション選択</a>
+    <a href="character-create.html">キャラ作成</a>
     <span class="draft-pill">試作</span>
   </nav>
 
@@ -342,10 +362,22 @@
         <h2 class="panel-title">提示されている選択肢</h2>
         <p class="panel-sub">この中から1枚を選んでプレイできる。</p>
         <div class="option-row">
-          <div class="option-card">開ける</div>
-          <div class="option-card">調べる</div>
-          <div class="option-card">戻る</div>
-          <div class="option-card propose active">＋ 新たな選択肢を提案</div>
+          <div class="option-card">
+            <span class="field-tag">選択肢</span>
+            <div class="option-name">開ける</div>
+          </div>
+          <div class="option-card">
+            <span class="field-tag">選択肢</span>
+            <div class="option-name">調べる</div>
+          </div>
+          <div class="option-card">
+            <span class="field-tag">選択肢</span>
+            <div class="option-name">戻る</div>
+          </div>
+          <div class="option-card propose active">
+            <span class="field-tag">選択肢</span>
+            <div class="option-name">＋<br>新たな選択肢を提案</div>
+          </div>
         </div>
 
         <div class="proposal-note">

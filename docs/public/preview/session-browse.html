@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>カルタグラフ セッション試作：セッション選択</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --felt: #1f2a24; --felt-panel: #24322b; --felt-panel-2: #1a241e;
+    --card: #efe7d8; --card-edge: rgba(43, 36, 28, 0.22);
+    --ink: #2b241c; --ink-soft: #55493a;
+    --parchment-text: #ddd3bf; --parchment-text-dim: #a99f8c;
+    --seal: #a33227; --thread: #b8935a; --thread-dim: rgba(184, 147, 90, 0.38);
+    --focus: #d9b877;
+    --approved: #6f8f6a; --pending: #c9973f; --neutral: #7f93a6;
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body {
+    margin: 0; background: var(--felt); color: var(--parchment-text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    line-height: 1.75; padding-inline: clamp(16px, 4vw, 40px);
+  }
+  h1, h2, h3 {
+    font-family: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 600; text-wrap: balance; color: var(--parchment-text); margin: 0;
+  }
+  a { color: var(--focus); }
+  a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .wrap { max-width: 900px; margin-inline: auto; }
+
+  .proto-nav {
+    display: flex; align-items: center; gap: 16px; padding-block: 16px;
+    font-size: 0.83rem; border-bottom: 1px solid rgba(184, 147, 90, 0.18); flex-wrap: wrap;
+  }
+  .proto-nav a { color: var(--parchment-text-dim); text-decoration: none; }
+  .proto-nav a[aria-current="page"] { color: var(--focus); border-bottom: 2px solid var(--focus); padding-bottom: 3px; }
+  .proto-nav .draft-pill { margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.7rem; padding: 3px 10px; border-radius: 999px; }
+
+  .session-head { padding-block: 22px 8px; }
+  .session-title { font-size: 1.4rem; }
+  .session-crumb { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 6px; }
+
+  .listings { display: flex; flex-direction: column; gap: 16px; padding-block: 20px 40px; }
+  .listing {
+    background: var(--felt-panel); border: 1px solid rgba(184, 147, 90, 0.16);
+    border-radius: 10px; padding: 20px;
+  }
+  .listing-head { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+  .listing-title { font-size: 1.12rem; }
+  .listing-gm { font-size: 0.8rem; color: var(--parchment-text-dim); margin-top: 4px; }
+  .fit-badge {
+    font-size: 0.76rem; padding: 4px 11px; border-radius: 999px; white-space: nowrap;
+  }
+  .fit-badge.good { color: var(--approved); border: 1px solid var(--approved); }
+  .fit-badge.partial { color: var(--pending); border: 1px solid var(--pending); }
+
+  .listing-meta { margin-top: 12px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.82rem; color: var(--parchment-text-dim); }
+  .listing-meta strong { color: var(--parchment-text); font-weight: 500; }
+  .listing-tags { margin-top: 10px; display: flex; gap: 7px; flex-wrap: wrap; }
+  .chip { font-size: 0.74rem; border: 1px solid var(--thread-dim); color: var(--thread); border-radius: 999px; padding: 2px 10px; }
+  .chip.off { color: var(--parchment-text-dim); border-color: rgba(184,147,90,0.18); }
+
+  .apply-row { margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(184,147,90,0.22); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .apply-row select {
+    background: var(--card); color: var(--ink); border: 1px solid var(--card-edge);
+    border-radius: 5px; padding: 7px 10px; font-family: "Zen Kaku Gothic New", sans-serif; font-size: 0.86rem;
+  }
+  .btn { font-family: "Zen Kaku Gothic New", sans-serif; font-size: 0.85rem; padding: 8px 18px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+  .btn-primary { background: var(--thread); color: #1a1410; font-weight: 500; }
+  .apply-note { font-size: 0.78rem; color: var(--parchment-text-dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="proto-nav">
+    <a href="cartagraph-zukan.html">図鑑</a>
+    <a href="session-play.html">プレイ画面</a>
+    <a href="session-gm-review.html">GM承認</a>
+    <a href="session-chat.html">チャット</a>
+    <a href="session-gm-manage.html">GM管理</a>
+    <a href="scenario-manage.html">シナリオ管理</a>
+    <a href="session-browse.html" aria-current="page">セッション選択</a>
+    <a href="character-create.html">キャラ作成</a>
+    <span class="draft-pill">試作</span>
+  </nav>
+
+  <header class="session-head">
+    <h1 class="session-title">参加できるセッション</h1>
+    <p class="session-crumb">募集中のシナリオ。前提を満たさなくても応募できる（最終判断はGM）。</p>
+  </header>
+
+  <div class="listings">
+
+    <article class="listing">
+      <div class="listing-head">
+        <div>
+          <h2 class="listing-title">灰色館の一夜</h2>
+          <p class="listing-gm">GM：霧乃</p>
+        </div>
+        <span class="fit-badge good">あなたのPCの多くが参加できます</span>
+      </div>
+      <div class="listing-meta">
+        <span>想定人数 <strong>2〜4人</strong>（募集中 1/2）</span>
+        <span>空間モデル <strong>1次元</strong></span>
+        <span>推奨CP <strong>3枚分</strong></span>
+      </div>
+      <div class="listing-tags">
+        <span class="chip off">前提タグ：なし</span>
+        <span class="chip off">体・技・心を参照</span>
+      </div>
+      <div class="apply-row">
+        <label for="pc-select-1" style="font-size:0.82rem; color:var(--parchment-text-dim);">参加させるPC</label>
+        <select id="pc-select-1">
+          <option>迅（探索者・体3/技4/心2）</option>
+          <option>灯（旅人）</option>
+        </select>
+        <button class="btn btn-primary" type="button">応募する</button>
+      </div>
+    </article>
+
+    <article class="listing">
+      <div class="listing-head">
+        <div>
+          <h2 class="listing-title">鉄鎖のガレオン船</h2>
+          <p class="listing-gm">GM：柊</p>
+        </div>
+        <span class="fit-badge partial">一部のPCは戦闘スキル不足（応募は可能）</span>
+      </div>
+      <div class="listing-meta">
+        <span>想定人数 <strong>3〜5人</strong>（募集中 4/4）</span>
+        <span>空間モデル <strong>2次元</strong></span>
+        <span>推奨CP <strong>5枚分</strong></span>
+      </div>
+      <div class="listing-tags">
+        <span class="chip">前提タグ：航海の心得</span>
+        <span class="chip">戦闘スキルを参照</span>
+      </div>
+      <div class="apply-row">
+        <label for="pc-select-2" style="font-size:0.82rem; color:var(--parchment-text-dim);">参加させるPC</label>
+        <select id="pc-select-2">
+          <option>迅（探索者・戦闘スキルなし）</option>
+        </select>
+        <button class="btn btn-primary" type="button">応募する</button>
+        <span class="apply-note">前提タグ「航海の心得」を持つPCがいませんが、応募自体は可能です</span>
+      </div>
+    </article>
+
+    <article class="listing">
+      <div class="listing-head">
+        <div>
+          <h2 class="listing-title">灯りの回廊・後日談</h2>
+          <p class="listing-gm">GM：霧乃</p>
+        </div>
+        <span class="fit-badge partial">結末タグ「灯りの回廊」保持者向け</span>
+      </div>
+      <div class="listing-meta">
+        <span>想定人数 <strong>1〜3人</strong>（募集中 0/3）</span>
+        <span>空間モデル <strong>1次元</strong></span>
+        <span>推奨CP <strong>2枚分</strong></span>
+      </div>
+      <div class="listing-tags">
+        <span class="chip">前提タグ：灯りの回廊を経験</span>
+      </div>
+      <div class="apply-row">
+        <span class="apply-note">この前提タグを持つPCがいないため、他PLからPCを借りることもできます。</span>
+      </div>
+    </article>
+
+  </div>
+
+</div>
+</body>
+</html>

@@ -45,12 +45,22 @@ export default defineConfig({
         ]
       },
       {
+        // 試作ページはVitePressのpublicディレクトリに置いた生のHTMLで、
+        // VitePress管理下のページではないため、target指定なしだと
+        // VitePressのSPAルーターが横取りして404表示になる
+        // （F5で直接読み込むと正しく表示されるのはそのため）。
+        // target: '_self' を付けることでSPA遷移を回避し、通常の
+        // ページ遷移としてブラウザに読み込ませる。
         text: '試作',
         items: [
-          { text: 'カルタグラフ図鑑（閲覧サイト試作）', link: '/preview/cartagraph-zukan.html' },
-          { text: 'プレイ画面（ドライバー視点）', link: '/preview/session-play.html' },
-          { text: 'GM承認画面', link: '/preview/session-gm-review.html' },
-          { text: 'チャット（ドライバー/ナビゲーター/GM）', link: '/preview/session-chat.html' }
+          { text: 'カルタグラフ図鑑（閲覧サイト試作）', link: '/preview/cartagraph-zukan.html', target: '_self' },
+          { text: 'プレイ画面（ドライバー視点）', link: '/preview/session-play.html', target: '_self' },
+          { text: 'GM承認画面', link: '/preview/session-gm-review.html', target: '_self' },
+          { text: 'チャット（ドライバー/ナビゲーター/GM）', link: '/preview/session-chat.html', target: '_self' },
+          { text: 'GMのセッション管理', link: '/preview/session-gm-manage.html', target: '_self' },
+          { text: 'シナリオ製作者のシナリオ管理', link: '/preview/scenario-manage.html', target: '_self' },
+          { text: 'プレイヤーのセッション選択', link: '/preview/session-browse.html', target: '_self' },
+          { text: 'キャラクター作成', link: '/preview/character-create.html', target: '_self' }
         ]
       }
     ],

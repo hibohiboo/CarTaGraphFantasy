@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>カルタグラフ セッション試作：GMのセッション管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --felt: #1f2a24; --felt-panel: #24322b; --felt-panel-2: #1a241e;
+    --card: #efe7d8; --card-edge: rgba(43, 36, 28, 0.22);
+    --ink: #2b241c; --ink-soft: #55493a;
+    --parchment-text: #ddd3bf; --parchment-text-dim: #a99f8c;
+    --seal: #a33227; --thread: #b8935a; --thread-dim: rgba(184, 147, 90, 0.38);
+    --focus: #d9b877;
+    --role-driver: #b8935a; --role-navigator: #7f93a6; --role-gm: #a33227;
+    --pending: #c9973f; --approved: #6f8f6a; --rejected: #8c4a41; --neutral: #7f93a6;
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body {
+    margin: 0; background: var(--felt); color: var(--parchment-text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    line-height: 1.75; padding-inline: clamp(16px, 4vw, 40px);
+  }
+  h1, h2, h3 {
+    font-family: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 600; text-wrap: balance; color: var(--parchment-text); margin: 0;
+  }
+  a { color: var(--focus); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .wrap { max-width: 1080px; margin-inline: auto; }
+
+  .proto-nav {
+    display: flex; align-items: center; gap: 16px; padding-block: 16px;
+    font-size: 0.83rem; border-bottom: 1px solid rgba(184, 147, 90, 0.18); flex-wrap: wrap;
+  }
+  .proto-nav a { color: var(--parchment-text-dim); text-decoration: none; }
+  .proto-nav a[aria-current="page"] { color: var(--focus); border-bottom: 2px solid var(--focus); padding-bottom: 3px; }
+  .proto-nav .draft-pill { margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.7rem; padding: 3px 10px; border-radius: 999px; }
+
+  .session-head { padding-block: 22px 8px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+  .session-title { font-size: 1.4rem; }
+  .session-crumb { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 6px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;
+    padding: 5px 12px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
+  }
+  .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .badge-driver { color: var(--role-driver); }
+  .badge-navigator { color: var(--role-navigator); }
+  .badge-gm { color: var(--role-gm); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-block: 22px; }
+  .stat {
+    background: var(--felt-panel); border: 1px solid rgba(184, 147, 90, 0.16);
+    border-left: 3px solid var(--stat-color, var(--thread)); border-radius: 8px; padding: 14px 16px;
+  }
+  .stat .num { font-family: "Zen Old Mincho", serif; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+  .stat .label { font-size: 0.78rem; color: var(--parchment-text-dim); margin-top: 2px; }
+  .stat.warn { --stat-color: var(--pending); }
+
+  .panel { background: var(--felt-panel); border: 1px solid rgba(184, 147, 90, 0.16); border-radius: 10px; padding: 20px; }
+  .panel + .panel { margin-top: 18px; }
+  .panel-title { font-size: 1.02rem; }
+  .panel-sub { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 4px; }
+
+  .people { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .person { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 0.9rem; }
+  .person-left { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%; background: var(--felt-panel-2);
+    border: 1px solid var(--role); color: var(--role); display: flex; align-items: center;
+    justify-content: center; font-size: 0.78rem; font-family: "Zen Old Mincho", serif; flex: none;
+  }
+  .person.driver .avatar { --role: var(--role-driver); }
+  .person.navigator .avatar { --role: var(--role-navigator); }
+  .person-time { font-size: 0.78rem; color: var(--parchment-text-dim); font-variant-numeric: tabular-nums; }
+  .person-time.warn { color: var(--pending); }
+
+  .zone-row { display: flex; gap: 22px; margin-top: 14px; flex-wrap: wrap; font-size: 0.88rem; }
+  .zone-row strong { font-family: "Zen Old Mincho", serif; font-size: 1.15rem; display: block; margin-top: 2px; }
+
+  .feed { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .feed-item { font-size: 0.85rem; color: var(--parchment-text-dim); display: flex; gap: 10px; }
+  .feed-item .t { font-variant-numeric: tabular-nums; flex: none; color: var(--parchment-text-dim); opacity: 0.8; }
+  .feed-item .card-chip { background: var(--card); color: var(--ink); border-radius: 4px; padding: 1px 8px; font-family: "Zen Old Mincho", serif; }
+
+  .action-row { margin-top: 18px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .btn { font-family: "Zen Kaku Gothic New", sans-serif; font-size: 0.85rem; padding: 9px 18px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+  .btn-primary { background: var(--thread); color: #1a1410; font-weight: 500; }
+  .btn-outline { background: transparent; color: var(--rejected); border-color: var(--rejected); }
+  .toggle-note { font-size: 0.8rem; color: var(--parchment-text-dim); }
+
+  @media (max-width: 860px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .stats { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="proto-nav">
+    <a href="cartagraph-zukan.html">図鑑</a>
+    <a href="session-play.html">プレイ画面</a>
+    <a href="session-gm-review.html">GM承認</a>
+    <a href="session-chat.html">チャット</a>
+    <a href="session-gm-manage.html" aria-current="page">GM管理</a>
+    <a href="scenario-manage.html">シナリオ管理</a>
+    <a href="session-browse.html">セッション選択</a>
+    <a href="character-create.html">キャラ作成</a>
+    <span class="draft-pill">試作</span>
+  </nav>
+
+  <header class="session-head">
+    <div>
+      <h1 class="session-title">セッション管理</h1>
+      <p class="session-crumb">「灰色館の一夜」 ／ パーティー「迷い星」</p>
+    </div>
+    <span class="badge badge-gm">霧乃（GM）</span>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="num">3-2 / 7</div><div class="label">進行中のシーン</div></div>
+    <div class="stat"><div class="num">軽量</div><div class="label">現在のモード</div></div>
+    <div class="stat"><div class="num">3時間前</div><div class="label">最後の参加者反応</div></div>
+    <div class="stat warn"><div class="num">残り約21時間</div><div class="label">無反応で「中断」になるまで</div></div>
+  </div>
+
+  <section class="panel">
+    <h2 class="panel-title">参加者</h2>
+    <p class="panel-sub">ドライバーが応答しなくなった場合、ナビゲーターやPCの所有者が引き継げる。</p>
+    <div class="people">
+      <div class="person driver">
+        <div class="person-left"><span class="avatar">迅</span><span>迅<br><span style="font-size:0.76rem; color:var(--parchment-text-dim);">ドライバー</span></span></div>
+        <span class="person-time">最終反応：19:20</span>
+      </div>
+      <div class="person navigator">
+        <div class="person-left"><span class="avatar">カ</span><span>カヤ<br><span style="font-size:0.76rem; color:var(--parchment-text-dim);">ナビゲーター</span></span></div>
+        <span class="person-time">最終反応：昨日 20:14</span>
+      </div>
+      <div class="person navigator">
+        <div class="person-left"><span class="avatar">ル</span><span>ルウ<br><span style="font-size:0.76rem; color:var(--parchment-text-dim);">ナビゲーター</span></span></div>
+        <span class="person-time warn">最終反応：3日前</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">場のゾーン</h2>
+    <p class="panel-sub">GMは両方のゾーンを見渡せる。PLはPL可視ゾーンのみ。</p>
+    <div class="zone-row">
+      <div>GM専用ゾーン<strong>3枚</strong></div>
+      <div>PL可視ゾーン<strong>6枚</strong></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">最近の進行</h2>
+    <div class="feed">
+      <div class="feed-item"><span class="t">19:20</span><span>迅が <span class="card-chip">扉を破壊する</span> をプレイ — 扉が破壊された</span></div>
+      <div class="feed-item"><span class="t">19:05</span><span>霧乃が提案「扉を壊してみたい」を採用</span></div>
+      <div class="feed-item"><span class="t">8:12</span><span>迅が新たな選択肢を提案</span></div>
+      <div class="feed-item"><span class="t">昨日 20:00</span><span>「奥の扉」が場に追加された</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">セッションの操作</h2>
+    <div class="action-row">
+      <button class="btn btn-primary" type="button">次のシーンを濃密モードにする</button>
+      <span class="toggle-note">戦闘イベントなど特定のカードは自動で濃密モードを要求する</span>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-outline" type="button">セッションを終了する</button>
+      <span class="toggle-note">シナリオを使い切った時、またはGMが任意のタイミングで宣言できる</span>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
