@@ -10,7 +10,7 @@
 
 同じ情報を複数箇所に重複して書かず、常にどこか一箇所を正とする方針を維持する。
 
-SSOT（正式仕様）は **`docs/` 配下の正式ページ**（`concept/`, `cartagraph/`, `glossary.md`, `open-questions.md` など、`docs/interviews/` を除くページ）とする。
+SSOT（正式仕様）は **`docs/` 配下の正式ページ**（`concept/`, `cartagraph/`, `architecture/`, `glossary.md`, `open-questions.md` など、`docs/interviews/` を除くページ）とする。
 
 `docs/interviews/` 配下の議論ログ（インタビュー原文）は一次資料・アーカイブであり、正式仕様ではない。原文とSSOT側の記述が食い違う場合は、原文を優先せず矛盾として報告する（前セクション参照）。
 
