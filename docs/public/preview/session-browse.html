@@ -30,7 +30,7 @@
   }
   a { color: var(--focus); }
   a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-  .wrap { max-width: 900px; margin-inline: auto; }
+  .wrap { max-width: 1080px; margin-inline: auto; }
 
   .proto-nav {
     display: flex; align-items: center; gap: 16px; padding-block: 16px;
@@ -44,34 +44,78 @@
   .session-title { font-size: 1.4rem; }
   .session-crumb { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 6px; }
 
-  .listings { display: flex; flex-direction: column; gap: 16px; padding-block: 20px 40px; }
-  .listing {
-    background: var(--felt-panel); border: 1px solid rgba(184, 147, 90, 0.16);
-    border-radius: 10px; padding: 20px;
+  /* ---------- recruit card grid ---------- */
+  .listings { display: flex; flex-wrap: wrap; gap: 20px; padding-block: 22px 44px; align-items: flex-start; }
+  .recruit-card {
+    position: relative;
+    width: 246px;
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 9px;
+    border: 1px solid var(--card-edge);
+    box-shadow: 4px 4px 0 rgba(10, 14, 11, 0.32);
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
   }
-  .listing-head { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
-  .listing-title { font-size: 1.12rem; }
-  .listing-gm { font-size: 0.8rem; color: var(--parchment-text-dim); margin-top: 4px; }
+  .recruit-tag {
+    align-self: flex-start;
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    border: 1px solid var(--ink-soft);
+    border-radius: 4px;
+    padding: 1px 7px;
+  }
+  .recruit-title { font-size: 1.14rem; margin-top: 12px; }
+  .recruit-gm { font-size: 0.78rem; color: var(--ink-soft); margin-top: 3px; }
+
   .fit-badge {
-    font-size: 0.76rem; padding: 4px 11px; border-radius: 999px; white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 10px;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 999px;
   }
-  .fit-badge.good { color: var(--approved); border: 1px solid var(--approved); }
-  .fit-badge.partial { color: var(--pending); border: 1px solid var(--pending); }
+  .fit-badge.good { color: #2f5c37; background: rgba(111,143,106,0.22); }
+  .fit-badge.partial { color: #8a5a12; background: rgba(201,151,63,0.22); }
 
-  .listing-meta { margin-top: 12px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.82rem; color: var(--parchment-text-dim); }
-  .listing-meta strong { color: var(--parchment-text); font-weight: 500; }
-  .listing-tags { margin-top: 10px; display: flex; gap: 7px; flex-wrap: wrap; }
-  .chip { font-size: 0.74rem; border: 1px solid var(--thread-dim); color: var(--thread); border-radius: 999px; padding: 2px 10px; }
-  .chip.off { color: var(--parchment-text-dim); border-color: rgba(184,147,90,0.18); }
+  .recruit-divider { border: none; border-top: 1px dashed rgba(43,36,28,0.22); margin: 12px 0; }
 
-  .apply-row { margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(184,147,90,0.22); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .apply-row select {
-    background: var(--card); color: var(--ink); border: 1px solid var(--card-edge);
-    border-radius: 5px; padding: 7px 10px; font-family: "Zen Kaku Gothic New", sans-serif; font-size: 0.86rem;
+  .recruit-meta { display: flex; flex-direction: column; gap: 5px; font-size: 0.78rem; color: var(--ink-soft); }
+  .recruit-meta strong { color: var(--ink); font-weight: 600; }
+
+  .recruit-tags { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font-size: 0.68rem; border: 1px solid var(--ink-soft); color: var(--ink-soft); border-radius: 999px; padding: 1px 8px; }
+
+  .recruit-apply { margin-top: auto; padding-top: 14px; }
+  .recruit-apply select {
+    width: 100%;
+    background: var(--felt-panel-2);
+    color: var(--parchment-text);
+    border: 1px solid var(--card-edge);
+    border-radius: 5px;
+    padding: 6px 8px;
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 0.8rem;
   }
-  .btn { font-family: "Zen Kaku Gothic New", sans-serif; font-size: 0.85rem; padding: 8px 18px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
-  .btn-primary { background: var(--thread); color: #1a1410; font-weight: 500; }
-  .apply-note { font-size: 0.78rem; color: var(--parchment-text-dim); }
+  .btn {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 0.85rem;
+    padding: 8px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-align: center;
+  }
+  .btn-primary { background: var(--ink); color: var(--card); font-weight: 500; }
+  .recruit-note { font-size: 0.76rem; color: var(--ink-soft); }
+
+  @media (max-width: 400px) {
+    .recruit-card { width: 100%; }
+  }
 </style>
 </head>
 <body>
@@ -86,6 +130,8 @@
     <a href="scenario-manage.html">シナリオ管理</a>
     <a href="session-browse.html" aria-current="page">セッション選択</a>
     <a href="character-create.html">キャラ作成</a>
+    <a href="scene-builder.html">シーン構築</a>
+    <a href="scene-play.html">シーン進行</a>
     <span class="draft-pill">試作</span>
   </nav>
 
@@ -96,26 +142,23 @@
 
   <div class="listings">
 
-    <article class="listing">
-      <div class="listing-head">
-        <div>
-          <h2 class="listing-title">灰色館の一夜</h2>
-          <p class="listing-gm">GM：霧乃</p>
-        </div>
-        <span class="fit-badge good">あなたのPCの多くが参加できます</span>
-      </div>
-      <div class="listing-meta">
+    <article class="recruit-card">
+      <span class="recruit-tag">シナリオ</span>
+      <h2 class="recruit-title">灰色館の一夜</h2>
+      <p class="recruit-gm">GM：霧乃</p>
+      <span class="fit-badge good">多くのPCが参加できます</span>
+      <hr class="recruit-divider">
+      <div class="recruit-meta">
         <span>想定人数 <strong>2〜4人</strong>（募集中 1/2）</span>
         <span>空間モデル <strong>1次元</strong></span>
         <span>推奨CP <strong>3枚分</strong></span>
       </div>
-      <div class="listing-tags">
-        <span class="chip off">前提タグ：なし</span>
-        <span class="chip off">体・技・心を参照</span>
+      <div class="recruit-tags">
+        <span class="chip">前提タグなし</span>
+        <span class="chip">体・技・心</span>
       </div>
-      <div class="apply-row">
-        <label for="pc-select-1" style="font-size:0.82rem; color:var(--parchment-text-dim);">参加させるPC</label>
-        <select id="pc-select-1">
+      <div class="recruit-apply">
+        <select aria-label="参加させるPC">
           <option>迅（探索者・体3/技4/心2）</option>
           <option>灯（旅人）</option>
         </select>
@@ -123,51 +166,46 @@
       </div>
     </article>
 
-    <article class="listing">
-      <div class="listing-head">
-        <div>
-          <h2 class="listing-title">鉄鎖のガレオン船</h2>
-          <p class="listing-gm">GM：柊</p>
-        </div>
-        <span class="fit-badge partial">一部のPCは戦闘スキル不足（応募は可能）</span>
-      </div>
-      <div class="listing-meta">
+    <article class="recruit-card">
+      <span class="recruit-tag">シナリオ</span>
+      <h2 class="recruit-title">鉄鎖のガレオン船</h2>
+      <p class="recruit-gm">GM：柊</p>
+      <span class="fit-badge partial">戦闘スキル不足（応募は可能）</span>
+      <hr class="recruit-divider">
+      <div class="recruit-meta">
         <span>想定人数 <strong>3〜5人</strong>（募集中 4/4）</span>
         <span>空間モデル <strong>2次元</strong></span>
         <span>推奨CP <strong>5枚分</strong></span>
       </div>
-      <div class="listing-tags">
-        <span class="chip">前提タグ：航海の心得</span>
-        <span class="chip">戦闘スキルを参照</span>
+      <div class="recruit-tags">
+        <span class="chip">航海の心得</span>
+        <span class="chip">戦闘スキル</span>
       </div>
-      <div class="apply-row">
-        <label for="pc-select-2" style="font-size:0.82rem; color:var(--parchment-text-dim);">参加させるPC</label>
-        <select id="pc-select-2">
-          <option>迅（探索者・戦闘スキルなし）</option>
+      <div class="recruit-apply">
+        <select aria-label="参加させるPC">
+          <option>迅（戦闘スキルなし）</option>
         </select>
         <button class="btn btn-primary" type="button">応募する</button>
-        <span class="apply-note">前提タグ「航海の心得」を持つPCがいませんが、応募自体は可能です</span>
+        <p class="recruit-note">前提タグ不足ですが応募自体は可能です。</p>
       </div>
     </article>
 
-    <article class="listing">
-      <div class="listing-head">
-        <div>
-          <h2 class="listing-title">灯りの回廊・後日談</h2>
-          <p class="listing-gm">GM：霧乃</p>
-        </div>
-        <span class="fit-badge partial">結末タグ「灯りの回廊」保持者向け</span>
-      </div>
-      <div class="listing-meta">
+    <article class="recruit-card">
+      <span class="recruit-tag">シナリオ</span>
+      <h2 class="recruit-title">灯りの回廊・後日談</h2>
+      <p class="recruit-gm">GM：霧乃</p>
+      <span class="fit-badge partial">結末タグ保持者向け</span>
+      <hr class="recruit-divider">
+      <div class="recruit-meta">
         <span>想定人数 <strong>1〜3人</strong>（募集中 0/3）</span>
         <span>空間モデル <strong>1次元</strong></span>
         <span>推奨CP <strong>2枚分</strong></span>
       </div>
-      <div class="listing-tags">
-        <span class="chip">前提タグ：灯りの回廊を経験</span>
+      <div class="recruit-tags">
+        <span class="chip">灯りの回廊を経験</span>
       </div>
-      <div class="apply-row">
-        <span class="apply-note">この前提タグを持つPCがいないため、他PLからPCを借りることもできます。</span>
+      <div class="recruit-apply">
+        <p class="recruit-note">この前提タグを持つPCがいません。他PLからPCを借りて応募することもできます。</p>
       </div>
     </article>
 
