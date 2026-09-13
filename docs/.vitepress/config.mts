@@ -9,15 +9,39 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: 'ホーム', link: '/' },
-      { text: '設計ドキュメント', link: '/未整理/カルタグラフTRPG_設計まとめ_v0.1' }
+      { text: 'コンセプト', link: '/concept/' },
+      { text: 'カルタグラフ', link: '/cartagraph/' },
+      { text: '用語集', link: '/glossary' },
+      { text: '未解決論点', link: '/open-questions' }
     ],
 
     sidebar: [
       {
-        text: '未整理ドキュメント',
+        text: 'コンセプト',
         items: [
-          { text: '設計まとめ v0.1', link: '/未整理/カルタグラフTRPG_設計まとめ_v0.1' },
-          { text: '追加インタビュー', link: '/未整理/追加インタビュー' }
+          { text: '進化するTRPGとは', link: '/concept/' }
+        ]
+      },
+      {
+        text: 'カルタグラフ構想',
+        items: [
+          { text: '全体像', link: '/cartagraph/' },
+          { text: 'カード・デッキの考え方', link: '/cartagraph/card-and-deck' },
+          { text: '場・手札・プレイ', link: '/cartagraph/play-and-field' },
+          { text: 'カードの裏表', link: '/cartagraph/card-face-back' }
+        ]
+      },
+      {
+        text: 'リファレンス',
+        items: [
+          { text: '用語集', link: '/glossary' },
+          { text: '未解決論点トラッカー', link: '/open-questions' }
+        ]
+      },
+      {
+        text: '議論ログ（アーカイブ）',
+        items: [
+          { text: '追加インタビュー (2025-09)', link: '/interviews/2025-09-追加インタビュー' }
         ]
       }
     ],

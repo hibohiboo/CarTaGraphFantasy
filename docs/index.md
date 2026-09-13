@@ -7,11 +7,11 @@ hero:
   tagline: 遊ぶことでゲーム自体が進化していくTRPGの設計を、議論しながらまとめていくサイトです。
   actions:
     - theme: brand
-      text: 設計まとめを読む
-      link: /未整理/カルタグラフTRPG_設計まとめ_v0.1
+      text: コンセプトを読む
+      link: /concept/
     - theme: alt
-      text: 追加インタビューを読む
-      link: /未整理/追加インタビュー
+      text: カルタグラフ構想を読む
+      link: /cartagraph/
 
 features:
   - title: 進化するTRPG
