@@ -1,0 +1,2 @@
+- [pushしたら確認不要、報告でよい](push-then-report.md) — mainへのpushは事前確認なしで実行し、完了後に報告する
+- [閲覧サイトフェーズの試作状況](cartagraph-viewer-site-phase.md) — docs/public/preview配下の試作ページ一覧とデザイントークン
