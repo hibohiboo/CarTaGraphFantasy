@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>カルタグラフ セッション試作：場の状況</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --felt: #1f2a24; --felt-panel: #24322b; --felt-panel-2: #1a241e;
+    --card: #efe7d8; --card-edge: rgba(43, 36, 28, 0.22);
+    --ink: #2b241c; --ink-soft: #55493a;
+    --parchment-text: #ddd3bf; --parchment-text-dim: #a99f8c;
+    --seal: #a33227; --thread: #b8935a; --thread-dim: rgba(184, 147, 90, 0.38);
+    --focus: #d9b877; --pending: #c9973f; --role-driver: #b8935a;
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body {
+    margin: 0; background: var(--felt); color: var(--parchment-text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    line-height: 1.75; padding-inline: clamp(16px, 4vw, 40px);
+  }
+  h1, h2, h3 {
+    font-family: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 600; text-wrap: balance; color: var(--parchment-text); margin: 0;
+  }
+  a { color: var(--focus); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .wrap { max-width: 1080px; margin-inline: auto; }
+
+  .proto-nav {
+    display: flex; align-items: center; gap: 16px; padding-block: 12px;
+    font-size: 0.83rem; border-bottom: 1px solid rgba(184, 147, 90, 0.18);
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .proto-nav a { flex: none; white-space: nowrap; color: var(--parchment-text-dim); text-decoration: none; }
+  .proto-nav a[aria-current="page"] { color: var(--focus); border-bottom: 2px solid var(--focus); padding-bottom: 3px; }
+  .proto-nav .draft-pill { flex: none; margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.7rem; padding: 3px 10px; border-radius: 999px; }
+
+  .session-head { padding-block: 22px 8px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+  .session-title { font-size: 1.4rem; }
+  .session-crumb { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 6px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;
+    padding: 5px 12px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
+  }
+  .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .badge-driver { color: var(--role-driver); }
+
+  .open-note {
+    font-size: 0.78rem; color: var(--parchment-text-dim); margin-top: -4px; margin-bottom: 18px;
+  }
+
+  .panel { background: var(--felt-panel); border: 1px solid rgba(184, 147, 90, 0.16); border-radius: 10px; padding: 20px; }
+  .panel + .panel { margin-top: 18px; }
+  .panel-title { font-size: 1.02rem; }
+  .panel-sub { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 4px; }
+
+  .row { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+
+  .field-card {
+    position: relative;
+    width: 130px; aspect-ratio: 5 / 7;
+    background: var(--card); color: var(--ink);
+    border-radius: 8px; border: 1px solid var(--card-edge);
+    box-shadow: 3px 3px 0 rgba(10,14,11,0.32);
+    padding: 12px 12px 10px;
+    display: flex; flex-direction: column;
+  }
+  .field-card.hidden {
+    background: repeating-linear-gradient(45deg, var(--felt-panel-2) 0 6px, #223027 6px 12px);
+    color: var(--parchment-text-dim);
+    border-color: rgba(184, 147, 90, 0.4);
+    align-items: center; justify-content: center; text-align: center;
+  }
+  .field-card.hidden .field-mark { font-size: 1.5rem; color: var(--thread); font-family: "Zen Old Mincho", serif; }
+  .field-tag { font-size: 0.66rem; color: var(--ink-soft); border: 1px solid var(--ink-soft); border-radius: 4px; padding: 1px 6px; align-self: flex-start; }
+  .field-name { font-family: "Zen Old Mincho", serif; font-size: 0.98rem; margin-top: 8px; }
+  .field-note { font-size: 0.72rem; color: var(--ink-soft); margin-top: auto; padding-top: 8px; }
+
+  /* 選択肢カード */
+  .option-card {
+    width: 130px; aspect-ratio: 5 / 7;
+    background: var(--card); color: var(--ink);
+    border-radius: 8px; border: 2px solid transparent;
+    box-shadow: 3px 3px 0 rgba(10,14,11,0.32);
+    padding: 12px 12px 10px;
+    display: flex; flex-direction: column;
+    text-align: center;
+  }
+  .option-card .option-name {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    font-family: "Zen Old Mincho", serif; font-size: 1.02rem; line-height: 1.4;
+  }
+  .option-card.propose {
+    background: var(--felt-panel-2); color: var(--thread);
+    border: 2px dashed var(--thread); box-shadow: none;
+  }
+  .option-card.propose .field-tag { color: var(--thread); border-color: var(--thread); }
+  .option-card.propose .option-name { font-family: "Zen Kaku Gothic New", sans-serif; font-size: 0.84rem; }
+  .pending-note { margin-top: 12px; font-size: 0.8rem; color: var(--parchment-text-dim); }
+  .pill-pending {
+    display: inline-flex; align-items: center; gap: 5px; color: var(--pending);
+    border: 1px solid var(--pending); border-radius: 999px; padding: 1px 9px; font-size: 0.76rem; margin-left: 4px;
+  }
+  .pill-pending::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* キャラクターカード（クリックでキャラクターシートへ） */
+  .char-link { text-decoration: none; display: block; }
+  .char-card {
+    width: 130px; aspect-ratio: 5 / 7;
+    background: var(--card); color: var(--ink);
+    border-radius: 8px; border: 2px solid transparent;
+    box-shadow: 3px 3px 0 rgba(10,14,11,0.32);
+    padding: 10px;
+    display: flex; flex-direction: column;
+    transition: transform 120ms ease, border-color 120ms ease;
+  }
+  .char-link:hover .char-card, .char-link:focus-visible .char-card { transform: translateY(-4px); border-color: var(--focus); }
+  .card-portrait {
+    flex: 1; min-height: 0; border-radius: 5px;
+    background-color: var(--felt-panel-2);
+    background-size: cover; background-position: center;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-portrait.no-image svg { width: 42%; height: 42%; fill: none; stroke: var(--thread); stroke-width: 1.6; opacity: 0.7; }
+  .char-name { font-family: "Zen Old Mincho", serif; font-size: 1rem; text-align: center; margin-top: 8px; }
+  .char-role { font-size: 0.7rem; color: var(--ink-soft); text-align: center; margin-top: 2px; }
+  .char-hint { font-size: 0.72rem; color: var(--parchment-text-dim); margin-top: 8px; }
+
+  @media (max-width: 400px) {
+    .field-card, .option-card, .char-card { width: 120px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="proto-nav">
+    <a href="cartagraph-zukan.html">図鑑</a>
+    <a href="session-play.html">プレイ画面</a>
+    <a href="session-gm-review.html">GM承認</a>
+    <a href="session-chat.html">チャット</a>
+    <a href="session-gm-manage.html">GM管理</a>
+    <a href="scenario-manage.html">シナリオ管理</a>
+    <a href="session-browse.html">セッション選択</a>
+    <a href="character-create.html">キャラ作成</a>
+    <a href="scene-builder.html">シーン構築</a>
+    <a href="scene-play.html">シーン進行</a>
+    <a href="combat-play.html">戦闘（2次元）</a>
+    <a href="combat-play-1d.html">戦闘（1次元）</a>
+    <a href="session-field.html" aria-current="page">場の状況</a>
+    <a href="character-sheet.html">キャラクターシート</a>
+    <span class="draft-pill">試作</span>
+  </nav>
+
+  <header class="session-head">
+    <div>
+      <h1 class="session-title">場の状況</h1>
+      <p class="session-crumb">「灰色館の一夜」 › シーン 3-2「奥の扉」 ／ パーティー「迷い星」</p>
+    </div>
+    <span class="badge badge-driver">迅（ドライバー）</span>
+  </header>
+  <p class="open-note">プレイ画面（<a href="session-play.html">操作はこちら</a>）とは別タブで開いておき、必要なときに見返す想定のページです。</p>
+
+  <section class="panel">
+    <h2 class="panel-title">シーン</h2>
+    <p class="panel-sub">今どのシーンにいるか。</p>
+    <div class="row">
+      <div class="field-card">
+        <span class="field-tag">シーン</span>
+        <div class="field-name">3-2 奥の扉</div>
+        <div class="field-note">館の地下、古びた扉の前</div>
+      </div>
+      <div class="field-card">
+        <span class="field-tag">場所</span>
+        <div class="field-name">地下回廊</div>
+        <div class="field-note">湿った空気と、遠くから響く音</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">このシーンで出た情報</h2>
+    <p class="panel-sub">存在は分かっているが、まだ中身の分からないカードもある。</p>
+    <div class="row">
+      <div class="field-card hidden">
+        <span class="field-mark">？</span>
+        <div class="field-note">何かが書かれた紙（内容不明）</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">今の選択肢</h2>
+    <p class="panel-sub">手札として選べる、このシーン限定の選択肢。</p>
+    <div class="row">
+      <div class="option-card">
+        <span class="field-tag">選択肢</span>
+        <div class="option-name">開ける</div>
+      </div>
+      <div class="option-card">
+        <span class="field-tag">選択肢</span>
+        <div class="option-name">調べる</div>
+      </div>
+      <div class="option-card">
+        <span class="field-tag">選択肢</span>
+        <div class="option-name">戻る</div>
+      </div>
+      <div class="option-card propose">
+        <span class="field-tag">選択肢</span>
+        <div class="option-name">＋<br>新たな選択肢を提案</div>
+      </div>
+    </div>
+    <p class="pending-note">迅の提案「扉を壊してみたい」<span class="pill-pending">GM裁定待ち</span></p>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">パーティー</h2>
+    <p class="panel-sub">カードをクリックすると、そのキャラクターのシート（能力・所持カードのデッキ）を確認できる。ここでは名前と姿だけを一覧にしている。</p>
+    <div class="row">
+      <a class="char-link" href="character-sheet.html">
+        <div class="char-card">
+          <div class="card-portrait no-image">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="4"></circle><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+          </div>
+          <div class="char-name">迅</div>
+          <div class="char-role">探索者・ドライバー</div>
+        </div>
+      </a>
+    </div>
+    <p class="char-hint">スキル・アイテムなどの所持デッキはここには出さない。キャラクターをクリックした先のシートで確認する。</p>
+  </section>
+
+</div>
+</body>
+</html>

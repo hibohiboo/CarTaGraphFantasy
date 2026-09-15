@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>カルタグラフ セッション試作：キャラクターシート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --felt: #1f2a24; --felt-panel: #24322b; --felt-panel-2: #1a241e;
+    --card: #efe7d8; --card-edge: rgba(43, 36, 28, 0.22);
+    --ink: #2b241c; --ink-soft: #55493a;
+    --parchment-text: #ddd3bf; --parchment-text-dim: #a99f8c;
+    --seal: #a33227; --thread: #b8935a; --thread-dim: rgba(184, 147, 90, 0.38);
+    --focus: #d9b877; --role-driver: #b8935a;
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body {
+    margin: 0; background: var(--felt); color: var(--parchment-text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    line-height: 1.75; padding-inline: clamp(16px, 4vw, 40px);
+  }
+  h1, h2, h3 {
+    font-family: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 600; text-wrap: balance; color: var(--parchment-text); margin: 0;
+  }
+  a { color: var(--focus); }
+  a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .wrap { max-width: 1080px; margin-inline: auto; }
+
+  .proto-nav {
+    display: flex; align-items: center; gap: 16px; padding-block: 12px;
+    font-size: 0.83rem; border-bottom: 1px solid rgba(184, 147, 90, 0.18);
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .proto-nav a { flex: none; white-space: nowrap; color: var(--parchment-text-dim); text-decoration: none; }
+  .proto-nav a[aria-current="page"] { color: var(--focus); border-bottom: 2px solid var(--focus); padding-bottom: 3px; }
+  .proto-nav .draft-pill { flex: none; margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.7rem; padding: 3px 10px; border-radius: 999px; }
+
+  .back-link { display: inline-block; margin-top: 18px; font-size: 0.82rem; }
+
+  .sheet-head { margin-top: 18px; display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+  .char-card {
+    width: 150px; aspect-ratio: 5 / 7; flex: none;
+    background: var(--card); color: var(--ink);
+    border-radius: 8px; border: 1px solid var(--card-edge);
+    box-shadow: 4px 4px 0 rgba(10,14,11,0.32);
+    padding: 10px;
+    display: flex; flex-direction: column;
+  }
+  .card-portrait {
+    flex: 1; min-height: 0; border-radius: 5px;
+    background-color: var(--felt-panel-2);
+    background-size: cover; background-position: center;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-portrait.no-image svg { width: 42%; height: 42%; fill: none; stroke: var(--thread); stroke-width: 1.6; opacity: 0.7; }
+  .char-card .char-name { font-family: "Zen Old Mincho", serif; font-size: 1rem; text-align: center; margin-top: 8px; }
+  .char-card .char-role { font-size: 0.7rem; color: var(--ink-soft); text-align: center; margin-top: 2px; }
+
+  .sheet-title { font-size: 1.4rem; }
+  .sheet-meta { font-size: 0.82rem; color: var(--parchment-text-dim); margin-top: 6px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;
+    padding: 5px 12px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
+    margin-top: 10px;
+  }
+  .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .badge-driver { color: var(--role-driver); }
+
+  .panel { background: var(--felt-panel); border: 1px solid rgba(184, 147, 90, 0.16); border-radius: 10px; padding: 20px; }
+  .panel + .panel { margin-top: 18px; }
+  .panel-title { font-size: 1.0rem; }
+  .panel-sub { font-size: 0.8rem; color: var(--parchment-text-dim); margin-top: 4px; }
+
+  .ability-row { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; font-size: 0.9rem; max-width: 260px; }
+  .pips { display: flex; gap: 5px; }
+  .pip { width: 11px; height: 11px; border-radius: 50%; border: 1px solid var(--thread); }
+  .pip.on { background: var(--thread); }
+  .hp-row { margin-top: 14px; font-size: 0.9rem; display: flex; justify-content: space-between; max-width: 260px; }
+  .hp-row strong { font-variant-numeric: tabular-nums; }
+
+  .deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; margin-top: 14px; }
+  .deck-card {
+    background: var(--card); color: var(--ink); border-radius: 8px;
+    border: 1px solid var(--card-edge); box-shadow: 3px 3px 0 rgba(10,14,11,0.3);
+    padding: 12px 10px 10px; aspect-ratio: 5 / 7; display: flex; flex-direction: column;
+  }
+  .deck-tag { font-size: 0.66rem; color: var(--ink-soft); border: 1px solid var(--ink-soft); border-radius: 4px; padding: 1px 6px; align-self: flex-start; }
+  .deck-name { font-family: "Zen Old Mincho", serif; font-size: 0.9rem; margin-top: 22px; }
+  .deck-desc { font-size: 0.72rem; color: var(--ink-soft); margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="proto-nav">
+    <a href="cartagraph-zukan.html">図鑑</a>
+    <a href="session-play.html">プレイ画面</a>
+    <a href="session-gm-review.html">GM承認</a>
+    <a href="session-chat.html">チャット</a>
+    <a href="session-gm-manage.html">GM管理</a>
+    <a href="scenario-manage.html">シナリオ管理</a>
+    <a href="session-browse.html">セッション選択</a>
+    <a href="character-create.html">キャラ作成</a>
+    <a href="scene-builder.html">シーン構築</a>
+    <a href="scene-play.html">シーン進行</a>
+    <a href="combat-play.html">戦闘（2次元）</a>
+    <a href="combat-play-1d.html">戦闘（1次元）</a>
+    <a href="session-field.html">場の状況</a>
+    <a href="character-sheet.html" aria-current="page">キャラクターシート</a>
+    <span class="draft-pill">試作</span>
+  </nav>
+
+  <a class="back-link" href="session-field.html">← 場の状況へ戻る</a>
+
+  <div class="sheet-head">
+    <div class="char-card">
+      <div class="card-portrait no-image">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="4"></circle><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+      </div>
+      <div class="char-name">迅</div>
+      <div class="char-role">探索者</div>
+    </div>
+    <div>
+      <h1 class="sheet-title">迅</h1>
+      <p class="sheet-meta">パーティー「迷い星」／プレイヤー：（あなた）</p>
+      <span class="badge badge-driver">ドライバー</span>
+    </div>
+  </div>
+
+  <section class="panel">
+    <h2 class="panel-title">能力値</h2>
+    <p class="panel-sub">体・技・心＋2d6で判定する。戦闘スキルはまだ持たないため、濃密モードの戦闘には参加できない。</p>
+    <div class="ability-row"><span>体</span><div class="pips"><span class="pip on"></span><span class="pip on"></span><span class="pip on"></span><span class="pip"></span><span class="pip"></span></div></div>
+    <div class="ability-row"><span>技</span><div class="pips"><span class="pip on"></span><span class="pip on"></span><span class="pip on"></span><span class="pip on"></span><span class="pip"></span></div></div>
+    <div class="ability-row"><span>心</span><div class="pips"><span class="pip on"></span><span class="pip on"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span></div></div>
+    <div class="hp-row"><span>HP</span><strong>16 / 16</strong></div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">所持デッキ</h2>
+    <p class="panel-sub">このキャラクターが持つスキル・特徴・アイテムなど。場の状況の一覧には出さず、ここでまとめて確認する。</p>
+    <div class="deck-grid">
+      <div class="deck-card">
+        <span class="deck-tag">アイテム</span>
+        <div class="deck-name">灯火のランタン</div>
+        <div class="deck-desc">暗い場所を照らす</div>
+      </div>
+      <div class="deck-card">
+        <span class="deck-tag">特徴</span>
+        <div class="deck-name">夜目が利く</div>
+        <div class="deck-desc">暗所での判定に強い</div>
+      </div>
+      <div class="deck-card">
+        <span class="deck-tag">能力</span>
+        <div class="deck-name">先読み</div>
+        <div class="deck-desc">危険な仕掛けに気づきやすい</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
