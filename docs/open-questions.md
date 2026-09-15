@@ -110,7 +110,7 @@ HP・ダメージ量・カードコスト・目標値・CPなど、複数のペ�
 
 これまでの論点（ゲームデザイン）とは別に、実装技術の方針についての論点。現状はVitePressのドキュメントサイトのみで、実装コードは存在しない。開発フェーズを「まず閲覧サイト→後にセッション管理システム」と段階分けし、実装言語はTypeScriptで統一、クラウドはAWS＋CDK（TypeScript、学習目的）を使うと決着した。閲覧サイトはまずGitHub Pagesで構築し、バックエンドAPI着手のタイミングでS3＋CloudFrontへまとめて移行する。RDBはコスト比較の結果Neonを選び、正史グラフ・PC発見グラフも専用グラフDBは使わずRDB上で表現する。パッケージマネージャはpnpmを継続し、将来はapps/・packages/・infra/・docs/のモノレポ構成にする。閲覧サイトは既存のVitePress docsとは分離した新規Reactフロントエンドとして構築する。
 
-詳細は [技術スタック](architecture/index.md) を参照。
+詳細は [技術スタック](architecture/index.md) を参照。閲覧サイト・セッション管理系UIのHTML/CSS試作（全15画面）とReact実装への引き継ぎ事項は [閲覧サイト・セッション画面プロトタイプ 引き継ぎまとめ](architecture/prototype-handover.md) を参照。
 
 ## 次に詰める候補
 
