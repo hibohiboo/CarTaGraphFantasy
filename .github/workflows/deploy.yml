@@ -1,4 +1,4 @@
-name: Deploy VitePress site to Pages
+name: Deploy docs and web app to Pages
 
 on:
   push:
@@ -38,8 +38,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm run docs:build
+      - name: Build docs and web app
+        run: pnpm run build:pages
+        env:
+          WEB_BASE: /CarTaGraphFantasy/app/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5

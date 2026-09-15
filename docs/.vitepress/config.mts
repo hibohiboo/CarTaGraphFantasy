@@ -12,7 +12,8 @@ export default defineConfig({
       { text: 'コンセプト', link: '/concept/' },
       { text: 'カルタグラフ', link: '/cartagraph/' },
       { text: '用語集', link: '/glossary' },
-      { text: '未解決論点', link: '/open-questions' }
+      { text: '未解決論点', link: '/open-questions' },
+      { text: 'アプリ', link: '/app/', target: '_self' }
     ],
 
     sidebar: [
@@ -29,6 +30,16 @@ export default defineConfig({
           { text: 'カード・デッキの考え方', link: '/cartagraph/card-and-deck' },
           { text: '場・手札・プレイ', link: '/cartagraph/play-and-field' },
           { text: 'カードの裏表', link: '/cartagraph/card-face-back' }
+        ]
+      },
+      {
+        text: 'アーキテクチャ',
+        items: [
+          { text: '技術スタック', link: '/architecture/' },
+          { text: 'Webアプリ（apps/web）の構成', link: '/architecture/web-app' },
+          { text: '試作の引き継ぎまとめ', link: '/architecture/prototype-handover' },
+          // アプリは VitePress 管理外の静的ファイルなので SPA 遷移を避ける
+          { text: 'アプリを開く（モックAPI）', link: '/app/', target: '_self' }
         ]
       },
       {
