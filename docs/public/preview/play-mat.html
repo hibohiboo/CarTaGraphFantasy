@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>カルタグラフ セッション試作：プレイマット</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --felt: #1f2a24; --felt-panel: #24322b; --felt-panel-2: #1a241e;
+    --card: #efe7d8; --card-edge: rgba(43, 36, 28, 0.22);
+    --ink: #2b241c; --ink-soft: #55493a;
+    --parchment-text: #ddd3bf; --parchment-text-dim: #a99f8c;
+    --thread: #b8935a; --thread-dim: rgba(184, 147, 90, 0.38);
+    --focus: #d9b877; --pending: #c9973f; --role-driver: #b8935a;
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body {
+    margin: 0; background: var(--felt); color: var(--parchment-text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    line-height: 1.6; padding-inline: clamp(16px, 4vw, 40px);
+  }
+  h1, h2 {
+    font-family: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 600; text-wrap: balance; color: var(--parchment-text); margin: 0;
+  }
+  a { color: var(--focus); }
+  a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .wrap { max-width: 720px; margin-inline: auto; }
+
+  .proto-nav {
+    display: flex; align-items: center; gap: 16px; padding-block: 12px;
+    font-size: 0.83rem; border-bottom: 1px solid rgba(184, 147, 90, 0.18);
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .proto-nav a { flex: none; white-space: nowrap; color: var(--parchment-text-dim); text-decoration: none; }
+  .proto-nav a[aria-current="page"] { color: var(--focus); border-bottom: 2px solid var(--focus); padding-bottom: 3px; }
+  .proto-nav .draft-pill { flex: none; margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.7rem; padding: 3px 10px; border-radius: 999px; }
+
+  .session-head { padding-block: 16px 4px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+  .session-title { font-size: 1.2rem; }
+  .session-crumb { font-size: 0.78rem; color: var(--parchment-text-dim); margin-top: 4px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 0.74rem;
+    padding: 4px 11px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
+  }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge-driver { color: var(--role-driver); }
+  .view-link { font-size: 0.78rem; color: var(--parchment-text-dim); margin-top: 2px; }
+
+  /* ---------- play mat ---------- */
+  .mat {
+    margin-top: 14px;
+    border: 2px solid var(--thread-dim);
+    border-radius: 12px;
+    background: var(--felt-panel-2);
+    padding: clamp(10px, 2vw, 16px);
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    grid-template-areas:
+      "scene   party"
+      "info    options";
+    gap: 10px;
+  }
+  .mat-zone {
+    border: 1px dashed rgba(184, 147, 90, 0.35);
+    border-radius: 8px;
+    padding: 8px;
+  }
+  .mat-zone.scene { grid-area: scene; }
+  .mat-zone.party { grid-area: party; }
+  .mat-zone.info { grid-area: info; }
+  .mat-zone.options { grid-area: options; }
+  .mat-zone-label { font-size: 0.66rem; color: var(--parchment-text-dim); margin-bottom: 7px; }
+
+  .mat-chips { display: flex; gap: 7px; flex-wrap: wrap; }
+  .mat-chip {
+    position: relative;
+    width: 64px;
+    background: var(--card); color: var(--ink);
+    border-radius: 6px; padding: 6px 3px 5px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    box-shadow: 2px 2px 0 rgba(10, 14, 11, 0.28);
+    text-align: center;
+  }
+  .mat-chip .icon svg { width: 18px; height: 18px; fill: none; stroke: var(--thread); stroke-width: 1.7; }
+  .mat-chip .name { font-size: 0.6rem; line-height: 1.25; }
+  .mat-chip.hidden {
+    background: repeating-linear-gradient(45deg, var(--felt-panel-2) 0 5px, #223027 5px 10px);
+    border: 1px solid rgba(184, 147, 90, 0.4);
+    color: var(--parchment-text-dim);
+    box-shadow: none;
+  }
+  .mat-chip.propose {
+    background: var(--felt-panel-2);
+    border: 1px dashed var(--thread);
+    color: var(--thread);
+    box-shadow: none;
+  }
+  .mat-chip.propose .icon svg { stroke: var(--thread); }
+  .mat-chip .dot {
+    position: absolute; top: -4px; right: -4px;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--pending); border: 1px solid var(--felt-panel-2);
+  }
+
+  @media (max-width: 460px) {
+    .mat { grid-template-columns: 1fr; grid-template-areas: "scene" "party" "info" "options"; }
+  }
+
+  /* ---------- legend ---------- */
+  .legend {
+    margin-top: 14px;
+    display: flex; flex-wrap: wrap; gap: 14px;
+    font-size: 0.72rem; color: var(--parchment-text-dim);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend svg { width: 14px; height: 14px; fill: none; stroke: var(--thread); stroke-width: 1.7; flex: none; }
+  .legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--pending); flex: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="proto-nav">
+    <a href="cartagraph-zukan.html">図鑑</a>
+    <a href="session-play.html">プレイ画面</a>
+    <a href="session-gm-review.html">GM承認</a>
+    <a href="session-chat.html">チャット</a>
+    <a href="session-gm-manage.html">GM管理</a>
+    <a href="scenario-manage.html">シナリオ管理</a>
+    <a href="session-browse.html">セッション選択</a>
+    <a href="character-create.html">キャラ作成</a>
+    <a href="scene-builder.html">シーン構築</a>
+    <a href="scene-play.html">シーン進行</a>
+    <a href="combat-play.html">戦闘（2次元）</a>
+    <a href="combat-play-1d.html">戦闘（1次元）</a>
+    <a href="session-field.html">場の状況</a>
+    <a href="character-sheet.html">キャラクターシート</a>
+    <a href="play-mat.html" aria-current="page">プレイマット</a>
+    <span class="draft-pill">試作</span>
+  </nav>
+
+  <header class="session-head">
+    <div>
+      <h1 class="session-title">プレイマット</h1>
+      <p class="session-crumb">「灰色館の一夜」 › シーン 3-2「奥の扉」</p>
+    </div>
+    <span class="badge badge-driver">迅（ドライバー）</span>
+  </header>
+  <p class="view-link">1枚で場の全体が見える簡易表示。カードの詳しい中身は<a href="session-field.html">場の状況</a>で。</p>
+
+  <div class="mat">
+    <div class="mat-zone scene">
+      <div class="mat-zone-label">シーン・場所</div>
+      <div class="mat-chips">
+        <div class="mat-chip">
+          <span class="icon"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4V3z"></path></svg></span>
+          <span class="name">3-2<br>奥の扉</span>
+        </div>
+        <div class="mat-chip">
+          <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2c-4 0-7 3-7 7 0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z"></path><circle cx="12" cy="9" r="2.2"></circle></svg></span>
+          <span class="name">地下回廊</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mat-zone party">
+      <div class="mat-zone-label">パーティー</div>
+      <div class="mat-chips">
+        <div class="mat-chip">
+          <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"></circle><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg></span>
+          <span class="name">迅</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mat-zone info">
+      <div class="mat-zone-label">このシーンの情報</div>
+      <div class="mat-chips">
+        <div class="mat-chip hidden">
+          <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .8-1 1.7" stroke-linecap="round"></path><circle cx="12" cy="17" r="0.6" fill="var(--parchment-text-dim)" stroke="none"></circle></svg></span>
+          <span class="name">？</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mat-zone options">
+      <div class="mat-zone-label">選択肢（今の手札）</div>
+      <div class="mat-chips">
+        <div class="mat-chip">
+          <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 3l9 9-9 9-9-9 9-9z"></path></svg></span>
+          <span class="name">開ける</span>
+        </div>
+        <div class="mat-chip">
+          <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 3l9 9-9 9-9-9 9-9z"></path></svg></span>
+          <span class="name">調べる</span>
+        </div>
+        <div class="mat-chip">
+          <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 3l9 9-9 9-9-9 9-9z"></path></svg></span>
+          <span class="name">戻る</span>
+        </div>
+        <div class="mat-chip propose">
+          <span class="dot" title="GM裁定待ち"></span>
+          <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"></path></svg></span>
+          <span class="name">新たな提案</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4V3z"></path></svg>シーン</span>
+    <span><svg viewBox="0 0 24 24"><path d="M12 2c-4 0-7 3-7 7 0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z"></path><circle cx="12" cy="9" r="2.2"></circle></svg>場所</span>
+    <span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle></svg>情報（内容不明）</span>
+    <span><svg viewBox="0 0 24 24"><path d="M12 3l9 9-9 9-9-9 9-9z"></path></svg>選択肢</span>
+    <span><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"></circle><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>キャラクター</span>
+    <span><span class="legend-dot"></span>裁定待ち</span>
+  </div>
+
+</div>
+</body>
+</html>

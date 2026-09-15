@@ -66,7 +66,8 @@ export default defineConfig({
           { text: '戦闘画面（2次元）', link: '/preview/combat-play.html', target: '_self' },
           { text: '戦闘画面（1次元）', link: '/preview/combat-play-1d.html', target: '_self' },
           { text: '場の状況', link: '/preview/session-field.html', target: '_self' },
-          { text: 'キャラクターシート', link: '/preview/character-sheet.html', target: '_self' }
+          { text: 'キャラクターシート', link: '/preview/character-sheet.html', target: '_self' },
+          { text: 'プレイマット（簡易表示）', link: '/preview/play-mat.html', target: '_self' }
         ]
       }
     ],
