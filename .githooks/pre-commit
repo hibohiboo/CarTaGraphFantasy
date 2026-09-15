@@ -7,12 +7,23 @@
 # 一時的に無効化したい場合は `git commit --no-verify`。ただし CI 側にも
 # `pnpm lint` があるので、無効化してコミットしても push 前後に取りこぼしは検出される。
 
-set -e
-
 if ! command -v pnpm >/dev/null 2>&1; then
   echo "[pre-commit] pnpm が見つかりません。lint をスキップします（PATH を確認してください）" >&2
   exit 0
 fi
 
 echo "[pre-commit] biome check --staged"
-pnpm exec biome check --staged
+output=$(pnpm exec biome check --staged 2>&1)
+status=$?
+printf '%s\n' "$output"
+
+if [ $status -ne 0 ]; then
+  # Biome は Markdown など対応外の拡張子しかステージされていないとき
+  # 「処理対象が0件」を失敗として扱う。docs のみのコミットまで止めては
+  # 困るので、これだけは無害として通す（本物のlint違反はここを通らない）。
+  if printf '%s' "$output" | grep -q 'No files were processed in the specified paths'; then
+    echo "[pre-commit] Biome対象外のファイルのみのため lint をスキップします"
+    exit 0
+  fi
+  exit $status
+fi

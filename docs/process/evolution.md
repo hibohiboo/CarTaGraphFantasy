@@ -9,9 +9,11 @@
 サイクルの途中で気づいた人（人間・AIどちらでも）が追記する。書式：`- [ ] <候補> — <気づいた状況・根拠>（<日付>）`
 
 - [ ] `apps/web/src/components/index.ts` の barrel export を解消する — アーキテクチャルールで barrel 禁止を採用した結果、既存コードが唯一の逸脱になった。テスト駆動リファクタリングの定期作業で扱う（2026-09-16）
+- [ ] `noNonNullAssertion`（5箇所）・`noDescendingSpecificity`（GameCard.module.css 2箇所）の警告を解消する — Biome導入時（2026-09-16）に検出。lintはブロックしないが、C5のリファクタリング定期作業で見直す
+- [ ] `RoleBadge`/`Avatar` の `role` prop 名を ARIA の `role` 属性と衝突しない名前（例：`badgeRole`）に変える — Biome導入時（2026-09-16）に `lint/a11y/useValidAriaRole` の誤検知が19箇所見つかり、`biome-ignore` コメントで個別に抑制した。プロパティ名を変えれば誤検知自体がなくなるが、アプリコードの広範囲な書き換えになるためC2の範囲外とした
 - [x] CI で `pnpm web:typecheck && pnpm web:test` を必ず回す — 2026-09-16 に `.github/workflows/ci.yml` として実施（プランの C1）。下記「採用済み」参照
 - [ ] `apps/`・`packages/` の変更を PR 経由にする — 現状は main へ直 push。AI相互レビューと CI をマージ条件にするなら PR が要る。docs のみの修正は直 push のまま（2026-09-16）。**判断：基盤整備が終わってから採用（プランの C6）。それまでスピード重視で直 push**
-- [ ] lint・フォーマッタの導入（Biome か ESLint + Prettier） — 命名・未使用変数・import 順などを機械で弾き、P2 指摘をレビューから減らす（2026-09-16）。**判断：Biome を採用。AI にトークンを使わせず、コミット前の git フック（`.githooks/`、リポジトリ管理）で止める（プランの C2）**
+- [x] lint・フォーマッタの導入（Biome） — 2026-09-16 に実施（プランの C2）。下記「採用済み」参照
 - [ ] Claude Code の自動メモリにある運用知識を `docs/` へ移す — `MSYS_NO_PATHCONV`、pnpm の peer 解決、大きなファイルの書き方など、Claude 以外のツールからは見えない（2026-09-16）
 - [ ] 普段と違うモデルで1サイクル試走し、`AGENTS.md`・依頼文の不足を洗う — 「Fable が使えなくても回る」ことの実証。主目的はモデルの切り替え（Sonnet / Opus 等）で、Codex など別ツールは余裕があれば（2026-09-16 に目的を修正）
 - [ ] E2E（Playwright）の導入時期 — バックエンド着手時に再評価。それまではページ描画テストで代替（2026-09-16）
@@ -19,6 +21,14 @@
 ## 採用済み
 
 新しいものを上に。書式：`### <日付> <タイトル>` の下に、内容・理由・反映先。
+
+### 2026-09-16 Biome を導入し、コミット前フックとCIでlintを回す（C2）
+
+- **内容** — `biome.json`（既存コードのスタイルに合わせてシングルクォート・セミコロンあり・トレイリングカンマ）を追加し、`pnpm lint` / `pnpm lint:fix` を用意。`.githooks/pre-commit` が `biome check --staged` を実行してコミットを止め、`pnpm install` の `prepare` スクリプト（`scripts/setup-git-hooks.mjs`）が `core.hooksPath` を自動設定する。CI にも `pnpm lint` を追加（フック未設定・`--no-verify` の取りこぼし検出）
+- **既存コードへの適用** — 安全なフォーマット・import整理を全体に適用。a11yの指摘4件（`useAriaPropsSupportedByRole`・`noLabelWithoutControl`・`noArrayIndexKey`×2）は手で修正・理由を明記して抑制。`useValidAriaRole` の誤検知19箇所（`RoleBadge`/`Avatar` の独自 `role` prop を ARIA の role 属性と誤認）は `biome-ignore` コメントで個別に抑制した
+- **`--unsafe` 自動修正は使わない方針にした** — 一度 `biome check --write --unsafe` を試したところ、上記の誤検知を「無効なARIAロール」として `role` 属性ごと削除してしまい、UIの見た目（`RoleBadge`/`Avatar` が役割を表示できなくなる）と `tsc` の型エラー（`noNonNullAssertion` の安全でない除去による）の両方を壊すことが判明した。安全網（typecheck・test）で検出できたため実害はなかったが、以降は `--write`（safeのみ）だけを使い、`--unsafe` の指摘は個別に判断する
+- **残課題** — `noNonNullAssertion`（5箇所）・`noDescendingSpecificity`（2箇所）は警告のまま残した（lintはブロックしない）。`RoleBadge`/`Avatar` の `role` prop 名を変える案は「候補」に追記した
+- **反映先** — `biome.json`、`package.json`、`.githooks/pre-commit`、`scripts/setup-git-hooks.mjs`、`.github/workflows/ci.yml`、`AGENTS.md`、既存の `apps/web/src/**`（フォーマット・a11y修正）
 
 ### 2026-09-16 CI に型検査・テスト・docsビルドの安全網を追加（C1）
 
