@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>カルタグラフ セッション試作：戦闘画面</title>
+<title>カルタグラフ セッション試作：戦闘画面（1次元）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
 <style>
@@ -94,7 +94,6 @@
   .turn-chip.pc { color: var(--role-driver); }
   .turn-chip.enemy { color: var(--role-enemy); }
   .turn-chip.active { background: rgba(217, 184, 119, 0.16); border-color: var(--focus); color: var(--parchment-text); }
-  .turn-chip.down { opacity: 0.55; text-decoration: line-through; }
   label.turn-chip.pc { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
 
   /* ---------- party hand switcher ---------- */
@@ -108,34 +107,34 @@
   #view-akira:checked ~ .hand-dock #hand-akira,
   #view-mio:checked ~ .hand-dock #hand-mio { display: flex; }
 
-  /* ---------- table: battle grid ---------- */
+  /* ---------- table: 1次元の4グループ ---------- */
   .table-open { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; }
-  .battle-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: clamp(5px, 1vw, 10px);
-    width: min(100%, 460px);
-  }
-  .cell {
+  .line-groups { display: flex; align-items: center; gap: clamp(10px, 3vw, 26px); }
+  .line-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .line-group-label { font-size: 0.72rem; color: var(--parchment-text-dim); }
+  .line-group-slots { display: flex; gap: 8px; }
+  .token {
+    width: 68px;
     aspect-ratio: 1;
-    border: 1px solid rgba(184, 147, 90, 0.15);
     border-radius: 7px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     font-size: 0.7rem; text-align: center; padding: 4px;
   }
-  .cell.pc { border: 2px solid var(--role-driver); color: var(--parchment-text); }
-  .cell.enemy { border: 2px solid var(--role-enemy); color: var(--parchment-text); }
-  .cell.enemy.down { border-color: var(--neutral); color: var(--parchment-text-dim); }
-  .cell .mini-hp { width: 100%; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); margin-top: 4px; overflow: hidden; }
-  .cell .mini-hp span { display: block; height: 100%; }
-  .grid-caption { margin-top: 12px; font-size: 0.78rem; color: var(--parchment-text-dim); display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .token.pc { border: 2px solid var(--role-driver); color: var(--parchment-text); }
+  .token.enemy { border: 2px solid var(--role-enemy); color: var(--parchment-text); }
+  .token .mini-hp { width: 100%; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); margin-top: 4px; overflow: hidden; }
+  .token .mini-hp span { display: block; height: 100%; }
+  .vs-divider { width: 1px; height: 72px; background: var(--thread-dim); position: relative; flex: none; }
+  .vs-divider::after {
+    content: "対陣";
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(90deg);
+    font-size: 0.66rem; color: var(--parchment-text-dim); background: var(--felt); padding-inline: 4px; white-space: nowrap;
+  }
+  .grid-caption { margin-top: 14px; font-size: 0.78rem; color: var(--parchment-text-dim); display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
   .grid-caption .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
 
   /* ---------- status line ---------- */
-  .status-line {
-    flex: none; text-align: center; font-size: 0.82rem; color: var(--parchment-text-dim);
-    padding-bottom: 6px;
-  }
+  .status-line { flex: none; text-align: center; font-size: 0.82rem; color: var(--parchment-text-dim); padding-bottom: 6px; }
   .status-line strong { color: var(--parchment-text); font-weight: 500; }
   .status-line .pill {
     display: inline-flex; align-items: center; gap: 5px;
@@ -145,7 +144,7 @@
 
   /* ---------- hand dock ---------- */
   .hand-dock { flex: none; overflow-x: auto; overflow-y: hidden; padding-block: 6px clamp(10px, 2vh, 18px); }
-  .hand-row { display: flex; gap: 10px; width: max-content; margin-inline: auto; padding-inline: 2px; }
+  .hand-row-inner { display: flex; gap: 10px; width: max-content; margin-inline: auto; padding-inline: 2px; }
   .hand-card {
     position: relative;
     width: 110px;
@@ -169,6 +168,10 @@
   .hand-card.active { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(217,184,119,0.25), 3px 3px 0 rgba(10,14,11,0.32); }
 
   @media (prefers-reduced-motion: reduce) { .hand-card { transition: none; } }
+  @media (max-width: 560px) {
+    .line-groups { gap: 10px; }
+    .token { width: 56px; }
+  }
 </style>
 </head>
 <body>
@@ -187,48 +190,64 @@
     <a href="character-create.html">キャラ作成</a>
     <a href="scene-builder.html">シーン構築</a>
     <a href="scene-play.html">シーン進行</a>
-    <a href="combat-play.html" aria-current="page">戦闘（PL視点）</a>
+    <a href="combat-play.html">戦闘（2次元）</a>
+    <a href="combat-play-1d.html" aria-current="page">戦闘（1次元）</a>
     <span class="draft-pill">試作</span>
   </nav>
 
   <header class="hud">
-    <span class="hud-title">鉄鎖のガレオン船</span>
-    <span class="hud-scene">甲板での戦闘</span>
+    <span class="hud-title">灰塔の遺跡</span>
+    <span class="hud-scene">崩れた祭壇の間</span>
     <span class="badge badge-driver">彰（ドライバー）</span>
     <span class="badge badge-mode">濃密モード・戦闘</span>
     <div class="count-chip" title="現在のカウント">13</div>
     <div class="turn-chips">
       <label for="view-akira" class="turn-chip pc active">彰 13</label>
-      <span class="turn-chip enemy">見張りA 10</span>
+      <span class="turn-chip enemy">采掘の番人 11</span>
       <label for="view-mio" class="turn-chip pc">澪 9</label>
-      <span class="turn-chip enemy down">見張りB —</span>
+      <span class="turn-chip enemy">呪術師見習い 7</span>
     </div>
     <div class="hud-spacer"></div>
     <span class="badge badge-gm">GM：柊</span>
   </header>
 
   <main class="table-open">
-    <div class="battle-grid">
-      <div class="cell pc">彰<div class="mini-hp"><span style="width:100%; background:var(--approved);"></span></div></div>
-      <div class="cell pc">澪<div class="mini-hp"><span style="width:100%; background:var(--approved);"></span></div></div>
-      <div class="cell"></div>
-      <div class="cell"></div>
-      <div class="cell"></div>
-      <div class="cell"></div>
-      <div class="cell"></div>
-      <div class="cell enemy">見張りA<div class="mini-hp"><span style="width:71%; background:var(--pending);"></span></div></div>
-      <div class="cell enemy down">見張りB<div class="mini-hp"><span style="width:0%;"></span></div></div>
-      <div class="cell"></div>
+    <div class="line-groups">
+      <div class="line-group">
+        <div class="line-group-label">敵後衛</div>
+        <div class="line-group-slots">
+          <div class="token enemy">呪術師<br>見習い<div class="mini-hp"><span style="width:100%; background:var(--approved);"></span></div></div>
+        </div>
+      </div>
+      <div class="line-group">
+        <div class="line-group-label">敵前衛</div>
+        <div class="line-group-slots">
+          <div class="token enemy">采掘の<br>番人<div class="mini-hp"><span style="width:75%; background:var(--pending);"></span></div></div>
+        </div>
+      </div>
+      <div class="vs-divider"></div>
+      <div class="line-group">
+        <div class="line-group-label">味方前衛</div>
+        <div class="line-group-slots">
+          <div class="token pc">彰<div class="mini-hp"><span style="width:100%; background:var(--approved);"></span></div></div>
+        </div>
+      </div>
+      <div class="line-group">
+        <div class="line-group-label">味方後衛</div>
+        <div class="line-group-slots">
+          <div class="token pc">澪<div class="mini-hp"><span style="width:100%; background:var(--approved);"></span></div></div>
+        </div>
+      </div>
     </div>
     <div class="grid-caption">
-      <span><span class="swatch" style="background:var(--role-driver);"></span>味方（彰・澪は隣接して同じグループ）</span>
-      <span><span class="swatch" style="background:var(--role-enemy);"></span>敵（隣接2体で1グループ）</span>
-      <span><span class="swatch" style="background:var(--neutral);"></span>戦闘不能・場には残る</span>
+      <span><span class="swatch" style="background:var(--role-driver);"></span>味方（前衛・後衛）</span>
+      <span><span class="swatch" style="background:var(--role-enemy);"></span>敵（前衛・後衛）</span>
+      <span>射程1＝隣のグループまで。味方前衛から敵後衛へは射程2必要</span>
     </div>
   </main>
 
   <p class="status-line">
-    対象：<strong>見張り兵A</strong>（射程1・同じグループなら誰でも可）　ダメージ <span class="pill">4</span>　行動値 13 → 8
+    対象：<strong>采掘の番人</strong>（射程1・隣接する敵前衛）　ダメージ <span class="pill">4</span>　行動値 13 → 8
   </p>
 
   <p class="hand-caption">
@@ -238,27 +257,31 @@
 
   <div class="hand-dock">
     <div class="hand-row" id="hand-akira">
-      <div class="hand-card active">
-        <span class="field-tag">攻撃</span>
-        <div class="name">斬りつける</div>
-        <div class="stats"><span>射程1</span><span>コスト5</span></div>
-      </div>
-      <div class="hand-card">
-        <span class="field-tag">移動</span>
-        <div class="name">前へ踏み込む</div>
-        <div class="stats"><span>射程—</span><span>コスト2</span></div>
+      <div class="hand-row-inner">
+        <div class="hand-card active">
+          <span class="field-tag">攻撃</span>
+          <div class="name">斬りつける</div>
+          <div class="stats"><span>射程1</span><span>コスト5</span></div>
+        </div>
+        <div class="hand-card">
+          <span class="field-tag">移動</span>
+          <div class="name">前へ踏み込む</div>
+          <div class="stats"><span>射程—</span><span>コスト2</span></div>
+        </div>
       </div>
     </div>
     <div class="hand-row" id="hand-mio">
-      <div class="hand-card">
-        <span class="field-tag">攻撃</span>
-        <div class="name">矢を放つ</div>
-        <div class="stats"><span>射程2</span><span>コスト4</span></div>
-      </div>
-      <div class="hand-card">
-        <span class="field-tag">回復</span>
-        <div class="name">傷を癒す</div>
-        <div class="stats"><span>判定なし</span><span>コスト3</span></div>
+      <div class="hand-row-inner">
+        <div class="hand-card">
+          <span class="field-tag">攻撃</span>
+          <div class="name">矢を放つ</div>
+          <div class="stats"><span>射程2</span><span>コスト4</span></div>
+        </div>
+        <div class="hand-card">
+          <span class="field-tag">回復</span>
+          <div class="name">傷を癒す</div>
+          <div class="stats"><span>判定なし</span><span>コスト3</span></div>
+        </div>
       </div>
     </div>
   </div>
