@@ -11,9 +11,13 @@
     "web:build": "pnpm --filter @cartagraph/web build",
     "web:test": "pnpm --filter @cartagraph/web test",
     "web:typecheck": "pnpm --filter @cartagraph/web typecheck",
-    "build:pages": "pnpm run docs:build && pnpm run web:build && node scripts/copy-web-to-pages.mjs"
+    "build:pages": "pnpm run docs:build && pnpm run web:build && node scripts/copy-web-to-pages.mjs",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "prepare": "node scripts/setup-git-hooks.mjs"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.13",
     "vitepress": "^1.6.4"
   }
 }

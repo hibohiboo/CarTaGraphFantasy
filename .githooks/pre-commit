@@ -1,0 +1,18 @@
+#!/bin/sh
+# コミット前に、ステージ済みファイルだけを Biome でチェックする。
+# 目的は AI・人間どちらのコミットも、lint違反をAIにトークンを使わせず機械的に止めること。
+# 有効化: git config --local core.hooksPath .githooks
+# （`pnpm install` の prepare スクリプトが自動で設定する。scripts/setup-git-hooks.mjs 参照）
+#
+# 一時的に無効化したい場合は `git commit --no-verify`。ただし CI 側にも
+# `pnpm lint` があるので、無効化してコミットしても push 前後に取りこぼしは検出される。
+
+set -e
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "[pre-commit] pnpm が見つかりません。lint をスキップします（PATH を確認してください）" >&2
+  exit 0
+fi
+
+echo "[pre-commit] biome check --staged"
+pnpm exec biome check --staged

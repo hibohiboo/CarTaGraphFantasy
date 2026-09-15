@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint (Biome)
+        run: pnpm lint
+
       - name: Typecheck (apps/web)
         run: pnpm web:typecheck
 
