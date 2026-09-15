@@ -52,6 +52,27 @@
   .panel-title { font-size: 1.0rem; }
   .panel-sub { font-size: 0.8rem; color: var(--parchment-text-dim); margin-top: 4px; }
 
+  /* ---------- character card（画像 / 未設定時はアイコンにフォールバック） ---------- */
+  .char-card {
+    width: 148px; aspect-ratio: 5 / 7; margin-inline: auto;
+    background: var(--card); color: var(--ink);
+    border-radius: 8px; border: 1px solid var(--card-edge);
+    box-shadow: 3px 3px 0 rgba(10,14,11,0.32);
+    padding: 10px;
+    display: flex; flex-direction: column;
+  }
+  .card-portrait {
+    flex: 1; min-height: 0;
+    border-radius: 5px;
+    background-color: var(--felt-panel-2);
+    background-size: cover; background-position: center;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-portrait.no-image svg { width: 42%; height: 42%; fill: none; stroke: var(--thread); stroke-width: 1.6; opacity: 0.7; }
+  .char-name { font-family: "Zen Old Mincho", serif; font-size: 1rem; text-align: center; margin-top: 8px; }
+  .char-role { font-size: 0.72rem; color: var(--ink-soft); text-align: center; margin-top: 2px; }
+  .portrait-note { font-size: 0.72rem; color: var(--parchment-text-dim); text-align: center; margin-top: 10px; }
+
   /* ---------- CP budget meter ---------- */
   .budget-label { display: flex; justify-content: space-between; font-size: 0.86rem; margin-top: 14px; }
   .budget-label strong { font-family: "Zen Old Mincho", serif; font-variant-numeric: tabular-nums; font-size: 1.1rem; color: var(--parchment-text); }
@@ -120,6 +141,17 @@
 
   <div class="layout">
     <aside>
+      <div class="panel">
+        <div class="char-card">
+          <div class="card-portrait no-image">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="4"></circle><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+          </div>
+          <div class="char-name">灯</div>
+          <div class="char-role">探索者</div>
+        </div>
+        <p class="portrait-note">画像未設定のため簡易アイコンを表示中</p>
+      </div>
+
       <div class="panel">
         <h2 class="panel-title">CP予算</h2>
         <p class="panel-sub">他の判定と違い、これは超過を許さないハードな制約。</p>

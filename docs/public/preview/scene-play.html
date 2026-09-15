@@ -90,6 +90,19 @@
   .stage-card.hidden .field-mark { font-size: 1.5rem; color: var(--thread); font-family: "Zen Old Mincho", serif; }
   .stage-name { font-family: "Zen Old Mincho", serif; font-size: 0.98rem; margin-top: 8px; }
   .stage-note { font-size: 0.72rem; color: var(--ink-soft); margin-top: auto; padding-top: 8px; }
+
+  /* ---------- card portrait（画像 / 未設定時はアイコンにフォールバック） ---------- */
+  .card-portrait {
+    flex: 1;
+    min-height: 0;
+    margin-top: 6px;
+    border-radius: 5px;
+    background-color: var(--felt-panel-2);
+    background-size: cover;
+    background-position: center;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-portrait.no-image svg { width: 42%; height: 42%; fill: none; stroke: var(--thread); stroke-width: 1.6; opacity: 0.7; }
   .zone-pill { position: absolute; top: 8px; right: 8px; font-size: 0.6rem; padding: 1px 7px; border-radius: 999px; }
   .zone-pill.gm { color: var(--seal); border: 1px solid var(--seal); }
   .zone-pill.pl { color: var(--parchment-text-dim); border: 1px solid var(--parchment-text-dim); }
@@ -166,6 +179,12 @@
         <span class="zone-pill gm">GM専用</span>
         <span class="field-mark">？</span>
         <div class="stage-note">隠し書庫の存在に気づく（条件待ち）</div>
+      </div>
+      <div class="stage-card">
+        <span class="zone-pill pl">PL可視</span>
+        <div class="card-portrait" style="background-image: linear-gradient(150deg, #7c8f6a, #445640);"></div>
+        <div class="stage-name">ネリー</div>
+        <div class="stage-note">屋敷の管理人（NPC）</div>
       </div>
     </div>
   </section>
