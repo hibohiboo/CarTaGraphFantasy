@@ -1,7 +1,15 @@
+import { ARCHETYPE_LABEL, type Character, deriveArchetype } from '@cartagraph/domain';
 import { useNavigate } from 'react-router';
-import { ARCHETYPE_LABEL, deriveArchetype, type Character } from '@cartagraph/domain';
+import {
+  Button,
+  CardGrid,
+  ErrorNote,
+  GameCard,
+  Loading,
+  PageHeader,
+  Panel,
+} from '../../components';
 import { useCharacters, useMe } from '../../lib/queries';
-import { Button, CardGrid, ErrorNote, GameCard, Loading, PageHeader, Panel } from '../../components';
 import s from '../pages.module.css';
 
 export function CharacterListPage() {
@@ -23,14 +31,20 @@ export function CharacterListPage() {
         actions={<Button onClick={() => navigate('/pl/characters/new')}>新しいPCを作る</Button>}
       />
       <div className={s.stack}>
-        <Panel title="自分のPC" sub="能力値や戦闘スキルを得るたびに、参加できるシナリオが自然に広がる。">
+        <Panel
+          title="自分のPC"
+          sub="能力値や戦闘スキルを得るたびに、参加できるシナリオが自然に広がる。"
+        >
           <CardGrid min={150}>
             {mine.map((c) => (
               <CharacterCard key={c.id} c={c} />
             ))}
           </CardGrid>
         </Panel>
-        <Panel title="借りられるPC" sub="他PLのPC。借りてドライバーになれる。所有者はナビゲーターとして参加するかを選べる。">
+        <Panel
+          title="借りられるPC"
+          sub="他PLのPC。借りてドライバーになれる。所有者はナビゲーターとして参加するかを選べる。"
+        >
           <CardGrid min={150}>
             {others.map((c) => (
               <CharacterCard key={c.id} c={c} />
@@ -46,7 +60,14 @@ function CharacterCard({ c }: { c: Character }) {
   const navigate = useNavigate();
   const archetype = ARCHETYPE_LABEL[deriveArchetype(c)];
   return (
-    <GameCard card={{ kind: 'character', name: c.name, description: `${archetype}／${c.ownerName}` }} portrait showDescription fluid onClick={() => navigate(`/pl/characters/${c.id}`)} title={`${c.name}のキャラクターシートを開く`}>
+    <GameCard
+      card={{ kind: 'character', name: c.name, description: `${archetype}／${c.ownerName}` }}
+      portrait
+      showDescription
+      fluid
+      onClick={() => navigate(`/pl/characters/${c.id}`)}
+      title={`${c.name}のキャラクターシートを開く`}
+    >
       <span className="u-small" style={{ color: 'var(--ink-soft)' }}>
         {c.deck.length}枚のカード
       </span>

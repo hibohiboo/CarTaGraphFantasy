@@ -1,8 +1,17 @@
+import type { CardDef } from '@cartagraph/domain';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import type { CardDef } from '@cartagraph/domain';
+import {
+  Button,
+  CardGrid,
+  ErrorNote,
+  Field,
+  GameCard,
+  Loading,
+  PageHeader,
+  Panel,
+} from '../../components';
 import { useCardPool, useCreateCharacter } from '../../lib/queries';
-import { Button, CardGrid, ErrorNote, Field, GameCard, Loading, PageHeader, Panel } from '../../components';
 import s from '../pages.module.css';
 
 /**
@@ -21,8 +30,13 @@ export function CharacterCreatePage() {
   const [ab, setAb] = useState({ body: 3, skill: 3, mind: 3 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const allCards = useMemo(() => [...(pool.data?.basic ?? []), ...(pool.data?.unlocked ?? [])], [pool.data]);
-  const spent = allCards.filter((c) => selected.has(c.id)).reduce((sum, c) => sum + (c.cpCost ?? 0), 0);
+  const allCards = useMemo(
+    () => [...(pool.data?.basic ?? []), ...(pool.data?.unlocked ?? [])],
+    [pool.data],
+  );
+  const spent = allCards
+    .filter((c) => selected.has(c.id))
+    .reduce((sum, c) => sum + (c.cpCost ?? 0), 0);
   const budget = pool.data?.budget ?? 0;
   const over = spent > budget;
   const abilitySum = ab.body + ab.skill + ab.mind;
@@ -46,16 +60,29 @@ export function CharacterCreatePage() {
 
   return (
     <>
-      <PageHeader title="キャラクター作成" crumb="基本カードプール＋自分が解放したプールから、CP予算の範囲でカードを選ぶ。予算超過は機械的に禁止される（ソフトガイドではない数少ない制約）。" />
+      <PageHeader
+        title="キャラクター作成"
+        crumb="基本カードプール＋自分が解放したプールから、CP予算の範囲でカードを選ぶ。予算超過は機械的に禁止される（ソフトガイドではない数少ない制約）。"
+      />
       <div className={s.twoCol}>
         <aside className="u-stack">
           <Panel title="基本情報">
             <div className={s.form}>
               <Field label="名前">
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="例：迅" />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="例：迅"
+                />
               </Field>
               <label className="u-row u-small">
-                <input type="checkbox" checked={hasAbilities} onChange={(e) => setHasAbilities(e.target.checked)} style={{ width: 'auto' }} />
+                <input
+                  type="checkbox"
+                  checked={hasAbilities}
+                  onChange={(e) => setHasAbilities(e.target.checked)}
+                  style={{ width: 'auto' }}
+                />
                 能力値（体・技・心）を持つ ＝ 探索者として始める
               </label>
               {hasAbilities && (
@@ -63,7 +90,13 @@ export function CharacterCreatePage() {
                   <div className={s.abilityInputs}>
                     {(['body', 'skill', 'mind'] as const).map((k) => (
                       <Field key={k} label={{ body: '体', skill: '技', mind: '心' }[k]}>
-                        <input type="number" min={1} max={5} value={ab[k]} onChange={(e) => setAb({ ...ab, [k]: Number(e.target.value) })} />
+                        <input
+                          type="number"
+                          min={1}
+                          max={5}
+                          value={ab[k]}
+                          onChange={(e) => setAb({ ...ab, [k]: Number(e.target.value) })}
+                        />
                       </Field>
                     ))}
                   </div>
@@ -80,10 +113,23 @@ export function CharacterCreatePage() {
             </p>
             <p className="u-small u-dim">選んだカードのCPコスト合計。超えると作成できない。</p>
             <div className="u-mt">
-              <Button block onClick={submit} disabled={create.isPending || over || !name.trim() || (hasAbilities && abilitySum !== ABILITY_TOTAL)}>
+              <Button
+                block
+                onClick={submit}
+                disabled={
+                  create.isPending ||
+                  over ||
+                  !name.trim() ||
+                  (hasAbilities && abilitySum !== ABILITY_TOTAL)
+                }
+              >
                 {create.isPending ? '作成中…' : 'このPCを作成する'}
               </Button>
-              {create.error && <div className="u-mt"><ErrorNote error={create.error} /></div>}
+              {create.error && (
+                <div className="u-mt">
+                  <ErrorNote error={create.error} />
+                </div>
+              )}
             </div>
           </Panel>
         </aside>
@@ -91,14 +137,35 @@ export function CharacterCreatePage() {
           <Panel title="基本カードプール" sub="誰でも最初から選べるシステム標準のカード。">
             <CardGrid min={130}>
               {pool.data.basic.map((c) => (
-                <GameCard key={c.id} card={c} fluid portrait showDescription showCost="cp" selected={selected.has(c.id)} onClick={() => toggle(c)} />
+                <GameCard
+                  key={c.id}
+                  card={c}
+                  fluid
+                  portrait
+                  showDescription
+                  showCost="cp"
+                  selected={selected.has(c.id)}
+                  onClick={() => toggle(c)}
+                />
               ))}
             </CardGrid>
           </Panel>
-          <Panel title="解放済みカードプール" sub="過去のPCが獲得したカード。無償配布ではなく、CPを払えば選べる選択肢が広がっている。">
+          <Panel
+            title="解放済みカードプール"
+            sub="過去のPCが獲得したカード。無償配布ではなく、CPを払えば選べる選択肢が広がっている。"
+          >
             <CardGrid min={130}>
               {pool.data.unlocked.map((c) => (
-                <GameCard key={c.id} card={c} fluid portrait showDescription showCost="cp" selected={selected.has(c.id)} onClick={() => toggle(c)} />
+                <GameCard
+                  key={c.id}
+                  card={c}
+                  fluid
+                  portrait
+                  showDescription
+                  showCost="cp"
+                  selected={selected.has(c.id)}
+                  onClick={() => toggle(c)}
+                />
               ))}
             </CardGrid>
           </Panel>

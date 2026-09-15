@@ -1,5 +1,5 @@
 // TanStack Query のフック集。ページからは API のパスを直接触らず、ここを経由する。
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import type {
   CardDef,
   Character,
@@ -9,6 +9,7 @@ import type {
   Scenario,
   Session,
 } from '@cartagraph/domain';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 
 export const keys = {
@@ -24,7 +25,8 @@ export const keys = {
   library: ['library'] as const,
 };
 
-export const useMe = () => useQuery({ queryKey: keys.me, queryFn: () => api.get<CurrentUser>('/me') });
+export const useMe = () =>
+  useQuery({ queryKey: keys.me, queryFn: () => api.get<CurrentUser>('/me') });
 
 export const useRecruitments = () =>
   useQuery({ queryKey: keys.recruitments, queryFn: () => api.get<Recruitment[]>('/recruitments') });
@@ -33,7 +35,10 @@ export const useCharacters = () =>
   useQuery({ queryKey: keys.characters, queryFn: () => api.get<Character[]>('/characters') });
 
 export const useCharacter = (id: string) =>
-  useQuery({ queryKey: keys.character(id), queryFn: () => api.get<Character>(`/characters/${id}`) });
+  useQuery({
+    queryKey: keys.character(id),
+    queryFn: () => api.get<Character>(`/characters/${id}`),
+  });
 
 export const useCardPool = () =>
   useQuery({
@@ -65,7 +70,9 @@ export function useApply() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (v: { recruitmentId: string; characterId: string }) =>
-      api.post<Recruitment>(`/recruitments/${v.recruitmentId}/apply`, { characterId: v.characterId }),
+      api.post<Recruitment>(`/recruitments/${v.recruitmentId}/apply`, {
+        characterId: v.characterId,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.recruitments }),
   });
 }
@@ -103,12 +110,16 @@ export const usePropose = () =>
 
 export const useApproveProposal = () =>
   useSessionMutation((v: { sessionId: string; proposalId: string; cardName: string }) =>
-    api.post<Session>(`/sessions/${v.sessionId}/proposals/${v.proposalId}/approve`, { cardName: v.cardName }),
+    api.post<Session>(`/sessions/${v.sessionId}/proposals/${v.proposalId}/approve`, {
+      cardName: v.cardName,
+    }),
   );
 
 export const useRejectProposal = () =>
   useSessionMutation((v: { sessionId: string; proposalId: string; reason: string }) =>
-    api.post<Session>(`/sessions/${v.sessionId}/proposals/${v.proposalId}/reject`, { reason: v.reason }),
+    api.post<Session>(`/sessions/${v.sessionId}/proposals/${v.proposalId}/reject`, {
+      reason: v.reason,
+    }),
   );
 
 export const useSetMode = () =>
@@ -117,7 +128,9 @@ export const useSetMode = () =>
   );
 
 export const useEndSession = () =>
-  useSessionMutation((v: { sessionId: string }) => api.post<Session>(`/sessions/${v.sessionId}/end`));
+  useSessionMutation((v: { sessionId: string }) =>
+    api.post<Session>(`/sessions/${v.sessionId}/end`),
+  );
 
 export function useCreateScenario() {
   const qc = useQueryClient();
@@ -130,7 +143,8 @@ export function useCreateScenario() {
 export function useUpdateScenario() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { id: string; patch: Partial<Scenario> }) => api.patch<Scenario>(`/scenarios/${v.id}`, v.patch),
+    mutationFn: (v: { id: string; patch: Partial<Scenario> }) =>
+      api.patch<Scenario>(`/scenarios/${v.id}`, v.patch),
     onSuccess: (s) => {
       qc.setQueryData(keys.scenario(s.id), s);
       void qc.invalidateQueries({ queryKey: ['scenarios'] });
@@ -141,8 +155,12 @@ export function useUpdateScenario() {
 export function useCreateRecruitment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { scenarioId: string; capacity: number; note?: string; excludedNodeIds?: string[] }) =>
-      api.post<Recruitment>(`/scenarios/${v.scenarioId}/recruitments`, v),
+    mutationFn: (v: {
+      scenarioId: string;
+      capacity: number;
+      note?: string;
+      excludedNodeIds?: string[];
+    }) => api.post<Recruitment>(`/scenarios/${v.scenarioId}/recruitments`, v),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.recruitments }),
   });
 }

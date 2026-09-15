@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react';
 import type { CardDef, Session } from '@cartagraph/domain';
+import type { ReactNode } from 'react';
 import { GameCard } from './GameCard';
-import { Avatar, RoleBadge } from './ui';
 import s from './play.module.css';
+import { Avatar, RoleBadge } from './ui';
 
 /** 1画面完結レイアウトの外枠（HUD＋卓＋手札） */
 export function PlayScreen({ children }: { children: ReactNode }) {
@@ -25,10 +25,13 @@ export function Hud({
       <h1 className={s.hudTitle}>{session.scenarioTitle}</h1>
       <span className={s.hudScene}>{session.currentScene.path}</span>
       {viewer === 'driver' ? (
+        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
         <RoleBadge role="driver">{driver?.characterName ?? driver?.name}（ドライバー）</RoleBadge>
       ) : (
+        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
         <RoleBadge role="gm">{session.gmName}（GM）</RoleBadge>
       )}
+      {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
       <RoleBadge role="mode">{session.mode === 'dense' ? '濃密モード' : '軽量モード'}</RoleBadge>
       <div className={s.hudParty}>
         {others.map((p) => (
@@ -40,7 +43,15 @@ export function Hud({
   );
 }
 
-export function Table({ flavor, hint, mystery }: { flavor: string; hint?: string; mystery?: CardDef[] }) {
+export function Table({
+  flavor,
+  hint,
+  mystery,
+}: {
+  flavor: string;
+  hint?: string;
+  mystery?: CardDef[];
+}) {
   return (
     <main className={s.table}>
       <p className={s.flavor}>
@@ -87,12 +98,30 @@ export function HandDock({
     <div className={s.dock}>
       <div className={s.dockRow}>
         {choices.map((c) => (
-          <GameCard key={c.id} card={c} width={110} centerName onClick={() => onPlay(c)} selected={c.id === selectedId} disabled={disabled} showCost="action" />
+          <GameCard
+            key={c.id}
+            card={c}
+            width={110}
+            centerName
+            onClick={() => onPlay(c)}
+            selected={c.id === selectedId}
+            disabled={disabled}
+            showCost="action"
+          />
         ))}
         {extra}
         {rest.length > 0 && <div className={s.dockDivider} />}
         {rest.map((c) => (
-          <GameCard key={c.id} card={c} width={110} centerName onClick={() => onPlay(c)} selected={c.id === selectedId} disabled={disabled} showCost="action" />
+          <GameCard
+            key={c.id}
+            card={c}
+            width={110}
+            centerName
+            onClick={() => onPlay(c)}
+            selected={c.id === selectedId}
+            disabled={disabled}
+            showCost="action"
+          />
         ))}
       </div>
     </div>

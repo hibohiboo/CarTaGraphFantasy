@@ -1,8 +1,8 @@
+import { ARCHETYPE_LABEL, deriveArchetype } from '@cartagraph/domain';
 import { Link } from 'react-router';
-import { deriveArchetype, ARCHETYPE_LABEL } from '@cartagraph/domain';
-import { useCharacters, useMe, useSessions } from '../lib/queries';
-import { GROUP_LABEL, routes, type RouteGroup } from '../app/routes';
+import { GROUP_LABEL, type RouteGroup, routes } from '../app/routes';
 import { Loading, RoleBadge } from '../components';
+import { useCharacters, useMe, useSessions } from '../lib/queries';
 import s from './pages.module.css';
 
 const groups: RouteGroup[] = ['pl', 'gm', 'creator', 'rulebook', 'admin'];
@@ -12,7 +12,9 @@ export function HomePage() {
   const sessions = useSessions();
   const characters = useCharacters();
 
-  const mySessions = (sessions.data ?? []).filter((x) => x.status === 'playing' && x.participants.some((p) => p.userId === me.data?.id));
+  const mySessions = (sessions.data ?? []).filter(
+    (x) => x.status === 'playing' && x.participants.some((p) => p.userId === me.data?.id),
+  );
   const myChars = (characters.data ?? []).filter((c) => c.ownerId === me.data?.id);
 
   return (
@@ -38,10 +40,17 @@ export function HomePage() {
             <div className={s.homeLinks}>
               {mySessions.map((x) => {
                 const mine = x.participants.find((p) => p.userId === me.data?.id);
-                const to = mine?.role === 'gm' ? `/gm/sessions/${x.id}` : `/pl/sessions/${x.id}/play`;
+                const to =
+                  mine?.role === 'gm' ? `/gm/sessions/${x.id}` : `/pl/sessions/${x.id}/play`;
                 return (
                   <span key={x.id} className="u-row">
-                    <RoleBadge role={mine?.role ?? 'navigator'}>{mine?.role === 'gm' ? 'GM' : mine?.role === 'driver' ? 'ドライバー' : 'ナビゲーター'}</RoleBadge>
+                    <RoleBadge role={mine?.role ?? 'navigator'}>
+                      {mine?.role === 'gm'
+                        ? 'GM'
+                        : mine?.role === 'driver'
+                          ? 'ドライバー'
+                          : 'ナビゲーター'}
+                    </RoleBadge>
                     <Link to={to}>{x.scenarioTitle}</Link>
                     <span className="u-dim u-small">{x.currentScene.name}</span>
                   </span>

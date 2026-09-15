@@ -1,8 +1,16 @@
-@import './tokens.css';
+@import "./tokens.css";
 
-* { box-sizing: border-box; }
-html { color-scheme: dark; }
-html, body, #root { height: 100%; }
+* {
+  box-sizing: border-box;
+}
+html {
+  color-scheme: dark;
+}
+html,
+body,
+#root {
+  height: 100%;
+}
 
 body {
   margin: 0;
@@ -13,7 +21,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-serif);
   font-weight: 600;
   text-wrap: balance;
@@ -21,17 +32,33 @@ h1, h2, h3, h4 {
   margin: 0;
 }
 
-p { margin: 0; }
-a { color: var(--focus); }
-a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible,
-textarea:focus-visible, [tabindex]:focus-visible {
+p {
+  margin: 0;
+}
+a {
+  color: var(--focus);
+}
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
-button, input, select, textarea { font: inherit; }
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
 
-input[type='text'], input[type='number'], textarea, select {
+input[type="text"],
+input[type="number"],
+textarea,
+select {
   background: var(--felt-panel-2);
   color: var(--parchment-text);
   border: 1px solid var(--thread-dim);
@@ -40,16 +67,43 @@ input[type='text'], input[type='number'], textarea, select {
   font-size: 0.9rem;
   width: 100%;
 }
-textarea { resize: vertical; min-height: 80px; }
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
 
-.u-dim { color: var(--parchment-text-dim); }
-.u-small { font-size: 0.8rem; }
-.u-serif { font-family: var(--font-serif); }
-.u-num { font-variant-numeric: tabular-nums; }
-.u-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.u-stack { display: flex; flex-direction: column; gap: 12px; }
-.u-mt { margin-top: 14px; }
+.u-dim {
+  color: var(--parchment-text-dim);
+}
+.u-small {
+  font-size: 0.8rem;
+}
+.u-serif {
+  font-family: var(--font-serif);
+}
+.u-num {
+  font-variant-numeric: tabular-nums;
+}
+.u-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.u-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.u-mt {
+  margin-top: 14px;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

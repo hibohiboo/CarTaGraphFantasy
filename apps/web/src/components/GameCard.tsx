@@ -1,5 +1,5 @@
-import type { CSSProperties, ReactNode } from 'react';
 import { CARD_KIND_LABEL, type CardDef } from '@cartagraph/domain';
+import type { CSSProperties, ReactNode } from 'react';
 import s from './GameCard.module.css';
 
 export type GameCardVariant = 'default' | 'propose';
@@ -67,7 +67,7 @@ export function GameCard({
         : null;
 
   const body = faceDown ? (
-    <div className={s.name} aria-label={`伏せ札：${card.name}`}>
+    <div className={s.name} role="img" aria-label={`伏せ札：${card.name}`}>
       ？
     </div>
   ) : (
@@ -103,7 +103,14 @@ export function GameCard({
       {children}
       {stamp && <span className={s.stamp}>{stamp}</span>}
       {showZone && card.zone && (
-        <span className={s.zone} data-zone={card.zone} style={{ fontSize: '0.62rem', color: card.zone === 'gm' ? 'var(--seal)' : 'var(--ink-soft)' }}>
+        <span
+          className={s.zone}
+          data-zone={card.zone}
+          style={{
+            fontSize: '0.62rem',
+            color: card.zone === 'gm' ? 'var(--seal)' : 'var(--ink-soft)',
+          }}
+        >
           {card.zone === 'gm' ? 'GM専用' : 'PL可視'}
         </span>
       )}

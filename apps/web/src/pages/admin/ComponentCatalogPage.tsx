@@ -1,6 +1,25 @@
-import type { ReactNode } from 'react';
 import { CARD_KIND_LABEL, type CardKind } from '@cartagraph/domain';
-import { Avatar, Button, CardGrid, Chip, ChipGroup, DeckTree, EmptyNote, ErrorNote, GameCard, Loading, PageHeader, Panel, Pips, RoleBadge, StatGrid, StatTile, StatusPill, ZonePill } from '../../components';
+import type { ReactNode } from 'react';
+import {
+  Avatar,
+  Button,
+  CardGrid,
+  Chip,
+  ChipGroup,
+  DeckTree,
+  EmptyNote,
+  ErrorNote,
+  GameCard,
+  Loading,
+  PageHeader,
+  Panel,
+  Pips,
+  RoleBadge,
+  StatGrid,
+  StatTile,
+  StatusPill,
+  ZonePill,
+} from '../../components';
 import s from '../pages.module.css';
 
 const tokens = [
@@ -33,12 +52,24 @@ function Section({ title, note, children }: { title: string; note?: string; chil
 export function ComponentCatalogPage() {
   return (
     <>
-      <PageHeader title="コンポーネントカタログ" crumb="共通UI部品とデザイントークン。試作フェーズ（docs/architecture/prototype-handover.md）で決めた見た目を React に移植したもの。" />
+      <PageHeader
+        title="コンポーネントカタログ"
+        crumb="共通UI部品とデザイントークン。試作フェーズ（docs/architecture/prototype-handover.md）で決めた見た目を React に移植したもの。"
+      />
       <div className={s.catalog}>
         <Section title="デザイントークン" note="CSS変数。src/styles/tokens.css">
           {tokens.map(([name, desc]) => (
             <div key={name} className="u-row u-small" style={{ width: 240 }}>
-              <span style={{ width: 28, height: 28, borderRadius: 6, background: `var(${name})`, border: '1px solid var(--thread-dim)', flex: 'none' }} />
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 6,
+                  background: `var(${name})`,
+                  border: '1px solid var(--thread-dim)',
+                  flex: 'none',
+                }}
+              />
               <span>
                 <code>{name}</code>
                 <br />
@@ -48,23 +79,81 @@ export function ComponentCatalogPage() {
           ))}
         </Section>
 
-        <Section title="タイポグラフィ" note="見出し・カード名は Zen Old Mincho、本文・UIは Zen Kaku Gothic New">
+        <Section
+          title="タイポグラフィ"
+          note="見出し・カード名は Zen Old Mincho、本文・UIは Zen Kaku Gothic New"
+        >
           <div>
-            <p className="u-serif" style={{ fontSize: '1.6rem', fontWeight: 600 }}>見出し（明朝）</p>
+            <p className="u-serif" style={{ fontSize: '1.6rem', fontWeight: 600 }}>
+              見出し（明朝）
+            </p>
             <p>本文はゴシック。行間 1.75。</p>
             <p className="u-dim u-small">副次テキスト</p>
           </div>
         </Section>
 
-        <Section title="GameCard" note="5:7比率。単一のゲーム内カードはすべてこれ。variant / faceDown / portrait / stamp / cost / selected">
-          <GameCard card={{ kind: 'choice', name: '開ける' }} width={110} centerName onClick={() => {}} />
-          <GameCard card={{ kind: 'choice', name: '調べる' }} width={110} centerName selected onClick={() => {}} />
-          <GameCard card={{ kind: 'choice', name: '＋\n新たな選択肢を提案' }} width={110} centerName variant="propose" onClick={() => {}} />
+        <Section
+          title="GameCard"
+          note="5:7比率。単一のゲーム内カードはすべてこれ。variant / faceDown / portrait / stamp / cost / selected"
+        >
+          <GameCard
+            card={{ kind: 'choice', name: '開ける' }}
+            width={110}
+            centerName
+            onClick={() => {}}
+          />
+          <GameCard
+            card={{ kind: 'choice', name: '調べる' }}
+            width={110}
+            centerName
+            selected
+            onClick={() => {}}
+          />
+          <GameCard
+            card={{ kind: 'choice', name: '＋\n新たな選択肢を提案' }}
+            width={110}
+            centerName
+            variant="propose"
+            onClick={() => {}}
+          />
           <GameCard card={{ kind: 'info', name: '何かが書かれた紙', faceDown: true }} width={110} />
-          <GameCard card={{ kind: 'character', name: '迅', description: '探索者' }} width={130} portrait showDescription />
-          <GameCard card={{ kind: 'skill', name: '斬撃', description: '射程1。ダイスでダメージを決める', tags: ['戦闘スキル'], actionCost: 3, range: 1 }} width={130} showDescription showTags showCost="action" />
-          <GameCard card={{ kind: 'item', name: '灯火のランタン', description: '暗い場所を照らす', cpCost: 1 }} width={130} showDescription showCost="cp" />
-          <GameCard card={{ kind: 'relation', name: '幼馴染', description: '物語上意味を持つ関係性' }} width={130} showDescription stamp="決" />
+          <GameCard
+            card={{ kind: 'character', name: '迅', description: '探索者' }}
+            width={130}
+            portrait
+            showDescription
+          />
+          <GameCard
+            card={{
+              kind: 'skill',
+              name: '斬撃',
+              description: '射程1。ダイスでダメージを決める',
+              tags: ['戦闘スキル'],
+              actionCost: 3,
+              range: 1,
+            }}
+            width={130}
+            showDescription
+            showTags
+            showCost="action"
+          />
+          <GameCard
+            card={{
+              kind: 'item',
+              name: '灯火のランタン',
+              description: '暗い場所を照らす',
+              cpCost: 1,
+            }}
+            width={130}
+            showDescription
+            showCost="cp"
+          />
+          <GameCard
+            card={{ kind: 'relation', name: '幼馴染', description: '物語上意味を持つ関係性' }}
+            width={130}
+            showDescription
+            stamp="決"
+          />
           <GameCard card={{ kind: 'npc', name: '館の老従者', zone: 'gm' }} width={110} showZone />
         </Section>
 
@@ -86,12 +175,21 @@ export function ComponentCatalogPage() {
           </div>
         </Section>
 
-        <Section title="RoleBadge" note="役割は色で統一：ドライバー＝金／ナビゲーター＝スレート／GM＝朱">
+        <Section
+          title="RoleBadge"
+          note="役割は色で統一：ドライバー＝金／ナビゲーター＝スレート／GM＝朱"
+        >
+          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
           <RoleBadge role="driver">迅（ドライバー）</RoleBadge>
+          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
           <RoleBadge role="navigator">カヤ（ナビゲーター）</RoleBadge>
+          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
           <RoleBadge role="gm">霧乃（GM）</RoleBadge>
+          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
           <RoleBadge role="creator">シナリオ製作者</RoleBadge>
+          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
           <RoleBadge role="mode">軽量モード</RoleBadge>
+          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
           <RoleBadge role="library">共有ライブラリ公開中</RoleBadge>
         </Section>
 
@@ -113,8 +211,11 @@ export function ComponentCatalogPage() {
           </ChipGroup>
           <ZonePill zone="gm" />
           <ZonePill zone="pl" />
+          {/* biome-ignore lint/a11y/useValidAriaRole: Avatar の role は独自propで、ARIAのrole属性ではない */}
           <Avatar name="迅" role="driver" />
+          {/* biome-ignore lint/a11y/useValidAriaRole: Avatar の role は独自propで、ARIAのrole属性ではない */}
           <Avatar name="カヤ" role="navigator" />
+          {/* biome-ignore lint/a11y/useValidAriaRole: Avatar の role は独自propで、ARIAのrole属性ではない */}
           <Avatar name="霧乃" role="gm" />
         </Section>
 
@@ -142,9 +243,18 @@ export function ComponentCatalogPage() {
 
         <Section title="Pips（能力値）">
           <div>
-            <div className={s.abilityRow}><span>体</span><Pips value={3} label="体" /></div>
-            <div className={s.abilityRow}><span>技</span><Pips value={4} label="技" /></div>
-            <div className={s.abilityRow}><span>心</span><Pips value={2} label="心" /></div>
+            <div className={s.abilityRow}>
+              <span>体</span>
+              <Pips value={3} label="体" />
+            </div>
+            <div className={s.abilityRow}>
+              <span>技</span>
+              <Pips value={4} label="技" />
+            </div>
+            <div className={s.abilityRow}>
+              <span>心</span>
+              <Pips value={2} label="心" />
+            </div>
           </div>
         </Section>
 
@@ -155,7 +265,12 @@ export function ComponentCatalogPage() {
               excludedIds={new Set(['s3'])}
               nodes={[
                 { id: 'i', kind: 'intro', name: '灰色館へ到着', cards: [] },
-                { id: 's1', kind: 'scene', name: '3-1 地下回廊', cards: [{ id: 'a', kind: 'location', name: 'x', tags: [] }] },
+                {
+                  id: 's1',
+                  kind: 'scene',
+                  name: '3-1 地下回廊',
+                  cards: [{ id: 'a', kind: 'location', name: 'x', tags: [] }],
+                },
                 { id: 's2', kind: 'scene', name: '3-2 奥の扉', cards: [] },
                 { id: 's3', kind: 'scene', name: '3-3 甲板の戦い', dense: true, cards: [] },
                 { id: 'e', kind: 'ending', name: 'エンディング', cards: [] },

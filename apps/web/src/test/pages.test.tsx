@@ -1,9 +1,10 @@
 // 全ルートを MSW（node）＋メモリルーターで描画し、見出しが出ることと主要な操作が通ることを確認する。
-import { describe, expect, it } from 'vitest';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createMemoryRouter, RouterProvider } from 'react-router';
+import { describe, expect, it } from 'vitest';
 import { routeObjects } from '../app/router';
 import { routes } from '../app/routes';
 
@@ -31,13 +32,17 @@ describe('全ページの描画', () => {
 
   it('未定義のパスは 404 ページになる', async () => {
     renderAt('/nowhere');
-    expect(await screen.findByRole('heading', { level: 1, name: 'ページが見つかりません' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'ページが見つかりません' }),
+    ).toBeInTheDocument();
   });
 
   it('router のパス一覧と routes.ts が一致する', () => {
     const declared = new Set(routes.map((r) => r.path));
     const children = routeObjects[0].children ?? [];
-    const actual = new Set(children.filter((c) => c.path && c.path !== '*').map((c) => `/${c.path}`));
+    const actual = new Set(
+      children.filter((c) => c.path && c.path !== '*').map((c) => `/${c.path}`),
+    );
     actual.add('/');
     expect([...actual].sort()).toEqual([...declared].sort());
   });
@@ -47,7 +52,9 @@ describe('プレイページ', () => {
   it('選択肢をプレイすると卓の描写が変わり、提案は「今回は未使用」になる', async () => {
     const user = userEvent.setup();
     renderAt('/pl/sessions/ss-mansion/play');
-    expect(await screen.findByText('古びた扉の向こうから、かすかな音が聞こえる。')).toBeInTheDocument();
+    expect(
+      await screen.findByText('古びた扉の向こうから、かすかな音が聞こえる。'),
+    ).toBeInTheDocument();
     expect(screen.getByText('GM裁定待ち')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /^選択肢\s*開ける/ }));
     expect(await screen.findByText(/扉が軋みながら開いた/)).toBeInTheDocument();

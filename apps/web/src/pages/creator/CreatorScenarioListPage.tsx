@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { useCreateScenario, useScenarios } from '../../lib/queries';
-import { Button, ErrorNote, Loading, PageHeader, Panel, RoleBadge, StatusPill } from '../../components';
+import {
+  Button,
+  ErrorNote,
+  Loading,
+  PageHeader,
+  Panel,
+  RoleBadge,
+  StatusPill,
+} from '../../components';
 import { relativeTime } from '../../lib/format';
+import { useCreateScenario, useScenarios } from '../../lib/queries';
 import s from '../pages.module.css';
 
 /** シナリオ作成者のシナリオ管理：自分が作ったシナリオの一覧と新規作成 */
@@ -17,16 +25,42 @@ export function CreatorScenarioListPage() {
 
   return (
     <>
-      <PageHeader title="自分のシナリオ" crumb="シナリオ製作者＝シナリオを作る人。GMとの兼任は妨げない。共有ライブラリに公開すると、他のGMが選べるようになる。" actions={<RoleBadge role="creator">シナリオ製作者</RoleBadge>} />
+      <PageHeader
+        title="自分のシナリオ"
+        crumb="シナリオ製作者＝シナリオを作る人。GMとの兼任は妨げない。共有ライブラリに公開すると、他のGMが選べるようになる。"
+        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
+        actions={<RoleBadge role="creator">シナリオ製作者</RoleBadge>}
+      />
       <div className={s.stack}>
-        <Panel title="新しいシナリオを作る" sub="共有ライブラリの設定をテンプレートとして使える（ルールブック → 共有設定）。">
+        <Panel
+          title="新しいシナリオを作る"
+          sub="共有ライブラリの設定をテンプレートとして使える（ルールブック → 共有設定）。"
+        >
           <div className="u-row">
-            <input type="text" style={{ maxWidth: 360 }} placeholder="シナリオのタイトル" value={title} onChange={(e) => setTitle(e.target.value)} />
-            <Button disabled={create.isPending || !title.trim()} onClick={() => create.mutate({ title }, { onSuccess: (sc) => navigate(`/creator/scenarios/${sc.id}`) })}>
+            <input
+              type="text"
+              style={{ maxWidth: 360 }}
+              placeholder="シナリオのタイトル"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <Button
+              disabled={create.isPending || !title.trim()}
+              onClick={() =>
+                create.mutate(
+                  { title },
+                  { onSuccess: (sc) => navigate(`/creator/scenarios/${sc.id}`) },
+                )
+              }
+            >
               下書きを作成
             </Button>
           </div>
-          {create.error && <div className="u-mt"><ErrorNote error={create.error} /></div>}
+          {create.error && (
+            <div className="u-mt">
+              <ErrorNote error={create.error} />
+            </div>
+          )}
         </Panel>
         <Panel title="シナリオ一覧">
           <div className={s.list}>
@@ -37,11 +71,14 @@ export function CreatorScenarioListPage() {
                     <Link to={`/creator/scenarios/${sc.id}`}>{sc.title}</Link>
                     <br />
                     <span className={s.itemSub}>
-                      シーン {sc.deck.filter((n) => n.kind === 'scene').length}・結末 {sc.endings.length}・更新 {relativeTime(sc.updatedAt)}
+                      シーン {sc.deck.filter((n) => n.kind === 'scene').length}・結末{' '}
+                      {sc.endings.length}・更新 {relativeTime(sc.updatedAt)}
                     </span>
                   </span>
                 </div>
-                <StatusPill status={sc.libraryStatus === 'published' ? 'approved' : 'neutral'}>{sc.libraryStatus === 'published' ? '共有ライブラリ公開中' : '下書き'}</StatusPill>
+                <StatusPill status={sc.libraryStatus === 'published' ? 'approved' : 'neutral'}>
+                  {sc.libraryStatus === 'published' ? '共有ライブラリ公開中' : '下書き'}
+                </StatusPill>
               </div>
             ))}
           </div>

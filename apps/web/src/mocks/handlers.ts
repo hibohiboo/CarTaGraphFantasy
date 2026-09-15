@@ -1,6 +1,6 @@
 // MSW ハンドラ。バックエンドができるまでの代替。
 // 状態はメモリ上に持ち、リロードで初期化される（永続化はしない）。
-import { HttpResponse, http } from 'msw';
+
 import type {
   CardDef,
   Character,
@@ -9,6 +9,7 @@ import type {
   Scenario,
   Session,
 } from '@cartagraph/domain';
+import { HttpResponse, http } from 'msw';
 import * as fx from './fixtures';
 
 type Db = {
@@ -40,7 +41,8 @@ let seq = 1000;
 const nextId = (prefix: string) => `${prefix}-${++seq}`;
 const nowIso = () => new Date().toISOString();
 
-const notFound = (what: string) => HttpResponse.json({ message: `${what} が見つかりません` }, { status: 404 });
+const notFound = (what: string) =>
+  HttpResponse.json({ message: `${what} が見つかりません` }, { status: 404 });
 
 /** 選択肢カードをプレイしたときの卓上の変化（シナリオ側の「効果」の代わりに簡易スクリプトで表現） */
 const playScript: Record<string, { flavor: string; addChoices?: CardDef[]; reveal?: string }> = {
@@ -95,7 +97,11 @@ export const handlers = [
   }),
 
   http.get('/api/card-pool', () =>
-    HttpResponse.json({ basic: fx.basicPool, unlocked: fx.unlockedPool, budget: fx.initialCpBudget }),
+    HttpResponse.json({
+      basic: fx.basicPool,
+      unlocked: fx.unlockedPool,
+      budget: fx.initialCpBudget,
+    }),
   ),
 
   http.post('/api/characters', async ({ request }) => {
@@ -105,13 +111,19 @@ export const handlers = [
       cardIds: string[];
     };
     const pool = [...fx.basicPool, ...fx.unlockedPool];
-    const deck = body.cardIds.map((id) => pool.find((c) => c.id === id)).filter((c): c is CardDef => !!c);
+    const deck = body.cardIds
+      .map((id) => pool.find((c) => c.id === id))
+      .filter((c): c is CardDef => !!c);
     const spent = deck.reduce((sum, c) => sum + (c.cpCost ?? 0), 0);
     if (spent > fx.initialCpBudget) {
       // CP予算はハードな制約（docs/cartagraph/character-growth.md）
-      return HttpResponse.json({ message: `CP予算（${fx.initialCpBudget}）を超えています` }, { status: 422 });
+      return HttpResponse.json(
+        { message: `CP予算（${fx.initialCpBudget}）を超えています` },
+        { status: 422 },
+      );
     }
-    if (!body.name.trim()) return HttpResponse.json({ message: '名前を入力してください' }, { status: 422 });
+    if (!body.name.trim())
+      return HttpResponse.json({ message: '名前を入力してください' }, { status: 422 });
     const ch: Character = {
       id: nextId('pc'),
       name: body.name.trim(),
@@ -168,7 +180,12 @@ export const handlers = [
       const fd = s.field.plVisible.find((c) => c.id === script.reveal);
       if (fd) fd.faceDown = false;
     }
-    s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `${driver?.characterName ?? 'ドライバー'}が「${card.name}」をプレイ`, cardName: card.name });
+    s.feed.unshift({
+      id: nextId('f'),
+      at: nowIso(),
+      text: `${driver?.characterName ?? 'ドライバー'}が「${card.name}」をプレイ`,
+      cardName: card.name,
+    });
     s.lastActivityAt = nowIso();
     return HttpResponse.json(s);
   }),
@@ -177,7 +194,8 @@ export const handlers = [
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
     const { text } = (await request.json()) as { text: string };
-    if (!text?.trim()) return HttpResponse.json({ message: '提案内容を入力してください' }, { status: 422 });
+    if (!text?.trim())
+      return HttpResponse.json({ message: '提案内容を入力してください' }, { status: 422 });
     const driver = s.participants.find((p) => p.role === 'driver');
     const proposal: Proposal = {
       id: nextId('pr'),
@@ -190,7 +208,11 @@ export const handlers = [
       createdAt: nowIso(),
     };
     s.proposals.unshift(proposal);
-    s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `${driver?.characterName ?? 'ドライバー'}が新たな選択肢を提案「${proposal.text}」` });
+    s.feed.unshift({
+      id: nextId('f'),
+      at: nowIso(),
+      text: `${driver?.characterName ?? 'ドライバー'}が新たな選択肢を提案「${proposal.text}」`,
+    });
     s.lastActivityAt = nowIso();
     return HttpResponse.json(s, { status: 201 });
   }),
@@ -201,13 +223,24 @@ export const handlers = [
     const p = s.proposals.find((x) => x.id === params.pid);
     if (!p) return notFound('提案');
     const { cardName } = (await request.json()) as { cardName: string };
-    if (!cardName?.trim()) return HttpResponse.json({ message: 'カード名を入力してください' }, { status: 422 });
+    if (!cardName?.trim())
+      return HttpResponse.json({ message: 'カード名を入力してください' }, { status: 422 });
     p.status = 'approved';
     p.resolution = cardName.trim();
-    const card: CardDef = { id: nextId('ch'), kind: 'choice', name: cardName.trim(), tags: ['GM生成'] };
+    const card: CardDef = {
+      id: nextId('ch'),
+      kind: 'choice',
+      name: cardName.trim(),
+      tags: ['GM生成'],
+    };
     const lastChoice = s.hand.map((c) => c.kind).lastIndexOf('choice');
     s.hand.splice(lastChoice + 1, 0, card);
-    s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `${s.gmName}が提案「${p.text}」を採用`, cardName: card.name });
+    s.feed.unshift({
+      id: nextId('f'),
+      at: nowIso(),
+      text: `${s.gmName}が提案「${p.text}」を採用`,
+      cardName: card.name,
+    });
     s.lastActivityAt = nowIso();
     return HttpResponse.json(s);
   }),
@@ -230,7 +263,11 @@ export const handlers = [
     if (!s) return notFound('セッション');
     const { mode } = (await request.json()) as { mode: Session['mode'] };
     s.mode = mode;
-    s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `${s.gmName}が${mode === 'dense' ? '濃密' : '軽量'}モードへ切り替えた` });
+    s.feed.unshift({
+      id: nextId('f'),
+      at: nowIso(),
+      text: `${s.gmName}が${mode === 'dense' ? '濃密' : '軽量'}モードへ切り替えた`,
+    });
     return HttpResponse.json(s);
   }),
 
@@ -238,7 +275,11 @@ export const handlers = [
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
     s.status = 'ended';
-    s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `${s.gmName}がセッションの終了を宣言した` });
+    s.feed.unshift({
+      id: nextId('f'),
+      at: nowIso(),
+      text: `${s.gmName}がセッションの終了を宣言した`,
+    });
     return HttpResponse.json(s);
   }),
 
@@ -246,7 +287,9 @@ export const handlers = [
   http.get('/api/scenarios', ({ request }) => {
     const url = new URL(request.url);
     const mine = url.searchParams.get('mine') === '1';
-    const list = mine ? db.scenarios.filter((s) => s.authorId === fx.me.id) : db.scenarios.filter((s) => s.libraryStatus === 'published');
+    const list = mine
+      ? db.scenarios.filter((s) => s.authorId === fx.me.id)
+      : db.scenarios.filter((s) => s.libraryStatus === 'published');
     return HttpResponse.json(list);
   }),
 
@@ -257,7 +300,8 @@ export const handlers = [
 
   http.post('/api/scenarios', async ({ request }) => {
     const body = (await request.json()) as { title: string };
-    if (!body.title?.trim()) return HttpResponse.json({ message: 'タイトルを入力してください' }, { status: 422 });
+    if (!body.title?.trim())
+      return HttpResponse.json({ message: 'タイトルを入力してください' }, { status: 422 });
     const s: Scenario = {
       id: nextId('sc'),
       title: body.title.trim(),
@@ -293,7 +337,11 @@ export const handlers = [
   http.post('/api/scenarios/:id/recruitments', async ({ params, request }) => {
     const s = db.scenarios.find((x) => x.id === params.id);
     if (!s) return notFound('シナリオ');
-    const body = (await request.json()) as { capacity: number; note?: string; excludedNodeIds?: string[] };
+    const body = (await request.json()) as {
+      capacity: number;
+      note?: string;
+      excludedNodeIds?: string[];
+    };
     const rc: Recruitment = {
       id: nextId('rc'),
       scenarioId: s.id,

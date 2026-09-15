@@ -1,7 +1,18 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import {
+  Button,
+  Chip,
+  ChipGroup,
+  DeckTree,
+  ErrorNote,
+  Field,
+  Loading,
+  PageHeader,
+  Panel,
+  RoleBadge,
+} from '../../components';
 import { useCreateRecruitment, useScenario } from '../../lib/queries';
-import { Button, Chip, ChipGroup, DeckTree, ErrorNote, Field, Loading, PageHeader, Panel, RoleBadge } from '../../components';
 import s from '../pages.module.css';
 
 /**
@@ -31,10 +42,22 @@ export function GmScenarioDetailPage() {
 
   return (
     <>
-      <PageHeader title={sc.title} crumb={<>シナリオ製作者：{sc.authorName} ／ <Link to="/gm/scenarios">シナリオ一覧へ戻る</Link></>} actions={<RoleBadge role="gm">GMとしてカスタマイズ中</RoleBadge>} />
+      <PageHeader
+        title={sc.title}
+        crumb={
+          <>
+            シナリオ製作者：{sc.authorName} ／ <Link to="/gm/scenarios">シナリオ一覧へ戻る</Link>
+          </>
+        }
+        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
+        actions={<RoleBadge role="gm">GMとしてカスタマイズ中</RoleBadge>}
+      />
       <div className={s.twoCol}>
         <aside className="u-stack">
-          <Panel title="メタデータ" sub="募集を出すときPLに明示される。前提タグはソフトガイドで、満たさない応募も止めない。">
+          <Panel
+            title="メタデータ"
+            sub="募集を出すときPLに明示される。前提タグはソフトガイドで、満たさない応募も止めない。"
+          >
             <div className={s.metaRow}>
               <div className={s.metaLabel}>参照するデータ種別</div>
               <ChipGroup>
@@ -55,43 +78,69 @@ export function GmScenarioDetailPage() {
             </div>
             <div className={s.metaRow}>
               <div className={s.metaLabel}>想定人数</div>
-              <div className={s.metaValue}>{sc.partySize.min}〜{sc.partySize.max}人（ドライバー1人）</div>
+              <div className={s.metaValue}>
+                {sc.partySize.min}〜{sc.partySize.max}人（ドライバー1人）
+              </div>
             </div>
             <div className={s.metaRow}>
               <div className={s.metaLabel}>空間モデル</div>
-              <div className={s.metaValue}>{sc.spaceModel === '2d' ? '2次元' : sc.spaceModel === '1d' ? '1次元' : '戦闘なし'}</div>
+              <div className={s.metaValue}>
+                {sc.spaceModel === '2d' ? '2次元' : sc.spaceModel === '1d' ? '1次元' : '戦闘なし'}
+              </div>
             </div>
             <div className={s.metaRow}>
               <div className={s.metaLabel}>推奨CP／基本CP</div>
-              <div className={s.metaValue}>{sc.recommendedCp}枚分／クリア時 {sc.baseCp}</div>
+              <div className={s.metaValue}>
+                {sc.recommendedCp}枚分／クリア時 {sc.baseCp}
+              </div>
             </div>
           </Panel>
           <Panel title="募集を出す" sub="想定人数・前提タグ・空間モデルは自動で明示される。">
             <div className={s.form}>
               <Field label="募集人数（ドライバー候補＋PC）">
-                <input type="number" min={1} max={sc.partySize.max} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} />
+                <input
+                  type="number"
+                  min={1}
+                  max={sc.partySize.max}
+                  value={capacity}
+                  onChange={(e) => setCapacity(Number(e.target.value))}
+                />
               </Field>
               <Field label="募集メモ（任意）">
-                <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="例：初心者歓迎。前提を満たさなくても相談を" />
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="例：初心者歓迎。前提を満たさなくても相談を"
+                />
               </Field>
               <Button
                 block
                 disabled={recruit.isPending}
                 onClick={() =>
                   recruit.mutate(
-                    { scenarioId: sc.id, capacity, note: note || undefined, excludedNodeIds: [...excluded] },
+                    {
+                      scenarioId: sc.id,
+                      capacity,
+                      note: note || undefined,
+                      excludedNodeIds: [...excluded],
+                    },
                     { onSuccess: () => navigate('/pl/sessions') },
                   )
                 }
               >
-                {recruit.isPending ? '募集を作成中…' : `この構成で募集を出す（${excluded.size}件を外す）`}
+                {recruit.isPending
+                  ? '募集を作成中…'
+                  : `この構成で募集を出す（${excluded.size}件を外す）`}
               </Button>
               {recruit.error && <ErrorNote error={recruit.error} />}
             </div>
           </Panel>
         </aside>
         <div className="u-stack">
-          <Panel title="シナリオデッキの取捨選択" sub="今回使うシーン・カードを選ぶ／外す。外したシーンはこのセッションのスナップショットに含まれない。">
+          <Panel
+            title="シナリオデッキの取捨選択"
+            sub="今回使うシーン・カードを選ぶ／外す。外したシーンはこのセッションのスナップショットに含まれない。"
+          >
             <DeckTree
               nodes={sc.deck}
               excludedIds={excluded}
@@ -104,12 +153,19 @@ export function GmScenarioDetailPage() {
               }
             />
           </Panel>
-          <Panel title="結末タグ" sub="このシナリオが配り得る結末。後続シナリオの前提タグと同じ仕組みで突き合わされる。">
+          <Panel
+            title="結末タグ"
+            sub="このシナリオが配り得る結末。後続シナリオの前提タグと同じ仕組みで突き合わされる。"
+          >
             <div className={s.list}>
               {sc.endings.map((e) => (
                 <div key={e.id} className={s.listItem}>
                   <span>{e.name}</span>
-                  <span className={s.itemSub}>{e.grantsTag ? `→ 前提タグ「${e.grantsTag}」` : '→ 前提タグなし（単発として扱う）'}</span>
+                  <span className={s.itemSub}>
+                    {e.grantsTag
+                      ? `→ 前提タグ「${e.grantsTag}」`
+                      : '→ 前提タグなし（単発として扱う）'}
+                  </span>
                 </div>
               ))}
             </div>

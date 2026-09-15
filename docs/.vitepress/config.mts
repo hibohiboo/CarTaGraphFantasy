@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig } from 'vitepress';
 
 export default defineConfig({
   base: '/CarTaGraphFantasy/',
@@ -15,15 +15,13 @@ export default defineConfig({
       { text: 'カルタグラフ', link: '/cartagraph/' },
       { text: '用語集', link: '/glossary' },
       { text: '未解決論点', link: '/open-questions' },
-      { text: 'アプリ', link: '/app/', target: '_self' }
+      { text: 'アプリ', link: '/app/', target: '_self' },
     ],
 
     sidebar: [
       {
         text: 'コンセプト',
-        items: [
-          { text: '進化するTRPGとは', link: '/concept/' }
-        ]
+        items: [{ text: '進化するTRPGとは', link: '/concept/' }],
       },
       {
         text: 'カルタグラフ構想',
@@ -31,8 +29,8 @@ export default defineConfig({
           { text: '全体像', link: '/cartagraph/' },
           { text: 'カード・デッキの考え方', link: '/cartagraph/card-and-deck' },
           { text: '場・手札・プレイ', link: '/cartagraph/play-and-field' },
-          { text: 'カードの裏表', link: '/cartagraph/card-face-back' }
-        ]
+          { text: 'カードの裏表', link: '/cartagraph/card-face-back' },
+        ],
       },
       {
         text: 'アーキテクチャ',
@@ -41,15 +39,15 @@ export default defineConfig({
           { text: 'Webアプリ（apps/web）の構成', link: '/architecture/web-app' },
           { text: '試作の引き継ぎまとめ', link: '/architecture/prototype-handover' },
           // アプリは VitePress 管理外の静的ファイルなので SPA 遷移を避ける
-          { text: 'アプリを開く（モックAPI）', link: '/app/', target: '_self' }
-        ]
+          { text: 'アプリを開く（モックAPI）', link: '/app/', target: '_self' },
+        ],
       },
       {
         text: 'リファレンス',
         items: [
           { text: '用語集', link: '/glossary' },
-          { text: '未解決論点トラッカー', link: '/open-questions' }
-        ]
+          { text: '未解決論点トラッカー', link: '/open-questions' },
+        ],
       },
       {
         text: '開発プロセス',
@@ -59,14 +57,14 @@ export default defineConfig({
           { text: 'テストルール', link: '/process/rules/testing' },
           { text: 'レビュールール', link: '/process/rules/review' },
           { text: '依頼文サンプル', link: '/process/prompt-sample' },
-          { text: '体制の進化ログ', link: '/process/evolution' }
-        ]
+          { text: '体制の進化ログ', link: '/process/evolution' },
+        ],
       },
       {
         text: '議論ログ（アーカイブ）',
         items: [
-          { text: '追加インタビュー (2025-09)', link: '/interviews/2025-09-追加インタビュー' }
-        ]
+          { text: '追加インタビュー (2025-09)', link: '/interviews/2025-09-追加インタビュー' },
+        ],
       },
       {
         // 試作ページはVitePressのpublicディレクトリに置いた生のHTMLで、
@@ -77,13 +75,33 @@ export default defineConfig({
         // ページ遷移としてブラウザに読み込ませる。
         text: '試作',
         items: [
-          { text: 'カルタグラフ図鑑（閲覧サイト試作）', link: '/preview/cartagraph-zukan.html', target: '_self' },
-          { text: 'プレイ画面（ドライバー視点）', link: '/preview/session-play.html', target: '_self' },
+          {
+            text: 'カルタグラフ図鑑（閲覧サイト試作）',
+            link: '/preview/cartagraph-zukan.html',
+            target: '_self',
+          },
+          {
+            text: 'プレイ画面（ドライバー視点）',
+            link: '/preview/session-play.html',
+            target: '_self',
+          },
           { text: 'GM承認画面', link: '/preview/session-gm-review.html', target: '_self' },
-          { text: 'チャット（ドライバー/ナビゲーター/GM）', link: '/preview/session-chat.html', target: '_self' },
+          {
+            text: 'チャット（ドライバー/ナビゲーター/GM）',
+            link: '/preview/session-chat.html',
+            target: '_self',
+          },
           { text: 'GMのセッション管理', link: '/preview/session-gm-manage.html', target: '_self' },
-          { text: 'シナリオ製作者のシナリオ管理', link: '/preview/scenario-manage.html', target: '_self' },
-          { text: 'プレイヤーのセッション選択', link: '/preview/session-browse.html', target: '_self' },
+          {
+            text: 'シナリオ製作者のシナリオ管理',
+            link: '/preview/scenario-manage.html',
+            target: '_self',
+          },
+          {
+            text: 'プレイヤーのセッション選択',
+            link: '/preview/session-browse.html',
+            target: '_self',
+          },
           { text: 'キャラクター作成', link: '/preview/character-create.html', target: '_self' },
           { text: 'シーン構築', link: '/preview/scene-builder.html', target: '_self' },
           { text: 'シーン進行（GM視点）', link: '/preview/scene-play.html', target: '_self' },
@@ -91,17 +109,15 @@ export default defineConfig({
           { text: '戦闘画面（1次元）', link: '/preview/combat-play-1d.html', target: '_self' },
           { text: '場の状況', link: '/preview/session-field.html', target: '_self' },
           { text: 'キャラクターシート', link: '/preview/character-sheet.html', target: '_self' },
-          { text: 'プレイマット（簡易表示）', link: '/preview/play-mat.html', target: '_self' }
-        ]
-      }
+          { text: 'プレイマット（簡易表示）', link: '/preview/play-mat.html', target: '_self' },
+        ],
+      },
     ],
 
     outline: {
-      level: [2, 3]
+      level: [2, 3],
     },
 
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/hibohiboo/CarTaGraphFantasy' }
-    ]
-  }
-})
+    socialLinks: [{ icon: 'github', link: 'https://github.com/hibohiboo/CarTaGraphFantasy' }],
+  },
+});

@@ -4,15 +4,7 @@
   "autoMemoryEnabled": true,
   "language": "japanese",
   "permissions": {
-    "allow": [
-      "Bash(git diff *)",
-      "Bash(git log *)",
-      "Bash(git show *)",
-      "Bash(git status)"
-    ],
-    "deny": [
-      "Read(.env)",
-      "Read(.env.*)"
-    ]
+    "allow": ["Bash(git diff *)", "Bash(git log *)", "Bash(git show *)", "Bash(git status)"],
+    "deny": ["Read(.env)", "Read(.env.*)"]
   }
 }

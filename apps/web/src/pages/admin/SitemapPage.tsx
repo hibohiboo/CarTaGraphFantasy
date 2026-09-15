@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { GROUP_LABEL, routes, type RouteGroup } from '../../app/routes';
+import { GROUP_LABEL, type RouteGroup, routes } from '../../app/routes';
 import { PageHeader, Panel } from '../../components';
 import s from '../pages.module.css';
 
@@ -10,7 +10,10 @@ const order: RouteGroup[] = ['common', 'pl', 'gm', 'creator', 'rulebook', 'admin
 export function SitemapPage() {
   return (
     <>
-      <PageHeader title="サイトマップ" crumb="全ページの一覧。ルート定義（routes.ts）から生成しているので、ナビゲーションと食い違わない。" />
+      <PageHeader
+        title="サイトマップ"
+        crumb="全ページの一覧。ルート定義（routes.ts）から生成しているので、ナビゲーションと食い違わない。"
+      />
       <div className={s.stack}>
         {order.map((g) => (
           <Panel key={g} title={GROUP_LABEL[g]}>
@@ -37,7 +40,13 @@ export function SitemapPage() {
                           {r.example && <span className="u-small u-dim">（例）</span>}
                         </td>
                         <td>{r.description}</td>
-                        <td>{r.prototype ? <a href={`${PREVIEW_BASE}${r.prototype}`}>{r.prototype}</a> : <span className="u-dim">—</span>}</td>
+                        <td>
+                          {r.prototype ? (
+                            <a href={`${PREVIEW_BASE}${r.prototype}`}>{r.prototype}</a>
+                          ) : (
+                            <span className="u-dim">—</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                 </tbody>

@@ -1,10 +1,27 @@
+import type { CardDef } from '@cartagraph/domain';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import type { CardDef } from '@cartagraph/domain';
+import {
+  Button,
+  ErrorNote,
+  GameCard,
+  HandDock,
+  Hud,
+  Loading,
+  PlayScreen,
+  ProposeForm,
+  StatusLine,
+  StatusPill,
+  Table,
+} from '../../components';
 import { usePlayCard, usePropose, useSession } from '../../lib/queries';
-import { Button, ErrorNote, GameCard, HandDock, Hud, Loading, PlayScreen, ProposeForm, StatusLine, StatusPill, Table } from '../../components';
 
-const PROPOSE_CARD: CardDef = { id: 'propose', kind: 'choice', name: '＋\n新たな選択肢を提案', tags: [] };
+const PROPOSE_CARD: CardDef = {
+  id: 'propose',
+  kind: 'choice',
+  name: '＋\n新たな選択肢を提案',
+  tags: [],
+};
 
 /** ドライバー視点のプレイ画面。HUD＋卓＋手札の1画面完結レイアウト（session-play.html を移植） */
 export function PlayPage() {
@@ -24,7 +41,15 @@ export function PlayPage() {
 
   const submitProposal = () => {
     if (!text.trim()) return;
-    propose.mutate({ sessionId, text }, { onSuccess: () => { setText(''); setProposing(false); } });
+    propose.mutate(
+      { sessionId, text },
+      {
+        onSuccess: () => {
+          setText('');
+          setProposing(false);
+        },
+      },
+    );
   };
 
   return (
@@ -34,14 +59,24 @@ export function PlayPage() {
         viewer="driver"
         links={
           <>
-            <Link to={`/pl/characters/${s.participants.find((p) => p.role === 'driver')?.characterId ?? ''}`}>キャラクターシート</Link>
+            <Link
+              to={`/pl/characters/${s.participants.find((p) => p.role === 'driver')?.characterId ?? ''}`}
+            >
+              キャラクターシート
+            </Link>
             <Link to="/pl/sessions">セッション一覧</Link>
           </>
         }
       />
       <Table
         flavor={s.flavor}
-        hint={ended ? 'このセッションは終了しています。' : busy ? '…' : '手札から1枚選んでプレイしよう。'}
+        hint={
+          ended
+            ? 'このセッションは終了しています。'
+            : busy
+              ? '…'
+              : '手札から1枚選んでプレイしよう。'
+        }
         mystery={s.field.plVisible.filter((c) => c.faceDown)}
       />
       <StatusLine>
@@ -64,7 +99,9 @@ export function PlayPage() {
         {!pending && s.proposals[0]?.status === 'approved' && (
           <>
             <span>提案「{s.proposals[0].text}」</span>
-            <StatusPill status="approved">採用・手札に「{s.proposals[0].resolution}」が加わった</StatusPill>
+            <StatusPill status="approved">
+              採用・手札に「{s.proposals[0].resolution}」が加わった
+            </StatusPill>
           </>
         )}
       </StatusLine>
@@ -77,6 +114,7 @@ export function PlayPage() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submitProposal()}
+            // biome-ignore lint/a11y/noAutofocus: プレイ中の提案入力欄。ページの主操作なので意図的にフォーカスする
             autoFocus
           />
           <Button size="sm" onClick={submitProposal} disabled={busy || !text.trim()}>
@@ -93,7 +131,16 @@ export function PlayPage() {
         onPlay={(card) => play.mutate({ sessionId, cardId: card.id })}
         extra={
           !ended && (
-            <GameCard card={PROPOSE_CARD} variant="propose" width={110} centerName selected={proposing} onClick={() => setProposing((v) => !v)} disabled={!!pending || busy} title={pending ? '裁定待ちの提案があります' : undefined} />
+            <GameCard
+              card={PROPOSE_CARD}
+              variant="propose"
+              width={110}
+              centerName
+              selected={proposing}
+              onClick={() => setProposing((v) => !v)}
+              disabled={!!pending || busy}
+              title={pending ? '裁定待ちの提案があります' : undefined}
+            />
           )
         }
       />

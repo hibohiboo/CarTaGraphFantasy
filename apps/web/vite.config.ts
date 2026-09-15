@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vitest/config';
 
 // GitHub Pages では docs サイト配下の /CarTaGraphFantasy/app/ に置く（scripts/copy-web-to-pages.mjs）。
 // ローカル開発では / のまま。

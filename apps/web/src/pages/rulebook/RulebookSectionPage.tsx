@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
-import { DOCS_BASE, rulebook, type RuleSection } from '../../content/rulebook';
-import { useMe } from '../../lib/queries';
 import { PageHeader, StatusPill } from '../../components';
+import { DOCS_BASE, type RuleSection, rulebook } from '../../content/rulebook';
+import { useMe } from '../../lib/queries';
 import s from '../pages.module.css';
 
 export function RulebookSectionPage({ sectionId }: { sectionId: RuleSection['id'] }) {
@@ -13,8 +13,18 @@ export function RulebookSectionPage({ sectionId }: { sectionId: RuleSection['id'
     <>
       <PageHeader
         title={sec.title}
-        crumb={<><Link to="/rulebook">ルールブック</Link> › {sec.title}</>}
-        actions={read ? <StatusPill status="approved">読了（自己申告）</StatusPill> : <StatusPill status="neutral">未読</StatusPill>}
+        crumb={
+          <>
+            <Link to="/rulebook">ルールブック</Link> › {sec.title}
+          </>
+        }
+        actions={
+          read ? (
+            <StatusPill status="approved">読了（自己申告）</StatusPill>
+          ) : (
+            <StatusPill status="neutral">未読</StatusPill>
+          )
+        }
       />
       <article className={s.prose} style={{ paddingBottom: 40 }}>
         <p className="u-dim">{sec.lede}</p>
@@ -45,7 +55,8 @@ export function RulebookSectionPage({ sectionId }: { sectionId: RuleSection['id'
                     {b.table.rows.map((r) => (
                       <tr key={r[0]}>
                         {r.map((c, i) => (
-                          <td key={i}>{c}</td>
+                          // biome-ignore lint/suspicious/noArrayIndexKey: rulebook.ts の固定データを並べるだけで、並び替え・増減はしない
+                          <td key={`${r[0]}-${i}`}>{c}</td>
                         ))}
                       </tr>
                     ))}

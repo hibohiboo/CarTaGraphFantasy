@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
-import { useScenarios } from '../../lib/queries';
 import { Chip, ChipGroup, ErrorNote, Loading, PageHeader, Panel } from '../../components';
+import { useScenarios } from '../../lib/queries';
 import s from '../pages.module.css';
 
 /** GMのシナリオ管理：共有ライブラリから選ぶ（GM＝シナリオを選んで運営する人） */
@@ -11,7 +11,11 @@ export function GmScenarioListPage() {
 
   return (
     <>
-      <PageHeader title="シナリオを選ぶ" crumb="共有ライブラリに公開されているシナリオ。選んでカードを取捨選択し、募集を出す。自分で作るならシナリオ作成者のページへ。" actions={<Link to="/creator/scenarios">シナリオを作る →</Link>} />
+      <PageHeader
+        title="シナリオを選ぶ"
+        crumb="共有ライブラリに公開されているシナリオ。選んでカードを取捨選択し、募集を出す。自分で作るならシナリオ作成者のページへ。"
+        actions={<Link to="/creator/scenarios">シナリオを作る →</Link>}
+      />
       <div className={s.stack}>
         {scenarios.data.map((sc) => (
           <Panel

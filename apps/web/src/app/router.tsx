@@ -1,23 +1,23 @@
 import { createHashRouter, type RouteObject } from 'react-router';
-import { AppShell } from './AppShell';
-import { HomePage } from '../pages/HomePage';
-import { NotFoundPage } from '../pages/NotFoundPage';
-import { SessionBrowsePage } from '../pages/pl/SessionBrowsePage';
-import { PlayPage } from '../pages/pl/PlayPage';
-import { CharacterListPage } from '../pages/pl/CharacterListPage';
-import { CharacterCreatePage } from '../pages/pl/CharacterCreatePage';
-import { CharacterSheetPage } from '../pages/pl/CharacterSheetPage';
-import { GmScenarioListPage } from '../pages/gm/GmScenarioListPage';
+import { ComponentCatalogPage } from '../pages/admin/ComponentCatalogPage';
+import { SitemapPage } from '../pages/admin/SitemapPage';
+import { CreatorScenarioEditPage } from '../pages/creator/CreatorScenarioEditPage';
+import { CreatorScenarioListPage } from '../pages/creator/CreatorScenarioListPage';
 import { GmScenarioDetailPage } from '../pages/gm/GmScenarioDetailPage';
+import { GmScenarioListPage } from '../pages/gm/GmScenarioListPage';
 import { GmSessionListPage } from '../pages/gm/GmSessionListPage';
 import { GmSessionManagePage } from '../pages/gm/GmSessionManagePage';
-import { CreatorScenarioListPage } from '../pages/creator/CreatorScenarioListPage';
-import { CreatorScenarioEditPage } from '../pages/creator/CreatorScenarioEditPage';
+import { HomePage } from '../pages/HomePage';
+import { NotFoundPage } from '../pages/NotFoundPage';
+import { CharacterCreatePage } from '../pages/pl/CharacterCreatePage';
+import { CharacterListPage } from '../pages/pl/CharacterListPage';
+import { CharacterSheetPage } from '../pages/pl/CharacterSheetPage';
+import { PlayPage } from '../pages/pl/PlayPage';
+import { SessionBrowsePage } from '../pages/pl/SessionBrowsePage';
+import { LibraryPage } from '../pages/rulebook/LibraryPage';
 import { RulebookIndexPage } from '../pages/rulebook/RulebookIndexPage';
 import { RulebookSectionPage } from '../pages/rulebook/RulebookSectionPage';
-import { LibraryPage } from '../pages/rulebook/LibraryPage';
-import { SitemapPage } from '../pages/admin/SitemapPage';
-import { ComponentCatalogPage } from '../pages/admin/ComponentCatalogPage';
+import { AppShell } from './AppShell';
 
 // パスの一覧は routes.ts（サイトマップの情報源）と一致させる
 export const routeObjects: RouteObject[] = [

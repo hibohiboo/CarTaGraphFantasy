@@ -1,16 +1,64 @@
-.tree { display: flex; flex-direction: column; gap: 8px; }
-.node {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  background: var(--felt-panel-2); border: 1px solid var(--thread-faint);
-  border-radius: 6px; padding: 10px 14px;
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.node[data-nested='true'] { margin-left: 26px; }
-.node[data-kind='ending'] { border-left: 3px solid var(--approved); }
-.node[data-kind='intro'] { border-left: 3px solid var(--thread); }
-.node[data-current='true'] { border-color: var(--focus); box-shadow: 0 0 0 1px var(--focus) inset; }
-.node[data-excluded='true'] { opacity: 0.45; text-decoration: line-through; }
-.kind { font-size: 0.72rem; color: var(--parchment-text-dim); border: 1px solid var(--ink-soft); border-radius: 4px; padding: 1px 7px; flex: none; }
-.name { font-family: var(--font-serif); font-size: 0.94rem; }
-.meta { margin-left: auto; font-size: 0.76rem; color: var(--parchment-text-dim); font-variant-numeric: tabular-nums; display: flex; gap: 10px; align-items: center; }
-.dense { font-size: 0.7rem; color: var(--seal); border: 1px solid var(--seal); border-radius: 999px; padding: 0 8px; }
-.nodeActions { display: flex; gap: 6px; }
+.node {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--felt-panel-2);
+  border: 1px solid var(--thread-faint);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+.node[data-nested="true"] {
+  margin-left: 26px;
+}
+.node[data-kind="ending"] {
+  border-left: 3px solid var(--approved);
+}
+.node[data-kind="intro"] {
+  border-left: 3px solid var(--thread);
+}
+.node[data-current="true"] {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus) inset;
+}
+.node[data-excluded="true"] {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.kind {
+  font-size: 0.72rem;
+  color: var(--parchment-text-dim);
+  border: 1px solid var(--ink-soft);
+  border-radius: 4px;
+  padding: 1px 7px;
+  flex: none;
+}
+.name {
+  font-family: var(--font-serif);
+  font-size: 0.94rem;
+}
+.meta {
+  margin-left: auto;
+  font-size: 0.76rem;
+  color: var(--parchment-text-dim);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.dense {
+  font-size: 0.7rem;
+  color: var(--seal);
+  border: 1px solid var(--seal);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+.nodeActions {
+  display: flex;
+  gap: 6px;
+}

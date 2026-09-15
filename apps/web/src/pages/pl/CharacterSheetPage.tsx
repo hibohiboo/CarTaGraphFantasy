@@ -1,7 +1,18 @@
-import { Link, useParams } from 'react-router';
 import { ARCHETYPE_LABEL, deriveArchetype } from '@cartagraph/domain';
+import { Link, useParams } from 'react-router';
+import {
+  CardGrid,
+  Chip,
+  ChipGroup,
+  ErrorNote,
+  GameCard,
+  Loading,
+  PageHeader,
+  Panel,
+  Pips,
+  RoleBadge,
+} from '../../components';
 import { useCharacter, useMe } from '../../lib/queries';
-import { CardGrid, Chip, ChipGroup, ErrorNote, GameCard, Loading, PageHeader, Panel, Pips, RoleBadge } from '../../components';
 import s from '../pages.module.css';
 
 export function CharacterSheetPage() {
@@ -17,16 +28,34 @@ export function CharacterSheetPage() {
 
   return (
     <>
-      <PageHeader title={c.name} crumb={<>所有者：{isMine ? 'あなた' : c.ownerName} ／ <Link to="/pl/characters">キャラクター一覧へ戻る</Link></>} actions={<RoleBadge role="pl">{ARCHETYPE_LABEL[archetype]}</RoleBadge>} />
+      <PageHeader
+        title={c.name}
+        crumb={
+          <>
+            所有者：{isMine ? 'あなた' : c.ownerName} ／{' '}
+            <Link to="/pl/characters">キャラクター一覧へ戻る</Link>
+          </>
+        }
+        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
+        actions={<RoleBadge role="pl">{ARCHETYPE_LABEL[archetype]}</RoleBadge>}
+      />
       <div className={s.twoCol}>
         <aside className="u-stack">
-          <GameCard card={{ kind: 'character', name: c.name, description: ARCHETYPE_LABEL[archetype] }} portrait showDescription width={180} />
+          <GameCard
+            card={{ kind: 'character', name: c.name, description: ARCHETYPE_LABEL[archetype] }}
+            portrait
+            showDescription
+            width={180}
+          />
           <Panel title="成長">
             <p className="u-small">
-              CP <strong className="u-num">{c.cp.total - c.cp.spent}</strong> 残り（獲得 {c.cp.total}・使用 {c.cp.spent}）
+              CP <strong className="u-num">{c.cp.total - c.cp.spent}</strong> 残り（獲得{' '}
+              {c.cp.total}・使用 {c.cp.spent}）
             </p>
             <div className={s.metaRow}>
-              <div className={s.metaLabel}>称号タグ（参加者から贈られ、所有者が反映を選んだもの）</div>
+              <div className={s.metaLabel}>
+                称号タグ（参加者から贈られ、所有者が反映を選んだもの）
+              </div>
               <ChipGroup>
                 {c.titles.length === 0 && <Chip tone="off">まだない</Chip>}
                 {c.titles.map((t) => (
@@ -61,7 +90,10 @@ export function CharacterSheetPage() {
                 {(['body', 'skill', 'mind'] as const).map((k) => (
                   <div key={k} className={s.abilityRow}>
                     <span>{{ body: '体', skill: '技', mind: '心' }[k]}</span>
-                    <Pips value={c.abilities![k]} label={{ body: '体', skill: '技', mind: '心' }[k]} />
+                    <Pips
+                      value={c.abilities![k]}
+                      label={{ body: '体', skill: '技', mind: '心' }[k]}
+                    />
                   </div>
                 ))}
                 {c.hp && (
@@ -81,10 +113,20 @@ export function CharacterSheetPage() {
               </>
             )}
           </Panel>
-          <Panel title="所持デッキ" sub="このキャラクターを構成するスキル・特徴・アイテム・装備。セッションごとに持ち込む組み合わせを変えられる。">
+          <Panel
+            title="所持デッキ"
+            sub="このキャラクターを構成するスキル・特徴・アイテム・装備。セッションごとに持ち込む組み合わせを変えられる。"
+          >
             <CardGrid min={130}>
               {c.deck.map((card) => (
-                <GameCard key={card.id} card={card} fluid showDescription showTags showCost={card.actionCost !== undefined ? 'action' : 'cp'} />
+                <GameCard
+                  key={card.id}
+                  card={card}
+                  fluid
+                  showDescription
+                  showTags
+                  showCost={card.actionCost !== undefined ? 'action' : 'cp'}
+                />
               ))}
             </CardGrid>
           </Panel>

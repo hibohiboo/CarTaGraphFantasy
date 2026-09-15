@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
-import { useMe } from '../../lib/queries';
-import { DOCS_BASE, rulebook } from '../../content/rulebook';
 import { GameCard, PageHeader } from '../../components';
+import { DOCS_BASE, rulebook } from '../../content/rulebook';
+import { useMe } from '../../lib/queries';
 import s from '../pages.module.css';
 
 /** ルールブック目次。ルールもカードのモチーフで読む（cartagraph/index.md「Webサイト」） */
@@ -12,7 +12,16 @@ export function RulebookIndexPage() {
 
   return (
     <>
-      <PageHeader title="ルールブック" crumb={<>遊び方・判定ルール・積みあがった共有設定。仕様の正は <a href={DOCS_BASE}>設計ドキュメント</a>で、ここはプレイヤー向けの要約。朱印は「読んだ」の自己申告（制作側の学習的アンロック）。</>} />
+      <PageHeader
+        title="ルールブック"
+        crumb={
+          <>
+            遊び方・判定ルール・積みあがった共有設定。仕様の正は{' '}
+            <a href={DOCS_BASE}>設計ドキュメント</a>
+            で、ここはプレイヤー向けの要約。朱印は「読んだ」の自己申告（制作側の学習的アンロック）。
+          </>
+        }
+      />
       <div className={s.tocGrid}>
         {rulebook.map((sec) => (
           <GameCard
@@ -28,7 +37,17 @@ export function RulebookIndexPage() {
             </p>
           </GameCard>
         ))}
-        <GameCard card={{ kind: 'relation', name: '共有設定', description: 'セッションから積みあがり、共有ライブラリへ格上げされた設定・カード。新しいシナリオの土台に使える。' }} fluid showDescription onClick={() => navigate('/rulebook/library')} />
+        <GameCard
+          card={{
+            kind: 'relation',
+            name: '共有設定',
+            description:
+              'セッションから積みあがり、共有ライブラリへ格上げされた設定・カード。新しいシナリオの土台に使える。',
+          }}
+          fluid
+          showDescription
+          onClick={() => navigate('/rulebook/library')}
+        />
       </div>
     </>
   );

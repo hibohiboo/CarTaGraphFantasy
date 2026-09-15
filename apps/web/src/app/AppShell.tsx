@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router';
-import { GROUP_LABEL, navRoutes, type RouteGroup } from './routes';
 import s from './AppShell.module.css';
+import { GROUP_LABEL, navRoutes, type RouteGroup } from './routes';
 
 const DOCS_URL = 'https://hibohiboo.github.io/CarTaGraphFantasy/';
 
@@ -42,7 +42,8 @@ export function AppShell() {
       </main>
       {!fill && (
         <footer className={[s.footer, s.inner].join(' ')}>
-          仕様の正は <a href={DOCS_URL}>設計ドキュメント（docs）</a>。この画面はバックエンド未実装のモックデータで動いています。
+          仕様の正は <a href={DOCS_URL}>設計ドキュメント（docs）</a>
+          。この画面はバックエンド未実装のモックデータで動いています。
         </footer>
       )}
     </div>

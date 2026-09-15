@@ -3,16 +3,40 @@
 /* nav と同じ理由でラップさせず横スクロールにする（スマホ幅で縦の予算を圧迫させない） */
 .hud {
   flex: none;
-  display: flex; align-items: center; gap: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
   padding-block: 10px;
   flex-wrap: nowrap;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
-.hudTitle { flex: none; font-family: var(--font-serif); font-size: 1.1rem; font-weight: 600; white-space: nowrap; margin: 0; }
-.hudScene { flex: none; font-size: 0.82rem; color: var(--parchment-text-dim); white-space: nowrap; }
-.hudParty { flex: none; display: flex; align-items: center; gap: 4px; margin-left: auto; }
-.hudParty a { font-size: 0.76rem; margin-left: 6px; white-space: nowrap; }
+.hudTitle {
+  flex: none;
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+.hudScene {
+  flex: none;
+  font-size: 0.82rem;
+  color: var(--parchment-text-dim);
+  white-space: nowrap;
+}
+.hudParty {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.hudParty a {
+  font-size: 0.76rem;
+  margin-left: 6px;
+  white-space: nowrap;
+}
 
 .table {
   flex: 1 1 auto;
@@ -30,12 +54,32 @@
   font-size: clamp(1.05rem, 2vw + 0.6rem, 1.4rem);
   line-height: 1.9;
 }
-.flavorDim { display: block; margin-top: 10px; font-family: var(--font-sans); font-size: 0.82rem; color: var(--parchment-text-dim); }
-.mystery { position: absolute; right: clamp(4px, 2vw, 28px); bottom: 6px; display: flex; gap: 6px; }
+.flavorDim {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--parchment-text-dim);
+}
+.mystery {
+  position: absolute;
+  right: clamp(4px, 2vw, 28px);
+  bottom: 6px;
+  display: flex;
+  gap: 6px;
+}
 
 .statusLine {
-  flex: none; text-align: center; font-size: 0.78rem; color: var(--parchment-text-dim); padding-bottom: 6px;
-  display: flex; justify-content: center; gap: 8px; align-items: center; flex-wrap: wrap;
+  flex: none;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--parchment-text-dim);
+  padding-bottom: 6px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .dock {
@@ -44,8 +88,20 @@
   overflow-y: hidden;
   padding-block: 8px clamp(10px, 2vh, 18px);
 }
-.dockRow { display: flex; gap: 10px; width: max-content; margin-inline: auto; padding-inline: 2px; }
-.dockDivider { flex: none; width: 1px; align-self: stretch; background: var(--thread-dim); margin-block: 6px; }
+.dockRow {
+  display: flex;
+  gap: 10px;
+  width: max-content;
+  margin-inline: auto;
+  padding-inline: 2px;
+}
+.dockDivider {
+  flex: none;
+  width: 1px;
+  align-self: stretch;
+  background: var(--thread-dim);
+  margin-block: 6px;
+}
 
 /* 1画面完結：ページ全体を縦flexにして中央だけ伸ばす */
 .screen {
@@ -57,7 +113,13 @@
 
 .proposeForm {
   flex: none;
-  display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   padding-bottom: 8px;
 }
-.proposeForm input { max-width: 360px; }
+.proposeForm input {
+  max-width: 360px;
+}

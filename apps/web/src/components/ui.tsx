@@ -1,5 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import type { ParticipantRole, ProposalStatus, UserRole } from '@cartagraph/domain';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import s from './ui.module.css';
 
 // ---------- Panel ----------
@@ -81,8 +81,21 @@ export function Button({
   size,
   block,
   ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: 'sm'; block?: boolean }) {
-  return <button type="button" className={s.btn} data-variant={variant} data-size={size} data-block={block ? 'true' : undefined} {...rest} />;
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: ButtonVariant;
+  size?: 'sm';
+  block?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className={s.btn}
+      data-variant={variant}
+      data-size={size}
+      data-block={block ? 'true' : undefined}
+      {...rest}
+    />
+  );
 }
 
 // ---------- StatTile ----------
@@ -108,7 +121,15 @@ export function StatTile({
 }
 
 // ---------- PageHeader ----------
-export function PageHeader({ title, crumb, actions }: { title: ReactNode; crumb?: ReactNode; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  crumb,
+  actions,
+}: {
+  title: ReactNode;
+  crumb?: ReactNode;
+  actions?: ReactNode;
+}) {
   return (
     <header className={s.pageHead}>
       <div>
@@ -125,6 +146,7 @@ export function Pips({ value, max = 5, label }: { value: number; max?: number; l
   return (
     <div className={s.pips} role="img" aria-label={`${label} ${value}`}>
       {Array.from({ length: max }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: max個の無名の丸を並べるだけで、並び替え・増減はしない
         <span key={i} className={s.pip} data-on={i < value ? 'true' : 'false'} />
       ))}
     </div>
@@ -155,6 +177,7 @@ export function EmptyNote({ children }: { children: ReactNode }) {
 
 export function Field({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
+    // biome-ignore lint/a11y/noLabelWithoutControl: children は常にフォームコントロール（input/select/textarea）で、label に包まれる形で関連付く。children は ReactNode 型のため静的解析では検出できない
     <label className={s.field}>
       <span className={s.fieldLabel}>{label}</span>
       {children}

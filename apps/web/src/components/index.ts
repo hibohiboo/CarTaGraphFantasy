@@ -1,4 +1,4 @@
-export * from './ui';
+export * from './DeckTree';
 export * from './GameCard';
 export * from './play';
-export * from './DeckTree';
+export * from './ui';
