@@ -42,7 +42,8 @@
     padding-inline: clamp(14px, 3vw, 32px);
     height: 100vh;
     height: 100dvh;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
   }
@@ -53,24 +54,33 @@
   .wrap { max-width: 1080px; margin-inline: auto; width: 100%; height: 100%; display: flex; flex-direction: column; min-height: 0; }
 
   /* ---------- proto nav ---------- */
+  /* 折り返さず横スクロールにする。ラップさせると固定高さレイアウトの
+     予算を圧迫し、スマホ幅で卓・手札がつぶれる原因になるため。 */
   .proto-nav {
     flex: none;
     display: flex; align-items: center; gap: 14px;
     padding-block: 8px;
     font-size: 0.76rem;
     border-bottom: 1px solid rgba(184, 147, 90, 0.18);
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  .proto-nav a { color: var(--parchment-text-dim); text-decoration: none; }
+  .proto-nav a { flex: none; color: var(--parchment-text-dim); text-decoration: none; white-space: nowrap; }
   .proto-nav a[aria-current="page"] { color: var(--focus); border-bottom: 2px solid var(--focus); padding-bottom: 2px; }
-  .proto-nav .draft-pill { margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.68rem; padding: 2px 9px; border-radius: 999px; }
+  .proto-nav .draft-pill { flex: none; margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.68rem; padding: 2px 9px; border-radius: 999px; }
 
   /* ---------- HUD ---------- */
-  .hud { flex: none; display: flex; align-items: center; gap: 12px; padding-block: 10px; flex-wrap: wrap; }
-  .hud-title { font-family: "Zen Old Mincho", serif; font-size: 1.1rem; white-space: nowrap; }
-  .hud-scene { font-size: 0.82rem; color: var(--parchment-text-dim); white-space: nowrap; }
-  .hud-spacer { flex: 1; }
+  /* nav と同じ理由でラップさせず横スクロールにする */
+  .hud {
+    flex: none; display: flex; align-items: center; gap: 12px; padding-block: 10px;
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .hud-title { flex: none; font-family: "Zen Old Mincho", serif; font-size: 1.1rem; white-space: nowrap; }
+  .hud-scene { flex: none; font-size: 0.82rem; color: var(--parchment-text-dim); white-space: nowrap; }
+  .hud-spacer { display: none; }
   .badge {
+    flex: none;
     display: inline-flex; align-items: center; gap: 6px; font-size: 0.74rem;
     padding: 4px 11px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
   }
@@ -86,8 +96,9 @@
     display: flex; align-items: center; justify-content: center;
     font-family: "Zen Old Mincho", serif; font-size: 1.05rem; font-variant-numeric: tabular-nums;
   }
-  .turn-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .turn-chips { flex: none; display: flex; gap: 6px; flex-wrap: nowrap; }
   .turn-chip {
+    flex: none;
     font-size: 0.72rem; padding: 3px 10px; border-radius: 999px;
     border: 1px solid currentColor; white-space: nowrap; font-variant-numeric: tabular-nums;
   }

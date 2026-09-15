@@ -82,10 +82,14 @@
     align-items: center;
     gap: 20px;
     font-size: 0.9rem;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  .site-nav a { text-decoration: none; color: var(--parchment-text); }
+  .site-nav a { flex: none; white-space: nowrap; text-decoration: none; color: var(--parchment-text); }
   .site-nav a:hover { color: var(--focus); }
   .draft-pill {
+    flex: none;
     border: 1px solid var(--thread-dim);
     color: var(--thread);
     font-size: 0.72rem;

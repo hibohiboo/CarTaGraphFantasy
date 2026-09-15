@@ -33,12 +33,13 @@
   .wrap { max-width: 1080px; margin-inline: auto; }
 
   .proto-nav {
-    display: flex; align-items: center; gap: 16px; padding-block: 16px;
-    font-size: 0.83rem; border-bottom: 1px solid rgba(184, 147, 90, 0.18); flex-wrap: wrap;
+    display: flex; align-items: center; gap: 16px; padding-block: 12px;
+    font-size: 0.83rem; border-bottom: 1px solid rgba(184, 147, 90, 0.18);
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
   }
-  .proto-nav a { color: var(--parchment-text-dim); text-decoration: none; }
+  .proto-nav a { flex: none; white-space: nowrap; color: var(--parchment-text-dim); text-decoration: none; }
   .proto-nav a[aria-current="page"] { color: var(--focus); border-bottom: 2px solid var(--focus); padding-bottom: 3px; }
-  .proto-nav .draft-pill { margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.7rem; padding: 3px 10px; border-radius: 999px; }
+  .proto-nav .draft-pill { flex: none; margin-left: auto; border: 1px solid var(--thread-dim); color: var(--thread); font-size: 0.7rem; padding: 3px 10px; border-radius: 999px; }
 
   .session-head { padding-block: 22px 8px; }
   .session-title { font-size: 1.4rem; }
