@@ -1,17 +1,12 @@
 # CarTaGraphFantasy プロジェクトルール
 
-## ルールと仕様書が矛盾した場合
+開発ルール・技術スタック・ディレクトリ構成・最重要ルールは、ツールに依存しない入口ファイル `AGENTS.md` に集約している（ここに重複して書かない）。
 
-このファイル（CLAUDE.md）に書かれた開発運用ルールと、`docs/` 配下のドキュメント（設計仕様書・議論ログなど）の内容が矛盾する場合、推測でどちらかを優先して作業を進めてはいけない。
+@AGENTS.md
 
-作業を止め、矛盾の内容（どのルールと、どの仕様書のどの記述が食い違っているか）をユーザーに報告し、判断を仰ぐこと。
+## Claude Code 固有の補足
 
-## 唯一の信頼できる情報源（Single Source of Truth）
-
-同じ情報を複数箇所に重複して書かず、常にどこか一箇所を正とする方針を維持する。
-
-SSOT（正式仕様）は **`docs/` 配下の正式ページ**（`concept/`, `cartagraph/`, `architecture/`, `glossary.md`, `open-questions.md` など、`docs/interviews/` を除くページ）とする。
-
-`docs/interviews/` 配下の議論ログ（インタビュー原文）は一次資料・アーカイブであり、正式仕様ではない。原文とSSOT側の記述が食い違う場合は、原文を優先せず矛盾として報告する（前セクション参照）。
-
-情報の重複・分散が疑われる状況に気づいた場合は、黙って統合・削除せず、その旨をユーザーに報告すること。
+- `.claude/agents/`（design-reviewer / edge-case-reviewer / spec-reviewer）と `.claude/skills/`（dev-cycle / grilling / tdd / eng-practices / create-pr）は、`docs/process/` に書かれた手順の**呼び出し口**である。手順の本文を変えるときは `docs/process/` 側を直す。
+- サブエージェントの `model` は `inherit`（セッションのモデルを引き継ぐ）にし、特定モデルを固定しない。
+- プランドキュメントは `docs/plans/`（`settings.json` の `plansDirectory`）に置く。
+- 自動メモリ（`.claude/memory/`）は Claude 固有の記憶であり、他のエージェントからは見えない。プロジェクトとして残すべき知識（構成・運用上の注意・決定事項）は `docs/` に書き、メモリにはそこへのポインタと個人的な作業上の学びだけを残す。

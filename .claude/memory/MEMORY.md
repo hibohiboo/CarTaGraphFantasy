@@ -2,3 +2,4 @@
 - [閲覧サイトフェーズの試作状況](cartagraph-viewer-site-phase.md) — docs/public/preview配下の試作ページ一覧とデザイントークン
 - [複数画面は着手前に一覧化する](list-screens-before-building.md) — UIモックアップを複数作る時は先に画面一覧を示してスコープ確認する
 - [React実装フェーズ（apps/web）の状況](web-app-react-phase.md) — MSWでAPI代替、Pagesの/app/配下にHashルーターで同時デプロイ。構成はdocs/architecture/web-app.md
+- [開発プロセスの置き場所と2ルート運用](dev-process-structure.md) — docs/processがSSOT、AGENTS.mdが入口、.claudeは呼び出し口。基盤整備計画はdocs/plans/2026-09-16-dev-process-foundation.md（C2以降はユーザー判断待ち）

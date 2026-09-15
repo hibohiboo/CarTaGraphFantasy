@@ -5,6 +5,8 @@ export default defineConfig({
   title: 'カルタグラフTRPG',
   description: '進化型カードTRPG「カルタグラフ」の設計ドキュメント',
   lang: 'ja-JP',
+  // docs/plans/ は作業単位のプランドキュメント（コードのパス等を多く含む）で、公開サイトには載せない
+  srcExclude: ['plans/**'],
 
   themeConfig: {
     nav: [
@@ -47,6 +49,17 @@ export default defineConfig({
         items: [
           { text: '用語集', link: '/glossary' },
           { text: '未解決論点トラッカー', link: '/open-questions' }
+        ]
+      },
+      {
+        text: '開発プロセス',
+        items: [
+          { text: '開発サイクルと体制の進化', link: '/process/' },
+          { text: 'アーキテクチャルール', link: '/process/rules/architecture' },
+          { text: 'テストルール', link: '/process/rules/testing' },
+          { text: 'レビュールール', link: '/process/rules/review' },
+          { text: '依頼文サンプル', link: '/process/prompt-sample' },
+          { text: '体制の進化ログ', link: '/process/evolution' }
         ]
       },
       {
