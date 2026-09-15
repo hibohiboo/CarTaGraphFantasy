@@ -14,3 +14,10 @@ describe('toDictionaryForm', () => {
     expect(toDictionaryForm(input)).toBe(expected);
   });
 });
+
+// CI検証用の一時的な失敗テスト（このコミット後すぐ削除する）
+describe('CI検証用ダミー', () => {
+  it('わざと失敗する', () => {
+    expect(1).toBe(2);
+  });
+});
