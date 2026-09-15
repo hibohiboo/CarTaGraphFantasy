@@ -9,7 +9,7 @@
 サイクルの途中で気づいた人（人間・AIどちらでも）が追記する。書式：`- [ ] <候補> — <気づいた状況・根拠>（<日付>）`
 
 - [ ] `apps/web/src/components/index.ts` の barrel export を解消する — アーキテクチャルールで barrel 禁止を採用した結果、既存コードが唯一の逸脱になった。テスト駆動リファクタリングの定期作業で扱う（2026-09-16）
-- [ ] CI で `pnpm web:typecheck && pnpm web:test` を必ず回す — 現状の GitHub Actions はビルドとデプロイのみで、テストが落ちていてもデプロイされる。モデルに依存しない安全網として最優先（2026-09-16）
+- [x] CI で `pnpm web:typecheck && pnpm web:test` を必ず回す — 2026-09-16 に `.github/workflows/ci.yml` として実施（プランの C1）。下記「採用済み」参照
 - [ ] `apps/`・`packages/` の変更を PR 経由にする — 現状は main へ直 push。AI相互レビューと CI をマージ条件にするなら PR が要る。docs のみの修正は直 push のまま（2026-09-16）。**判断：基盤整備が終わってから採用（プランの C6）。それまでスピード重視で直 push**
 - [ ] lint・フォーマッタの導入（Biome か ESLint + Prettier） — 命名・未使用変数・import 順などを機械で弾き、P2 指摘をレビューから減らす（2026-09-16）。**判断：Biome を採用。AI にトークンを使わせず、コミット前の git フック（`.githooks/`、リポジトリ管理）で止める（プランの C2）**
 - [ ] Claude Code の自動メモリにある運用知識を `docs/` へ移す — `MSYS_NO_PATHCONV`、pnpm の peer 解決、大きなファイルの書き方など、Claude 以外のツールからは見えない（2026-09-16）
@@ -19,6 +19,12 @@
 ## 採用済み
 
 新しいものを上に。書式：`### <日付> <タイトル>` の下に、内容・理由・反映先。
+
+### 2026-09-16 CI に型検査・テスト・docsビルドの安全網を追加（C1）
+
+- **内容** — `.github/workflows/ci.yml` を新設。`main` への push と PR（C6 で PR 運用を始めたときのため）で `pnpm web:typecheck` → `pnpm web:test` → `pnpm docs:build`（リンク切れ検査）を順に実行する。既存の `deploy.yml`（ビルド・デプロイ）とは分離し、デプロイは従来どおりテストの成否を待たずに走る
+- **理由** — これまで型検査・テストが落ちていてもデプロイされる状態だった。lint はコミット前フック（C2）に任せ、CI では取りこぼし検出はまだ担わない（C2 実装時に `pnpm lint` を追加する）
+- **反映先** — `.github/workflows/ci.yml`、`docs/plans/2026-09-16-dev-process-foundation.md`（C1 完了）
 
 ### 2026-09-16 『プロフェッショナルAI駆動開発』のサンプル構成を移植し、開発プロセスを文書化
 
