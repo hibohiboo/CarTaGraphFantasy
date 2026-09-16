@@ -30,6 +30,12 @@
 - **残課題** — `noNonNullAssertion`（5箇所）・`noDescendingSpecificity`（2箇所）は警告のまま残した（lintはブロックしない）。`RoleBadge`/`Avatar` の `role` prop 名を変える案は「候補」に追記した
 - **反映先** — `biome.json`、`package.json`、`.githooks/pre-commit`、`scripts/setup-git-hooks.mjs`、`.github/workflows/ci.yml`、`AGENTS.md`、既存の `apps/web/src/**`（フォーマット・a11y修正）
 
+### 2026-09-16 push前に型検査・テスト・docsビルドを通す `.githooks/pre-push` を追加
+
+- **内容** — `pre-commit`（lintのみ）に加えて `pre-push` を追加し、push前に `pnpm web:typecheck && pnpm web:test && pnpm docs:build`（CIと同じ3つ）をローカルで実行してから push させるようにした。失敗時は push を中止する
+- **理由** — ユーザーから「push の前にもテストがローカルで通ることを確認する hook が欲しい」との要望。コミット単位では途中経過のコミットがテスト未通過でも構わない場合があるが、push（他者・CIに見える境界）の前には確実に通したい
+- **反映先** — `.githooks/pre-push`、`AGENTS.md`
+
 ### 2026-09-16 CI に型検査・テスト・docsビルドの安全網を追加（C1）
 
 - **内容** — `.github/workflows/ci.yml` を新設。`main` への push と PR（C6 で PR 運用を始めたときのため）で `pnpm web:typecheck` → `pnpm web:test` → `pnpm docs:build`（リンク切れ検査）を順に実行する。既存の `deploy.yml`（ビルド・デプロイ）とは分離し、デプロイは従来どおりテストの成否を待たずに走る

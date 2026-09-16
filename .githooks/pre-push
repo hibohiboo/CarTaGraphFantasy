@@ -1,0 +1,24 @@
+#!/bin/sh
+# push前に、型検査・テスト・docsビルド（リンク切れ検査）をローカルで通す。
+# CI（.github/workflows/ci.yml）と同じ3つを、pushする前に手元で確認するのが目的。
+# 有効化: git config --local core.hooksPath .githooks
+# （`pnpm install` の prepare スクリプトが自動で設定する。scripts/setup-git-hooks.mjs 参照）
+#
+# 一時的に無効化したい場合は `git push --no-verify`。ただし CI 側で同じチェックが
+# 走るので、無効化して push しても取りこぼしはそこで検出される。
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "[pre-push] pnpm が見つかりません。チェックをスキップします（PATH を確認してください）" >&2
+  exit 0
+fi
+
+echo "[pre-push] pnpm web:typecheck && pnpm web:test && pnpm docs:build"
+pnpm web:typecheck && pnpm web:test && pnpm docs:build
+status=$?
+
+if [ $status -ne 0 ]; then
+  echo "[pre-push] チェックに失敗したため push を中止しました。" >&2
+  echo "[pre-push] 緊急時は git push --no-verify で迂回できますが、CI で同じチェックが走ります。" >&2
+fi
+
+exit $status

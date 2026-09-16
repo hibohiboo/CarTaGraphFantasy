@@ -41,7 +41,11 @@ pnpm lint:fix         # 同上、安全な修正を自動適用
 
 コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`docs/` を触ったら `pnpm docs:build` も通す。
 
-lint は AI にトークンを使わせず、コミット前の git フックで機械的に止める（`.githooks/pre-commit` が `biome check --staged` を実行）。`pnpm install` すると `prepare` スクリプトが `git config --local core.hooksPath .githooks` を自動で設定するので、通常は何もしなくてよい。設定されていない場合は手動で同じコマンドを実行する。CI（`.github/workflows/ci.yml`）にも `pnpm lint` があり、フック未設定や `--no-verify` の取りこぼしを検出する。
+lint・型検査・テスト・docsビルドは、AI にトークンを使わせず git フックで機械的に止める。
+- `.githooks/pre-commit` … ステージ済みファイルだけ `biome check --staged` を実行する
+- `.githooks/pre-push` … push前に `pnpm web:typecheck && pnpm web:test && pnpm docs:build`（CIと同じ3つ）を実行する
+
+`pnpm install` すると `prepare` スクリプトが `git config --local core.hooksPath .githooks` を自動で設定するので、通常は何もしなくてよい。設定されていない場合は手動で同じコマンドを実行する。CI（`.github/workflows/ci.yml`）にも同じ4つのチェックがあり、フック未設定や `--no-verify` の取りこぼしを検出する。
 
 ## 開発ルールの適用
 
