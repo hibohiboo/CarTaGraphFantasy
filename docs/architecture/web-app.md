@@ -66,8 +66,10 @@ pnpm build:pages     # docs + app を docs/.vitepress/dist にまとめてビル
 
 ## 未React化の画面
 
-シーン構築画面（カード編集）と戦闘画面（1次元／2次元）は、まだ React 化していない。試作 HTML（`docs/public/preview/scene-builder.html` 等）は残しており、このdocsサイトのサイドバー「試作」（`docs/.vitepress/config.mts`）から見られる。
+戦闘画面（1次元／2次元）は、まだ React 化していない。試作 HTML（`docs/public/preview/combat-play.html`・`combat-play-1d.html`）は残しており、このdocsサイトのサイドバー「試作」（`docs/.vitepress/config.mts`）から見られる。
 
-（**アプリ内のサイトマップ〈`/admin/sitemap`〉ではない** — サイトマップは `apps/web/src/app/routes.ts` の各ルートが持つ `prototype` フィールドから「試作元」リンクを出す仕組みで、routes.ts に存在するルート＝既にReact化済みのページの試作元しか出せない。シーン構築・戦闘のようにまだルートが無い画面は、サイトマップには出てこない。React 化してルートを追加するときに `prototype: 'scene-builder.html'` のように指定すると、以後はサイトマップからも辿れるようになる）
+（**アプリ内のサイトマップ〈`/admin/sitemap`〉ではない** — サイトマップは `apps/web/src/app/routes.ts` の各ルートが持つ `prototype` フィールドから「試作元」リンクを出す仕組みで、routes.ts に存在するルート＝既にReact化済みのページの試作元しか出せない。まだルートが無い画面は、サイトマップには出てこない。React 化してルートを追加するときに `prototype: 'combat-play.html'` のように指定すると、以後はサイトマップからも辿れるようになる）
+
+シーン構築画面（カード編集）は`/creator/scenarios/:scenarioId/scenes/:sceneId`（`CreatorSceneEditPage.tsx`）としてReact化済み（`docs/plans/2026-09-16-scene-builder.md`、開発サイクルC4）。シーンの「目的」「終了条件」は未決の仮ルールとして実装しており、[未解決論点トラッカー](../open-questions.md)の該当項目は決着していない。
 
 React 化する際は、この試作の見た目・情報設計を踏襲しつつ、既存の React コンポーネント（`components/GameCard.tsx`・`components/ui.tsx` 等）を再利用する。試作HTML自体のクラス構造をそのまま持ち込むのではない（[試作フェーズの引き継ぎ](prototype-handover.md)参照）。

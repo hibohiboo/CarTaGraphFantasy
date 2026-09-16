@@ -3,6 +3,7 @@ import { ComponentCatalogPage } from '../pages/admin/ComponentCatalogPage';
 import { SitemapPage } from '../pages/admin/SitemapPage';
 import { CreatorScenarioEditPage } from '../pages/creator/CreatorScenarioEditPage';
 import { CreatorScenarioListPage } from '../pages/creator/CreatorScenarioListPage';
+import { CreatorSceneEditPage } from '../pages/creator/CreatorSceneEditPage';
 import { GmScenarioDetailPage } from '../pages/gm/GmScenarioDetailPage';
 import { GmScenarioListPage } from '../pages/gm/GmScenarioListPage';
 import { GmSessionListPage } from '../pages/gm/GmSessionListPage';
@@ -37,6 +38,10 @@ export const routeObjects: RouteObject[] = [
       { path: 'gm/sessions/:sessionId', element: <GmSessionManagePage /> },
       { path: 'creator/scenarios', element: <CreatorScenarioListPage /> },
       { path: 'creator/scenarios/:scenarioId', element: <CreatorScenarioEditPage /> },
+      {
+        path: 'creator/scenarios/:scenarioId/scenes/:sceneId',
+        element: <CreatorSceneEditPage />,
+      },
       { path: 'rulebook', element: <RulebookIndexPage /> },
       { path: 'rulebook/how-to-play', element: <RulebookSectionPage sectionId="how-to-play" /> },
       { path: 'rulebook/checks', element: <RulebookSectionPage sectionId="checks" /> },

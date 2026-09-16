@@ -242,6 +242,7 @@ function Editor({
               renderActions={(n) =>
                 n.kind === 'scene' ? (
                   <>
+                    <Link to={`/creator/scenarios/${sc.id}/scenes/${n.id}`}>編集</Link>
                     <Button size="sm" variant="ghost" onClick={() => toggleDense(n.id)}>
                       {n.dense ? '軽量に' : '濃密に'}
                     </Button>
@@ -252,9 +253,6 @@ function Editor({
                 ) : null
               }
             />
-            <p className="u-small u-dim u-mt">
-              シーン内のカード編集（ロケーション・NPC・イベントの配置）は次の段階で追加する。
-            </p>
           </Panel>
           <Panel
             title="結末タグ"

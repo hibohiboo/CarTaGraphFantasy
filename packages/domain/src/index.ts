@@ -131,6 +131,14 @@ export interface DeckNode {
   dense?: boolean;
   cards: CardDef[];
   children?: DeckNode[];
+  /**
+   * シーンの目的（仮ルール）。docs/open-questions.md「シーンカードの『目的』『終了条件』
+   * という属性」が未決のため、正式仕様ではない。意味を持つのは kind === 'scene' のときだけ
+   * （型では強制しない）。
+   */
+  objective?: string;
+  /** シーンの終了条件（同上、仮ルール） */
+  endCondition?: string;
 }
 
 /** 結末タグの定義（成功／失敗に限らず任意の数） */

@@ -123,6 +123,14 @@ export const routes: RouteMeta[] = [
     example: '/creator/scenarios/sc-galleon',
     prototype: 'scenario-manage.html',
   },
+  {
+    path: '/creator/scenarios/:scenarioId/scenes/:sceneId',
+    title: 'シーン編集',
+    group: 'creator',
+    description: 'ロケーション・NPC・情報・イベントカードの配置、目的・終了条件（仮）の編集',
+    example: '/creator/scenarios/sc-gray-mansion/scenes/d-s2',
+    prototype: 'scene-builder.html',
+  },
 
   {
     path: '/rulebook',
