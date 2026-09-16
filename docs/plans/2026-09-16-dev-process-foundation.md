@@ -51,7 +51,7 @@
 | C0 | 文書化（完了） | サンプルを移植し `docs/process/`・`AGENTS.md`・`.claude/` を整備 | 強いモデル＋人間の校正 | このプランと `evolution.md` の採用済み欄 |
 | C1 | CI の安全網（**完了**） | `.github/workflows/ci.yml` を追加し、main push（と将来の PR）で `pnpm web:typecheck`・`pnpm web:test`・`pnpm docs:build` を回す | 定型作業。軽いモデルで可 | 5. の C1 ✅ 2026-09-16 |
 | C2 | lint とコミット前フック（**完了**） | Biome を導入し `pnpm lint`（check）と `pnpm lint:fix` を用意。`.githooks/pre-commit` でステージ済みファイルだけ `biome check --staged` を実行。フックはリポジトリ管理（`prepare` スクリプトで `core.hooksPath` を自動設定）。既存コードの自動修正は別コミットに分けた。CI にも `pnpm lint` を追加 | 定型作業。軽いモデルで可 | フックが lint 違反のコミットを止める。既存コードが通る ✅ 2026-09-16 |
-| C3 | モデル非依存の実証 | (a) 自動メモリの運用知識を `docs/architecture/web-app.md` へ移す。(b) Claude Code のモデルを切り替えて（Sonnet / Opus 等）依頼文サンプル1〜2を試し、`AGENTS.md`・依頼文の不足を `evolution.md` に記録。余裕があれば Codex でも同じ依頼を試す | 人間がモデルを切り替えて操作 | 5. の C3 |
+| C3 | モデル非依存の実証（**完了**） | (a) 自動メモリの運用知識を `docs/architecture/web-app.md` へ移す。(b) 会話文脈ゼロのOpusサブエージェントに、依頼文サンプル1相当の一言だけを与えて挙動を再現させ、`AGENTS.md`・依頼文の不足を `evolution.md` に記録。Codex 等の別ツールでの試走は未実施 | 人間がモデルを切り替えて操作 | 5. の C3 ✅ 2026-09-16（詳細はevolution.md） |
 | C4 | 新プロセスで1機能を完走 | 題材：**シーン構築画面の React 化**（試作 `docs/public/preview/scene-builder.html` が元）。サイクル1〜8を全部回し、振り返りを記録。push は直 push のまま | プランと実装は使えるモデル、レビューは別セッション | 5. の C4 |
 | C5 | 定期リファクタリング | 依頼文サンプル8で `components/index.ts` の barrel 解消と肥大ファイルの分割 | 軽いモデルで可（テストが安全網） | Green を保って完了、`evolution.md` の候補を消し込む |
 | C6 | PR 運用の開始（基盤整備後） | `apps/`・`packages/` の変更はブランチ→PR→AIレビュー→CI→人間レビュー→マージ。docs のみは直 push のまま。`create-pr` スキルを初めて使う。ブランチ保護は人間が設定 | 人間が判断、AIが手順を実行 | 最初の PR がこの流れで閉じる |

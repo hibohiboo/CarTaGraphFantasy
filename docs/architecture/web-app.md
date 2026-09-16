@@ -58,3 +58,16 @@ pnpm web:test        # vitest（MSW の node サーバーで全ページを描�
 pnpm web:typecheck
 pnpm build:pages     # docs + app を docs/.vitepress/dist にまとめてビルド（CI と同じ）
 ```
+
+## ローカル開発の注意（つまずきやすい点）
+
+- **Git Bash で `WEB_BASE` を渡すとき** — `WEB_BASE=/CarTaGraphFantasy/app/ pnpm web:build` のように環境変数でパスを渡すと、Windows の Git Bash（MSYS2）がパス文字列をWindows形式に変換してしまい壊れる。ローカルで確認する場合は `MSYS_NO_PATHCONV=1 WEB_BASE=/CarTaGraphFantasy/app/ pnpm web:build` のように付ける。GitHub Actions（Ubuntu）では不要（`.github/workflows/deploy.yml` 参照）。
+- **vitest のバージョンを上げるときは pnpm workspace の peer 解決に注意** — pnpm workspace のルート（VitePress が使う vite 5 系）から peer 依存を解決してしまうと、`apps/web` の vitest が意図せず vite 5 系を掴んで動かなくなることがある。そのため `.npmrc` に `resolve-peers-from-workspace-root=false` を置き、`apps/web` の vitest は vite 7 系と整合する 4 系に固定している。`.npmrc` を消したり pnpm の設定を変えたりする際はこの依存関係を思い出すこと。
+
+## 未React化の画面
+
+シーン構築画面（カード編集）と戦闘画面（1次元／2次元）は、まだ React 化していない。試作 HTML（`docs/public/preview/scene-builder.html` 等）は残しており、このdocsサイトのサイドバー「試作」（`docs/.vitepress/config.mts`）から見られる。
+
+（**アプリ内のサイトマップ〈`/admin/sitemap`〉ではない** — サイトマップは `apps/web/src/app/routes.ts` の各ルートが持つ `prototype` フィールドから「試作元」リンクを出す仕組みで、routes.ts に存在するルート＝既にReact化済みのページの試作元しか出せない。シーン構築・戦闘のようにまだルートが無い画面は、サイトマップには出てこない。React 化してルートを追加するときに `prototype: 'scene-builder.html'` のように指定すると、以後はサイトマップからも辿れるようになる）
+
+React 化する際は、この試作の見た目・情報設計を踏襲しつつ、既存の React コンポーネント（`components/GameCard.tsx`・`components/ui.tsx` 等）を再利用する。試作HTML自体のクラス構造をそのまま持ち込むのではない（[試作フェーズの引き継ぎ](prototype-handover.md)参照）。
