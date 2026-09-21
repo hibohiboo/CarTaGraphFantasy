@@ -1,6 +1,9 @@
 #!/bin/sh
 # コミット前に、ステージ済みファイルだけを Biome でチェックする。
-# 目的は AI・人間どちらのコミットも、lint違反をAIにトークンを使わせず機械的に止めること。
+# 安全な指摘（フォーマット・import整理等）は自動修正して再ステージし、
+# 手で直す必要がある指摘（--unsafeが要るもの等）だけコミットを止める。
+# 目的は AI・人間どちらのコミットも、lint違反の確認にトークンを使わせず
+# 機械的に済ませること（安全な指摘は直すことさえ機械にやらせる）。
 # 有効化: git config --local core.hooksPath .githooks
 # （`pnpm install` の prepare スクリプトが自動で設定する。scripts/setup-git-hooks.mjs 参照）
 #
@@ -12,18 +15,34 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit 0
 fi
 
-echo "[pre-commit] biome check --staged"
-output=$(pnpm exec biome check --staged 2>&1)
+# --write で書き換わったファイルを後で再ステージするため、今ステージされている
+# ファイルの一覧を先に控えておく（削除されたファイルは対象外）。
+staged_files=$(git diff --name-only --cached --diff-filter=ACMR)
+
+echo "[pre-commit] biome check --staged --write（安全な自動修正）"
+output=$(pnpm exec biome check --staged --write 2>&1)
 status=$?
 printf '%s\n' "$output"
 
-if [ $status -ne 0 ]; then
+if [ $status -ne 0 ] && printf '%s' "$output" | grep -q 'No files were processed in the specified paths'; then
   # Biome は Markdown など対応外の拡張子しかステージされていないとき
   # 「処理対象が0件」を失敗として扱う。docs のみのコミットまで止めては
   # 困るので、これだけは無害として通す（本物のlint違反はここを通らない）。
-  if printf '%s' "$output" | grep -q 'No files were processed in the specified paths'; then
-    echo "[pre-commit] Biome対象外のファイルのみのため lint をスキップします"
-    exit 0
-  fi
+  echo "[pre-commit] Biome対象外のファイルのみのため lint をスキップします"
+  exit 0
+fi
+
+# --write が書き換えた内容をコミットへ反映する（書き換わっていなければ no-op）。
+if [ -n "$staged_files" ]; then
+  echo "$staged_files" | while IFS= read -r f; do
+    [ -f "$f" ] && git add -- "$f"
+  done
+fi
+
+if [ $status -ne 0 ]; then
+  echo "[pre-commit] 自動修正できない指摘が残っています（--unsafeな修正が要るものは自動適用しない方針）。手で直してください。" >&2
+  echo "[pre-commit] 詳細: pnpm lint" >&2
   exit $status
 fi
+
+exit 0
