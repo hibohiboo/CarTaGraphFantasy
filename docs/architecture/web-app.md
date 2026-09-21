@@ -3,6 +3,7 @@
 [技術スタック](index.md)のモノレポ方針に沿って追加した、React製フロントエンドの構成をまとめる。[試作フェーズの引き継ぎ](prototype-handover.md)で決めたデザイントークン・コンポーネント境界を、そのままReactに移植したもの。
 
 公開先：`https://hibohiboo.github.io/CarTaGraphFantasy/app/`（このdocsサイトと同じGitHub Pagesの `app/` 配下）
+E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（Playwrightのスクリーンショット付きHTMLレポート。mainへのpushごとに更新）
 
 ## 位置づけ
 
@@ -25,6 +26,7 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
    └─ styles/    tokens.css（デザイントークン）、global.css
 packages/domain/          ドメイン型（CardDef / Character / Scenario / Session など）。docs の用語をそのまま型にしたもの
 scripts/copy-web-to-pages.mjs   ビルド成果物を docs の dist 配下 app/ へコピー（GitHub Pages 用）
+scripts/copy-e2e-report-to-pages.mjs   PlaywrightのHTMLレポートを docs の dist 配下 e2e-report/ へコピー（GitHub Pages 用）
 ```
 
 ## ページ一覧（ロール別）
@@ -55,6 +57,7 @@ scripts/copy-web-to-pages.mjs   ビルド成果物を docs の dist 配下 app/ 
 ```sh
 pnpm web:dev         # http://localhost:5173（MSW 有効）
 pnpm web:test        # vitest（MSW の node サーバーで全ページを描画）
+pnpm web:e2e         # Playwright（Chromium）。ビルド→vite previewに対して全ルートを実ブラウザで巡回
 pnpm web:typecheck
 pnpm build:pages     # docs + app を docs/.vitepress/dist にまとめてビルド（CI と同じ）
 ```

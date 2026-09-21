@@ -10,6 +10,7 @@
     "web:dev": "pnpm --filter @cartagraph/web dev",
     "web:build": "pnpm --filter @cartagraph/web build",
     "web:test": "pnpm --filter @cartagraph/web test",
+    "web:e2e": "pnpm --filter @cartagraph/web e2e",
     "web:typecheck": "pnpm --filter @cartagraph/web typecheck",
     "build:pages": "pnpm run docs:build && pnpm run web:build && node scripts/copy-web-to-pages.mjs",
     "lint": "biome check .",

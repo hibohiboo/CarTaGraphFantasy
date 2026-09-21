@@ -43,6 +43,31 @@ jobs:
         env:
           WEB_BASE: /CarTaGraphFantasy/app/
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter @cartagraph/web exec playwright install --with-deps chromium
+        continue-on-error: true
+
+      - name: Install Playwright OS dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @cartagraph/web exec playwright install-deps chromium
+        continue-on-error: true
+
+      - name: E2E (report only, does not block deploy)
+        run: pnpm web:e2e
+        continue-on-error: true
+
+      - name: Copy E2E report into Pages dist
+        if: always()
+        run: node scripts/copy-e2e-report-to-pages.mjs
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:

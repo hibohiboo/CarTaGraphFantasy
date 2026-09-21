@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 // GitHub Pages では docs サイト配下の /CarTaGraphFantasy/app/ に置く（scripts/copy-web-to-pages.mjs）。
 // ローカル開発では / のまま。
@@ -25,5 +25,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     globals: false,
     css: false,
+    // e2e/ は Playwright 専用（apps/web/playwright.config.ts）。Vitest の既定includeは
+    // .test.ts/.spec.ts の両方を拾うため、明示的に除外しないと二重に実行されてしまう
+    exclude: [...configDefaults.exclude, '**/e2e/**'],
   },
 });
