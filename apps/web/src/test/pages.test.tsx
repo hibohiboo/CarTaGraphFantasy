@@ -135,6 +135,13 @@ describe('セッション選択', () => {
 });
 
 describe('チュートリアル（旅立ちの酒場）', () => {
+  it('NPCとの問答に集中させるため、ヘッダー・フッターを出さない', async () => {
+    renderAt('/pl/tutorial');
+    await screen.findByRole('heading', { level: 1, name: '旅立ちの酒場' });
+    expect(screen.queryByLabelText('主要ナビゲーション')).not.toBeInTheDocument();
+    expect(screen.queryByText(/設計ドキュメント（docs）/)).not.toBeInTheDocument();
+  });
+
   it('名前が空だと扉を開けられない', async () => {
     renderAt('/pl/tutorial');
     await screen.findByLabelText('名前');
