@@ -1,19 +1,9 @@
 import type { CardDef } from '@cartagraph/domain';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import {
-  Button,
-  ErrorNote,
-  GameCard,
-  HandDock,
-  Hud,
-  Loading,
-  PlayScreen,
-  ProposeForm,
-  StatusLine,
-  StatusPill,
-  Table,
-} from '../../components';
+import { GameCard } from '../../components/GameCard';
+import { HandDock, Hud, PlayScreen, ProposeForm, StatusLine, Table } from '../../components/play';
+import { Button, ErrorNote, Loading, StatusPill } from '../../components/ui';
 import { usePlayCard, usePropose, useSession } from '../../lib/queries';
 
 const PROPOSE_CARD: CardDef = {

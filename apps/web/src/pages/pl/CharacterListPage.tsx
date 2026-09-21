@@ -1,14 +1,7 @@
 import { ARCHETYPE_LABEL, type Character, deriveArchetype } from '@cartagraph/domain';
 import { useNavigate } from 'react-router';
-import {
-  Button,
-  CardGrid,
-  ErrorNote,
-  GameCard,
-  Loading,
-  PageHeader,
-  Panel,
-} from '../../components';
+import { CardGrid, GameCard } from '../../components/GameCard';
+import { Button, ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
 import { useCharacters, useMe } from '../../lib/queries';
 import s from '../pages.module.css';
 

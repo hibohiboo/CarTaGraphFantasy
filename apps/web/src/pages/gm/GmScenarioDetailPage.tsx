@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { DeckTree } from '../../components/DeckTree';
 import {
   Button,
   Chip,
   ChipGroup,
-  DeckTree,
   ErrorNote,
   Field,
   Loading,
   PageHeader,
   Panel,
   RoleBadge,
-} from '../../components';
+} from '../../components/ui';
 import { useCreateRecruitment, useScenario } from '../../lib/queries';
 import s from '../pages.module.css';
 
@@ -49,8 +49,7 @@ export function GmScenarioDetailPage() {
             シナリオ製作者：{sc.authorName} ／ <Link to="/gm/scenarios">シナリオ一覧へ戻る</Link>
           </>
         }
-        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
-        actions={<RoleBadge role="gm">GMとしてカスタマイズ中</RoleBadge>}
+        actions={<RoleBadge badgeRole="gm">GMとしてカスタマイズ中</RoleBadge>}
       />
       <div className={s.twoCol}>
         <aside className="u-stack">

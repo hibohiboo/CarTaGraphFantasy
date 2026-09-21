@@ -33,9 +33,9 @@ export function Panel({
 // ---------- Badge ----------
 export type BadgeRole = ParticipantRole | UserRole | 'mode' | 'library';
 
-export function RoleBadge({ role, children }: { role: BadgeRole; children: ReactNode }) {
+export function RoleBadge({ badgeRole, children }: { badgeRole: BadgeRole; children: ReactNode }) {
   return (
-    <span className={s.badge} data-role={role}>
+    <span className={s.badge} data-role={badgeRole}>
       {children}
     </span>
   );
@@ -185,9 +185,9 @@ export function Field({ label, children }: { label: ReactNode; children: ReactNo
   );
 }
 
-export function Avatar({ name, role }: { name: string; role?: ParticipantRole }) {
+export function Avatar({ name, avatarRole }: { name: string; avatarRole?: ParticipantRole }) {
   return (
-    <span className={s.avatar} data-role={role} aria-hidden="true">
+    <span className={s.avatar} data-role={avatarRole} aria-hidden="true">
       {name.slice(0, 1)}
     </span>
   );

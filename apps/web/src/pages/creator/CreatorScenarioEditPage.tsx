@@ -1,9 +1,9 @@
 import type { DeckNode, EndingDef, Scenario } from '@cartagraph/domain';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { DeckTree } from '../../components/DeckTree';
 import {
   Button,
-  DeckTree,
   ErrorNote,
   Field,
   Loading,
@@ -11,7 +11,7 @@ import {
   Panel,
   RoleBadge,
   StatusPill,
-} from '../../components';
+} from '../../components/ui';
 import { useScenario, useUpdateScenario } from '../../lib/queries';
 import s from '../pages.module.css';
 
@@ -103,8 +103,7 @@ function Editor({
         }
         actions={
           <>
-            {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
-            <RoleBadge role="creator">シナリオ製作者</RoleBadge>
+            <RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>
             <StatusPill status={sc.libraryStatus === 'published' ? 'approved' : 'neutral'}>
               {sc.libraryStatus === 'published' ? '共有ライブラリ公開中' : '下書き'}
             </StatusPill>

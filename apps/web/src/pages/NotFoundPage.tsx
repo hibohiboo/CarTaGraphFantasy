@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { PageHeader } from '../components';
+import { PageHeader } from '../components/ui';
 
 export function NotFoundPage() {
   return (

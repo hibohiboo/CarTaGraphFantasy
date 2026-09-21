@@ -8,7 +8,7 @@ import {
   Panel,
   RoleBadge,
   StatusPill,
-} from '../../components';
+} from '../../components/ui';
 import { relativeTime } from '../../lib/format';
 import { useCreateScenario, useScenarios } from '../../lib/queries';
 import s from '../pages.module.css';
@@ -28,8 +28,7 @@ export function CreatorScenarioListPage() {
       <PageHeader
         title="自分のシナリオ"
         crumb="シナリオ製作者＝シナリオを作る人。GMとの兼任は妨げない。共有ライブラリに公開すると、他のGMが選べるようになる。"
-        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
-        actions={<RoleBadge role="creator">シナリオ製作者</RoleBadge>}
+        actions={<RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>}
       />
       <div className={s.stack}>
         <Panel

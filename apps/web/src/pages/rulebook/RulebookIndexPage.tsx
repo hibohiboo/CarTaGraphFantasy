@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router';
-import { GameCard, PageHeader } from '../../components';
+import { GameCard } from '../../components/GameCard';
+import { PageHeader } from '../../components/ui';
 import { DOCS_BASE, rulebook } from '../../content/rulebook';
 import { useMe } from '../../lib/queries';
 import s from '../pages.module.css';

@@ -1,17 +1,16 @@
 import { ARCHETYPE_LABEL, deriveArchetype } from '@cartagraph/domain';
 import { Link, useParams } from 'react-router';
+import { CardGrid, GameCard } from '../../components/GameCard';
 import {
-  CardGrid,
   Chip,
   ChipGroup,
   ErrorNote,
-  GameCard,
   Loading,
   PageHeader,
   Panel,
   Pips,
   RoleBadge,
-} from '../../components';
+} from '../../components/ui';
 import { useCharacter, useMe } from '../../lib/queries';
 import s from '../pages.module.css';
 
@@ -36,8 +35,7 @@ export function CharacterSheetPage() {
             <Link to="/pl/characters">キャラクター一覧へ戻る</Link>
           </>
         }
-        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
-        actions={<RoleBadge role="pl">{ARCHETYPE_LABEL[archetype]}</RoleBadge>}
+        actions={<RoleBadge badgeRole="pl">{ARCHETYPE_LABEL[archetype]}</RoleBadge>}
       />
       <div className={s.twoCol}>
         <aside className="u-stack">

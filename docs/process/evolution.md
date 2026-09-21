@@ -8,20 +8,31 @@
 
 サイクルの途中で気づいた人（人間・AIどちらでも）が追記する。書式：`- [ ] <候補> — <気づいた状況・根拠>（<日付>）`
 
-- [ ] `apps/web/src/components/index.ts` の barrel export を解消する — アーキテクチャルールで barrel 禁止を採用した結果、既存コードが唯一の逸脱になった。テスト駆動リファクタリングの定期作業で扱う（2026-09-16）
+- [x] `apps/web/src/components/index.ts` の barrel export を解消する — アーキテクチャルールで barrel 禁止を採用した結果、既存コードが唯一の逸脱になった。テスト駆動リファクタリングの定期作業で扱う（2026-09-16）。**2026-09-21 実施。** 下記「採用済み」参照
 - [ ] `noNonNullAssertion`（5箇所）・`noDescendingSpecificity`（GameCard.module.css 2箇所）の警告を解消する — Biome導入時（2026-09-16）に検出。lintはブロックしないが、C5のリファクタリング定期作業で見直す
-- [ ] `RoleBadge`/`Avatar` の `role` prop 名を ARIA の `role` 属性と衝突しない名前（例：`badgeRole`）に変える — Biome導入時（2026-09-16）に `lint/a11y/useValidAriaRole` の誤検知が19箇所見つかり、`biome-ignore` コメントで個別に抑制した。プロパティ名を変えれば誤検知自体がなくなるが、アプリコードの広範囲な書き換えになるためC2の範囲外とした
+- [x] `RoleBadge`/`Avatar` の `role` prop 名を ARIA の `role` 属性と衝突しない名前（例：`badgeRole`）に変える — Biome導入時（2026-09-16）に `lint/a11y/useValidAriaRole` の誤検知が19箇所見つかり、`biome-ignore` コメントで個別に抑制した。プロパティ名を変えれば誤検知自体がなくなるが、アプリコードの広範囲な書き換えになるためC2の範囲外とした。**2026-09-21 実施。** 下記「採用済み」参照
+- [ ] 肥大化した1ページ1ファイルの分割先が未定義 — C5の barrel 解消時に `CreatorSceneEditPage.tsx`（399行）の分割を検討したが、`docs/process/rules/architecture.md` の「構造」表は pages/ を「1ページ1ファイル」と定め、「1ファイル1責務」節の分割例は `components/` への抽出のみを挙げている。一方「複数ページで共有するUI → components/。ただし2ページ目が現れるまで共通化しない」（同ファイル）があるため、1ページでしか使わない大きな区画を分割する置き場所のルールが存在しない。ルールを拡張する（例：pages/<ロール>/ 内の兄弟ファイルを許可する）か、行数だけでは分割しない方針にするか、人間の判断が要る。判断が出るまで `CreatorSceneEditPage.tsx` の分割は保留し、barrel 解消とprop改名だけをC5として完了させた（2026-09-21）
 - [x] CI で `pnpm web:typecheck && pnpm web:test` を必ず回す — 2026-09-16 に `.github/workflows/ci.yml` として実施（プランの C1）。下記「採用済み」参照
 - [ ] `apps/`・`packages/` の変更を PR 経由にする — 現状は main へ直 push。AI相互レビューと CI をマージ条件にするなら PR が要る。docs のみの修正は直 push のまま（2026-09-16）。**判断：基盤整備が終わってから採用（プランの C6）。それまでスピード重視で直 push**
 - [x] lint・フォーマッタの導入（Biome） — 2026-09-16 に実施（プランの C2）。下記「採用済み」参照
 - [x] Claude Code の自動メモリにある運用知識を `docs/` へ移す — 2026-09-16 に実施（プランの C3a）。下記「採用済み」参照
 - [x] 普段と違うモデルで1サイクル試走し、`AGENTS.md`・依頼文の不足を洗う — 2026-09-16 に Opus でのサブエージェント試走を実施（プランの C3b）。下記「採用済み」参照。Codex 等の別ツールでの試走は未実施（余裕があれば別途）
-- [ ] `docs/plans/<日付>-<機能>.md` のファイル名規約（機能名部分の言語）を明文化する — C3bのOpus試走で「唯一の実例（dev-process-foundation）がローマ字で、日本語かローマ字か規約に書かれていない」と指摘された（2026-09-16）。次にプランを作る際にでも一言足せばよい軽微な指摘
-- [ ] E2E（Playwright）の導入時期 — バックエンド着手時に再評価。それまではページ描画テストで代替（2026-09-16）
+- [x] `docs/plans/<日付>-<機能>.md` のファイル名規約（機能名部分の言語）を明文化する — C3bのOpus試走で「唯一の実例（dev-process-foundation）がローマ字で、日本語かローマ字か規約に書かれていない」と指摘された（2026-09-16）。次にプランを作る際にでも一言足せばよい軽微な指摘。**2026-09-21 実施。** 下記「採用済み」参照
+- [ ] E2E（Playwright）の導入時期 — バックエンド着手時に再評価、それまではページ描画テストで代替という方針だった（2026-09-16）。**判断：早期導入に変更（2026-09-21、人間の判断）。** 理由：スクリーンショットをGitHub Pagesから確認できるようにしたいという要望が優先する。導入方式（Playwright HTMLレポートをgh-pagesの別パスに公開）は決めたが、詳細設計（対象画面・実行タイミング・deploy.ymlの変更点）は未着手。プランの「スコープ外」記載（バックエンド着手時に再評価）と矛盾するため、`docs/plans/2026-09-16-dev-process-foundation.md` のスコープ外欄を先に更新し、実装は別プラン（`docs/plans/<日付>-e2e導入.md`）をgrilling/dev-cycleで新規作成してから進める
 
 ## 採用済み
 
 新しいものを上に。書式：`### <日付> <タイトル>` の下に、内容・理由・反映先。
+
+### 2026-09-21 定期リファクタリング（C5）でbarrel exportを解消し、RoleBadge/Avatarのpropを改名した。プランファイル名規約も明文化した
+
+- **内容（barrel解消）** — `apps/web/src/components/index.ts` を削除し、19ファイルの import をすべて実ファイル（`./components/ui`・`./components/GameCard`・`./components/play`・`./components/DeckTree`）への直接importに書き換えた。アーキテクチャルールの「barrel export は新規に作らない」の既存の唯一の逸脱を解消した
+- **内容（RoleBadge/Avatarのprop改名）** — `RoleBadge` の `role` prop を `badgeRole` に、`Avatar` の `role` prop を `avatarRole` に改名した（`ui.tsx`・呼び出し元23箇所）。ARIAの `role` 属性と衝突しなくなったため、Biome導入時に付けた `biome-ignore lint/a11y/useValidAriaRole` コメント19箇所を全て削除できた。DOM側の `data-role` 属性・CSSセレクタ（`ui.module.css`）は変更していない
+- **内容（プランファイル名規約）** — `docs/process/index.md`「プランドキュメントの8項目」に、`<機能>` 部分は日本語で書ける内容なら日本語にする旨を追記した。既存のローマ字ファイル（`2026-09-16-dev-process-foundation.md`）はリネームしない
+- **保留（肥大ファイル分割）** — `CreatorSceneEditPage.tsx`（399行）の分割は、置き場所のルールが未定義だったため見送った。詳細は上の候補一覧を参照
+- **確認** — `pnpm web:typecheck`・`pnpm web:test`（64件）・`pnpm lint` は全て通過（既存の警告4件は今回の変更と無関係）
+- **理由** — ユーザーから、進化ログの候補一覧（RoleBadge/Avatarのprop改名・プランファイル名規約・E2E導入時期）とプランのC5・C6を進めたいと依頼された。prop改名は「今後のprop名を混乱させないため」明示的に要望があった
+- **反映先** — `apps/web/src/components/index.ts`（削除）、`apps/web/src/components/ui.tsx`・`play.tsx`、`apps/web/src/pages/**`（19ファイル）、`docs/process/index.md`、`docs/process/evolution.md`
 
 ### 2026-09-21 フック化で不要になったAI向け指示を削減し、Biomeでさらに2ルールを機械化した
 

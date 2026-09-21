@@ -1,15 +1,14 @@
 import { CARD_KIND_LABEL, type CardKind } from '@cartagraph/domain';
 import type { ReactNode } from 'react';
+import { DeckTree } from '../../components/DeckTree';
+import { CardGrid, GameCard } from '../../components/GameCard';
 import {
   Avatar,
   Button,
-  CardGrid,
   Chip,
   ChipGroup,
-  DeckTree,
   EmptyNote,
   ErrorNote,
-  GameCard,
   Loading,
   PageHeader,
   Panel,
@@ -19,7 +18,7 @@ import {
   StatTile,
   StatusPill,
   ZonePill,
-} from '../../components';
+} from '../../components/ui';
 import s from '../pages.module.css';
 
 const tokens = [
@@ -179,18 +178,12 @@ export function ComponentCatalogPage() {
           title="RoleBadge"
           note="役割は色で統一：ドライバー＝金／ナビゲーター＝スレート／GM＝朱"
         >
-          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
-          <RoleBadge role="driver">迅（ドライバー）</RoleBadge>
-          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
-          <RoleBadge role="navigator">カヤ（ナビゲーター）</RoleBadge>
-          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
-          <RoleBadge role="gm">霧乃（GM）</RoleBadge>
-          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
-          <RoleBadge role="creator">シナリオ製作者</RoleBadge>
-          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
-          <RoleBadge role="mode">軽量モード</RoleBadge>
-          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
-          <RoleBadge role="library">共有ライブラリ公開中</RoleBadge>
+          <RoleBadge badgeRole="driver">迅（ドライバー）</RoleBadge>
+          <RoleBadge badgeRole="navigator">カヤ（ナビゲーター）</RoleBadge>
+          <RoleBadge badgeRole="gm">霧乃（GM）</RoleBadge>
+          <RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>
+          <RoleBadge badgeRole="mode">軽量モード</RoleBadge>
+          <RoleBadge badgeRole="library">共有ライブラリ公開中</RoleBadge>
         </Section>
 
         <Section title="StatusPill" note="状態セマンティック色。アクセントの金とは役割を分離">
@@ -211,12 +204,9 @@ export function ComponentCatalogPage() {
           </ChipGroup>
           <ZonePill zone="gm" />
           <ZonePill zone="pl" />
-          {/* biome-ignore lint/a11y/useValidAriaRole: Avatar の role は独自propで、ARIAのrole属性ではない */}
-          <Avatar name="迅" role="driver" />
-          {/* biome-ignore lint/a11y/useValidAriaRole: Avatar の role は独自propで、ARIAのrole属性ではない */}
-          <Avatar name="カヤ" role="navigator" />
-          {/* biome-ignore lint/a11y/useValidAriaRole: Avatar の role は独自propで、ARIAのrole属性ではない */}
-          <Avatar name="霧乃" role="gm" />
+          <Avatar name="迅" avatarRole="driver" />
+          <Avatar name="カヤ" avatarRole="navigator" />
+          <Avatar name="霧乃" avatarRole="gm" />
         </Section>
 
         <Section title="Button">

@@ -25,17 +25,18 @@ export function Hud({
       <h1 className={s.hudTitle}>{session.scenarioTitle}</h1>
       <span className={s.hudScene}>{session.currentScene.path}</span>
       {viewer === 'driver' ? (
-        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
-        <RoleBadge role="driver">{driver?.characterName ?? driver?.name}（ドライバー）</RoleBadge>
+        <RoleBadge badgeRole="driver">
+          {driver?.characterName ?? driver?.name}（ドライバー）
+        </RoleBadge>
       ) : (
-        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
-        <RoleBadge role="gm">{session.gmName}（GM）</RoleBadge>
+        <RoleBadge badgeRole="gm">{session.gmName}（GM）</RoleBadge>
       )}
-      {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
-      <RoleBadge role="mode">{session.mode === 'dense' ? '濃密モード' : '軽量モード'}</RoleBadge>
+      <RoleBadge badgeRole="mode">
+        {session.mode === 'dense' ? '濃密モード' : '軽量モード'}
+      </RoleBadge>
       <div className={s.hudParty}>
         {others.map((p) => (
-          <Avatar key={p.userId} name={p.characterName ?? p.name} role={p.role} />
+          <Avatar key={p.userId} name={p.characterName ?? p.name} avatarRole={p.role} />
         ))}
         {links}
       </div>
