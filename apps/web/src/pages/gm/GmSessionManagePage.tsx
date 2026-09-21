@@ -6,13 +6,13 @@ import {
 } from '@cartagraph/domain';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { GameCard } from '../../components/GameCard';
 import {
   Avatar,
   Button,
   Chip,
   ChipGroup,
   ErrorNote,
-  GameCard,
   Loading,
   PageHeader,
   Panel,
@@ -20,7 +20,7 @@ import {
   StatGrid,
   StatTile,
   StatusPill,
-} from '../../components';
+} from '../../components/ui';
 import { hhmm, relativeTime, untilLabel } from '../../lib/format';
 import { toDictionaryForm } from '../../lib/japanese';
 import {
@@ -60,8 +60,7 @@ export function GmSessionManagePage() {
             <Link to="/gm/sessions">一覧へ戻る</Link>
           </>
         }
-        // biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない
-        actions={<RoleBadge role="gm">{x.gmName}（GM）</RoleBadge>}
+        actions={<RoleBadge badgeRole="gm">{x.gmName}（GM）</RoleBadge>}
       />
 
       <StatGrid>
@@ -107,7 +106,7 @@ export function GmSessionManagePage() {
             {x.participants.map((p) => (
               <div key={p.userId} className={s.listItem} data-plain="true">
                 <div className={s.itemLeft}>
-                  <Avatar name={p.characterName ?? p.name} role={p.role} />
+                  <Avatar name={p.characterName ?? p.name} avatarRole={p.role} />
                   <span>
                     {p.characterName ? `${p.characterName}（${p.name}）` : p.name}
                     <br />
@@ -225,8 +224,7 @@ function ProposalTicket({ p, session }: { p: Proposal; session: Session }) {
     <article className={s.ticket} data-status={p.status}>
       <div className={s.ticketHead}>
         <div>
-          {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
-          <RoleBadge role="driver">{p.byName}</RoleBadge>
+          <RoleBadge badgeRole="driver">{p.byName}</RoleBadge>
           <div className="u-small u-dim">シーン {p.sceneName}</div>
         </div>
         <span className="u-small u-dim u-num">{relativeTime(p.createdAt)}</span>

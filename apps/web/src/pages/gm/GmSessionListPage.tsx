@@ -7,7 +7,7 @@ import {
   Panel,
   RoleBadge,
   StatusPill,
-} from '../../components';
+} from '../../components/ui';
 import { relativeTime } from '../../lib/format';
 import { useMe, useSessions } from '../../lib/queries';
 import s from '../pages.module.css';
@@ -42,8 +42,7 @@ export function GmSessionListPage() {
             {mine.map((x) => (
               <div key={x.id} className={s.listItem}>
                 <div className={s.itemLeft}>
-                  {/* biome-ignore lint/a11y/useValidAriaRole: RoleBadge の role は独自propで、ARIAのrole属性ではない */}
-                  <RoleBadge role="gm">GM</RoleBadge>
+                  <RoleBadge badgeRole="gm">GM</RoleBadge>
                   <span>
                     <Link to={`/gm/sessions/${x.id}`}>{x.scenarioTitle}</Link>
                     <br />
@@ -73,7 +72,7 @@ export function GmSessionListPage() {
                 <div key={x.id} className={s.listItem}>
                   <div className={s.itemLeft}>
                     {meP && (
-                      <RoleBadge role={meP.role}>
+                      <RoleBadge badgeRole={meP.role}>
                         {meP.role === 'driver' ? 'ドライバー' : 'ナビゲーター'}
                       </RoleBadge>
                     )}

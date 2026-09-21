@@ -1,15 +1,8 @@
 import { CARD_KIND_LABEL, type CardKind } from '@cartagraph/domain';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import {
-  Button,
-  CardGrid,
-  ErrorNote,
-  GameCard,
-  Loading,
-  PageHeader,
-  Panel,
-} from '../../components';
+import { CardGrid, GameCard } from '../../components/GameCard';
+import { Button, ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
 import { relativeTime } from '../../lib/format';
 import { useLibrary } from '../../lib/queries';
 import s from '../pages.module.css';

@@ -5,7 +5,7 @@ import {
   type Recruitment,
 } from '@cartagraph/domain';
 import { useState } from 'react';
-import { Button, Chip, ChipGroup, ErrorNote, Loading, PageHeader } from '../../components';
+import { Button, Chip, ChipGroup, ErrorNote, Loading, PageHeader } from '../../components/ui';
 import { useApply, useCharacters, useMe, useRecruitments } from '../../lib/queries';
 import s from '../pages.module.css';
 

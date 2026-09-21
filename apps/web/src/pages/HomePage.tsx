@@ -1,7 +1,7 @@
 import { ARCHETYPE_LABEL, deriveArchetype } from '@cartagraph/domain';
 import { Link } from 'react-router';
 import { routes } from '../app/routes';
-import { Loading, RoleBadge } from '../components';
+import { Loading, RoleBadge } from '../components/ui';
 import { useCharacters, useMe, useSessions } from '../lib/queries';
 import s from './pages.module.css';
 
@@ -42,7 +42,7 @@ export function HomePage() {
                   mine?.role === 'gm' ? `/gm/sessions/${x.id}` : `/pl/sessions/${x.id}/play`;
                 return (
                   <span key={x.id} className="u-row">
-                    <RoleBadge role={mine?.role ?? 'navigator'}>
+                    <RoleBadge badgeRole={mine?.role ?? 'navigator'}>
                       {mine?.role === 'gm'
                         ? 'GM'
                         : mine?.role === 'driver'

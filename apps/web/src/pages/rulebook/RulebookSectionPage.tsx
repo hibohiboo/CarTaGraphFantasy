@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { PageHeader, StatusPill } from '../../components';
+import { PageHeader, StatusPill } from '../../components/ui';
 import { DOCS_BASE, type RuleSection, rulebook } from '../../content/rulebook';
 import { useMe } from '../../lib/queries';
 import s from '../pages.module.css';

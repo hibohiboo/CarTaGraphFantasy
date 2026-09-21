@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { Chip, ChipGroup, ErrorNote, Loading, PageHeader, Panel } from '../../components';
+import { Chip, ChipGroup, ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
 import { useScenarios } from '../../lib/queries';
 import s from '../pages.module.css';
 

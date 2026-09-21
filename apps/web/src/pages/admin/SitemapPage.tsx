@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { GROUP_LABEL, type RouteGroup, routes } from '../../app/routes';
-import { PageHeader, Panel } from '../../components';
+import { PageHeader, Panel } from '../../components/ui';
 import s from '../pages.module.css';
 
 const PREVIEW_BASE = 'https://hibohiboo.github.io/CarTaGraphFantasy/preview/';

@@ -1,16 +1,8 @@
 import type { CardDef } from '@cartagraph/domain';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import {
-  Button,
-  CardGrid,
-  ErrorNote,
-  Field,
-  GameCard,
-  Loading,
-  PageHeader,
-  Panel,
-} from '../../components';
+import { CardGrid, GameCard } from '../../components/GameCard';
+import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '../../components/ui';
 import { useCardPool, useCreateCharacter } from '../../lib/queries';
 import s from '../pages.module.css';
 
