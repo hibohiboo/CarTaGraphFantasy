@@ -4,6 +4,8 @@ paths:
   - "apps/web/src/test/**"
   - "apps/web/src/mocks/**"
   - "apps/web/vite.config.ts"
+  - "apps/web/e2e/**"
+  - "apps/web/playwright.config.ts"
 ---
 
 # テストルール（種別の切り分けと骨抜き禁止）
@@ -15,10 +17,11 @@ paths:
 | 単体 | Vitest | `apps/web/src/test/`（対象のファイル名を反映。例：`lib/japanese.ts` → `test/japanese.test.ts`） | `pnpm web:test` | ロジックの境界値・異常系 |
 | ページ描画 | Vitest + Testing Library + MSW（node） | `apps/web/src/test/pages.test.tsx` | 同上 | 全ルートが描画できること、主要操作が通ること |
 | ドメイン | Vitest | `packages/domain/src/**/*.test.ts`（ロジックが入った時点で追加） | 未設定（追加時に整える） | 純粋関数の判定・変換 |
-| E2E | 未導入 | — | — | バックエンド着手時に Playwright を検討 |
+| E2E | Playwright（Chromium） | `apps/web/e2e/smoke.test.ts` | `pnpm web:e2e` | 全ルートが実ブラウザで例外なく描画できること（2026-09-21導入。`docs/plans/2026-09-21-e2e導入.md`参照） |
 
 - `pages.test.tsx` は `app/routes.ts` を走査して全ルートを描画する。ルートを追加すると自動的に対象になるので、ページ固有の操作テストだけを個別に書く
-- 型検査（`pnpm web:typecheck`）もテストの一部として扱う。push前に`.githooks/pre-push`が自動で確認する（AGENTS.md参照）
+- `e2e/smoke.test.ts` も同じく `app/routes.ts` を走査する。実ブラウザでの崩れ・実行時エラーの検出が目的で、`pages.test.tsx`（MSWのnodeサーバー、描画のみ）と役割が重複しないよう、深いインタラクションシナリオはE2E化しない
+- 型検査（`pnpm web:typecheck`）もテストの一部として扱う。push前に`.githooks/pre-push`が自動で確認する（AGENTS.md参照）。E2Eはブラウザ起動を伴い重いため `.githooks/pre-push` には含めず、CIのみで実行する
 
 ## 単体とページ描画の切り分け
 

@@ -18,11 +18,20 @@
 - [x] Claude Code の自動メモリにある運用知識を `docs/` へ移す — 2026-09-16 に実施（プランの C3a）。下記「採用済み」参照
 - [x] 普段と違うモデルで1サイクル試走し、`AGENTS.md`・依頼文の不足を洗う — 2026-09-16 に Opus でのサブエージェント試走を実施（プランの C3b）。下記「採用済み」参照。Codex 等の別ツールでの試走は未実施（余裕があれば別途）
 - [x] `docs/plans/<日付>-<機能>.md` のファイル名規約（機能名部分の言語）を明文化する — C3bのOpus試走で「唯一の実例（dev-process-foundation）がローマ字で、日本語かローマ字か規約に書かれていない」と指摘された（2026-09-16）。次にプランを作る際にでも一言足せばよい軽微な指摘。**2026-09-21 実施。** 下記「採用済み」参照
-- [ ] E2E（Playwright）の導入時期 — バックエンド着手時に再評価、それまではページ描画テストで代替という方針だった（2026-09-16）。**判断：早期導入に変更（2026-09-21、人間の判断）。** 理由：スクリーンショットをGitHub Pagesから確認できるようにしたいという要望が優先する。導入方式（Playwright HTMLレポートをgh-pagesの別パスに公開）は決めたが、詳細設計（対象画面・実行タイミング・deploy.ymlの変更点）は未着手。プランの「スコープ外」記載（バックエンド着手時に再評価）と矛盾するため、`docs/plans/2026-09-16-dev-process-foundation.md` のスコープ外欄を先に更新し、実装は別プラン（`docs/plans/<日付>-e2e導入.md`）をgrilling/dev-cycleで新規作成してから進める
+- [x] E2E（Playwright）の導入時期 — バックエンド着手時に再評価、それまではページ描画テストで代替という方針だった（2026-09-16）。**判断：早期導入に変更（2026-09-21、人間の判断）。** 理由：スクリーンショットをGitHub Pagesから確認できるようにしたいという要望が優先する。詳細設計は `docs/plans/2026-09-21-e2e導入.md` へgrillingで落とし込み、design-reviewerのレビュー（P0×2・P1×4・P2×3の指摘を反映）を経て実施した。**2026-09-21 実施。** 下記「採用済み」参照
 
 ## 採用済み
 
 新しいものを上に。書式：`### <日付> <タイトル>` の下に、内容・理由・反映先。
+
+### 2026-09-21 E2E（Playwright）を早期導入し、GitHub Pagesでスクリーンショット付きレポートを公開できるようにした
+
+- **内容** — `apps/web/e2e/smoke.test.ts` を新設し、`routes.ts`（サイトマップの唯一の情報源）の全20ルートを実ブラウザ（Chromium）で巡回する。動的ルートは既存の `route.example` を使う。合否判定は「遷移が例外なく完了」「`role="alert"`のエラー表示が無い」「console error/pageerrorが無い」の汎用3点チェック（`route.title`と実際の見出しの一致は見ない。動的ページでは意味を持たないため）。`/admin/components`（UI部品カタログ）は`ErrorNote`を見本として意図的に表示するため、アラートチェックのみ除外している
+- **CI・deployの非対称構成** — `ci.yml`にE2Eを追加してPRをブロックする条件にした。`deploy.yml`ではE2Eが失敗してもデプロイを止めない（`continue-on-error: true`）。C1の「型検査・テストはCIでゲート、デプロイはテストの成否を待たずに走る」という決定と同じ構成に揃えた
+- **GitHub Pagesへの公開** — GitHub Pagesが「1サイト1アーティファクト」（`actions/deploy-pages`）である制約に対応するため、新設した `scripts/copy-e2e-report-to-pages.mjs` でPlaywrightのHTMLレポートを`docs/.vitepress/dist/e2e-report/`へコピーしてから、既存のPages公開パイプラインに相乗りさせた。既存の`copy-web-to-pages.mjs`と異なり、レポートが存在しない場合は警告のみで正常終了する（`if: always()`で必ず実行されるステップのため、デプロイ全体を落とさないように）
+- **設計の経緯** — `docs/plans/2026-09-21-e2e導入.md` をgrillingスキルで作成し、design-reviewerのレビューでP0が2件（スクリーンショット設定の欠落、`testing.md`との矛盾）、P1が4件（CI内の二重ビルド、`testDir`未指定、pre-pushフックとの関係未定義、レポート欠損時の失敗設計）、P2が3件（`web-app.md`未更新、`.gitignore`未更新、excludeパターンの頑健性）見つかり、すべて反映してから実装した
+- **確認** — `pnpm web:typecheck`・`pnpm web:test`・`pnpm web:e2e`（20件全通過）・`pnpm docs:build` は全て通過
+- **反映先** — `apps/web/playwright.config.ts`（新設）、`apps/web/e2e/smoke.test.ts`（新設）、`apps/web/vite.config.ts`、`apps/web/tsconfig.json`、`apps/web/package.json`、`package.json`、`.gitignore`、`scripts/copy-e2e-report-to-pages.mjs`（新設）、`.github/workflows/ci.yml`・`deploy.yml`、`docs/process/rules/testing.md`、`docs/architecture/web-app.md`、`docs/plans/2026-09-21-e2e導入.md`
 
 ### 2026-09-21 定期リファクタリング（C5）でbarrel exportを解消し、RoleBadge/Avatarのpropを改名した。プランファイル名規約も明文化した
 
