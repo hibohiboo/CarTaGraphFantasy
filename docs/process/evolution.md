@@ -23,6 +23,12 @@
 
 新しいものを上に。書式：`### <日付> <タイトル>` の下に、内容・理由・反映先。
 
+### 2026-09-21 pre-commitフックが安全な指摘を自動修正・再ステージするよう変更
+
+- **内容** — `.githooks/pre-commit` を `biome check --staged`（チェックのみ）から `biome check --staged --write`（安全な指摘は自動修正）に変更。`--write`で直った内容を`git add`で再ステージしてからコミットを続行する。`--unsafe`が要る指摘（C2で意図的に自動適用しない方針にしたもの）だけ引き続きコミットを止める
+- **理由** — ユーザーが`vite.config.ts`にコードを1行足した際、ダブルクォート等のフォーマット崩れだけでコミットが止まり、`pnpm lint:fix`を別途手で挟む必要があった。フォーマット崩れは判断の要らない機械的な指摘なので、直すことも機械にやらせる方が「AIにトークンを使わせず機械的に止める」という狙いに合う
+- **反映先** — `.githooks/pre-commit`、`AGENTS.md`
+
 ### 2026-09-16 モデル非依存の実証（C3）— メモリの運用知識をdocsへ移し、Opusでの試走で確認した
 
 - **内容（C3a: メモリ→docs）** — Claude Code の自動メモリにあった `apps/web` の運用知識のうち、他ツール・他モデルにも必要なもの（`MSYS_NO_PATHCONV=1` が要る理由、pnpm workspace の peer 解決で vitest が壊れる件と `.npmrc` の意図、シーン構築・戦闘画面がまだReact化されていない旨）を `docs/architecture/web-app.md` に「ローカル開発の注意」「未React化の画面」として書き出した。Claude Code のBashツール固有の癖（長いheredocが壊れる→Writeツールを使う）は `docs` ではなく `CLAUDE.md`（Claude Code固有の補足）に置いた。元のメモリファイル（`web-app-react-phase.md`）は要点とdocsへのポインタだけに縮めた
