@@ -38,7 +38,15 @@
       "correctness": {
         "noUnusedVariables": "error",
         "noUnusedImports": "error"
+      },
+      "suspicious": {
+        "noConsole": "error",
+        "noSkippedTests": "error",
+        "noFocusedTests": "error"
       }
+    },
+    "domains": {
+      "test": "all"
     }
   },
   "assist": {
@@ -48,5 +56,17 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["scripts/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    }
+  ]
 }

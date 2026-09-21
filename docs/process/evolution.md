@@ -23,6 +23,13 @@
 
 新しいものを上に。書式：`### <日付> <タイトル>` の下に、内容・理由・反映先。
 
+### 2026-09-21 フック化で不要になったAI向け指示を削減し、Biomeでさらに2ルールを機械化した
+
+- **内容（不要な指示の削減）** — C2・pre-push導入（2026-09-16〜21）でlint・型検査・テスト・docsビルドがgitフックで自動化されたのに、`.claude/skills/eng-practices`・`create-pr`・`docs/process/index.md`・`docs/process/rules/testing.md`には、AIに同じチェックを手動で再実行させる記述がそのまま残っていた。フックが直後に同じチェックを再実行するだけの箇所（eng-practicesの仕上げ、create-prのPR本文用の再実行）は削除し、ライトルートの「コミット前テストを必ず通す」という表現も「フックが自動でやる」に書き換えた。tdd・prompt-sampleの「作業の節目で自分で実行して確認する」系の指示は、フックとは目的が違う（開発中の早期フィードバック、AIレビュー前の安全網）ため残した
+- **内容（新規ルールの機械化）** — `biome.json`に`suspicious.noConsole`・`suspicious.noSkippedTests`・`suspicious.noFocusedTests`を`error`で追加し、`linter.domains.test`を`"all"`にした（vitestのdomain検出だけでは発火しなかったため明示指定が必要だった）。`scripts/**`（Node.jsのビルドスクリプト）は`overrides`で`noConsole`を除外。これにより、`docs/process/rules/architecture.md`の「業務コードにconsole.*を残さない」と`docs/process/rules/testing.md`の「.only/.skipを残したままコミットしない」が、人間・AIが覚えてgrepする運用からコミット前フックでの機械的な検知に変わった
+- **理由** — ユーザーから「lintやtestをhookにしたことで、エージェントやスキルで無駄になったところはないか確認して削除してほしい。他にhookにできるものがあれば提案して」と依頼された。モデル非依存の基盤の原則5「AIにlint結果を読ませてトークンを使うより、機械で止める」に沿って、フックで担保済みの確認をAIに二重に行わせない方針を徹底した
+- **反映先** — `biome.json`、`.claude/skills/eng-practices/SKILL.md`、`.claude/skills/create-pr/SKILL.md`、`docs/process/index.md`、`docs/process/rules/testing.md`、`docs/process/rules/architecture.md`
+
 ### 2026-09-21 pre-commitフックが安全な指摘を自動修正・再ステージするよう変更
 
 - **内容** — `.githooks/pre-commit` を `biome check --staged`（チェックのみ）から `biome check --staged --write`（安全な指摘は自動修正）に変更。`--write`で直った内容を`git add`で再ステージしてからコミットを続行する。`--unsafe`が要る指摘（C2で意図的に自動適用しない方針にしたもの）だけ引き続きコミットを止める

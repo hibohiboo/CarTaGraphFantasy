@@ -1,0 +1,3 @@
+# 改行コードはLF（Windowsでも。AGENTS.md最重要ルール5）。
+# 個人のgit設定（core.autocrlf等）に依存させず、プロジェクトとして機械的に強制する。
+* text=auto eol=lf

@@ -22,4 +22,6 @@ description: push・PR の前に、自分の git diff を Google Engineering Pra
 
 ## 3. 直してから出す
 
-指摘は自分で直す。判断に迷う点は、PR 本文（または push 時の報告）の「レビュー観点」に書き出してレビューアーへ渡す。最後に `pnpm web:typecheck && pnpm web:test` を通す。
+指摘は自分で直す。判断に迷う点は、PR 本文（または push 時の報告）の「レビュー観点」に書き出してレビューアーへ渡す。
+
+型検査・テスト・docsビルドは `.githooks/pre-push` が push 時に自動で実行してコミットを止めるので、ここで手動で回して確認する必要はない（失敗すれば push 時にそのまま分かる）。lint も `.githooks/pre-commit` が自動修正・確認する。ここでのセルフレビューは、機械では拾えない設計・複雑さ・命名といった判断に絞る。

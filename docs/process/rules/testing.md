@@ -18,7 +18,7 @@ paths:
 | E2E | 未導入 | — | — | バックエンド着手時に Playwright を検討 |
 
 - `pages.test.tsx` は `app/routes.ts` を走査して全ルートを描画する。ルートを追加すると自動的に対象になるので、ページ固有の操作テストだけを個別に書く
-- 型検査（`pnpm web:typecheck`）もテストの一部として扱う。コミット前に必ず通す
+- 型検査（`pnpm web:typecheck`）もテストの一部として扱う。push前に`.githooks/pre-push`が自動で確認する（AGENTS.md参照）
 
 ## 単体とページ描画の切り分け
 
@@ -58,7 +58,7 @@ expect(toDictionaryForm('扉を破壊する')).toBe('扉を破壊する'); // �
 ```
 
 - MSW のハンドラをテスト内で常時成功に差し替えない（`fixtures.ts` の状態を通した結合を確かめるのがページ描画テストの仕事）
-- `.only` / `.skip` を残したままコミットしない
+- `.only` / `.skip` を残したままコミットしない（`biome.json`の`noFocusedTests`/`noSkippedTests`がコミット前フックで機械的に検知して止める。意図的に残す場合は抑制コメントを書く）
 - 新規テストは先に Red（失敗）を確認してから実装する。最初から通ったら、実装済みか assert が弱いかを判定する
 
 ## テストの独立性

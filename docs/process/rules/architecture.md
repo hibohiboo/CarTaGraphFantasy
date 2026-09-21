@@ -42,7 +42,7 @@ apps/web/src/
 - `packages/domain` の型と用語は `docs/` の用語に対応させる。**用語の意味を変えるときは docs を先に更新する**（SSOT）
 - 未解決論点（`docs/open-questions.md`）に関わる仮ルールは、コードのコメントと画面表示の両方で「仮」と明示する（例：キャラクター作成の能力値配分）
 - barrel export（`index.ts` への集約・再エクスポート）は新規に作らない。実ファイルへ直接 import する。既存の `components/index.ts` は解消候補（[体制の進化ログ](../evolution.md)参照）
-- 業務コードに `console.*` を残さない（現状ゼロ）。構造化ログの方針はバックエンド着手時に定める
+- 業務コードに `console.*` を残さない（`biome.json`の`noConsole`がコミット前フックで機械的に検知して止める。`scripts/`配下のNode.jsビルドスクリプトは対象外）。構造化ログの方針はバックエンド着手時に定める
 
 ## 副作用の分離（Functional Core / Imperative Shell）
 
