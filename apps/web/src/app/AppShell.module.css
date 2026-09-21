@@ -101,3 +101,29 @@
 .footer a {
   color: inherit;
 }
+.footerNav {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--thread-dim);
+}
+.footerGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+/* システム管理者向けの入り口は、さらに控えめに右端の隅へ */
+.footerAdmin {
+  margin-left: auto;
+  color: var(--parchment-text-dim);
+  opacity: 0.6;
+  font-size: 0.68rem;
+  text-decoration: none;
+}
+.footerAdmin:hover {
+  opacity: 1;
+}

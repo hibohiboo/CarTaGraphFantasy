@@ -1,11 +1,14 @@
 import { ARCHETYPE_LABEL, deriveArchetype } from '@cartagraph/domain';
 import { Link } from 'react-router';
-import { GROUP_LABEL, type RouteGroup, routes } from '../app/routes';
+import { routes } from '../app/routes';
 import { Loading, RoleBadge } from '../components';
 import { useCharacters, useMe, useSessions } from '../lib/queries';
 import s from './pages.module.css';
 
-const groups: RouteGroup[] = ['pl', 'gm', 'creator', 'rulebook', 'admin'];
+// トップページはプレイヤーの入り口だけをメインで見せる（「全部見える」トップにしない）。
+// GM・シナリオ作成者向けの入り口はヘッダー下のフッターへ、システム管理者向けはさらに
+// 控えめにフッターの隅へ移した（AppShell.tsx参照）。
+const plRoutes = routes.filter((r) => r.group === 'pl' && !r.path.includes(':'));
 
 export function HomePage() {
   const me = useMe();
@@ -20,14 +23,9 @@ export function HomePage() {
   return (
     <>
       <section className={s.hero}>
-        <h1 className={s.heroTitle}>
-          カードを開き、糸をたどって、
-          <br />
-          世界を読む。
-        </h1>
+        <h1 className={s.heroTitle}>ホーム</h1>
         <p className={s.heroLede}>
-          カルタグラフは、ルールも世界もシナリオも「カード」で読めるTRPGです。
-          {me.data && ` ${me.data.name}さん、`}今日はどの役割で卓につきますか。
+          {me.data && `${me.data.name}さん、`}今日はどの役割で卓につきますか。
         </p>
       </section>
 
@@ -67,22 +65,21 @@ export function HomePage() {
           )}
         </section>
 
-        {groups.map((g) => (
-          <section key={g} className={s.homeCard}>
-            <h2>{GROUP_LABEL[g]}</h2>
-            <div className={s.homeLinks}>
-              {routes
-                .filter((r) => r.group === g && !r.path.includes(':'))
-                .map((r) => (
-                  <span key={r.path}>
-                    <Link to={r.path}>{r.title}</Link>
-                    <span className="u-dim u-small"> — {r.description}</span>
-                  </span>
-                ))}
-            </div>
-          </section>
-        ))}
+        <section className={[s.homeCard, s.homeCardMain].join(' ')}>
+          <h2>プレイヤーとして卓につく</h2>
+          <div className={s.homeLinks}>
+            {plRoutes.map((r) => (
+              <span key={r.path}>
+                <Link to={r.path}>{r.title}</Link>
+                <span className="u-dim u-small"> — {r.description}</span>
+              </span>
+            ))}
+          </div>
+        </section>
       </div>
+      <p className="u-small u-dim u-mt">
+        GM・シナリオ作成者向けの入り口はページ下部に、システム管理者向けはさらにその隅にあります。
+      </p>
     </>
   );
 }

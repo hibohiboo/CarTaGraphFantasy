@@ -4,6 +4,7 @@ import { SitemapPage } from '../pages/admin/SitemapPage';
 import { CreatorScenarioEditPage } from '../pages/creator/CreatorScenarioEditPage';
 import { CreatorScenarioListPage } from '../pages/creator/CreatorScenarioListPage';
 import { CreatorSceneEditPage } from '../pages/creator/CreatorSceneEditPage';
+import { EntrancePage } from '../pages/EntrancePage';
 import { GmScenarioDetailPage } from '../pages/gm/GmScenarioDetailPage';
 import { GmScenarioListPage } from '../pages/gm/GmScenarioListPage';
 import { GmSessionListPage } from '../pages/gm/GmSessionListPage';
@@ -26,7 +27,8 @@ export const routeObjects: RouteObject[] = [
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <HomePage /> },
+      { index: true, element: <EntrancePage /> },
+      { path: 'home', element: <HomePage /> },
       { path: 'pl/sessions', element: <SessionBrowsePage /> },
       { path: 'pl/sessions/:sessionId/play', element: <PlayPage /> },
       { path: 'pl/characters', element: <CharacterListPage /> },

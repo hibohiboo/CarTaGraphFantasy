@@ -28,12 +28,18 @@ export interface RouteMeta {
 export const routes: RouteMeta[] = [
   {
     path: '/',
-    title: 'ホーム',
+    title: '入口',
     group: 'common',
+    description: '扉のカード1枚だけの最初の画面。開くとホームへ進む',
+  },
+
+  {
+    path: '/home',
+    title: 'ホーム',
+    group: 'pl',
     description: 'ロール別の入口。自分のセッション・PCの状況をまとめて見る',
     nav: true,
   },
-
   {
     path: '/pl/sessions',
     title: 'セッション選択',

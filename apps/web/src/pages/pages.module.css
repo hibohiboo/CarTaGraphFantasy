@@ -272,6 +272,16 @@
 .homeCard h2 {
   font-size: 1.05rem;
 }
+/* トップページでメインに出すのはプレイヤー向けの1枚だけ。目立たせるため全幅・強調枠にする */
+.homeCardMain {
+  grid-column: 1 / -1;
+  border-color: var(--thread);
+  box-shadow: var(--shadow-card);
+}
+.homeCardMain h2 {
+  font-size: 1.2rem;
+  color: var(--thread);
+}
 .homeLinks {
   display: flex;
   flex-direction: column;
@@ -392,4 +402,69 @@
 }
 .sitemapTable td:first-child {
   white-space: nowrap;
+}
+
+/* 入口（扉のカード1枚だけの最初の画面） */
+.entrance {
+  min-height: 70dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+  padding-block: 40px;
+}
+.entranceCard {
+  width: min(280px, 70vw);
+  aspect-ratio: var(--card-ratio);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+.entranceCard:hover,
+.entranceCard:focus-visible {
+  transform: translateY(-6px);
+  box-shadow:
+    0 0 0 3px rgba(217, 184, 119, 0.25),
+    var(--shadow-card);
+}
+.entranceDoor {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.entranceDoor svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.entranceTitle {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+.entranceHint {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
 }
