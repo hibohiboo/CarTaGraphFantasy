@@ -32,10 +32,16 @@ export function HomePage() {
       <div className={s.home}>
         <section className={s.homeCard}>
           <h2>いま進んでいること</h2>
-          {sessions.isPending || characters.isPending ? (
+          {sessions.isPending || characters.isPending || me.isPending ? (
             <Loading />
           ) : (
             <div className={s.homeLinks}>
+              {myChars.length === 0 && (
+                <span className="u-row">
+                  <span className="u-dim u-small">まだキャラクターがいません。</span>
+                  <Link to="/pl/tutorial">旅立ちの酒場へ行く</Link>
+                </span>
+              )}
               {mySessions.map((x) => {
                 const mine = x.participants.find((p) => p.userId === me.data?.id);
                 const to =

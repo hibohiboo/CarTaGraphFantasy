@@ -73,6 +73,12 @@ export const routes: RouteMeta[] = [
     prototype: 'character-create.html',
   },
   {
+    path: '/pl/tutorial',
+    title: '旅立ちの酒場',
+    group: 'pl',
+    description: '初めてのプレイヤー向け。酒場のNPCとの短い問答を経て、最初のキャラクターができる',
+  },
+  {
     path: '/pl/characters/:characterId',
     title: 'キャラクターシート',
     group: 'pl',

@@ -86,6 +86,21 @@ export function useCreateCharacter() {
   });
 }
 
+/** チュートリアル用。ステップごとにPCへ段階的に反映する（docs/plans/2026-09-22-チュートリアル導線.md） */
+export function useUpdateCharacter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: {
+      id: string;
+      patch: { abilities?: Character['abilities']; addCardIds?: string[] };
+    }) => api.patch<Character>(`/characters/${v.id}`, v.patch),
+    onSuccess: (c) => {
+      qc.setQueryData(keys.character(c.id), c);
+      void qc.invalidateQueries({ queryKey: keys.characters });
+    },
+  });
+}
+
 /** セッション操作系は、いずれもサーバーが返す最新の Session でキャッシュを置き換える */
 function useSessionMutation<V>(fn: (v: V) => Promise<Session>) {
   const qc = useQueryClient();
