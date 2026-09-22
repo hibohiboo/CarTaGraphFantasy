@@ -213,6 +213,9 @@ export function TutorialPage() {
               : `ロケーション：${LOCATION_CARD.name}（タップして詳しく見る）`
           }
         />
+        {/* 展開時はカード自体に名前が出るので、アイコン表示のときだけ隣に添える
+            （パッと見で今いる場所がわかるように、2026-09-22ユーザー指定） */}
+        {!locationExpanded && <span className="u-serif">{LOCATION_CARD.name}</span>}
       </div>
       {showMat && (
         <div className="u-mt">
@@ -233,7 +236,10 @@ export function TutorialPage() {
 
         {step === 'name' && (
           <div className={s.form}>
-            <Table flavor="良い夜だ、旅の方。ここは旅立ちの酒場。名を聞かせてくれないか" />
+            <Table
+              speakerCard={NPC_CARD}
+              flavor="良い夜だ、旅の方。ここは旅立ちの酒場。名を聞かせてくれないか"
+            />
             <HandDock
               hand={[]}
               onPlay={() => {}}
@@ -274,7 +280,10 @@ export function TutorialPage() {
 
         {step === 'training' && (
           <>
-            <Table flavor="腕に覚えはあるかい？なんなら少し鍛えてから旅立つのも悪くない" />
+            <Table
+              speakerCard={NPC_CARD}
+              flavor="腕に覚えはあるかい？なんなら少し鍛えてから旅立つのも悪くない"
+            />
             <HandDock
               hand={TRAINING_CHOICES}
               onPlay={(c) => setStep(c.id === 'train' ? 'ability' : 'done')}
@@ -285,6 +294,7 @@ export function TutorialPage() {
         {step === 'ability' && (
           <>
             <Table
+              speakerCard={NPC_CARD}
               flavor="なら、お前さんの得意はどれだ"
               hint="体技心の配分方法はここだけの仮ルール"
             />
@@ -303,7 +313,7 @@ export function TutorialPage() {
         {step === 'gear' &&
           (gearCards.length > 0 ? (
             <>
-              <Table flavor="旅には何か持たせてやろう" />
+              <Table speakerCard={NPC_CARD} flavor="旅には何か持たせてやろう" />
               <CardGrid min={130}>
                 {gearCards.map((card) => (
                   <GameCard
@@ -322,14 +332,17 @@ export function TutorialPage() {
             </>
           ) : (
             <div className={s.form}>
-              <Table flavor="……すまん、渡せる荷物が今は無いようだ。話を進めよう" />
+              <Table
+                speakerCard={NPC_CARD}
+                flavor="……すまん、渡せる荷物が今は無いようだ。話を進めよう"
+              />
               <Button onClick={() => setStep('resolve')}>先へ進む</Button>
             </div>
           ))}
 
         {step === 'resolve' && (
           <>
-            <Table flavor="最後に聞くが……戦う覚悟はあるか" />
+            <Table speakerCard={NPC_CARD} flavor="最後に聞くが……戦う覚悟はあるか" />
             <HandDock
               hand={RESOLVE_CHOICES}
               onPlay={(c) => (c.id === 'commit' ? becomeAdventurer() : setStep('done'))}

@@ -128,7 +128,10 @@ button.card:disabled {
   font-family: var(--font-serif);
   font-size: var(--card-name-size, 0.94rem);
   line-height: 1.35;
-  padding-top: 6px;
+}
+/* 通常表示は名前が先頭（カード自体のpaddingで上端に接する）。種別・コスト行は名前の下に続く */
+.card:not([data-layout="center"]) .kindRow {
+  margin-top: 4px;
 }
 /* hideMeta（名前＋アイコンだけの小さな表示）は1行固定。JS側
    （useAutoFitCardName）で収まる大きさへフォントサイズを縮めた上で、
@@ -137,6 +140,11 @@ button.card:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* 中央寄せ名（手札の選択肢など）は種別行のあとに名前が来るので、その間隔を名前側で確保しつつ
+   残り空間いっぱいに中央寄せする（伏せ札は種別行を持たないので対象外） */
+.card[data-layout="center"]:not([data-face="down"]) .name {
+  padding-top: 6px;
 }
 .card[data-layout="center"] .name {
   flex: 1;

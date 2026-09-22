@@ -1,5 +1,6 @@
 import type { CardDef, Session } from '@cartagraph/domain';
 import type { ReactNode } from 'react';
+import { CARD_KIND_ICONS } from './cardKindIcons';
 import { GameCard } from './GameCard';
 import s from './play.module.css';
 import { Avatar, RoleBadge } from './ui';
@@ -44,21 +45,46 @@ export function Hud({
   );
 }
 
+/** 台詞・地の文を出す「台詞カード」。GameCard（5:7）を横向きにした比率（7:5）。
+ * 発言者名はGameCardと同じくカード左上を維持し、その下に肖像（あれば）＋台詞欄を横並びで置く。
+ * speakerCard（NPCの台詞など）があるときだけ肖像を出す。GMの地の文はspeakerCardなしのまま、
+ * 肖像なしの今の見た目にする（2026-09-22ユーザー指定：名前欄が肖像に押されて右に寄ったので、
+ * 名前だけカード全体の左上に独立させ、肖像＋台詞欄はその下の行にした） */
 export function Table({
+  speakerCard,
   flavor,
   hint,
   mystery,
 }: {
+  speakerCard?: Pick<CardDef, 'name' | 'kind'> & Partial<CardDef>;
   flavor: string;
   hint?: string;
   mystery?: CardDef[];
 }) {
   return (
     <main className={s.table}>
-      <p className={s.flavor}>
-        {flavor}
-        {hint && <span className={s.flavorDim}>{hint}</span>}
-      </p>
+      <div className={s.speechCard}>
+        {speakerCard && <div className={s.speaker}>{speakerCard.name}</div>}
+        <div className={s.speechRow}>
+          {speakerCard && (
+            <div
+              className={s.speechPortrait}
+              style={
+                speakerCard.portraitUrl
+                  ? { backgroundImage: `url(${speakerCard.portraitUrl})` }
+                  : undefined
+              }
+              aria-hidden="true"
+            >
+              {!speakerCard.portraitUrl && CARD_KIND_ICONS[speakerCard.kind]}
+            </div>
+          )}
+          <p className={s.flavor}>
+            {flavor}
+            {hint && <span className={s.flavorDim}>{hint}</span>}
+          </p>
+        </div>
+      </div>
       {mystery && mystery.length > 0 && (
         <div className={s.mystery}>
           {mystery.map((c) => (

@@ -45,14 +45,74 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
   padding: 12px;
 }
+/* GameCardの5:7を横向きにした7:5。発言者名はGameCardと同じくカード全体の左上に独立して置き
+ * （肖像列に押されて右に寄らないよう、2026-09-22ユーザー指摘で名前だけ先頭行に分離）、
+ * その下の行に肖像（speakerCardがあるときだけ）＋台詞欄を横並びで置く。
+ * speakerCardがないとき（GMの地の文）は発言者名も肖像も出ず、台詞欄だけの従来の見た目になる */
+.speechCard {
+  width: min(480px, 100%);
+  aspect-ratio: 7 / 5;
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  overflow: auto;
+}
+.speechRow {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 10px;
+}
+.speechPortrait {
+  flex: none;
+  width: 26%;
+  /* stretchで台詞カードの高さいっぱいに伸ばすと縦長すぎたので、GameCardと同じ
+     --card-ratio（白銀比）で高さを決め、台詞欄の中で縦中央に置く（2026-09-22ユーザー指摘） */
+  aspect-ratio: var(--card-ratio);
+  align-self: center;
+  border-radius: 5px;
+  background-color: var(--felt-panel-2);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.speechPortrait svg {
+  width: 46%;
+  height: 46%;
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 1.6;
+  opacity: 0.7;
+}
+.speaker {
+  flex: none;
+  align-self: flex-start;
+  font-family: var(--font-serif);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  border: 1px solid var(--ink-soft);
+  border-radius: 4px;
+  padding: 1px 6px;
+  line-height: 1.5;
+}
 .flavor {
-  max-width: 30em;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  margin: 0;
   font-family: var(--font-serif);
   font-size: clamp(1.05rem, 2vw + 0.6rem, 1.4rem);
-  line-height: 1.9;
+  line-height: 1.5;
 }
 .flavorDim {
   display: block;
