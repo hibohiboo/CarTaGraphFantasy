@@ -142,6 +142,16 @@ describe('チュートリアル（旅立ちの酒場）', () => {
     expect(screen.queryByText(/設計ドキュメント（docs）/)).not.toBeInTheDocument();
   });
 
+  it('右下のプレイマットを開くと今の場の様子が見える', async () => {
+    const user = userEvent.setup();
+    renderAt('/pl/tutorial');
+    await user.click(await screen.findByRole('button', { name: 'プレイマットで見る' }));
+    expect(screen.getByText('シーン・場所')).toBeInTheDocument();
+    expect(screen.getByText('話し相手')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'プレイマットを閉じる' }));
+    expect(screen.queryByText('シーン・場所')).not.toBeInTheDocument();
+  });
+
   it('名前が空だと名乗れない', async () => {
     const user = userEvent.setup();
     renderAt('/pl/tutorial');

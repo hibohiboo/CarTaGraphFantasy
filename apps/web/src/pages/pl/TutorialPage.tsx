@@ -214,12 +214,6 @@ export function TutorialPage() {
           }
         />
       </div>
-      <p className="u-small u-dim">
-        1枚で場の全体が見える簡易表示。
-        <Button size="sm" variant="ghost" onClick={() => setShowMat((v) => !v)}>
-          {showMat ? 'プレイマットを閉じる' : 'プレイマットで見る'}
-        </Button>
-      </p>
       {showMat && (
         <div className="u-mt">
           <PlayMat zones={matZones} />
@@ -356,6 +350,17 @@ export function TutorialPage() {
           </div>
         )}
       </Panel>
+      <div style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 10 }}>
+        <GameCard
+          card={{ id: 'play-mat', kind: 'scene', name: 'プレイマット', tags: [] }}
+          width={44}
+          portrait
+          iconOnly
+          selected={showMat}
+          onClick={() => setShowMat((v) => !v)}
+          title={showMat ? 'プレイマットを閉じる' : 'プレイマットで見る'}
+        />
+      </div>
     </>
   );
 }
