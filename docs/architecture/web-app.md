@@ -9,6 +9,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 
 - **バックエンドはまだ作らない。** `/api/*` はすべて [MSW](https://mswjs.io/)（Mock Service Worker）が横取りして応答する。状態はブラウザのメモリ上にあり、リロードで初期化される。本番ビルド（GitHub Pages）でもMSWを起動している。
 - 本物のAPIができたら、`apps/web/src/lib/api.ts` の接続先を差し替え、`src/mocks/` を開発時のみ有効にする想定。
+- TanStack Queryの `QueryClient`（`src/main.tsx`）は `retry: false, staleTime: 5_000` のみを設定している。実レイテンシ・更新頻度を測定できる材料がまだ無いため、データ種別ごとのキャッシュチューニングは実バックエンド接続後に実測してから見直す。
 - [フェーズ分け](index.md#開発フェーズの段階分け決着)（まず閲覧サイト→後にセッション管理）の方針は変えていない。セッション管理系の画面も含めて先に画面を作っているのは、モックで体験を検証するためであり、バックエンド実装の着手順は改めて判断する。
 
 ## ディレクトリ

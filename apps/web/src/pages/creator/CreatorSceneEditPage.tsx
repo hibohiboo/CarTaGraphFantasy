@@ -1,6 +1,6 @@
 import type { CardDef, CardKind, DeckNode, Scenario } from '@cartagraph/domain';
 import { CARD_KIND_LABEL } from '@cartagraph/domain';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '../../components/GameCard';
 import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '../../components/ui';
@@ -84,8 +84,7 @@ function SceneEditor({
   imageSaveError: string | null;
 }) {
   const [draft, setDraft] = useState<DeckNode>(scene);
-  const [dirty, setDirty] = useState(false);
-  useEffect(() => setDirty(JSON.stringify(draft) !== JSON.stringify(scene)), [draft, scene]);
+  const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(scene), [draft, scene]);
 
   const [nameError, setNameError] = useState<string | null>(null);
   const [addingCard, setAddingCard] = useState(false);

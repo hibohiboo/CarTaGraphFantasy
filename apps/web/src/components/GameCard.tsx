@@ -70,6 +70,31 @@ export function GameCard({
         ? `コスト ${card.actionCost}${card.range !== undefined ? ` / 射程 ${card.range}` : ''}`
         : null;
 
+  const nameEl = (
+    <div
+      className={s.name}
+      ref={hideMeta ? autoFit.ref : undefined}
+      style={hideMeta ? { fontSize: `${autoFit.fontSize}px` } : undefined}
+    >
+      {card.name}
+    </div>
+  );
+  const metaRow = !hideMeta && (
+    <div className={s.kindRow}>
+      <span className={s.kind}>{CARD_KIND_LABEL[card.kind]}</span>
+      {cost && <span className={s.cost}>{cost}</span>}
+    </div>
+  );
+  const portraitEl = portrait && (
+    <div
+      className={s.portrait}
+      style={card.portraitUrl ? { backgroundImage: `url(${card.portraitUrl})` } : undefined}
+      aria-hidden="true"
+    >
+      {!card.portraitUrl && CARD_KIND_ICONS[card.kind]}
+    </div>
+  );
+
   const body = faceDown ? (
     <div className={s.name} role="img" aria-label={`伏せ札：${card.name}`}>
       ？
@@ -84,47 +109,21 @@ export function GameCard({
     </div>
   ) : (
     <>
-      {(() => {
-        const nameEl = (
-          <div
-            className={s.name}
-            ref={hideMeta ? autoFit.ref : undefined}
-            style={hideMeta ? { fontSize: `${autoFit.fontSize}px` } : undefined}
-          >
-            {card.name}
-          </div>
-        );
-        const metaRow = !hideMeta && (
-          <div className={s.kindRow}>
-            <span className={s.kind}>{CARD_KIND_LABEL[card.kind]}</span>
-            {cost && <span className={s.cost}>{cost}</span>}
-          </div>
-        );
-        const portraitEl = portrait && (
-          <div
-            className={s.portrait}
-            style={card.portraitUrl ? { backgroundImage: `url(${card.portraitUrl})` } : undefined}
-            aria-hidden="true"
-          >
-            {!card.portraitUrl && CARD_KIND_ICONS[card.kind]}
-          </div>
-        );
-        // 中央寄せ名（手札の選択肢など）は従来どおり種別→名前の順。
-        // それ以外は「手札で重なっても左上のカード名で識別できる」定石に合わせ、名前を先頭に出す
-        return centerName ? (
-          <>
-            {metaRow}
-            {portraitEl}
-            {nameEl}
-          </>
-        ) : (
-          <>
-            {nameEl}
-            {metaRow}
-            {portraitEl}
-          </>
-        );
-      })()}
+      {/* 中央寄せ名（手札の選択肢など）は従来どおり種別→名前の順。
+          それ以外は「手札で重なっても左上のカード名で識別できる」定石に合わせ、名前を先頭に出す */}
+      {centerName ? (
+        <>
+          {metaRow}
+          {portraitEl}
+          {nameEl}
+        </>
+      ) : (
+        <>
+          {nameEl}
+          {metaRow}
+          {portraitEl}
+        </>
+      )}
       {showDescription && card.description && (
         <p className={s.desc} data-clamp={portrait ? 'true' : undefined}>
           {card.description}

@@ -1,5 +1,5 @@
 import type { DeckNode, EndingDef, Scenario } from '@cartagraph/domain';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { DeckTree } from '../../components/DeckTree';
 import {
@@ -48,8 +48,7 @@ function Editor({
   error: unknown;
 }) {
   const [draft, setDraft] = useState<Scenario>(sc);
-  const [dirty, setDirty] = useState(false);
-  useEffect(() => setDirty(JSON.stringify(draft) !== JSON.stringify(sc)), [draft, sc]);
+  const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(sc), [draft, sc]);
 
   const set = <K extends keyof Scenario>(k: K, v: Scenario[K]) =>
     setDraft((d) => ({ ...d, [k]: v }));
