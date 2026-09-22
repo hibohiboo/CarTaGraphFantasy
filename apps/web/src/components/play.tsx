@@ -47,44 +47,60 @@ export function Hud({
 
 /** 台詞・地の文を出す「台詞カード」。GameCard（5:7）を横向きにした比率（7:5）。
  * 発言者名はGameCardと同じくカード左上を維持し、その下に肖像（あれば）＋台詞欄を横並びで置く。
- * speakerCard（NPCの台詞など）があるときだけ肖像を出す。GMの地の文はspeakerCardなしのまま、
- * 肖像なしの今の見た目にする（2026-09-22ユーザー指定：名前欄が肖像に押されて右に寄ったので、
- * 名前だけカード全体の左上に独立させ、肖像＋台詞欄はその下の行にした） */
+ * speakerCard（NPCの台詞など）は肖像つきの発言者、speaker（GMの情景描写など）は
+ * 肖像なしでラベルだけ出す。onClickを渡すとカード全体がボタンになり、右下に次へ進む合図を出す
+ * （2026-09-22ユーザー指定：台詞は1枚ずつ出し、クリックで次のカードへ進める） */
 export function Table({
+  speaker,
   speakerCard,
   flavor,
   hint,
   mystery,
+  onClick,
 }: {
+  speaker?: string;
   speakerCard?: Pick<CardDef, 'name' | 'kind'> & Partial<CardDef>;
   flavor: string;
   hint?: string;
   mystery?: CardDef[];
+  /** 次の台詞があるときだけ渡す。カード全体がクリック可能になる */
+  onClick?: () => void;
 }) {
+  const label = speakerCard?.name ?? speaker;
+  const body = (
+    <>
+      {label && <div className={s.speaker}>{label}</div>}
+      <div className={s.speechRow}>
+        {speakerCard && (
+          <div
+            className={s.speechPortrait}
+            style={
+              speakerCard.portraitUrl
+                ? { backgroundImage: `url(${speakerCard.portraitUrl})` }
+                : undefined
+            }
+            aria-hidden="true"
+          >
+            {!speakerCard.portraitUrl && CARD_KIND_ICONS[speakerCard.kind]}
+          </div>
+        )}
+        <p className={s.flavor}>
+          {flavor}
+          {hint && <span className={s.flavorDim}>{hint}</span>}
+        </p>
+      </div>
+      {onClick && <span className={s.speechNext}>次へ ▶</span>}
+    </>
+  );
   return (
     <main className={s.table}>
-      <div className={s.speechCard}>
-        {speakerCard && <div className={s.speaker}>{speakerCard.name}</div>}
-        <div className={s.speechRow}>
-          {speakerCard && (
-            <div
-              className={s.speechPortrait}
-              style={
-                speakerCard.portraitUrl
-                  ? { backgroundImage: `url(${speakerCard.portraitUrl})` }
-                  : undefined
-              }
-              aria-hidden="true"
-            >
-              {!speakerCard.portraitUrl && CARD_KIND_ICONS[speakerCard.kind]}
-            </div>
-          )}
-          <p className={s.flavor}>
-            {flavor}
-            {hint && <span className={s.flavorDim}>{hint}</span>}
-          </p>
-        </div>
-      </div>
+      {onClick ? (
+        <button type="button" className={s.speechCard} onClick={onClick}>
+          {body}
+        </button>
+      ) : (
+        <div className={s.speechCard}>{body}</div>
+      )}
       {mystery && mystery.length > 0 && (
         <div className={s.mystery}>
           {mystery.map((c) => (

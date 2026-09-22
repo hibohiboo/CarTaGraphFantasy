@@ -155,35 +155,10 @@ describe('チュートリアル（旅立ちの酒場）', () => {
   it('名前が空だと名乗れない', async () => {
     const user = userEvent.setup();
     renderAt('/pl/tutorial');
+    // 台詞カードは1枚ずつ出るので、GMの情景描写カードをクリックしてNPCの問いかけまで進める
+    await user.click(await screen.findByRole('button', { name: /次へ/ }));
     await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
     expect(screen.getByRole('button', { name: '名乗る' })).toBeDisabled();
-  });
-
-  it('身ひとつで旅立つと、旅人のままキャラクターができる', async () => {
-    const user = userEvent.setup();
-    const router = renderAt('/pl/tutorial');
-    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
-    await user.type(screen.getByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '名乗る' }));
-    await user.click(await screen.findByRole('button', { name: /このまま身ひとつで旅立つ/ }));
-    expect(await screen.findByText('旅人')).toBeInTheDocument();
-    // 実際に保存されたPCへのリンクになっていることを確認する（キャラクター一覧にも反映される）
-    await user.click(screen.getByRole('button', { name: 'キャラクターシートへ' }));
-    expect(await screen.findByRole('heading', { level: 1, name: '新人' })).toBeInTheDocument();
-    expect(router.state.location.pathname).toMatch(/^\/pl\/characters\/pc-/);
-  });
-
-  it('能力値は選ぶが戦う覚悟は選ばないと、探索者のまま完了する', async () => {
-    const user = userEvent.setup();
-    renderAt('/pl/tutorial');
-    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
-    await user.type(screen.getByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '名乗る' }));
-    await user.click(await screen.findByRole('button', { name: /腕試しをしていく/ }));
-    await user.click(await screen.findByRole('button', { name: /身軽さ/ }));
-    await user.click(await screen.findByRole('button', { name: /解錠具/ }));
-    await user.click(await screen.findByRole('button', { name: /まだ早い/ }));
-    expect(await screen.findByText('探索者')).toBeInTheDocument();
   });
 
   it('保存に失敗すると次のステップへ進まずエラーを表示する', async () => {
@@ -194,6 +169,8 @@ describe('チュートリアル（旅立ちの酒場）', () => {
       ),
     );
     renderAt('/pl/tutorial');
+    // 台詞カードは1枚ずつ出るので、GMの情景描写カード→NPCの問いかけの順にクリックして進める
+    await user.click(await screen.findByRole('button', { name: /次へ/ }));
     await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
     await user.type(screen.getByLabelText('名前'), '新人');
     await user.click(screen.getByRole('button', { name: '名乗る' }));
@@ -203,17 +180,23 @@ describe('チュートリアル（旅立ちの酒場）', () => {
     expect(screen.queryByText('旅には何か持たせてやろう')).not.toBeInTheDocument();
   });
 
-  it('全ステップを進めると冒険者になる', async () => {
+  it('全ステップを進めると（離脱の選択肢はなく一本道）冒険者になる', async () => {
     const user = userEvent.setup();
-    renderAt('/pl/tutorial');
+    const router = renderAt('/pl/tutorial');
+    // 台詞カードは1枚ずつ出るので、GMの情景描写カード→NPCの問いかけの順にクリックして進める
+    await user.click(await screen.findByRole('button', { name: /次へ/ }));
     await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
     await user.type(screen.getByLabelText('名前'), '新人');
     await user.click(screen.getByRole('button', { name: '名乗る' }));
     await user.click(await screen.findByRole('button', { name: /腕試しをしていく/ }));
     await user.click(await screen.findByRole('button', { name: /力自慢/ }));
     await user.click(await screen.findByRole('button', { name: /灯火のランタン/ }));
-    await user.click(await screen.findByRole('button', { name: /覚悟はできている/ }));
+    await user.click(await screen.findByRole('button', { name: /冒険者として登録する/ }));
     expect(await screen.findByText('冒険者')).toBeInTheDocument();
+    // 実際に保存されたPCへのリンクになっていることを確認する（キャラクター一覧にも反映される）
+    await user.click(screen.getByRole('button', { name: 'キャラクターシートへ' }));
+    expect(await screen.findByRole('heading', { level: 1, name: '新人' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toMatch(/^\/pl\/characters\/pc-/);
   });
 });
 

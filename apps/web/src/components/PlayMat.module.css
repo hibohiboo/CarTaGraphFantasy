@@ -50,6 +50,7 @@
   margin-bottom: 7px;
 }
 .zoneLabel .note {
+  margin-left: 4px;
   color: var(--thread);
 }
 .chips {

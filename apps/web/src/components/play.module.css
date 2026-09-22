@@ -52,6 +52,7 @@
  * その下の行に肖像（speakerCardがあるときだけ）＋台詞欄を横並びで置く。
  * speakerCardがないとき（GMの地の文）は発言者名も肖像も出ず、台詞欄だけの従来の見た目になる */
 .speechCard {
+  position: relative;
   width: min(480px, 100%);
   aspect-ratio: 7 / 5;
   background: var(--card);
@@ -64,6 +65,28 @@
   gap: 6px;
   text-align: left;
   overflow: auto;
+}
+button.speechCard {
+  font: inherit;
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+button.speechCard:hover,
+button.speechCard:focus-visible {
+  box-shadow:
+    0 0 0 3px rgba(217, 184, 119, 0.25),
+    var(--shadow-card-sm);
+}
+.speechNext {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
 }
 .speechRow {
   flex: 1;
@@ -108,7 +131,7 @@
 .flavor {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin: 0;
   font-family: var(--font-serif);
   font-size: clamp(1.05rem, 2vw + 0.6rem, 1.4rem);

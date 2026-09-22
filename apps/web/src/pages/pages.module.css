@@ -306,6 +306,75 @@
   display: grid;
   gap: 14px;
 }
+
+/* 画面を覆う「シート」の土台（台詞履歴・チュートリアルの名前入力など、下の内容に隠れがちな
+ * ものをここに乗せて確実に見えるようにする）。開いたことがひと目で分かるよう、
+ * 背景を暗くする全画面オーバーレイにする（2026-09-22ユーザー指摘） */
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+}
+@media (min-width: 640px) {
+  .sheetOverlay {
+    align-items: center;
+  }
+}
+/* 背景を暗くしつつ閉じる操作も兼ねる、全面のボタン */
+.sheetBackdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: none;
+  background: rgba(10, 14, 11, 0.6);
+  cursor: pointer;
+}
+/* position:fixedはスマホのソフトキーボードが開いても可視ビューポートの下端に追従するので、
+ * 入力欄はキーボードの上に乗る形で常に見える（2026-09-22ユーザー指摘：入力時に下の選択肢が
+ * 見えなかった問題への対応） */
+.proposeSheet {
+  position: relative;
+  width: min(420px, 100%);
+}
+/* Panelは子をさらに内部の素のdiv（.panelBody、flexではない）で包むため、.sheetを
+   flex縦積みにしてもその下の高さ配分（flex:1／min-height:0）は途中で途切れてしまい、
+   スマホでスクロールできない不具合になっていた。Panelの内部構造に頼らず、
+   .sheetBodyだけが自分の最大高さを持ってスクロールする形にする（2026-09-22ユーザー指摘）。
+   台詞履歴・プレイマットなど、シートに乗せる内容が増減しうるものはすべてこれを使う
+   （2026-09-22ユーザー指摘：プレイマットが同じ理由でスクロールできなかった不具合） */
+.sheet {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: 82vh;
+  overflow: hidden;
+}
+.sheetHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sheetBody {
+  max-height: min(60vh, calc(82vh - 90px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 12px;
+}
+/* 台詞履歴は台詞カード（Table）を縦に積む。Tableが自前で持つ .table の
+ * flex:1/min-heightは1画面完結レイアウト向けなので、積み重ね表示に合わせて打ち消す */
+.sheetBody[data-stack="true"] {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sheetBody main {
+  flex: none;
+  min-height: auto;
+}
 .formRow {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
