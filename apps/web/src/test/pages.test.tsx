@@ -3,10 +3,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routeObjects } from '../app/router';
 import { routes } from '../app/routes';
+import { server } from '../mocks/node';
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -129,5 +131,102 @@ describe('セッション選択', () => {
     const card = (await screen.findByText('灯りの回廊・後日談')).closest('article')!;
     await user.click(within(card).getByRole('button', { name: '応募する' }));
     expect(await within(card).findByText(/応募済み/)).toBeInTheDocument();
+  });
+});
+
+describe('チュートリアル（旅立ちの酒場）', () => {
+  it('NPCとの問答に集中させるため、ヘッダー・フッターを出さない', async () => {
+    renderAt('/pl/tutorial');
+    await screen.findByRole('heading', { level: 1, name: '旅立ちの酒場' });
+    expect(screen.queryByLabelText('主要ナビゲーション')).not.toBeInTheDocument();
+    expect(screen.queryByText(/設計ドキュメント（docs）/)).not.toBeInTheDocument();
+  });
+
+  it('右下のプレイマットを開くと今の場の様子が見える', async () => {
+    const user = userEvent.setup();
+    renderAt('/pl/tutorial');
+    await user.click(await screen.findByRole('button', { name: 'プレイマットで見る' }));
+    expect(screen.getByText('シーン・場所')).toBeInTheDocument();
+    expect(screen.getByText('話し相手')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'プレイマットを閉じる' }));
+    expect(screen.queryByText('シーン・場所')).not.toBeInTheDocument();
+  });
+
+  it('名前が空だと名乗れない', async () => {
+    const user = userEvent.setup();
+    renderAt('/pl/tutorial');
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    expect(screen.getByRole('button', { name: '名乗る' })).toBeDisabled();
+  });
+
+  it('身ひとつで旅立つと、旅人のままキャラクターができる', async () => {
+    const user = userEvent.setup();
+    const router = renderAt('/pl/tutorial');
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '名乗る' }));
+    await user.click(await screen.findByRole('button', { name: /このまま身ひとつで旅立つ/ }));
+    expect(await screen.findByText('旅人')).toBeInTheDocument();
+    // 実際に保存されたPCへのリンクになっていることを確認する（キャラクター一覧にも反映される）
+    await user.click(screen.getByRole('button', { name: 'キャラクターシートへ' }));
+    expect(await screen.findByRole('heading', { level: 1, name: '新人' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toMatch(/^\/pl\/characters\/pc-/);
+  });
+
+  it('能力値は選ぶが戦う覚悟は選ばないと、探索者のまま完了する', async () => {
+    const user = userEvent.setup();
+    renderAt('/pl/tutorial');
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '名乗る' }));
+    await user.click(await screen.findByRole('button', { name: /腕試しをしていく/ }));
+    await user.click(await screen.findByRole('button', { name: /身軽さ/ }));
+    await user.click(await screen.findByRole('button', { name: /解錠具/ }));
+    await user.click(await screen.findByRole('button', { name: /まだ早い/ }));
+    expect(await screen.findByText('探索者')).toBeInTheDocument();
+  });
+
+  it('保存に失敗すると次のステップへ進まずエラーを表示する', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.patch('/api/characters/:id', () =>
+        HttpResponse.json({ message: 'CP予算（5）を超えています' }, { status: 422 }),
+      ),
+    );
+    renderAt('/pl/tutorial');
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '名乗る' }));
+    await user.click(await screen.findByRole('button', { name: /腕試しをしていく/ }));
+    await user.click(await screen.findByRole('button', { name: /力自慢/ }));
+    expect(await screen.findByText('CP予算（5）を超えています')).toBeInTheDocument();
+    expect(screen.queryByText('旅には何か持たせてやろう')).not.toBeInTheDocument();
+  });
+
+  it('全ステップを進めると冒険者になる', async () => {
+    const user = userEvent.setup();
+    renderAt('/pl/tutorial');
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '名乗る' }));
+    await user.click(await screen.findByRole('button', { name: /腕試しをしていく/ }));
+    await user.click(await screen.findByRole('button', { name: /力自慢/ }));
+    await user.click(await screen.findByRole('button', { name: /灯火のランタン/ }));
+    await user.click(await screen.findByRole('button', { name: /覚悟はできている/ }));
+    expect(await screen.findByText('冒険者')).toBeInTheDocument();
+  });
+});
+
+describe('ホーム画面のチュートリアル導線', () => {
+  it('所持キャラクターが0件のときだけ「旅立ちの酒場へ行く」が出る', async () => {
+    server.use(http.get('/api/characters', () => HttpResponse.json([])));
+    renderAt('/home');
+    expect(await screen.findByRole('link', { name: '旅立ちの酒場へ行く' })).toBeInTheDocument();
+  });
+
+  it('所持キャラクターが1件以上あれば出ない', async () => {
+    renderAt('/home');
+    await screen.findByRole('heading', { level: 1, name: 'ホーム' });
+    expect(screen.queryByRole('link', { name: '旅立ちの酒場へ行く' })).not.toBeInTheDocument();
   });
 });

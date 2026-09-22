@@ -16,10 +16,12 @@ export function AppShell() {
   const fill = /^\/pl\/sessions\/[^/]+\/play$/.test(location.pathname);
   // 入口（扉のカード1枚だけの最初の画面）はヘッダーを出さない
   const isEntrance = location.pathname === '/';
+  // チュートリアル（旅立ちの酒場）はNPCとの問答に集中させるため、ヘッダー・フッターとも出さない
+  const isTutorial = location.pathname === '/pl/tutorial';
 
   return (
     <div className={s.shell}>
-      {!isEntrance && (
+      {!isEntrance && !isTutorial && (
         <nav className={[s.nav, s.inner].join(' ')} aria-label="主要ナビゲーション">
           <NavLink to="/" className={s.brand}>
             カルタグラフ
@@ -48,7 +50,7 @@ export function AppShell() {
           <Outlet />
         </div>
       </main>
-      {!fill && (
+      {!fill && !isTutorial && (
         <footer className={[s.footer, s.inner].join(' ')}>
           <p>
             仕様の正は <a href={DOCS_URL}>設計ドキュメント（docs）</a>

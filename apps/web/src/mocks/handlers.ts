@@ -141,6 +141,46 @@ export const handlers = [
     return HttpResponse.json(ch, { status: 201 });
   }),
 
+  // チュートリアル（docs/plans/2026-09-22-チュートリアル導線.md）が、Step0で作ったPCへ
+  // ステップごとに段階的に反映するためのPATCH。cp.spent はdeck全体から毎回再計算する
+  // （POSTハンドラと同じ予算チェックを、複数回に分けて行う形）。
+  http.patch('/api/characters/:id', async ({ params, request }) => {
+    const ch = db.characters.find((c) => c.id === params.id);
+    if (!ch) return notFound('キャラクター');
+    const body = (await request.json()) as {
+      abilities?: Character['abilities'];
+      addCardIds?: string[];
+    };
+    if (body.abilities) {
+      ch.abilities = body.abilities;
+      ch.hp = { current: 14, max: 14 };
+    }
+    if (body.addCardIds?.length) {
+      const pool = [...fx.basicPool, ...fx.unlockedPool];
+      const added = body.addCardIds
+        .map((id) => pool.find((c) => c.id === id))
+        .filter((c): c is CardDef => !!c);
+      if (added.length !== body.addCardIds.length) {
+        return HttpResponse.json(
+          { message: '存在しないカードが指定されています' },
+          { status: 422 },
+        );
+      }
+      const nextDeck = [...ch.deck, ...added];
+      const spent = nextDeck.reduce((sum, c) => sum + (c.cpCost ?? 0), 0);
+      if (spent > ch.cp.total) {
+        // CP予算はハードな制約（docs/cartagraph/character-growth.md）
+        return HttpResponse.json(
+          { message: `CP予算（${ch.cp.total}）を超えています` },
+          { status: 422 },
+        );
+      }
+      ch.deck = nextDeck;
+      ch.cp = { ...ch.cp, spent };
+    }
+    return HttpResponse.json(ch);
+  }),
+
   // ---------- セッション ----------
   http.get('/api/sessions', () => HttpResponse.json(db.sessions)),
 

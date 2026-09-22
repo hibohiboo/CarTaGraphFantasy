@@ -16,6 +16,7 @@ import { CharacterListPage } from '../pages/pl/CharacterListPage';
 import { CharacterSheetPage } from '../pages/pl/CharacterSheetPage';
 import { PlayPage } from '../pages/pl/PlayPage';
 import { SessionBrowsePage } from '../pages/pl/SessionBrowsePage';
+import { TutorialPage } from '../pages/pl/TutorialPage';
 import { LibraryPage } from '../pages/rulebook/LibraryPage';
 import { RulebookIndexPage } from '../pages/rulebook/RulebookIndexPage';
 import { RulebookSectionPage } from '../pages/rulebook/RulebookSectionPage';
@@ -33,6 +34,7 @@ export const routeObjects: RouteObject[] = [
       { path: 'pl/sessions/:sessionId/play', element: <PlayPage /> },
       { path: 'pl/characters', element: <CharacterListPage /> },
       { path: 'pl/characters/new', element: <CharacterCreatePage /> },
+      { path: 'pl/tutorial', element: <TutorialPage /> },
       { path: 'pl/characters/:characterId', element: <CharacterSheetPage /> },
       { path: 'gm/scenarios', element: <GmScenarioListPage /> },
       { path: 'gm/scenarios/:scenarioId', element: <GmScenarioDetailPage /> },

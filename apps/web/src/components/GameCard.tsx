@@ -1,6 +1,8 @@
 import { CARD_KIND_LABEL, type CardDef } from '@cartagraph/domain';
 import type { CSSProperties, ReactNode } from 'react';
+import { CARD_KIND_ICONS } from './cardKindIcons';
 import s from './GameCard.module.css';
+import { useAutoFitCardName } from './useAutoFitCardName';
 
 export type GameCardVariant = 'default' | 'propose';
 
@@ -27,17 +29,14 @@ export interface GameCardProps {
   showZone?: boolean;
   /** グリッド内などで幅を親に任せる */
   fluid?: boolean;
+  /** 種別ラベル・コストの行を隠す（名前＋アイコンだけの小さな表示にしたいとき） */
+  hideMeta?: boolean;
+  /** アイコンだけの親指サイズ表示にする（名前・種別ラベルも隠す）。タップで詳細を見せる導線向け */
+  iconOnly?: boolean;
   width?: number;
   title?: string;
   children?: ReactNode;
 }
-
-const KIND_ICON_FALLBACK = (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <circle cx="12" cy="9" r="4" />
-    <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" />
-  </svg>
-);
 
 export function GameCard({
   card,
@@ -53,12 +52,17 @@ export function GameCard({
   stamp,
   showZone,
   fluid,
+  hideMeta,
+  iconOnly,
   width,
   title,
   children,
 }: GameCardProps) {
   const faceDown = card.faceDown === true;
   const style = width ? ({ '--card-width': `${width}px` } as CSSProperties) : undefined;
+  // hideMeta（名前＋アイコンだけの小さな表示）のときだけ、名前が1行に収まるよう
+  // フォントサイズを縮める（tabifudaのuseAutoFitTitleを移植。基準11.2px・最小7px）
+  const autoFit = useAutoFitCardName(card.name, 11.2, 7);
   const cost =
     showCost === 'cp' && card.cpCost !== undefined
       ? `CP ${card.cpCost}`
@@ -70,22 +74,38 @@ export function GameCard({
     <div className={s.name} role="img" aria-label={`伏せ札：${card.name}`}>
       ？
     </div>
+  ) : iconOnly ? (
+    <div
+      className={s.portrait}
+      style={card.portraitUrl ? { backgroundImage: `url(${card.portraitUrl})` } : undefined}
+      aria-hidden="true"
+    >
+      {!card.portraitUrl && CARD_KIND_ICONS[card.kind]}
+    </div>
   ) : (
     <>
-      <div className={s.kindRow}>
-        <span className={s.kind}>{CARD_KIND_LABEL[card.kind]}</span>
-        {cost && <span className={s.cost}>{cost}</span>}
-      </div>
+      {!hideMeta && (
+        <div className={s.kindRow}>
+          <span className={s.kind}>{CARD_KIND_LABEL[card.kind]}</span>
+          {cost && <span className={s.cost}>{cost}</span>}
+        </div>
+      )}
       {portrait && (
         <div
           className={s.portrait}
           style={card.portraitUrl ? { backgroundImage: `url(${card.portraitUrl})` } : undefined}
           aria-hidden="true"
         >
-          {!card.portraitUrl && KIND_ICON_FALLBACK}
+          {!card.portraitUrl && CARD_KIND_ICONS[card.kind]}
         </div>
       )}
-      <div className={s.name}>{card.name}</div>
+      <div
+        className={s.name}
+        ref={hideMeta ? autoFit.ref : undefined}
+        style={hideMeta ? { fontSize: `${autoFit.fontSize}px` } : undefined}
+      >
+        {card.name}
+      </div>
       {showDescription && card.description && (
         <p className={s.desc} data-clamp={portrait ? 'true' : undefined}>
           {card.description}
@@ -124,13 +144,21 @@ export function GameCard({
     'data-selected': selected ? 'true' : undefined,
     'data-layout': centerName || faceDown ? 'center' : undefined,
     'data-fluid': fluid ? 'true' : undefined,
+    'data-compact': hideMeta ? 'true' : undefined,
+    'data-icon-only': iconOnly ? 'true' : undefined,
     style,
     title: title ?? (faceDown ? '内容不明のカード' : undefined),
   } as const;
 
   if (onClick) {
     return (
-      <button {...common} onClick={onClick} disabled={disabled} aria-pressed={selected}>
+      <button
+        {...common}
+        onClick={onClick}
+        disabled={disabled}
+        aria-pressed={selected}
+        aria-label={iconOnly ? (title ?? card.name) : undefined}
+      >
         {body}
       </button>
     );
