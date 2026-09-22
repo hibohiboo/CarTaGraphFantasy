@@ -30,6 +30,24 @@ function installTestLocalStorage() {
 }
 installTestLocalStorage();
 
+// jsdom は `canvas` npm パッケージ無しでは 2D コンテキストを実装しておらず、
+// GameCard の useAutoFitCardName（カード名を1行に収めるためのCanvas文字幅計測）を
+// 呼ぶたびに「not implemented」エラーをコンソールへ出してしまう。テストでは実際の
+// 描画幅までは要らない（実ブラウザでの見た目はPlaywrightのスクリーンショットで確認する）ため、
+// 文字数×フォントサイズの簡易近似を返すだけのスタブに差し替える。
+function installTestCanvasMeasureText() {
+  const stubContext = {
+    font: '10px sans-serif',
+    measureText(text: string) {
+      const size = Number(/(\d+(?:\.\d+)?)px/.exec(this.font)?.[1] ?? 10);
+      return { width: text.length * size } as TextMetrics;
+    },
+  };
+  HTMLCanvasElement.prototype.getContext = ((id: string) =>
+    id === '2d' ? stubContext : null) as typeof HTMLCanvasElement.prototype.getContext;
+}
+installTestCanvasMeasureText();
+
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {
   cleanup();

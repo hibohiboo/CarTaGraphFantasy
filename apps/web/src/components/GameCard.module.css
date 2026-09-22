@@ -21,6 +21,11 @@
 .card[data-fluid="true"] {
   width: auto;
 }
+/* 親指で押せる程度の極小サイズ。アイコンだけを大きめに見せ、名前・種別ラベルは出さない
+   （タップすると詳細な大きいカードに切り替える導線向け。2026-09-22、ユーザー指定） */
+.card[data-icon-only="true"] {
+  padding: 4px;
+}
 button.card {
   cursor: pointer;
 }
@@ -111,12 +116,27 @@ button.card:disabled {
   stroke-width: 1.6;
   opacity: 0.7;
 }
+.card[data-icon-only="true"] .portrait {
+  margin-top: 0;
+}
+.card[data-icon-only="true"] .portrait svg {
+  width: 60%;
+  height: 60%;
+}
 
 .name {
   font-family: var(--font-serif);
   font-size: var(--card-name-size, 0.94rem);
   line-height: 1.35;
   padding-top: 6px;
+}
+/* hideMeta（名前＋アイコンだけの小さな表示）は1行固定。JS側
+   （useAutoFitCardName）で収まる大きさへフォントサイズを縮めた上で、
+   それでも収まらない長さはここでの省略記号に任せる */
+.card[data-compact="true"] .name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .card[data-layout="center"] .name {
   flex: 1;

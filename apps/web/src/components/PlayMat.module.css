@@ -1,0 +1,74 @@
+/* プレイマット式の奥行き表現（docs/public/preview/play-mat.html を移植）。
+   GMが置くカードほど奥（上）、PLが置くカードほど手前（下）に並べる。 */
+.outer {
+  display: flex;
+  gap: 10px;
+}
+.rail {
+  flex: none;
+  width: 14px;
+  border-radius: 7px;
+  background: linear-gradient(to bottom, var(--thread-faint), var(--thread));
+  position: relative;
+}
+.railLabel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) rotate(180deg);
+  writing-mode: vertical-rl;
+  font-size: 0.62rem;
+  color: var(--parchment-text-dim);
+  white-space: nowrap;
+}
+.railLabel[data-pos="far"] {
+  top: 4px;
+}
+.railLabel[data-pos="near"] {
+  bottom: 4px;
+  color: var(--parchment-text);
+  font-weight: 500;
+}
+.mat {
+  flex: 1;
+  min-width: 0;
+  border: 2px solid var(--thread-dim);
+  border-radius: var(--radius-panel);
+  background: var(--felt-panel-2);
+  padding: clamp(10px, 2vw, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.zone {
+  border: 1px dashed var(--thread-dim);
+  border-radius: 8px;
+  padding: 8px;
+}
+.zoneLabel {
+  font-size: 0.66rem;
+  color: var(--parchment-text-dim);
+  margin-bottom: 7px;
+}
+.zoneLabel .note {
+  color: var(--thread);
+}
+.chips {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.chips:empty::after {
+  content: "（今は無し）";
+  font-size: 0.72rem;
+  color: var(--parchment-text-dim);
+}
+.pendingDot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--pending);
+  border: 1px solid var(--felt-panel-2);
+}

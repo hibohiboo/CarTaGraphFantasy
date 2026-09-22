@@ -142,17 +142,19 @@ describe('チュートリアル（旅立ちの酒場）', () => {
     expect(screen.queryByText(/設計ドキュメント（docs）/)).not.toBeInTheDocument();
   });
 
-  it('名前が空だと扉を開けられない', async () => {
+  it('名前が空だと名乗れない', async () => {
+    const user = userEvent.setup();
     renderAt('/pl/tutorial');
-    await screen.findByLabelText('名前');
-    expect(screen.getByRole('button', { name: '扉を開ける' })).toBeDisabled();
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    expect(screen.getByRole('button', { name: '名乗る' })).toBeDisabled();
   });
 
   it('身ひとつで旅立つと、旅人のままキャラクターができる', async () => {
     const user = userEvent.setup();
     const router = renderAt('/pl/tutorial');
-    await user.type(await screen.findByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '扉を開ける' }));
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '名乗る' }));
     await user.click(await screen.findByRole('button', { name: /このまま身ひとつで旅立つ/ }));
     expect(await screen.findByText('旅人')).toBeInTheDocument();
     // 実際に保存されたPCへのリンクになっていることを確認する（キャラクター一覧にも反映される）
@@ -164,8 +166,9 @@ describe('チュートリアル（旅立ちの酒場）', () => {
   it('能力値は選ぶが戦う覚悟は選ばないと、探索者のまま完了する', async () => {
     const user = userEvent.setup();
     renderAt('/pl/tutorial');
-    await user.type(await screen.findByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '扉を開ける' }));
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '名乗る' }));
     await user.click(await screen.findByRole('button', { name: /腕試しをしていく/ }));
     await user.click(await screen.findByRole('button', { name: /身軽さ/ }));
     await user.click(await screen.findByRole('button', { name: /解錠具/ }));
@@ -181,8 +184,9 @@ describe('チュートリアル（旅立ちの酒場）', () => {
       ),
     );
     renderAt('/pl/tutorial');
-    await user.type(await screen.findByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '扉を開ける' }));
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '名乗る' }));
     await user.click(await screen.findByRole('button', { name: /腕試しをしていく/ }));
     await user.click(await screen.findByRole('button', { name: /力自慢/ }));
     expect(await screen.findByText('CP予算（5）を超えています')).toBeInTheDocument();
@@ -192,8 +196,9 @@ describe('チュートリアル（旅立ちの酒場）', () => {
   it('全ステップを進めると冒険者になる', async () => {
     const user = userEvent.setup();
     renderAt('/pl/tutorial');
-    await user.type(await screen.findByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '扉を開ける' }));
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '名乗る' }));
     await user.click(await screen.findByRole('button', { name: /腕試しをしていく/ }));
     await user.click(await screen.findByRole('button', { name: /力自慢/ }));
     await user.click(await screen.findByRole('button', { name: /灯火のランタン/ }));

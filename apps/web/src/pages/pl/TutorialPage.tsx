@@ -3,8 +3,9 @@ import { ARCHETYPE_LABEL, deriveArchetype } from '@cartagraph/domain';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { CardGrid, GameCard } from '../../components/GameCard';
-import { HandDock, Table } from '../../components/play';
-import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '../../components/ui';
+import { PlayMat, type PlayMatZone } from '../../components/PlayMat';
+import { HandDock, ProposeForm, Table } from '../../components/play';
+import { Button, ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
 import { useCardPool, useCreateCharacter, useUpdateCharacter } from '../../lib/queries';
 import s from '../pages.module.css';
 
@@ -42,6 +43,37 @@ const RESOLVE_CHOICES = [
 ];
 
 /**
+ * 舞台となるロケーション・話し相手のNPC。実際のシーン進行画面（GmSessionManagePageの
+ * 「場のゾーン」等）と同じ見た目（ロケーション／NPCカード）を、会話の間ずっと出しておく。
+ * チュートリアル全体を通して同じ酒場・同じ主人なので、ステップが変わっても表示し続ける。
+ */
+const LOCATION_CARD: CardDef = {
+  id: 'loc-tavern-counter',
+  kind: 'location',
+  name: '酒場のカウンター',
+  description: '灯りの下のカウンター席。今夜はここで旅の話を聞いてもらえそうだ',
+  tags: [],
+};
+const NPC_CARD: CardDef = {
+  id: 'npc-tavern-master',
+  kind: 'npc',
+  name: '酒場の主人',
+  description: '長年この酒場を切り盛りしてきた、口数少ない主人',
+  tags: [],
+};
+
+/**
+ * 名乗りは自由入力なので、実際のプレイ画面と同じ「新たな選択肢を提案」の操作感
+ * （提案カードを選ぶ→自由入力欄が開く→GMへの提案として送る）で練習させる。
+ */
+const INTRODUCE_CARD: CardDef = {
+  id: 'introduce',
+  kind: 'choice',
+  name: '＋\n名を名乗る',
+  tags: [],
+};
+
+/**
  * 入口からのチュートリアル（docs/plans/2026-09-22-チュートリアル導線.md）。
  * NPCとの短い問答を進めるうちに実際のキャラクターができる。セッションモデルは使わず、
  * ここだけで完結するローカルなstateマシン。各選択はステップごとにサーバーへ保存するため、
@@ -54,7 +86,13 @@ export function TutorialPage() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState<Step>('name');
+  const [introducing, setIntroducing] = useState(false);
   const [name, setName] = useState('');
+  // ロケーション／NPCカードは狭い画面でも邪魔にならないよう小さく出し、
+  // タップで詳細（肖像・説明文）を見られるようにする
+  const [locationExpanded, setLocationExpanded] = useState(false);
+  const [npcExpanded, setNpcExpanded] = useState(false);
+  const [showMat, setShowMat] = useState(false);
   // 完了時のロール（旅人／探索者／冒険者）は専用の状態フラグを持たず、サーバーが返した実際の
   // Character（abilities・deck）から都度 deriveArchetype で導出する（docs/cartagraph/role-and-scenario.md）。
   const [character, setCharacter] = useState<Character | null>(null);
@@ -68,6 +106,30 @@ export function TutorialPage() {
   const gearCards = GEAR_CARD_IDS.map((id) => pool.data.basic.find((c) => c.id === id)).filter(
     (c): c is CardDef => !!c,
   );
+
+  // 今のステップの手札（選択肢）。プレイマットの「選択肢（今の手札）」ゾーンに出す
+  const stepChoices: CardDef[] =
+    step === 'training'
+      ? TRAINING_CHOICES
+      : step === 'ability'
+        ? ABILITY_PRESETS.map((p) => choiceCard(p.id, p.name))
+        : step === 'gear'
+          ? gearCards
+          : step === 'resolve'
+            ? RESOLVE_CHOICES
+            : [];
+  const matZones: PlayMatZone[] = [
+    { label: 'シーン・場所', note: 'GMが用意', cards: [LOCATION_CARD] },
+    { label: '話し相手', note: 'GMが用意', cards: [NPC_CARD] },
+    { label: '選択肢（今の手札）', note: 'PLが選ぶ', cards: stepChoices },
+    {
+      label: 'パーティー',
+      note: 'PLが置く・最前面',
+      cards: character
+        ? [{ id: character.id, kind: 'character', name: character.name, tags: [] }]
+        : [],
+    },
+  ];
 
   const startJourney = () => {
     if (busy) return;
@@ -135,25 +197,83 @@ export function TutorialPage() {
 
   return (
     <>
-      <PageHeader
-        title="旅立ちの酒場"
-        crumb="初めてのプレイヤー向け。会話の流れの中で最初のキャラクターができる。体技心の配分方法はここだけの仮ルール（docs/open-questions.md参照）。"
-      />
+      <PageHeader title="旅立ちの酒場" />
+      <div className="u-row">
+        <GameCard
+          card={LOCATION_CARD}
+          width={locationExpanded ? 190 : 44}
+          portrait
+          iconOnly={!locationExpanded}
+          showDescription={locationExpanded}
+          selected={locationExpanded}
+          onClick={() => setLocationExpanded((v) => !v)}
+          title={
+            locationExpanded
+              ? '小さくする'
+              : `ロケーション：${LOCATION_CARD.name}（タップして詳しく見る）`
+          }
+        />
+      </div>
+      <p className="u-small u-dim">
+        1枚で場の全体が見える簡易表示。
+        <Button size="sm" variant="ghost" onClick={() => setShowMat((v) => !v)}>
+          {showMat ? 'プレイマットを閉じる' : 'プレイマットで見る'}
+        </Button>
+      </p>
+      {showMat && (
+        <div className="u-mt">
+          <PlayMat zones={matZones} />
+        </div>
+      )}
       <Panel>
+        <GameCard
+          card={NPC_CARD}
+          width={npcExpanded ? 190 : 96}
+          portrait
+          hideMeta={!npcExpanded}
+          showDescription={npcExpanded}
+          selected={npcExpanded}
+          onClick={() => setNpcExpanded((v) => !v)}
+          title={npcExpanded ? '小さくする' : 'タップして詳しく見る'}
+        />
+
         {step === 'name' && (
           <div className={s.form}>
             <Table flavor="良い夜だ、旅の方。ここは旅立ちの酒場。名を聞かせてくれないか" />
-            <Field label="名前">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="例：迅"
-              />
-            </Field>
-            <Button disabled={!name.trim() || busy} onClick={startJourney}>
-              {busy ? '扉を開けている…' : '扉を開ける'}
-            </Button>
+            <HandDock
+              hand={[]}
+              onPlay={() => {}}
+              extra={
+                <GameCard
+                  card={INTRODUCE_CARD}
+                  variant="propose"
+                  width={110}
+                  centerName
+                  selected={introducing}
+                  onClick={() => setIntroducing((v) => !v)}
+                />
+              }
+            />
+            {introducing && (
+              <ProposeForm>
+                <input
+                  type="text"
+                  aria-label="名前"
+                  placeholder="例：迅"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && startJourney()}
+                  // biome-ignore lint/a11y/noAutofocus: 提案カードを選んだ直後の主操作なので意図的にフォーカスする
+                  autoFocus
+                />
+                <Button size="sm" onClick={startJourney} disabled={busy || !name.trim()}>
+                  {busy ? '名乗っている…' : '名乗る'}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setIntroducing(false)}>
+                  やめる
+                </Button>
+              </ProposeForm>
+            )}
             {create.error && <ErrorNote error={create.error} />}
           </div>
         )}
