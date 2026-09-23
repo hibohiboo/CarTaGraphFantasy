@@ -5,6 +5,7 @@ import { GameCard } from '../../components/GameCard';
 import { HandDock, Hud, PlayScreen, ProposeForm, StatusLine, Table } from '../../components/play';
 import { Button, ErrorNote, Loading, StatusPill } from '../../components/ui';
 import { usePlayCard, usePropose, useSession } from '../../lib/queries';
+import { AutoCombatLog, AutoCombatPanel } from './AutoCombatPanel';
 
 const PROPOSE_CARD: CardDef = {
   id: 'propose',
@@ -28,6 +29,10 @@ export function PlayPage() {
   const pending = s.proposals.find((p) => p.status === 'pending');
   const ended = s.status === 'ended';
   const busy = play.isPending || propose.isPending;
+  // 自動戦闘の設定中は、手札と提案の代わりに戦い方のパネルを出す（docs/cartagraph/auto-combat.md）
+  const choosingTactics = s.autoCombat?.status === 'awaiting-priority';
+  const enemyName =
+    s.field.plVisible.find((c) => c.id === s.autoCombat?.enemyCardId)?.name ?? '相手';
 
   const submitProposal = () => {
     if (!text.trim()) return;
@@ -63,12 +68,22 @@ export function PlayPage() {
         hint={
           ended
             ? 'このセッションは終了しています。'
-            : busy
-              ? '…'
-              : '手札から1枚選んでプレイしよう。'
+            : choosingTactics
+              ? '戦い方（カードの優先順位）を決めて、試験を始めよう。'
+              : busy
+                ? '…'
+                : '手札から1枚選んでプレイしよう。'
         }
         mystery={s.field.plVisible.filter((c) => c.faceDown)}
       />
+      {ended && s.currentScene.nodeId && <h2 className="u-serif">結末「{s.currentScene.name}」</h2>}
+      {s.autoCombat && (
+        <AutoCombatLog
+          state={s.autoCombat}
+          plName={s.participants.find((p) => p.role === 'driver')?.characterName ?? 'PL'}
+          enemyName={enemyName}
+        />
+      )}
       <StatusLine>
         {play.error && <ErrorNote error={play.error} />}
         {propose.error && <ErrorNote error={propose.error} />}
@@ -95,7 +110,7 @@ export function PlayPage() {
           </>
         )}
       </StatusLine>
-      {proposing && !ended && (
+      {proposing && !ended && !choosingTactics && (
         <ProposeForm>
           <input
             type="text"
@@ -115,26 +130,30 @@ export function PlayPage() {
           </Button>
         </ProposeForm>
       )}
-      <HandDock
-        hand={s.hand}
-        disabled={busy || ended}
-        onPlay={(card) => play.mutate({ sessionId, cardId: card.id })}
-        extra={
-          !ended &&
-          s.proposalHandling !== 'disabled' && (
-            <GameCard
-              card={PROPOSE_CARD}
-              variant="propose"
-              width={110}
-              centerName
-              selected={proposing}
-              onClick={() => setProposing((v) => !v)}
-              disabled={!!pending || busy}
-              title={pending ? '裁定待ちの提案があります' : undefined}
-            />
-          )
-        }
-      />
+      {choosingTactics ? (
+        <AutoCombatPanel session={s} />
+      ) : (
+        <HandDock
+          hand={s.hand}
+          disabled={busy || ended}
+          onPlay={(card) => play.mutate({ sessionId, cardId: card.id })}
+          extra={
+            !ended &&
+            s.proposalHandling !== 'disabled' && (
+              <GameCard
+                card={PROPOSE_CARD}
+                variant="propose"
+                width={110}
+                centerName
+                selected={proposing}
+                onClick={() => setProposing((v) => !v)}
+                disabled={!!pending || busy}
+                title={pending ? '裁定待ちの提案があります' : undefined}
+              />
+            )
+          }
+        />
+      )}
     </PlayScreen>
   );
 }

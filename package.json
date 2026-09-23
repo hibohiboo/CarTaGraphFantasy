@@ -12,6 +12,8 @@
     "web:test": "pnpm --filter @cartagraph/web test",
     "web:e2e": "pnpm --filter @cartagraph/web e2e",
     "web:typecheck": "pnpm --filter @cartagraph/web typecheck",
+    "domain:test": "pnpm --filter @cartagraph/domain test",
+    "domain:typecheck": "pnpm --filter @cartagraph/domain typecheck",
     "build:pages": "pnpm run docs:build && pnpm run web:build && node scripts/copy-web-to-pages.mjs",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",

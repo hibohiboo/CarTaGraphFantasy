@@ -1,6 +1,7 @@
 #!/bin/sh
 # push前に、型検査・テスト・docsビルド（リンク切れ検査）をローカルで通す。
-# CI（.github/workflows/ci.yml）と同じ3つを、pushする前に手元で確認するのが目的。
+# CI（.github/workflows/ci.yml）と同じ型検査・テスト（apps/web と packages/domain）・docsビルドを、
+# pushする前に手元で確認するのが目的。
 # 有効化: git config --local core.hooksPath .githooks
 # （`pnpm install` の prepare スクリプトが自動で設定する。scripts/setup-git-hooks.mjs 参照）
 #
@@ -12,8 +13,8 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit 0
 fi
 
-echo "[pre-push] pnpm web:typecheck && pnpm web:test && pnpm docs:build"
-pnpm web:typecheck && pnpm web:test && pnpm docs:build
+echo "[pre-push] pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm web:test && pnpm docs:build"
+pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm web:test && pnpm docs:build
 status=$?
 
 if [ $status -ne 0 ]; then

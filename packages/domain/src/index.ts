@@ -71,6 +71,62 @@ export interface CardDef {
   zone?: 'gm' | 'pl';
   /** 画像URL。無ければアイコンにフォールバック */
   portraitUrl?: string;
+  /** 自動戦闘での効果（docs/cartagraph/auto-combat.md、仮ルール）。無ければ優先順位リストに入れられない */
+  combatEffect?: CombatEffect;
+  /** 効果「次のシーンへ進む」の遷移先 DeckNode.id（docs/cartagraph/play-and-field.md 基本操作8） */
+  nextNodeId?: string;
+}
+
+/** ダイス式（例：2d6+1 は { count: 2, sides: 6, bonus: 1 }） */
+export interface DiceExpr {
+  count: number;
+  sides: number;
+  bonus: number;
+}
+
+/** 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）でカードが持つ効果。攻撃と回復のみ */
+export interface CombatEffect {
+  type: 'damage' | 'heal';
+  dice: DiceExpr;
+}
+
+/** 自動戦闘の相手（1体・固定の優先順位リスト。仮ルール） */
+export interface AutoCombatEnemy {
+  /** kind: 'enemy'。シーンに入るときにコピーして場に出す */
+  card: CardDef;
+  hp: number;
+  baseActionValue: number;
+  priority: CardDef[];
+}
+
+/** 自動戦闘の1手。使えるカードが無くラウンドの行動を終えた記録は effect: 'pass' */
+export interface CombatLogEntry {
+  round: number;
+  count: number;
+  actor: 'pl' | 'enemy';
+  actorName: string;
+  /** effect が 'pass' のときは空文字 */
+  cardName: string;
+  effect: CombatEffect['type'] | 'pass';
+  /** ダイスの出目 */
+  rolls: number[];
+  /** 実際に与えたダメージ／回復した量（HPの下限・上限で切り詰めた後） */
+  amount: number;
+  /** 行動後の双方のHP */
+  plHp: number;
+  enemyHp: number;
+}
+
+export type AutoCombatOutcome = 'win' | 'lose' | 'timeout';
+
+/** セッションが自動戦闘のシーンにいる間の状態（仮ルール） */
+export interface AutoCombatState {
+  nodeId: string;
+  /** 場（field.plVisible）のエネミーカードのID。エネミーの実体は場の1か所だけに置く */
+  enemyCardId: string;
+  status: 'awaiting-priority' | 'won';
+  attempts: number;
+  lastResult?: { outcome: AutoCombatOutcome; rounds: number; log: CombatLogEntry[] };
 }
 
 /** 典型ロールの通称（PCが持つデータから導出する。固定属性ではない） */
@@ -139,6 +195,11 @@ export interface DeckNode {
   objective?: string;
   /** シーンの終了条件（同上、仮ルール） */
   endCondition?: string;
+  /**
+   * このシーンで自動戦闘を行う（docs/cartagraph/auto-combat.md、仮ルール）。dense とは独立で、
+   * 自動戦闘中もセッションは軽量モードのまま
+   */
+  autoCombat?: { enemy: AutoCombatEnemy; maxRounds: number };
 }
 
 /** 結末タグの定義（成功／失敗に限らず任意の数） */
@@ -180,6 +241,11 @@ export interface Scenario {
   recommendedCp: number;
   baseCp: number;
   proposalHandling: ProposalHandling;
+  /**
+   * ソロ開始時にキャラクターへ無償で配る初期装備（docs/cartagraph/auto-combat.md「初期装備」、
+   * 仮ルール）。村パートの報酬・お店が実装されたら置き換える
+   */
+  soloStarter?: { hp: number; baseActionValue: number; cards: CardDef[] };
   deck: DeckNode[];
   endings: EndingDef[];
   /** 共有ライブラリへの公開状態 */
@@ -259,6 +325,15 @@ export interface SessionStatus {
   status: 'recruiting' | 'playing' | 'suspended' | 'ended';
 }
 
+/**
+ * 人間GMのいないソロセッションに割り当てるダミーGM（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md
+ * 決定事項5）。提案の自動解決の可否は gmId ではなく Session.proposalHandling で判定する。
+ * gmId がこれなら「人間GMのいないセッション」として、結末ノードへの遷移で終了する
+ * （docs/cartagraph/play-and-field.md「次のシーンへ進む」）
+ */
+export const SYSTEM_GM_ID = 'system-gm';
+export const SYSTEM_GM_NAME = '（自動進行）';
+
 export interface Session {
   id: string;
   scenarioId: string;
@@ -271,7 +346,10 @@ export interface Session {
   /** セッション開始時にScenarioからコピーする（セッションスナップショットの一部） */
   proposalHandling: ProposalHandling;
   /** 進行中のシーン（例: "3-2 奥の扉"） */
-  currentScene: { index: number; total: number; name: string; path: string };
+  /** nodeId は「次のシーンへ進む」で移ったノード（それ以前から続くセッションでは無い） */
+  currentScene: { index: number; total: number; name: string; path: string; nodeId?: string };
+  /** 自動戦闘のシーンにいる間だけ存在する（仮ルール） */
+  autoCombat?: AutoCombatState;
   participants: Participant[];
   /** 場のゾーン別枚数 */
   field: { gmOnly: CardDef[]; plVisible: CardDef[] };

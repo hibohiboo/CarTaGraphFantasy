@@ -11,7 +11,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 - `apps/web/` … Vite + React 19 + react-router（Hashルーター）+ TanStack Query + MSW
   - **バックエンドは未実装。** `/api/*` は MSW（Mock Service Worker）が応答し、状態はメモリ上でリロードで消える
 - `packages/domain/` … ドメイン型。`docs/` の用語をそのまま型に落としたもの
-- テスト … Vitest（`apps/web/src/test/`）。E2E は未導入
+- テスト … Vitest（`apps/web/src/test/`、`packages/domain/src/**/*.test.ts`）。E2E は Playwright（`apps/web/e2e/`、CIのみ）
 - 将来 … AWS + CDK（`infra/`）、Neon Postgres。方針は `docs/architecture/index.md`
 
 ## ディレクトリ構成
@@ -32,6 +32,8 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 pnpm web:dev          # http://localhost:5173（MSW 有効）
 pnpm web:test         # Vitest（MSW の node サーバーで全ページを描画）
 pnpm web:typecheck    # tsc
+pnpm domain:test      # Vitest（packages/domain の純粋関数）
+pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
 pnpm docs:dev         # 仕様書サイトをローカルで確認
 pnpm docs:build       # 仕様書サイトのビルド（リンク切れがあると失敗する）
 pnpm build:pages      # docs + app をまとめてビルド（CI と同じ）
@@ -39,13 +41,13 @@ pnpm lint             # Biome（フォーマット・import整理・lintをま�
 pnpm lint:fix         # 同上、安全な修正を自動適用
 ```
 
-コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`docs/` を触ったら `pnpm docs:build` も通す。
+コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。
 
 lint・型検査・テスト・docsビルドは、AI にトークンを使わせず git フックで機械的に止める。
 - `.githooks/pre-commit` … ステージ済みファイルだけ `biome check --staged --write` を実行し、安全な指摘（フォーマット崩れ等）は自動修正して再ステージする。`--unsafe`が要る指摘（意図的に自動適用しない方針）だけコミットを止める
-- `.githooks/pre-push` … push前に `pnpm web:typecheck && pnpm web:test && pnpm docs:build`（CIと同じ3つ）を実行する
+- `.githooks/pre-push` … push前に `pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm web:test && pnpm docs:build`（CIと同じ）を実行する
 
-`pnpm install` すると `prepare` スクリプトが `git config --local core.hooksPath .githooks` を自動で設定するので、通常は何もしなくてよい。設定されていない場合は手動で同じコマンドを実行する。CI（`.github/workflows/ci.yml`）にも同じ4つのチェックがあり、フック未設定や `--no-verify` の取りこぼしを検出する。
+`pnpm install` すると `prepare` スクリプトが `git config --local core.hooksPath .githooks` を自動で設定するので、通常は何もしなくてよい。設定されていない場合は手動で同じコマンドを実行する。CI（`.github/workflows/ci.yml`）にも同じチェック（lint・型検査・テスト・docsビルド）があり、フック未設定や `--no-verify` の取りこぼしを検出する。
 
 ## 開発ルールの適用
 
