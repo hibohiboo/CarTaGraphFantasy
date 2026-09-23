@@ -262,6 +262,7 @@ export const scenarios: Scenario[] = [
     spaceModel: null,
     recommendedCp: 3,
     baseCp: 3,
+    proposalHandling: 'gm-required',
     deck: [
       {
         id: 'd-intro',
@@ -323,6 +324,7 @@ export const scenarios: Scenario[] = [
     spaceModel: '2d',
     recommendedCp: 5,
     baseCp: 4,
+    proposalHandling: 'gm-required',
     deck: [
       { id: 'g-intro', kind: 'intro', name: '港の酒場', cards: [] },
       { id: 'g-s1', kind: 'scene', name: '1 鎖の桟橋', cards: [] },
@@ -355,6 +357,7 @@ export const scenarios: Scenario[] = [
     spaceModel: null,
     recommendedCp: 2,
     baseCp: 2,
+    proposalHandling: 'gm-required',
     deck: [
       { id: 'a-intro', kind: 'intro', name: '再び回廊へ', cards: [] },
       { id: 'a-end', kind: 'ending', name: 'エンディング', cards: [] },
@@ -375,10 +378,87 @@ export const scenarios: Scenario[] = [
     spaceModel: null,
     recommendedCp: 3,
     baseCp: 3,
+    proposalHandling: 'gm-required',
     deck: [{ id: 'w-intro', kind: 'intro', name: '井戸の縁', cards: [] }],
     endings: [],
     libraryStatus: 'draft',
     updatedAt: ago(5),
+  },
+  {
+    // C1（GMレス基盤）の動作確認用の最小シナリオ（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。
+    // 村パート・自動戦闘エンジンはまだ無いため、導入シーンだけを持つ仮データ。C3で正式な内容に置き換える。
+    id: 'sc-village-start',
+    title: '（仮）村はずれの一歩',
+    authorId: 'system',
+    authorName: 'システム',
+    summary: '朝もやの中、村はずれの道が街へと続いている。',
+    referenceTags: [],
+    prerequisiteTags: [],
+    partySize: { min: 1, max: 1 },
+    spaceModel: null,
+    recommendedCp: 0,
+    baseCp: 0,
+    // GMレス・ソロプレイ用（docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）。
+    // 人間GMの裁定を待たず、提案文をそのまま採用する。
+    proposalHandling: 'auto-resolve',
+    deck: [
+      {
+        id: 'vs-intro',
+        kind: 'intro',
+        name: '村はずれ',
+        cards: [{ id: 'vs-look-around', kind: 'choice', name: '辺りを見回す', tags: [] }],
+      },
+      { id: 'vs-end', kind: 'ending', name: 'エンディング', cards: [] },
+    ],
+    endings: [],
+    libraryStatus: 'draft',
+    updatedAt: ago(0),
+  },
+  {
+    // C1境界値テスト専用：提案不可（disabled）のGMレスシナリオ確認用
+    id: 'sc-village-no-propose',
+    title: '（テスト用）提案不可の村はずれ',
+    authorId: 'system',
+    authorName: 'システム',
+    summary: 'テスト専用シナリオ。',
+    referenceTags: [],
+    prerequisiteTags: [],
+    partySize: { min: 1, max: 1 },
+    spaceModel: null,
+    recommendedCp: 0,
+    baseCp: 0,
+    proposalHandling: 'disabled',
+    deck: [
+      {
+        id: 'vnp-intro',
+        kind: 'intro',
+        name: '村はずれ（提案不可）',
+        cards: [{ id: 'vnp-look-around', kind: 'choice', name: '辺りを見回す', tags: [] }],
+      },
+      { id: 'vnp-end', kind: 'ending', name: 'エンディング', cards: [] },
+    ],
+    endings: [],
+    libraryStatus: 'draft',
+    updatedAt: ago(0),
+  },
+  {
+    // C1境界値テスト専用：導入シーン（introノード）を持たないシナリオでstart-soloを呼んだ場合の確認用
+    id: 'sc-no-intro',
+    title: '（テスト用）導入なしシナリオ',
+    authorId: 'system',
+    authorName: 'システム',
+    summary: 'テスト専用シナリオ。',
+    referenceTags: [],
+    prerequisiteTags: [],
+    partySize: { min: 1, max: 1 },
+    spaceModel: null,
+    recommendedCp: 0,
+    baseCp: 0,
+    proposalHandling: 'auto-resolve',
+    deck: [{ id: 'ni-scene', kind: 'scene', name: 'シーン', cards: [] }],
+    endings: [],
+    libraryStatus: 'draft',
+    updatedAt: ago(0),
   },
 ];
 
@@ -445,6 +525,7 @@ export const sessions: Session[] = [
     partyName: '迷い星',
     status: 'playing',
     mode: 'light',
+    proposalHandling: 'gm-required',
     currentScene: { index: 4, total: 7, name: '3-2 奥の扉', path: '地下回廊 › 奥の扉' },
     participants: [
       {
@@ -540,6 +621,7 @@ export const sessions: Session[] = [
     partyName: '潮騒',
     status: 'playing',
     mode: 'dense',
+    proposalHandling: 'gm-required',
     currentScene: { index: 3, total: 5, name: '2 甲板の戦い', path: '鎖の桟橋 › 甲板' },
     participants: [
       {
@@ -597,6 +679,7 @@ export const sessions: Session[] = [
     partyName: '迷い星',
     status: 'ended',
     mode: 'light',
+    proposalHandling: 'gm-required',
     currentScene: { index: 5, total: 5, name: 'エンディング', path: 'エンディング' },
     participants: [
       {

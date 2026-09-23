@@ -79,6 +79,13 @@ export const routes: RouteMeta[] = [
     description: '初めてのプレイヤー向け。酒場のNPCとの短い問答を経て、最初のキャラクターができる',
   },
   {
+    path: '/pl/village-start',
+    title: '（仮）村はずれの一歩',
+    group: 'pl',
+    description:
+      'C1（GMレス基盤）の検証用。人間GMなしで1人プレイのセッションを開始する（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）',
+  },
+  {
     path: '/pl/characters/:characterId',
     title: 'キャラクターシート',
     group: 'pl',

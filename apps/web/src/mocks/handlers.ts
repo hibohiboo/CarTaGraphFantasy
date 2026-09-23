@@ -10,7 +10,15 @@ import type {
   Session,
 } from '@cartagraph/domain';
 import { HttpResponse, http } from 'msw';
+import { toDictionaryForm } from '../lib/japanese';
 import * as fx from './fixtures';
+
+// GMレスのソロセッション用ダミーGM（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md 決定事項5）。
+// 提案の自動解決の可否は Session.gmId ではなく Session.proposalHandling で判定する
+// （docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」。シナリオ側が選ぶ設定）。
+const SYSTEM_GM_ID = 'system-gm';
+const SYSTEM_GM_NAME = '（自動進行）';
+const DEFAULT_PROPOSAL_CARD_NAME = '新たな選択肢';
 
 type Db = {
   characters: Character[];
@@ -66,6 +74,89 @@ const playScript: Record<string, { flavor: string; addChoices?: CardDef[]; revea
 
 function findSession(id: string) {
   return db.sessions.find((s) => s.id === id);
+}
+
+/** 提案の採用処理（人間GMの手動承認・GMレスの自動承認の両方から呼ぶ共通ロジック） */
+function resolveApprovedProposal(s: Session, p: Proposal, cardName: string) {
+  p.status = 'approved';
+  p.resolution = cardName;
+  const card: CardDef = { id: nextId('ch'), kind: 'choice', name: cardName, tags: ['GM生成'] };
+  const lastChoice = s.hand.map((c) => c.kind).lastIndexOf('choice');
+  s.hand.splice(lastChoice + 1, 0, card);
+  s.feed.unshift({
+    id: nextId('f'),
+    at: nowIso(),
+    text: `${s.gmName}が提案「${p.text}」を採用`,
+    cardName: card.name,
+  });
+  s.lastActivityAt = nowIso();
+}
+
+/**
+ * proposalHandling === 'auto-resolve' のセッションでのみ呼ぶ。人間GMのような創造的な言い換えは
+ * せず、提案文をtoDictionaryFormで辞書形に変換した文言をそのまま採用する（既存のGM画面
+ * <GmSessionManagePage>が採用カード名の初期値に使っているのと同じ変換）。変換結果が空になる
+ * 場合に備えてデフォルト文言へフォールバックする。
+ */
+function autoApproveProposal(s: Session, p: Proposal) {
+  const cardName = toDictionaryForm(p.text).trim() || DEFAULT_PROPOSAL_CARD_NAME;
+  resolveApprovedProposal(s, p, cardName);
+}
+
+function buildSoloCharacter(name: string): Character | null {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  return {
+    id: nextId('pc'),
+    name: trimmed,
+    ownerId: fx.me.id,
+    ownerName: fx.me.name,
+    deck: [],
+    titles: [],
+    endingTags: [],
+    cp: { total: fx.initialCpBudget, spent: 0 },
+    createdAt: nowIso(),
+  };
+}
+
+function buildSoloSession(scenario: Scenario, character: Character): Session | null {
+  const intro = scenario.deck.find((d) => d.kind === 'intro');
+  if (!intro) return null;
+  const hand = intro.cards.filter((c) => c.kind === 'choice');
+  return {
+    id: nextId('ss'),
+    scenarioId: scenario.id,
+    scenarioTitle: scenario.title,
+    gmId: SYSTEM_GM_ID,
+    gmName: SYSTEM_GM_NAME,
+    partyName: character.name,
+    status: 'playing',
+    mode: 'light',
+    proposalHandling: scenario.proposalHandling,
+    currentScene: {
+      index: 0,
+      total: scenario.deck.length,
+      name: intro.name,
+      path: intro.name,
+    },
+    participants: [
+      {
+        userId: fx.me.id,
+        name: fx.me.name,
+        role: 'driver',
+        characterId: character.id,
+        characterName: character.name,
+        lastSeenAt: nowIso(),
+      },
+    ],
+    field: { gmOnly: [], plVisible: [] },
+    hand,
+    flavor: scenario.summary,
+    proposals: [],
+    feed: [{ id: nextId('f'), at: nowIso(), text: `${character.name}が${scenario.title}を始めた` }],
+    lastActivityAt: nowIso(),
+    suspendAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
+  };
 }
 
 export const handlers = [
@@ -233,6 +324,11 @@ export const handlers = [
   http.post('/api/sessions/:id/proposals', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
+    if (s.proposalHandling === 'disabled')
+      return HttpResponse.json(
+        { message: 'このシナリオでは新たな選択肢を提案できません' },
+        { status: 422 },
+      );
     const { text } = (await request.json()) as { text: string };
     if (!text?.trim())
       return HttpResponse.json({ message: '提案内容を入力してください' }, { status: 422 });
@@ -254,6 +350,9 @@ export const handlers = [
       text: `${driver?.characterName ?? 'ドライバー'}が新たな選択肢を提案「${proposal.text}」`,
     });
     s.lastActivityAt = nowIso();
+    // シナリオが「自動解決」を選んでいれば、人間GMの裁定を待たずシステムが即座に採用する
+    // （docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
+    if (s.proposalHandling === 'auto-resolve') autoApproveProposal(s, proposal);
     return HttpResponse.json(s, { status: 201 });
   }),
 
@@ -265,23 +364,7 @@ export const handlers = [
     const { cardName } = (await request.json()) as { cardName: string };
     if (!cardName?.trim())
       return HttpResponse.json({ message: 'カード名を入力してください' }, { status: 422 });
-    p.status = 'approved';
-    p.resolution = cardName.trim();
-    const card: CardDef = {
-      id: nextId('ch'),
-      kind: 'choice',
-      name: cardName.trim(),
-      tags: ['GM生成'],
-    };
-    const lastChoice = s.hand.map((c) => c.kind).lastIndexOf('choice');
-    s.hand.splice(lastChoice + 1, 0, card);
-    s.feed.unshift({
-      id: nextId('f'),
-      at: nowIso(),
-      text: `${s.gmName}が提案「${p.text}」を採用`,
-      cardName: card.name,
-    });
-    s.lastActivityAt = nowIso();
+    resolveApprovedProposal(s, p, cardName.trim());
     return HttpResponse.json(s);
   }),
 
@@ -323,6 +406,27 @@ export const handlers = [
     return HttpResponse.json(s);
   }),
 
+  // 募集・応募を経由せず、1リクエストでGMレスのソロセッションを開始する
+  // （docs/plans/2026-09-23-村スタート冒険者キャンペーン.md 決定事項5、3.詳細設計「GMレス基盤」）。
+  // 既存のRecruitmentフローは変更しない。
+  http.post('/api/scenarios/:id/start-solo', async ({ params, request }) => {
+    const scenario = db.scenarios.find((x) => x.id === params.id);
+    if (!scenario) return notFound('シナリオ');
+    const { name } = (await request.json()) as { name: string };
+    const character = buildSoloCharacter(name);
+    if (!character)
+      return HttpResponse.json({ message: '名前を入力してください' }, { status: 422 });
+    const session = buildSoloSession(scenario, character);
+    if (!session)
+      return HttpResponse.json(
+        { message: 'このシナリオはソロプレイの導入シーンを持っていません' },
+        { status: 422 },
+      );
+    db.characters.push(character);
+    db.sessions.push(session);
+    return HttpResponse.json(session, { status: 201 });
+  }),
+
   // ---------- シナリオ ----------
   http.get('/api/scenarios', ({ request }) => {
     const url = new URL(request.url);
@@ -354,6 +458,7 @@ export const handlers = [
       spaceModel: null,
       recommendedCp: 3,
       baseCp: 3,
+      proposalHandling: 'gm-required',
       deck: [
         { id: nextId('d'), kind: 'intro', name: '導入', cards: [] },
         { id: nextId('d'), kind: 'ending', name: 'エンディング', cards: [] },
