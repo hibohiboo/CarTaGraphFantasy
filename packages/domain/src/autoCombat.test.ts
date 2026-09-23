@@ -159,6 +159,15 @@ describe('resolveAutoCombat', () => {
       expect(() => run(ok, fighter('敵', 10, 2.5, [card('打', 1, hit(1))]))).toThrow(/行動値/);
     });
 
+    it('ラウンド上限が整数でなければ例外', () => {
+      expect(() => run(ok, ok, 2.5)).toThrow(/ラウンド/);
+    });
+
+    it('ダイスの修正値が NaN なら例外（HPが NaN になり決着しなくなるため）', () => {
+      const bad: CombatEffect = { type: 'damage', dice: { count: 1, sides: 6, bonus: Number.NaN } };
+      expect(() => run(fighter('PL', 10, 10, [card('打', 3, bad)]), ok)).toThrow(/修正値/);
+    });
+
     it('最大HPが NaN なら例外', () => {
       expect(() => run(fighter('PL', Number.NaN, 10, [card('打', 3, hit(1))]), ok)).toThrow(/HP/);
     });

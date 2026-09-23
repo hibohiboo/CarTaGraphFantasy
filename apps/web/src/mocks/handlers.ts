@@ -368,8 +368,9 @@ export const handlers = [
       if (plan.autoCombat) {
         // 戦えないまま自動戦闘のシーンへ入ると、手札も提案も無い行き止まりになるため先に止める
         const character = db.characters.find((c) => c.id === driver?.characterId);
-        const reason = character ? canFight(character) : 'キャラクターが見つかりません';
-        if (reason) return unprocessable(`${character?.name ?? ''}は${reason}`);
+        if (!character) return notFound('キャラクター');
+        const reason = canFight(character);
+        if (reason) return unprocessable(`${character.name}は${reason}`);
       }
       transition = plan;
     }
@@ -411,6 +412,7 @@ export const handlers = [
   http.post('/api/sessions/:id/proposals', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
+    if (s.status === 'ended') return sessionEnded();
     if (inAutoCombat(s)) return autoCombatBusy();
     if (s.proposalHandling === 'disabled')
       return HttpResponse.json(

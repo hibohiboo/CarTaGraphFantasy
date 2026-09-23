@@ -253,13 +253,19 @@ describe('自動戦闘の異常系', () => {
     expect(after.feed).toHaveLength(s.feed.length);
   });
 
-  it('終了済みのセッションでは、カードのプレイも自動戦闘も受け付けない', async () => {
-    await expect(api.post('/sessions/ss-ended/play', { cardId: 'x' })).rejects.toMatchObject({
-      status: 422,
-    });
+  it('戦闘の設定中に終了したセッションでは、プレイ・提案・自動戦闘を受け付けず、戦い方パネルも出ない', async () => {
+    const s = await startAtExam('sc-exam-always-win');
+    await api.post(`/sessions/${s.id}/end`);
+    const ended = { status: 422, message: 'このセッションは終了しています' };
+    await expect(runAutoCombat(s, ['c-slash'])).rejects.toMatchObject(ended);
+    await expect(api.post(`/sessions/${s.id}/play`, { cardId: 'x' })).rejects.toMatchObject(ended);
     await expect(
-      api.post('/sessions/ss-ended/auto-combat', { priority: ['c-slash'] }),
-    ).rejects.toMatchObject({ status: 422 });
+      api.post(`/sessions/${s.id}/proposals`, { text: '調べてみたい' }),
+    ).rejects.toMatchObject(ended);
+
+    renderAt(`/pl/sessions/${s.id}/play`);
+    await screen.findByText('このセッションは終了しています。');
+    expect(screen.queryByRole('region', { name: '戦い方を決める' })).not.toBeInTheDocument();
   });
 
   it('試験の戦闘中は、カードのプレイも提案もできない', async () => {

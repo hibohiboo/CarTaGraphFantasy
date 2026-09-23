@@ -38,9 +38,9 @@ export function validatePriority(cards: CardDef[]): string | null {
     // コスト0だと同じカウントで行動し続け、ラウンドが終わらない
     if (!isPositiveInt(c.actionCost))
       return `「${c.name}」のコストは1以上の整数である必要があります`;
-    const { count, sides } = c.combatEffect.dice;
-    if (!isPositiveInt(count) || !isPositiveInt(sides))
-      return `「${c.name}」のダイスは個数・面数とも1以上の整数である必要があります`;
+    const { count, sides, bonus } = c.combatEffect.dice;
+    if (!isPositiveInt(count) || !isPositiveInt(sides) || !Number.isInteger(bonus))
+      return `「${c.name}」のダイスは個数・面数が1以上の整数、修正値が整数である必要があります`;
   }
   if (new Set(cards.map((c) => c.id)).size !== cards.length) return '同じカードが重複しています';
   return null;
@@ -72,7 +72,7 @@ export function resolveAutoCombat(input: {
   rng: Rng;
 }): AutoCombatResult {
   const { maxRounds, rng } = input;
-  if (maxRounds < 1) throw new Error('ラウンド上限は1以上である必要があります');
+  if (!isPositiveInt(maxRounds)) throw new Error('ラウンド上限は1以上の整数である必要があります');
   for (const c of [input.pl, input.enemy]) {
     const error = validatePriority(c.priority);
     if (error) throw new Error(`${c.name}：${error}`);

@@ -1,4 +1,5 @@
 import type { AutoCombatState, CardDef, CombatLogEntry, Session } from '@cartagraph/domain';
+import { validatePriority } from '@cartagraph/domain/autoCombat';
 import { useState } from 'react';
 import { Button, ErrorNote, Loading } from '../../components/ui';
 import { useCharacter, useRunAutoCombat } from '../../lib/queries';
@@ -13,8 +14,9 @@ export function AutoCombatPanel({ session }: { session: Session }) {
   const run = useRunAutoCombat();
   const [priority, setPriority] = useState<string[]>([]);
 
-  // 自動戦闘の効果を持つカードだけが候補になる（補助・移動や装備は入れられない）
-  const candidates = (character.data?.deck ?? []).filter((c) => c.combatEffect);
+  // 優先順位リストに入れられるカード（自動戦闘の効果と正しいコストを持つもの）だけが候補になる。
+  // 基準はサーバーと同じ validatePriority（補助・移動や装備は入れられない）
+  const candidates = (character.data?.deck ?? []).filter((c) => validatePriority([c]) === null);
   const byId = new Map(candidates.map((c) => [c.id, c]));
   const chosen = priority.map((id) => byId.get(id)).filter((c): c is CardDef => !!c);
   const rest = candidates.filter((c) => !priority.includes(c.id));
