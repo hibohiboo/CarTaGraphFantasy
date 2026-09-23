@@ -151,6 +151,19 @@ export interface EndingDef {
 
 export type SpaceModel = '1d' | '2d';
 
+/**
+ * 「新たな選択肢を提案」カードの提案を誰がどう裁定するか（docs/cartagraph/play-and-field.md
+ * 「GMレスセッションでの提案の扱い（決着）」）。'auto-resolve' は人間GM不在のセッションでのみ使う、
+ * 「機械的な自動判定より人間の裁量を優先する」という一貫方針からの意図的な逸脱。
+ */
+export type ProposalHandling = 'gm-required' | 'disabled' | 'auto-resolve';
+
+export const PROPOSAL_HANDLING_LABEL: Record<ProposalHandling, string> = {
+  'gm-required': 'GM必須',
+  disabled: '提案不可',
+  'auto-resolve': '自動解決',
+};
+
 export interface Scenario {
   id: string;
   title: string;
@@ -166,6 +179,7 @@ export interface Scenario {
   spaceModel: SpaceModel | null;
   recommendedCp: number;
   baseCp: number;
+  proposalHandling: ProposalHandling;
   deck: DeckNode[];
   endings: EndingDef[];
   /** 共有ライブラリへの公開状態 */
@@ -254,6 +268,8 @@ export interface Session {
   partyName: string;
   status: SessionStatus['status'];
   mode: SessionMode;
+  /** セッション開始時にScenarioからコピーする（セッションスナップショットの一部） */
+  proposalHandling: ProposalHandling;
   /** 進行中のシーン（例: "3-2 奥の扉"） */
   currentScene: { index: number; total: number; name: string; path: string };
   participants: Participant[];

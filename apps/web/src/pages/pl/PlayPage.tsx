@@ -120,7 +120,8 @@ export function PlayPage() {
         disabled={busy || ended}
         onPlay={(card) => play.mutate({ sessionId, cardId: card.id })}
         extra={
-          !ended && (
+          !ended &&
+          s.proposalHandling !== 'disabled' && (
             <GameCard
               card={PROPOSE_CARD}
               variant="propose"

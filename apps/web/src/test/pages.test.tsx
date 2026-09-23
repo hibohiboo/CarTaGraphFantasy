@@ -1,5 +1,6 @@
 // 全ルートを MSW（node）＋メモリルーターで描画し、見出しが出ることと主要な操作が通ることを確認する。
 
+import type { Character, Session } from '@cartagraph/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -8,6 +9,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routeObjects } from '../app/router';
 import { routes } from '../app/routes';
+import { ApiError, api } from '../lib/api';
 import { server } from '../mocks/node';
 
 function renderAt(path: string) {
@@ -200,6 +202,103 @@ describe('チュートリアル（旅立ちの酒場）', () => {
   });
 });
 
+describe('村はずれの一歩（C1: GMレス基盤の検証用）', () => {
+  it('名前を入力して始めると、GMレスのセッションが開始されプレイページへ進む', async () => {
+    const user = userEvent.setup();
+    const router = renderAt('/pl/village-start');
+    await screen.findByRole('heading', { level: 1, name: '（仮）村はずれの一歩' });
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '始める' }));
+    expect(await screen.findByRole('button', { name: /新たな選択肢を提案/ })).toBeInTheDocument();
+    expect(router.state.location.pathname).toMatch(/^\/pl\/sessions\/ss-\d+\/play$/);
+  });
+
+  it('名前が空だと始められない', async () => {
+    renderAt('/pl/village-start');
+    await screen.findByRole('heading', { level: 1, name: '（仮）村はずれの一歩' });
+    expect(screen.getByRole('button', { name: '始める' })).toBeDisabled();
+  });
+
+  it('異常系：名前が空だとAPIレベルでも拒否され、Character・Sessionが増えない（中途半端な状態が残らない）', async () => {
+    const charactersBefore = await api.get<Character[]>('/characters');
+    await expect(
+      api.post('/scenarios/sc-village-start/start-solo', { name: '' }),
+    ).rejects.toBeInstanceOf(ApiError);
+    const charactersAfter = await api.get<Character[]>('/characters');
+    expect(charactersAfter.length).toBe(charactersBefore.length);
+  });
+
+  it('開始に失敗するとエラーを表示し、プレイページへは進まない', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/scenarios/:id/start-solo', () =>
+        HttpResponse.json({ message: 'シナリオ が見つかりません' }, { status: 404 }),
+      ),
+    );
+    const router = renderAt('/pl/village-start');
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '始める' }));
+    expect(await screen.findByText('シナリオ が見つかりません')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/pl/village-start');
+  });
+
+  it('新たな選択肢を提案すると、人間の操作なしに即座に採用される', async () => {
+    const user = userEvent.setup();
+    renderAt('/pl/village-start');
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '始める' }));
+    await user.click(await screen.findByRole('button', { name: /新たな選択肢を提案/ }));
+    await user.type(screen.getByLabelText('提案する行動'), '足跡を調べてみたい');
+    await user.click(screen.getByRole('button', { name: '提案を送る' }));
+    // GMレスなので裁定待ちにならず、即座に「足跡を調べる」が手札に加わる
+    expect(screen.queryByText('GM裁定待ち')).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /足跡を調べる/ })).toBeInTheDocument();
+  });
+
+  it('長い提案文でも、自動応答で正しいカード名が採用される（境界値）', async () => {
+    const user = userEvent.setup();
+    const longText = '足跡をひとつひとつ辿って夜明けまで歩き続けてみたい';
+    renderAt('/pl/village-start');
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '始める' }));
+    await user.click(await screen.findByRole('button', { name: /新たな選択肢を提案/ }));
+    await user.type(screen.getByLabelText('提案する行動'), longText);
+    await user.click(screen.getByRole('button', { name: '提案を送る' }));
+    expect(
+      await screen.findByRole('button', {
+        name: /足跡をひとつひとつ辿って夜明けまで歩き続ける/,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('境界値：導入シーン（introノード）を持たないシナリオでは開始できず、Characterも増えない', async () => {
+    const charactersBefore = await api.get<Character[]>('/characters');
+    await expect(
+      api.post('/scenarios/sc-no-intro/start-solo', { name: '新人' }),
+    ).rejects.toBeInstanceOf(ApiError);
+    const charactersAfter = await api.get<Character[]>('/characters');
+    expect(charactersAfter.length).toBe(charactersBefore.length);
+  });
+
+  it('シナリオが「提案不可」なら、プレイページに「新たな選択肢を提案」カードが出ない', async () => {
+    const session = await api.post<Session>('/scenarios/sc-village-no-propose/start-solo', {
+      name: '新人',
+    });
+    renderAt(`/pl/sessions/${session.id}/play`);
+    await screen.findByText('村はずれ（提案不可）');
+    expect(screen.queryByRole('button', { name: /新たな選択肢を提案/ })).not.toBeInTheDocument();
+  });
+
+  it('シナリオが「提案不可」なら、提案APIも拒否する', async () => {
+    const session = await api.post<Session>('/scenarios/sc-village-no-propose/start-solo', {
+      name: '新人',
+    });
+    await expect(
+      api.post(`/sessions/${session.id}/proposals`, { text: '調べてみたい' }),
+    ).rejects.toBeInstanceOf(ApiError);
+  });
+});
+
 describe('ホーム画面のチュートリアル導線', () => {
   it('所持キャラクターが0件のときだけ「旅立ちの酒場へ行く」が出る', async () => {
     server.use(http.get('/api/characters', () => HttpResponse.json([])));
@@ -211,5 +310,21 @@ describe('ホーム画面のチュートリアル導線', () => {
     renderAt('/home');
     await screen.findByRole('heading', { level: 1, name: 'ホーム' });
     expect(screen.queryByRole('link', { name: '旅立ちの酒場へ行く' })).not.toBeInTheDocument();
+  });
+
+  it('所持キャラクターが0件のときだけ、村はずれの一歩（C1検証用）へのリンクも出る', async () => {
+    server.use(http.get('/api/characters', () => HttpResponse.json([])));
+    renderAt('/home');
+    expect(
+      await screen.findByRole('link', { name: /（仮）村はずれの一歩を試す/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('所持キャラクターが1件以上あれば、村はずれの一歩へのリンクも出ない', async () => {
+    renderAt('/home');
+    await screen.findByRole('heading', { level: 1, name: 'ホーム' });
+    expect(
+      screen.queryByRole('link', { name: /（仮）村はずれの一歩を試す/ }),
+    ).not.toBeInTheDocument();
   });
 });

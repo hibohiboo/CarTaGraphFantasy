@@ -66,6 +66,20 @@ export const useLibrary = () =>
 
 // ---------- mutations ----------
 
+/** 募集を経由しない、GMレスのソロセッションの直接開始（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md C1） */
+export function useStartSoloSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { scenarioId: string; name: string }) =>
+      api.post<Session>(`/scenarios/${v.scenarioId}/start-solo`, { name: v.name }),
+    onSuccess: (s) => {
+      qc.setQueryData(keys.session(s.id), s);
+      void qc.invalidateQueries({ queryKey: keys.sessions });
+      void qc.invalidateQueries({ queryKey: keys.characters });
+    },
+  });
+}
+
 export function useApply() {
   const qc = useQueryClient();
   return useMutation({

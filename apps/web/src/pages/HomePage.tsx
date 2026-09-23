@@ -40,6 +40,9 @@ export function HomePage() {
                 <span className="u-row">
                   <span className="u-dim u-small">まだキャラクターがいません。</span>
                   <Link to="/pl/tutorial">旅立ちの酒場へ行く</Link>
+                  {/* C1（GMレス基盤）の検証用導線。C4で旧チュートリアルと統合する
+                      （docs/plans/2026-09-23-村スタート冒険者キャンペーン.md） */}
+                  <Link to="/pl/village-start">（仮）村はずれの一歩を試す</Link>
                 </span>
               )}
               {mySessions.map((x) => {
