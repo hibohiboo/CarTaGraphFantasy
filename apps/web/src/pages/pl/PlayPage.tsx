@@ -30,7 +30,7 @@ export function PlayPage() {
   const ended = s.status === 'ended';
   const busy = play.isPending || propose.isPending;
   // 自動戦闘の設定中は、手札と提案の代わりに戦い方のパネルを出す（docs/cartagraph/auto-combat.md）
-  const choosingTactics = s.autoCombat?.status === 'awaiting-priority';
+  const choosingTactics = !ended && s.autoCombat?.status === 'awaiting-priority';
   const enemyName =
     s.field.plVisible.find((c) => c.id === s.autoCombat?.enemyCardId)?.name ?? '相手';
 
@@ -69,7 +69,7 @@ export function PlayPage() {
           ended
             ? 'このセッションは終了しています。'
             : choosingTactics
-              ? '戦い方（カードの優先順位）を決めて、試験を始めよう。'
+              ? '戦い方（カードの優先順位）を決めて、戦闘を始めよう。'
               : busy
                 ? '…'
                 : '手札から1枚選んでプレイしよう。'

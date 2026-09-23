@@ -61,7 +61,7 @@ describe('planTransition', () => {
   });
 
   it('入れ子のノードでは index が祖先の添字、path が「親 › 子」になる', () => {
-    const plan = planTransition({ deck }, humanGm, 'exam');
+    const plan = planTransition({ deck }, soloGm, 'exam');
     expect(plan.ok && plan.currentScene).toEqual({
       index: 1,
       total: 3,
@@ -80,6 +80,13 @@ describe('planTransition', () => {
   it('人間GMのいないセッションで結末ノードへ移ると終了する', () => {
     const plan = planTransition({ deck }, soloGm, 'end');
     expect(plan.ok && plan.ended).toBe(true);
+  });
+
+  it('人間GMのセッションでは自動戦闘のノードへ進めない（自動戦闘はGM不在のソロ限定）', () => {
+    expect(planTransition({ deck }, humanGm, 'exam')).toEqual({
+      ok: false,
+      error: expect.stringMatching(/自動戦闘/),
+    });
   });
 
   it('人間GMのセッションでは結末ノードへ移っても終了しない（GMが宣言する）', () => {

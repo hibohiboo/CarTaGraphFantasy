@@ -119,6 +119,16 @@ export interface CombatLogEntry {
 
 export type AutoCombatOutcome = 'win' | 'lose' | 'timeout';
 
+/** 自動戦闘1回分の記録。セッションの記録として消さずに残す（docs/concept「セッションログの方針」） */
+export interface CombatRecord {
+  nodeId: string;
+  /** そのシーンで何回目の挑戦か */
+  attempt: number;
+  outcome: AutoCombatOutcome;
+  rounds: number;
+  log: CombatLogEntry[];
+}
+
 /** セッションが自動戦闘のシーンにいる間の状態（仮ルール） */
 export interface AutoCombatState {
   nodeId: string;
@@ -350,6 +360,8 @@ export interface Session {
   currentScene: { index: number; total: number; name: string; path: string; nodeId?: string };
   /** 自動戦闘のシーンにいる間だけ存在する（仮ルール） */
   autoCombat?: AutoCombatState;
+  /** これまでの自動戦闘のすべての挑戦（シーンを移っても残る） */
+  combatHistory?: CombatRecord[];
   participants: Participant[];
   /** 場のゾーン別枚数 */
   field: { gmOnly: CardDef[]; plVisible: CardDef[] };

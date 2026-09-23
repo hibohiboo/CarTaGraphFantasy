@@ -98,7 +98,7 @@ describe('自動戦闘（勝利）', () => {
     renderAt(`/pl/sessions/${s.id}/play`);
     const panel = await screen.findByRole('region', { name: '戦い方を決める' });
     await user.click(within(panel).getByRole('button', { name: '「斬撃」をリストに入れる' }));
-    await user.click(within(panel).getByRole('button', { name: '試験を始める' }));
+    await user.click(within(panel).getByRole('button', { name: '戦闘を始める' }));
 
     expect(await screen.findByText(/^1回目：\d+ラウンドで試験官に勝利した$/)).toBeInTheDocument();
     expect(screen.getByRole('list', { name: '戦闘の経過' })).toBeInTheDocument();
@@ -117,6 +117,13 @@ describe('自動戦闘（勝利）', () => {
     const ended = await api.get<Session>(`/sessions/${s.id}`);
     expect(ended.status).toBe('ended');
     expect(ended.autoCombat).toBeUndefined();
+    // 結末へ進んで自動戦闘の状態が消えても、戦闘の経過はセッションの記録として残る
+    expect(ended.combatHistory).toHaveLength(1);
+    expect(ended.combatHistory?.[0]).toMatchObject({ attempt: 1, outcome: 'win' });
+    expect(ended.combatHistory?.[0].log.length).toBeGreaterThan(0);
+    // 終了後は、提案も戦い方の設定もできない
+    expect(screen.queryByRole('button', { name: /新たな選択肢を提案/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '戦い方を決める' })).not.toBeInTheDocument();
   });
 
   it('並べ替えた優先順位がそのまま使われる（渾身の一撃を上へ）', async () => {
@@ -134,7 +141,7 @@ describe('自動戦闘（勝利）', () => {
       expect.stringContaining('渾身の一撃'),
       expect.stringContaining('斬撃'),
     ]);
-    await user.click(within(panel).getByRole('button', { name: '試験を始める' }));
+    await user.click(within(panel).getByRole('button', { name: '戦闘を始める' }));
     await screen.findByText(/^1回目：\d+ラウンドで試験官に勝利した$/);
     const after = await api.get<Session>(`/sessions/${s.id}`);
     expect(after.autoCombat?.lastResult?.log[0]).toMatchObject({
@@ -159,7 +166,7 @@ describe('自動戦闘（敗北・時間切れ）', () => {
     renderAt(`/pl/sessions/${s.id}/play`);
     const panel = await screen.findByRole('region', { name: '戦い方を決める' });
     await user.click(within(panel).getByRole('button', { name: '「斬撃」をリストに入れる' }));
-    await user.click(within(panel).getByRole('button', { name: '試験を始める' }));
+    await user.click(within(panel).getByRole('button', { name: '戦闘を始める' }));
     expect(await screen.findByText(/試験官に敗れた/)).toBeInTheDocument();
 
     const after1 = await api.get<Session>(`/sessions/${s.id}`);
@@ -171,10 +178,16 @@ describe('自動戦闘（敗北・時間切れ）', () => {
     expect(pc1.hp).toEqual({ current: 20, max: 20 });
 
     // 設定画面に戻っていて、もう一度挑戦できる
-    await user.click(within(panel).getByRole('button', { name: '試験を始める' }));
+    await user.click(within(panel).getByRole('button', { name: '戦闘を始める' }));
     await screen.findByText(/2回目/);
     const pc2 = await characterOf(s);
     expect(pc2.deck.filter((c) => c.name === '再挑戦の記憶')).toHaveLength(1);
+    // 前回の挑戦の経過も消えずに残る
+    const after2 = await api.get<Session>(`/sessions/${s.id}`);
+    expect(after2.combatHistory?.map((r) => [r.attempt, r.outcome])).toEqual([
+      [1, 'lose'],
+      [2, 'lose'],
+    ]);
   });
 
   it('ラウンド上限までに決着しなければ、敗北と同じ扱いになる', async () => {
@@ -189,11 +202,11 @@ describe('自動戦闘（敗北・時間切れ）', () => {
 });
 
 describe('自動戦闘の異常系', () => {
-  it('優先順位が0件なら「試験を始める」を押せない', async () => {
+  it('優先順位が0件なら「戦闘を始める」を押せない', async () => {
     const s = await startAtExam('sc-exam-always-win');
     renderAt(`/pl/sessions/${s.id}/play`);
     const panel = await screen.findByRole('region', { name: '戦い方を決める' });
-    expect(within(panel).getByRole('button', { name: '試験を始める' })).toBeDisabled();
+    expect(within(panel).getByRole('button', { name: '戦闘を始める' })).toBeDisabled();
   });
 
   it.each([
@@ -228,9 +241,25 @@ describe('自動戦闘の異常系', () => {
     ).rejects.toMatchObject({ status: 404 });
   });
 
-  it('HP・行動値を持たないキャラクターでは422', async () => {
-    const s = await startAtExam('sc-exam-no-starter');
-    await expect(runAutoCombat(s, ['c-slash'])).rejects.toMatchObject({ status: 422 });
+  it('戦えないキャラクター（HP・行動値・戦闘カードなし）は自動戦闘のシーンへ進めず、セッションは変わらない', async () => {
+    // 進めてしまうと、候補が0件で戦闘を始められず、手札も提案も無い行き止まりになる
+    const s = await api.post<Session>('/scenarios/sc-exam-no-starter/start-solo', { name: '新人' });
+    await expect(
+      api.post(`/sessions/${s.id}/play`, { cardId: 'ns-to-guild' }),
+    ).rejects.toMatchObject({ status: 422 });
+    const after = await api.get<Session>(`/sessions/${s.id}`);
+    expect(after.currentScene).toEqual(s.currentScene);
+    expect(after.autoCombat).toBeUndefined();
+    expect(after.feed).toHaveLength(s.feed.length);
+  });
+
+  it('終了済みのセッションでは、カードのプレイも自動戦闘も受け付けない', async () => {
+    await expect(api.post('/sessions/ss-ended/play', { cardId: 'x' })).rejects.toMatchObject({
+      status: 422,
+    });
+    await expect(
+      api.post('/sessions/ss-ended/auto-combat', { priority: ['c-slash'] }),
+    ).rejects.toMatchObject({ status: 422 });
   });
 
   it('試験の戦闘中は、カードのプレイも提案もできない', async () => {

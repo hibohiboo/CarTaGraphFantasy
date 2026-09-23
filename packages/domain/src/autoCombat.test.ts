@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   type Combatant,
+  canFight,
   pickCard,
   type Rng,
   resolveAutoCombat,
@@ -153,6 +154,54 @@ describe('resolveAutoCombat', () => {
     it('ラウンド上限が0なら例外', () => {
       expect(() => run(ok, ok, 0)).toThrow(/ラウンド/);
     });
+
+    it('基本行動値が整数でなければ例外（カウントと一致せず行動できなくなるため）', () => {
+      expect(() => run(ok, fighter('敵', 10, 2.5, [card('打', 1, hit(1))]))).toThrow(/行動値/);
+    });
+
+    it('最大HPが NaN なら例外', () => {
+      expect(() => run(fighter('PL', Number.NaN, 10, [card('打', 3, hit(1))]), ok)).toThrow(/HP/);
+    });
+  });
+
+  describe('validatePriority の数値検査', () => {
+    it('コストが整数でなければエラー', () => {
+      expect(validatePriority([card('a', 1.5, hit(1))])).toMatch(/コスト/);
+    });
+
+    it('ダイスの面数が0ならエラー', () => {
+      const bad: CombatEffect = { type: 'damage', dice: { count: 1, sides: 0, bonus: 0 } };
+      expect(validatePriority([card('a', 2, bad)])).toMatch(/ダイス/);
+    });
+
+    it('ダイスの個数が0ならエラー', () => {
+      const bad: CombatEffect = { type: 'damage', dice: { count: 0, sides: 6, bonus: 0 } };
+      expect(validatePriority([card('a', 2, bad)])).toMatch(/ダイス/);
+    });
+  });
+
+  describe('canFight（自動戦闘のシーンへ進めるか）', () => {
+    const fightable = card('打', 3, hit(1));
+
+    it('HP・行動値・自動戦闘の効果を持つカードがそろっていれば null', () => {
+      expect(
+        canFight({ hp: { current: 5, max: 5 }, baseActionValue: 5, deck: [fightable] }),
+      ).toBeNull();
+    });
+
+    it('HPが無ければ理由を返す', () => {
+      expect(canFight({ baseActionValue: 5, deck: [fightable] })).toMatch(/HP/);
+    });
+
+    it('行動値が無ければ理由を返す', () => {
+      expect(canFight({ hp: { current: 5, max: 5 }, deck: [fightable] })).toMatch(/行動値/);
+    });
+
+    it('自動戦闘の効果を持つカードが1枚も無ければ理由を返す', () => {
+      expect(
+        canFight({ hp: { current: 5, max: 5 }, baseActionValue: 5, deck: [card('剣', undefined)] }),
+      ).toMatch(/カード/);
+    });
   });
 
   it('カウント制どおりの行動順になる（同じラウンドの再行動・途中の同値はスタック・払えなければパス）', () => {
@@ -262,6 +311,12 @@ describe('resolveAutoCombat', () => {
     const enemy = fighter('敵', 100, 1, [card('打', 1, hit(1))]);
     const r = run(pl, enemy, 1, seq(0, 0.999));
     expect(r.log[0]).toMatchObject({ rolls: [1, 6], amount: 8, enemyHp: 92 });
+  });
+
+  it('回復カードだけの優先順位でも、ループせず時間切れで終わる', () => {
+    const pl = fighter('PL', 10, 6, [card('手当', 3, heal(5))]);
+    const enemy = fighter('敵', 100, 7, [card('打', 7, hit(1))]);
+    expect(run(pl, enemy, 3)).toMatchObject({ outcome: 'timeout', rounds: 3 });
   });
 
   it('同じ乱数列なら同じ結果になる', () => {

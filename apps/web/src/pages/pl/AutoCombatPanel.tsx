@@ -6,7 +6,7 @@ import s from './AutoCombatPanel.module.css';
 
 // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）の操作と経過の表示。PlayPage でだけ使う。
 
-/** 戦い方（優先順位リスト）を決めて試験を始めるパネル。自動戦闘の設定中だけ手札の代わりに出す */
+/** 戦い方（優先順位リスト）を決めて戦闘を始めるパネル。自動戦闘の設定中だけ手札の代わりに出す */
 export function AutoCombatPanel({ session }: { session: Session }) {
   const characterId = session.participants.find((p) => p.role === 'driver')?.characterId ?? '';
   const character = useCharacter(characterId);
@@ -22,12 +22,12 @@ export function AutoCombatPanel({ session }: { session: Session }) {
   if (character.isPending) return <Loading what="手持ちのカードを確認中" />;
   if (character.error) return <ErrorNote error={character.error} />;
 
-  const move = (index: number, delta: -1 | 1) =>
-    setPriority((p) => {
-      const next = [...p];
-      [next[index], next[index + delta]] = [next[index + delta], next[index]];
-      return next;
-    });
+  // 表示中の並び（chosen）の添字で入れ替える。デッキから消えたIDは同時に落とす
+  const move = (index: number, delta: -1 | 1) => {
+    const next = chosen.map((c) => c.id);
+    [next[index], next[index + delta]] = [next[index + delta], next[index]];
+    setPriority(next);
+  };
 
   return (
     <section className={s.panel} aria-labelledby="auto-combat-title">
@@ -106,10 +106,10 @@ export function AutoCombatPanel({ session }: { session: Session }) {
       </div>
       {run.error && <ErrorNote error={run.error} />}
       <Button
-        onClick={() => run.mutate({ sessionId: session.id, priority })}
+        onClick={() => run.mutate({ sessionId: session.id, priority: chosen.map((c) => c.id) })}
         disabled={chosen.length === 0 || run.isPending}
       >
-        試験を始める
+        戦闘を始める
       </Button>
     </section>
   );
@@ -153,7 +153,7 @@ function effectLabel(c: CardDef) {
   const e = c.combatEffect;
   if (!e) return '';
   const { count, sides, bonus } = e.dice;
-  const dice = `${count}d${sides}${bonus ? `+${bonus}` : ''}`;
+  const dice = `${count}d${sides}${bonus > 0 ? `+${bonus}` : bonus < 0 ? `${bonus}` : ''}`;
   return `コスト${c.actionCost ?? '-'}・${e.type === 'damage' ? '攻撃' : '回復'} ${dice}`;
 }
 

@@ -50,6 +50,12 @@ export function planTransition(
   const found = findDeckNode(scenario.deck, nextNodeId);
   if (!found) return { ok: false, error: `移り先のシーン（${nextNodeId}）がシナリオにありません` };
   const { node, topIndex, path } = found;
+  // 自動戦闘はGM不在のソロプレイ限定（docs/cartagraph/auto-combat.md）。人間GMのセッションでは入らない
+  if (node.autoCombat && session.gmId !== SYSTEM_GM_ID)
+    return {
+      ok: false,
+      error: `「${node.name}」は自動戦闘のシーンのため、人間GMのセッションでは進めません`,
+    };
   return {
     ok: true,
     currentScene: {

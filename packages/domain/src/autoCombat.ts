@@ -2,7 +2,7 @@
 // 戦闘ルール（docs/cartagraph/combat.md）のカウント制を、事前の優先順位リストで自動実行する。
 // 乱数は引数で受け取り、副作用を持たない（docs/process/rules/architecture.md の Functional Core）。
 
-import type { AutoCombatOutcome, CardDef, CombatLogEntry, DiceExpr } from './index';
+import type { AutoCombatOutcome, CardDef, Character, CombatLogEntry, DiceExpr } from './index';
 
 /** [0, 1) の乱数を返す関数 */
 export type Rng = () => number;
@@ -36,8 +36,11 @@ export function validatePriority(cards: CardDef[]): string | null {
   for (const c of cards) {
     if (!c.combatEffect) return `「${c.name}」は自動戦闘の効果を持たないため使えません`;
     // コスト0だと同じカウントで行動し続け、ラウンドが終わらない
-    if (c.actionCost === undefined || c.actionCost < 1)
-      return `「${c.name}」のコストは1以上である必要があります`;
+    if (!isPositiveInt(c.actionCost))
+      return `「${c.name}」のコストは1以上の整数である必要があります`;
+    const { count, sides } = c.combatEffect.dice;
+    if (!isPositiveInt(count) || !isPositiveInt(sides))
+      return `「${c.name}」のダイスは個数・面数とも1以上の整数である必要があります`;
   }
   if (new Set(cards.map((c) => c.id)).size !== cards.length) return '同じカードが重複しています';
   return null;
@@ -73,8 +76,10 @@ export function resolveAutoCombat(input: {
   for (const c of [input.pl, input.enemy]) {
     const error = validatePriority(c.priority);
     if (error) throw new Error(`${c.name}：${error}`);
-    if (c.baseActionValue < 1) throw new Error(`${c.name}：基本行動値は1以上である必要があります`);
-    if (c.maxHp < 1) throw new Error(`${c.name}：最大HPは1以上である必要があります`);
+    if (!isPositiveInt(c.baseActionValue))
+      throw new Error(`${c.name}：基本行動値は1以上の整数である必要があります`);
+    if (!isPositiveInt(c.maxHp))
+      throw new Error(`${c.name}：最大HPは1以上の整数である必要があります`);
   }
 
   type Side = 'pl' | 'enemy';
@@ -144,4 +149,18 @@ export function resolveAutoCombat(input: {
 
 function hps(s: Record<'pl' | 'enemy', { hp: number }>) {
   return { plHp: s.pl.hp, enemyHp: s.enemy.hp };
+}
+
+/** キャラクターが自動戦闘に臨めるか。臨めなければ理由を返す（戦闘のシーンへ入る前に確かめ、進めなくなる状態を防ぐ） */
+export function canFight(c: Pick<Character, 'hp' | 'baseActionValue' | 'deck'>): string | null {
+  if (!c.hp || !isPositiveInt(c.hp.max)) return 'HPを持たないため戦えません';
+  if (!isPositiveInt(c.baseActionValue)) return '行動値を持たないため戦えません';
+  if (!c.deck.some((card) => validatePriority([card]) === null))
+    return '自動戦闘に使えるカードを1枚も持っていないため戦えません';
+  return null;
+}
+
+/** カウント制は整数のカウントと行動値の一致で進むため、行動値・コスト・HPは1以上の整数に限る */
+function isPositiveInt(n: number | undefined): n is number {
+  return n !== undefined && Number.isInteger(n) && n >= 1;
 }

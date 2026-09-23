@@ -11,7 +11,12 @@ import {
   SYSTEM_GM_ID,
   SYSTEM_GM_NAME,
 } from '@cartagraph/domain';
-import { resolveAutoCombat, validatePriority } from '@cartagraph/domain/autoCombat';
+import {
+  type AutoCombatResult,
+  canFight,
+  resolveAutoCombat,
+  validatePriority,
+} from '@cartagraph/domain/autoCombat';
 import {
   findDeckNode,
   planTransition,
@@ -181,11 +186,13 @@ const inAutoCombat = (s: Session) => s.autoCombat?.status === 'awaiting-priority
 
 const autoCombatBusy = () =>
   HttpResponse.json(
-    { message: '試験の戦闘中は、優先順位を決めて戦闘を終えるまで他の行動はできません' },
+    { message: '戦闘中は、戦い方（優先順位）を決めて戦闘を終えるまで他の行動はできません' },
     { status: 422 },
   );
 
 const unprocessable = (message: string) => HttpResponse.json({ message }, { status: 422 });
+
+const sessionEnded = () => unprocessable('このセッションは終了しています');
 
 /** 基本操作8「次のシーンへ進む」の計算結果（planTransition）をセッションへ書き込む */
 function applyTransition(s: Session, plan: Extract<TransitionPlan, { ok: true }>) {
@@ -345,6 +352,7 @@ export const handlers = [
   http.post('/api/sessions/:id/play', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
+    if (s.status === 'ended') return sessionEnded();
     if (inAutoCombat(s)) return autoCombatBusy();
     const { cardId } = (await request.json()) as { cardId: string };
     const card = s.hand.find((c) => c.id === cardId);
@@ -357,6 +365,12 @@ export const handlers = [
       if (!scenario) return notFound('シナリオ');
       const plan = planTransition(scenario, s, card.nextNodeId);
       if (!plan.ok) return unprocessable(plan.error);
+      if (plan.autoCombat) {
+        // 戦えないまま自動戦闘のシーンへ入ると、手札も提案も無い行き止まりになるため先に止める
+        const character = db.characters.find((c) => c.id === driver?.characterId);
+        const reason = character ? canFight(character) : 'キャラクターが見つかりません';
+        if (reason) return unprocessable(`${character?.name ?? ''}は${reason}`);
+      }
       transition = plan;
     }
     const script = playScript[cardId];
@@ -485,6 +499,7 @@ export const handlers = [
   http.post('/api/sessions/:id/auto-combat', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
+    if (s.status === 'ended') return sessionEnded();
     const ac = s.autoCombat;
     if (!ac) return unprocessable('いまのシーンでは自動戦闘を行いません');
     if (ac.status === 'won') return unprocessable('この戦闘には既に勝利しています');
@@ -494,8 +509,9 @@ export const handlers = [
     const driver = s.participants.find((p) => p.role === 'driver');
     const character = db.characters.find((c) => c.id === driver?.characterId);
     if (!character) return notFound('キャラクター');
-    if (!character.hp || !character.baseActionValue)
-      return unprocessable(`${character.name}はHP・行動値を持たないため戦えません`);
+    const cannot = canFight(character);
+    if (cannot || !character.hp || !character.baseActionValue)
+      return unprocessable(`${character.name}は${cannot ?? '戦えません'}`);
 
     const { priority } = (await request.json()) as { priority?: string[] };
     const ids = Array.isArray(priority) ? priority : [];
@@ -507,24 +523,34 @@ export const handlers = [
     if (error) return unprocessable(error);
 
     const { enemy, maxRounds } = node.autoCombat;
-    const result = resolveAutoCombat({
-      pl: {
-        name: character.name,
-        maxHp: character.hp.max,
-        baseActionValue: character.baseActionValue,
-        priority: priorityCards,
-      },
-      enemy: {
-        name: enemy.card.name,
-        maxHp: enemy.hp,
-        baseActionValue: enemy.baseActionValue,
-        priority: enemy.priority,
-      },
-      maxRounds,
-      rng: Math.random,
-    });
+    let result: AutoCombatResult;
+    try {
+      result = resolveAutoCombat({
+        pl: {
+          name: character.name,
+          maxHp: character.hp.max,
+          baseActionValue: character.baseActionValue,
+          priority: priorityCards,
+        },
+        enemy: {
+          name: enemy.card.name,
+          maxHp: enemy.hp,
+          baseActionValue: enemy.baseActionValue,
+          priority: enemy.priority,
+        },
+        maxRounds,
+        rng: Math.random,
+      });
+    } catch (e) {
+      // 敵の定義などシナリオ側のデータが不正な場合。セッションは変えずに理由を返す
+      return unprocessable(e instanceof Error ? e.message : '自動戦闘を解決できませんでした');
+    }
     ac.attempts += 1;
     ac.lastResult = result;
+    s.combatHistory = [
+      ...(s.combatHistory ?? []),
+      { nodeId: ac.nodeId, attempt: ac.attempts, ...result },
+    ];
     const nth = `${ac.attempts}回目`;
     if (result.outcome === 'win') {
       const enemyCard = s.field.plVisible.find((c) => c.id === ac.enemyCardId);
