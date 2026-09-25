@@ -259,6 +259,36 @@ describe('自動戦闘の異常系', () => {
     expect((await characterOf(s)).deck).toEqual(pcBefore.deck);
   });
 
+  it('APIで送った使う条件どおりに戦う（渾身の一撃を「HPが半分以下」に限ると、満タンの初手は斬撃）', async () => {
+    const s = await startAtExam('sc-exam-always-win');
+    const after = await api.post<Session>(`/sessions/${s.id}/auto-combat`, {
+      priority: [
+        { cardId: 'c-heavy-blow', when: 'half' },
+        { cardId: 'c-slash', when: 'always' },
+      ],
+    });
+    expect(after.autoCombat?.lastResult?.log[0]).toMatchObject({ actor: 'pl', cardName: '斬撃' });
+  });
+
+  it.each([
+    ['null の行', [null]],
+    ['旧形式（カードIDの文字列）', ['c-slash']],
+    ['cardId の無い行', [{ when: 'always' }]],
+  ])('優先順位の行の形が正しくない（%s）と、その理由で422', async (_, priority) => {
+    const s = await startAtExam('sc-exam-always-win');
+    await expect(api.post(`/sessions/${s.id}/auto-combat`, { priority })).rejects.toMatchObject({
+      status: 422,
+      message: expect.stringMatching(/形/),
+    });
+  });
+
+  it('本文が JSON の null でも、500ではなく422', async () => {
+    const s = await startAtExam('sc-exam-always-win');
+    await expect(api.post(`/sessions/${s.id}/auto-combat`, null)).rejects.toMatchObject({
+      status: 422,
+    });
+  });
+
   it('使う条件が3種のどれでもなければ422', async () => {
     const s = await startAtExam('sc-exam-always-win');
     await expect(

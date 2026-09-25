@@ -518,10 +518,12 @@ export const handlers = [
       return unprocessable(`${character.name}は${cannot ?? '戦えません'}`);
 
     // 本文は優先順位の各行（カードIDと使う条件）。条件の検査はドメインの validatePriority に任せる
-    const { priority } = (await request.json()) as {
+    const body = (await request.json()) as {
       priority?: { cardId: string; when: HpCondition }[];
-    };
-    const rows = Array.isArray(priority) ? priority : [];
+    } | null;
+    const rows = Array.isArray(body?.priority) ? body.priority : [];
+    if (rows.some((r) => typeof r !== 'object' || r === null || typeof r.cardId !== 'string'))
+      return unprocessable('優先順位の行の形が正しくありません（各行はカードIDと使う条件の組）');
     const chosen = rows.map((r) => {
       const card = character.deck.find((c) => c.id === r?.cardId);
       return card && { card, when: r.when };
