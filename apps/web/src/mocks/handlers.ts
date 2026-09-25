@@ -186,13 +186,10 @@ const RETRY_TRAIT_NAME = '再挑戦の記憶';
 /** 試験の戦闘中（優先順位の設定中）か。この間は提案もプレイもできない（auto-combat.md「戦闘中の提案とプレイ」） */
 const inAutoCombat = (s: Session) => s.autoCombat?.status === 'awaiting-priority';
 
-const autoCombatBusy = () =>
-  HttpResponse.json(
-    { message: '戦闘中は、戦い方（優先順位）を決めて戦闘を終えるまで他の行動はできません' },
-    { status: 422 },
-  );
-
 const unprocessable = (message: string) => HttpResponse.json({ message }, { status: 422 });
+
+const autoCombatBusy = () =>
+  unprocessable('戦闘中は、戦い方（優先順位）を決めて戦闘を終えるまで他の行動はできません');
 
 const sessionEnded = () => unprocessable('このセッションは終了しています');
 
@@ -525,7 +522,7 @@ export const handlers = [
     if (rows.some((r) => typeof r !== 'object' || r === null || typeof r.cardId !== 'string'))
       return unprocessable('優先順位の行の形が正しくありません（各行はカードIDと使う条件の組）');
     const chosen = rows.map((r) => {
-      const card = character.deck.find((c) => c.id === r?.cardId);
+      const card = character.deck.find((c) => c.id === r.cardId);
       return card && { card, when: r.when };
     });
     if (chosen.some((e) => !e))
