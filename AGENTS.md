@@ -34,6 +34,7 @@ pnpm web:test         # Vitest（MSW の node サーバーで全ページを描�
 pnpm web:typecheck    # tsc
 pnpm domain:test      # Vitest（packages/domain の純粋関数）
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
+pnpm sim:auto-combat  # 自動戦闘のシミュレーションを回し docs/cartagraph/auto-combat-simulation.md を作り直す（任意。CIでは回さない）
 pnpm docs:dev         # 仕様書サイトをローカルで確認
 pnpm docs:build       # 仕様書サイトのビルド（リンク切れがあると失敗する）
 pnpm build:pages      # docs + app をまとめてビルド（CI と同じ）
