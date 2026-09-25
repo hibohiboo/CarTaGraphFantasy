@@ -61,7 +61,20 @@ pnpm web:test        # vitest（MSW の node サーバーで全ページを描�
 pnpm web:e2e         # Playwright（Chromium）。ビルド→vite previewに対して全ルートを実ブラウザで巡回
 pnpm web:typecheck
 pnpm build:pages     # docs + app を docs/.vitepress/dist にまとめてビルド（CI と同じ）
+pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実行。下記）
 ```
+
+## 自動戦闘の数値シミュレーション
+
+[自動戦闘（仮ルール）](../cartagraph/auto-combat.md)の数値バランスを確かめるスクリプト（`scripts/simulate-auto-combat.ts`）。検証用シナリオ `sc-village-start`（`apps/web/src/mocks/fixtures.ts`）の初期装備と試験官の数値のまま、代表的な戦い方ごとに5,000回ずつ戦わせ、勝率と決着ラウンドの表を [シミュレーション結果](../cartagraph/auto-combat-simulation.md) に書き出す。
+
+- **実行** — `pnpm sim:auto-combat`。回数・乱数の種は `pnpm sim:auto-combat -- --runs=10000 --seed=42` のように変えられる
+- **いつ回すか** — CI・git フックでは回さない。次のようなときに手で回し、書き出された `docs/cartagraph/auto-combat-simulation.md` も一緒にコミットする
+  - 初期装備・試験官・戦闘スキルカードの数値（HP・行動値・コスト・ダイス）を fixtures で変えたとき
+  - 自動戦闘のエンジン（`packages/domain/src/autoCombat.ts`）の判定を変えたとき
+  - 比べる戦い方を増やしたいとき（スクリプト内の `STRATEGIES` に足す）
+- **結果の読み方** — 乱数は種つきなので、数値が同じなら何度回しても同じ表になる。回し直して表に差分が出たら、数値かエンジンが変わったということ
+- **注意** — 結果のページはスクリプトが丸ごと作り直すので、手で編集しない（説明文を変えたいときはスクリプト側を直す）。スクリプトは `tsx` で実行し、型検査（`web:typecheck`・`domain:typecheck`）の対象外
 
 ## ローカル開発の注意（つまずきやすい点）
 
