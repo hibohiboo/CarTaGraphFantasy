@@ -60,6 +60,8 @@ pnpm web:dev         # http://localhost:5173（MSW 有効）
 pnpm web:test        # vitest（MSW の node サーバーで全ページを描画）
 pnpm web:e2e         # Playwright（Chromium）。ビルド→vite previewに対して全ルートを実ブラウザで巡回
 pnpm web:typecheck
+pnpm domain:test     # vitest（packages/domain の純粋関数。自動戦闘・シーン遷移など）
+pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
 pnpm build:pages     # docs + app を docs/.vitepress/dist にまとめてビルド（CI と同じ）
 pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実行。下記）
 ```
