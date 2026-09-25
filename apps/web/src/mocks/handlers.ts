@@ -4,6 +4,8 @@
 import {
   type CardDef,
   type Character,
+  type HpCondition,
+  type PriorityEntry,
   type Proposal,
   type Recruitment,
   type Scenario,
@@ -515,13 +517,19 @@ export const handlers = [
     if (cannot || !character.hp || !character.baseActionValue)
       return unprocessable(`${character.name}は${cannot ?? '戦えません'}`);
 
-    const { priority } = (await request.json()) as { priority?: string[] };
-    const ids = Array.isArray(priority) ? priority : [];
-    const chosen = ids.map((id) => character.deck.find((c) => c.id === id));
-    if (chosen.some((c) => !c))
+    // 本文は優先順位の各行（カードIDと使う条件）。条件の検査はドメインの validatePriority に任せる
+    const { priority } = (await request.json()) as {
+      priority?: { cardId: string; when: HpCondition }[];
+    };
+    const rows = Array.isArray(priority) ? priority : [];
+    const chosen = rows.map((r) => {
+      const card = character.deck.find((c) => c.id === r?.cardId);
+      return card && { card, when: r.when };
+    });
+    if (chosen.some((e) => !e))
       return unprocessable('キャラクターのデッキに無いカードが含まれています');
-    const priorityCards = chosen as CardDef[];
-    const error = validatePriority(priorityCards);
+    const priorityEntries = chosen as PriorityEntry[];
+    const error = validatePriority(priorityEntries);
     if (error) return unprocessable(error);
 
     const { enemy, maxRounds } = node.autoCombat;
@@ -532,7 +540,7 @@ export const handlers = [
           name: character.name,
           maxHp: character.hp.max,
           baseActionValue: character.baseActionValue,
-          priority: priorityCards,
+          priority: priorityEntries,
         },
         enemy: {
           name: enemy.card.name,

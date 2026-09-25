@@ -6,6 +6,7 @@ import type {
   Character,
   CurrentUser,
   LibraryEntry,
+  PriorityEntry,
   Recruitment,
   Scenario,
   Session,
@@ -293,6 +294,9 @@ const examinerCard: CardDef = {
   tags: [],
 };
 
+/** 敵の優先順位の行（試験官は条件を付けず、すべて「いつでも」） */
+const always = (card: CardDef): PriorityEntry => ({ card, when: 'always' });
+
 const examinerActions = [
   enemyAttack('ea-heavy', '重い打ち込み', 6, { count: 1, sides: 6, bonus: 0 }),
   enemyAttack('ea-feint', '牽制', 3, { count: 1, sides: 3, bonus: 0 }),
@@ -302,7 +306,7 @@ const examiner: AutoCombatEnemy = {
   card: examinerCard,
   hp: 26,
   baseActionValue: 9,
-  priority: examinerActions,
+  priority: examinerActions.map(always),
 };
 
 /**
@@ -540,7 +544,9 @@ export const scenarios: Scenario[] = [
     enemy: {
       ...examiner,
       baseActionValue: 11,
-      priority: [enemyAttack('ea-finisher', '本気の一撃', 11, { count: 1, sides: 1, bonus: 19 })],
+      priority: [
+        always(enemyAttack('ea-finisher', '本気の一撃', 11, { count: 1, sides: 1, bonus: 19 })),
+      ],
     },
     starter: testStarter,
   }),
@@ -553,7 +559,7 @@ export const scenarios: Scenario[] = [
     enemy: {
       ...examiner,
       hp: 100,
-      priority: [enemyAttack('ea-poke', '小突く', 9, { count: 1, sides: 1, bonus: 0 })],
+      priority: [always(enemyAttack('ea-poke', '小突く', 9, { count: 1, sides: 1, bonus: 0 }))],
     },
     maxRounds: 1,
     starter: testStarter,

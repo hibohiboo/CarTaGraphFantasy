@@ -90,13 +90,31 @@ export interface CombatEffect {
   dice: DiceExpr;
 }
 
+/**
+ * 優先順位リストの1行に付ける「使う条件」（自分のHPの段階。docs/cartagraph/auto-combat.md、仮ルール）。
+ * half＝HPが最大の半分以下、quarter＝1/4以下
+ */
+export type HpCondition = 'always' | 'half' | 'quarter';
+
+export const HP_CONDITION_LABEL: Record<HpCondition, string> = {
+  always: 'いつでも',
+  half: 'HPが半分以下',
+  quarter: 'HPが1/4以下',
+};
+
+/** 優先順位リストの1行 */
+export interface PriorityEntry {
+  card: CardDef;
+  when: HpCondition;
+}
+
 /** 自動戦闘の相手（1体・固定の優先順位リスト。仮ルール） */
 export interface AutoCombatEnemy {
   /** kind: 'enemy'。シーンに入るときにコピーして場に出す */
   card: CardDef;
   hp: number;
   baseActionValue: number;
-  priority: CardDef[];
+  priority: PriorityEntry[];
 }
 
 /** 自動戦闘の1手。使えるカードが無くラウンドの行動を終えた記録は effect: 'pass' */

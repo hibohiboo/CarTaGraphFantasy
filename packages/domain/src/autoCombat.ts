@@ -2,7 +2,15 @@
 // 戦闘ルール（docs/cartagraph/combat.md）のカウント制を、事前の優先順位リストで自動実行する。
 // 乱数は引数で受け取り、副作用を持たない（docs/process/rules/architecture.md の Functional Core）。
 
-import type { AutoCombatOutcome, CardDef, Character, CombatLogEntry, DiceExpr } from './index';
+import type {
+  AutoCombatOutcome,
+  CardDef,
+  Character,
+  CombatLogEntry,
+  DiceExpr,
+  HpCondition,
+  PriorityEntry,
+} from './index';
 
 /** [0, 1) の乱数を返す関数 */
 export type Rng = () => number;
@@ -15,24 +23,37 @@ export function rollDice(d: DiceExpr, rng: Rng): { rolls: number[]; total: numbe
 
 /**
  * 優先順位リストの先頭から、いま使えるカードのうち最初の1枚を選ぶ。使えるものが無ければ null。
- * 使える＝残り行動値がコスト以上、かつ回復なら自分のHPが最大未満（auto-combat.md「解決の手順」4）
+ * 使える＝行の「使う条件」を満たし、残り行動値がコスト以上、かつ回復なら自分のHPが最大未満
+ * （auto-combat.md「解決の手順」4）
  */
 export function pickCard(
   self: { hp: number; maxHp: number; actionValue: number },
-  priority: CardDef[],
+  priority: PriorityEntry[],
 ): CardDef | null {
-  return (
-    priority.find((c) => {
-      if (c.combatEffect === undefined || c.actionCost === undefined) return false;
-      if (c.actionCost > self.actionValue) return false;
-      return c.combatEffect.type !== 'heal' || self.hp < self.maxHp;
-    }) ?? null
-  );
+  const entry = priority.find(({ card: c, when }) => {
+    if (!meetsHpCondition(self, when)) return false;
+    if (c.combatEffect === undefined || c.actionCost === undefined) return false;
+    if (c.actionCost > self.actionValue) return false;
+    return c.combatEffect.type !== 'heal' || self.hp < self.maxHp;
+  });
+  return entry?.card ?? null;
+}
+
+const HP_CONDITIONS: HpCondition[] = ['always', 'half', 'quarter'];
+
+/** 行の「使う条件」を満たすか。割り算の丸めに依存しないよう整数の掛け算で比べる */
+function meetsHpCondition(self: { hp: number; maxHp: number }, when: HpCondition): boolean {
+  if (when === 'half') return self.hp * 2 <= self.maxHp;
+  if (when === 'quarter') return self.hp * 4 <= self.maxHp;
+  return true;
 }
 
 /** 優先順位リストとして使えるかを検査する。問題があればエラーメッセージ、無ければ null */
-export function validatePriority(cards: CardDef[]): string | null {
-  if (cards.length === 0) return '優先順位リストには1枚以上のカードが必要です';
+export function validatePriority(entries: PriorityEntry[]): string | null {
+  if (entries.length === 0) return '優先順位リストには1枚以上のカードが必要です';
+  if (entries.some((e) => !HP_CONDITIONS.includes(e.when)))
+    return '使う条件は「いつでも」「HPが半分以下」「HPが1/4以下」のいずれかです';
+  const cards = entries.map((e) => e.card);
   for (const c of cards) {
     if (!c.combatEffect) return `「${c.name}」は自動戦闘の効果を持たないため使えません`;
     // コスト0だと同じカウントで行動し続け、ラウンドが終わらない
@@ -51,7 +72,7 @@ export interface Combatant {
   name: string;
   maxHp: number;
   baseActionValue: number;
-  priority: CardDef[];
+  priority: PriorityEntry[];
 }
 
 export interface AutoCombatResult {
@@ -155,7 +176,7 @@ function hps(s: Record<'pl' | 'enemy', { hp: number }>) {
 export function canFight(c: Pick<Character, 'hp' | 'baseActionValue' | 'deck'>): string | null {
   if (!c.hp || !isPositiveInt(c.hp.max)) return 'HPを持たないため戦えません';
   if (!isPositiveInt(c.baseActionValue)) return '行動値を持たないため戦えません';
-  if (!c.deck.some((card) => validatePriority([card]) === null))
+  if (!c.deck.some((card) => validatePriority([{ card, when: 'always' }]) === null))
     return '自動戦闘に使えるカードを1枚も持っていないため戦えません';
   return null;
 }

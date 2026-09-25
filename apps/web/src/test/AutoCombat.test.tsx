@@ -39,8 +39,11 @@ async function startAtExam(scenarioId: string) {
 const characterOf = (s: Session) =>
   api.get<Character>(`/characters/${s.participants.find((p) => p.role === 'driver')?.characterId}`);
 
-const runAutoCombat = (s: Session, priority: string[]) =>
-  api.post<Session>(`/sessions/${s.id}/auto-combat`, { priority });
+/** 優先順位（カードID）を、すべて条件「いつでも」で送る */
+const runAutoCombat = (s: Session, cardIds: string[]) =>
+  api.post<Session>(`/sessions/${s.id}/auto-combat`, {
+    priority: cardIds.map((cardId) => ({ cardId, when: 'always' })),
+  });
 
 describe('試験シーンへの遷移（次のシーンへ進む）', () => {
   it('村はずれから「街の冒険者ギルドへ向かう」と、試験官が場に出て戦い方の設定画面になる', async () => {
@@ -150,6 +153,38 @@ describe('自動戦闘（勝利）', () => {
     });
   });
 
+  it('回復カードの使う条件は初期値が「HPが半分以下」、攻撃カードは「いつでも」', async () => {
+    const user = userEvent.setup();
+    const s = await startAtExam('sc-exam-always-win');
+    renderAt(`/pl/sessions/${s.id}/play`);
+    const panel = await screen.findByRole('region', { name: '戦い方を決める' });
+    await user.click(within(panel).getByRole('button', { name: '「応急手当」をリストに入れる' }));
+    await user.click(within(panel).getByRole('button', { name: '「斬撃」をリストに入れる' }));
+    expect(within(panel).getByRole('combobox', { name: '「応急手当」を使う条件' })).toHaveValue(
+      'half',
+    );
+    expect(within(panel).getByRole('combobox', { name: '「斬撃」を使う条件' })).toHaveValue(
+      'always',
+    );
+  });
+
+  it('選んだ使う条件で戦う（「渾身の一撃」をHPが半分以下に限ると、満タンの初手は斬撃になる）', async () => {
+    const user = userEvent.setup();
+    const s = await startAtExam('sc-exam-always-win');
+    renderAt(`/pl/sessions/${s.id}/play`);
+    const panel = await screen.findByRole('region', { name: '戦い方を決める' });
+    await user.click(within(panel).getByRole('button', { name: '「渾身の一撃」をリストに入れる' }));
+    await user.click(within(panel).getByRole('button', { name: '「斬撃」をリストに入れる' }));
+    await user.selectOptions(
+      within(panel).getByRole('combobox', { name: '「渾身の一撃」を使う条件' }),
+      'HPが半分以下',
+    );
+    await user.click(within(panel).getByRole('button', { name: '戦闘を始める' }));
+    await screen.findByText(/^1回目：\d+ラウンドで試験官に勝利した$/);
+    const after = await api.get<Session>(`/sessions/${s.id}`);
+    expect(after.autoCombat?.lastResult?.log[0]).toMatchObject({ actor: 'pl', cardName: '斬撃' });
+  });
+
   it('勝利後に同じシナリオで新しく始めても、場の試験官は戦闘不能になっていない', async () => {
     const first = await startAtExam('sc-exam-always-win');
     await runAutoCombat(first, ['c-slash']);
@@ -224,6 +259,15 @@ describe('自動戦闘の異常系', () => {
     expect((await characterOf(s)).deck).toEqual(pcBefore.deck);
   });
 
+  it('使う条件が3種のどれでもなければ422', async () => {
+    const s = await startAtExam('sc-exam-always-win');
+    await expect(
+      api.post(`/sessions/${s.id}/auto-combat`, {
+        priority: [{ cardId: 'c-slash', when: 'sometimes' }],
+      }),
+    ).rejects.toMatchObject({ status: 422 });
+  });
+
   it('自動戦闘のシーンにいないセッションでは422', async () => {
     const s = await api.post<Session>('/scenarios/sc-exam-always-win/start-solo', { name: '新人' });
     await expect(runAutoCombat(s, ['c-slash'])).rejects.toMatchObject({ status: 422 });
@@ -237,7 +281,9 @@ describe('自動戦闘の異常系', () => {
 
   it('存在しないセッションでは404', async () => {
     await expect(
-      api.post('/sessions/ss-nowhere/auto-combat', { priority: ['c-slash'] }),
+      api.post('/sessions/ss-nowhere/auto-combat', {
+        priority: [{ cardId: 'c-slash', when: 'always' }],
+      }),
     ).rejects.toMatchObject({ status: 404 });
   });
 

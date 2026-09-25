@@ -1,4 +1,11 @@
-import type { AutoCombatState, CardDef, CombatLogEntry, Session } from '@cartagraph/domain';
+import {
+  type AutoCombatState,
+  type CardDef,
+  type CombatLogEntry,
+  HP_CONDITION_LABEL,
+  type HpCondition,
+  type Session,
+} from '@cartagraph/domain';
 import { validatePriority } from '@cartagraph/domain/autoCombat';
 import { useState } from 'react';
 import { Button, ErrorNote, Loading } from '../../components/ui';
@@ -12,24 +19,39 @@ export function AutoCombatPanel({ session }: { session: Session }) {
   const characterId = session.participants.find((p) => p.role === 'driver')?.characterId ?? '';
   const character = useCharacter(characterId);
   const run = useRunAutoCombat();
-  const [priority, setPriority] = useState<string[]>([]);
+  // 優先順位の各行（カードIDと使う条件）
+  const [priority, setPriority] = useState<{ id: string; when: HpCondition }[]>([]);
 
   // 優先順位リストに入れられるカード（自動戦闘の効果と正しいコストを持つもの）だけが候補になる。
   // 基準はサーバーと同じ validatePriority（補助・移動や装備は入れられない）
-  const candidates = (character.data?.deck ?? []).filter((c) => validatePriority([c]) === null);
+  const candidates = (character.data?.deck ?? []).filter(
+    (card) => validatePriority([{ card, when: 'always' }]) === null,
+  );
   const byId = new Map(candidates.map((c) => [c.id, c]));
-  const chosen = priority.map((id) => byId.get(id)).filter((c): c is CardDef => !!c);
-  const rest = candidates.filter((c) => !priority.includes(c.id));
+  const chosen = priority.flatMap((row) => {
+    const card = byId.get(row.id);
+    return card ? [{ card, when: row.when }] : [];
+  });
+  const rest = candidates.filter((c) => !priority.some((row) => row.id === c.id));
 
   if (character.isPending) return <Loading what="手持ちのカードを確認中" />;
   if (character.error) return <ErrorNote error={character.error} />;
 
   // 表示中の並び（chosen）の添字で入れ替える。デッキから消えたIDは同時に落とす
+  const rows = () => chosen.map((e) => ({ id: e.card.id, when: e.when }));
   const move = (index: number, delta: -1 | 1) => {
-    const next = chosen.map((c) => c.id);
+    const next = rows();
     [next[index], next[index + delta]] = [next[index + delta], next[index]];
     setPriority(next);
   };
+  const setWhen = (index: number, when: HpCondition) =>
+    setPriority(rows().map((row, i) => (i === index ? { ...row, when } : row)));
+  // 回復を入れたときの初期値は「HPが半分以下」（満タン近くで回復ばかりして攻撃しない罠を避ける）
+  const add = (c: CardDef) =>
+    setPriority([
+      ...rows(),
+      { id: c.id, when: c.combatEffect?.type === 'heal' ? 'half' : 'always' },
+    ]);
 
   return (
     <section className={s.panel} aria-labelledby="auto-combat-title">
@@ -38,7 +60,7 @@ export function AutoCombatPanel({ session }: { session: Session }) {
       </h2>
       <p className={s.note}>
         仮ルール：自分の番が来ると、リストの上から「いま使えるカード」が自動で選ばれ、決着まで進む。
-        回復は傷ついているときだけ、どのカードも残り行動値がコスト以上のときだけ使える。
+        各行の「使う条件」を満たし、残り行動値がコスト以上のカードだけが使える（回復は傷ついているときだけ）。
       </p>
       <div className={s.columns}>
         <div>
@@ -47,12 +69,24 @@ export function AutoCombatPanel({ session }: { session: Session }) {
             <p className={s.empty}>右の候補からカードを入れよう。</p>
           ) : (
             <ol className={s.list} aria-label="優先順位">
-              {chosen.map((c, i) => (
+              {chosen.map(({ card: c, when }, i) => (
                 <li key={c.id} className={s.item}>
                   <span className={s.cardName}>
                     {c.name}
                     <span className={s.meta}>{effectLabel(c)}</span>
                   </span>
+                  <select
+                    className={s.when}
+                    aria-label={`「${c.name}」を使う条件`}
+                    value={when}
+                    onChange={(e) => setWhen(i, e.target.value as HpCondition)}
+                  >
+                    {(Object.keys(HP_CONDITION_LABEL) as HpCondition[]).map((w) => (
+                      <option key={w} value={w}>
+                        {HP_CONDITION_LABEL[w]}
+                      </option>
+                    ))}
+                  </select>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -75,7 +109,7 @@ export function AutoCombatPanel({ session }: { session: Session }) {
                     size="sm"
                     variant="ghost"
                     aria-label={`「${c.name}」を外す`}
-                    onClick={() => setPriority((p) => p.filter((id) => id !== c.id))}
+                    onClick={() => setPriority(rows().filter((row) => row.id !== c.id))}
                   >
                     外す
                   </Button>
@@ -97,7 +131,7 @@ export function AutoCombatPanel({ session }: { session: Session }) {
                   size="sm"
                   variant="ghost"
                   aria-label={`「${c.name}」をリストに入れる`}
-                  onClick={() => setPriority((p) => [...p, c.id])}
+                  onClick={() => add(c)}
                 >
                   入れる
                 </Button>
@@ -108,7 +142,12 @@ export function AutoCombatPanel({ session }: { session: Session }) {
       </div>
       {run.error && <ErrorNote error={run.error} />}
       <Button
-        onClick={() => run.mutate({ sessionId: session.id, priority: chosen.map((c) => c.id) })}
+        onClick={() =>
+          run.mutate({
+            sessionId: session.id,
+            priority: chosen.map((e) => ({ cardId: e.card.id, when: e.when })),
+          })
+        }
         disabled={chosen.length === 0 || run.isPending}
       >
         戦闘を始める

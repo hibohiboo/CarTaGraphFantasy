@@ -88,3 +88,8 @@
   padding-left: 1.4em;
   color: var(--parchment-text-dim);
 }
+
+.when {
+  font-size: 0.74rem;
+  max-width: 9.5em;
+}

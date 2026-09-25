@@ -4,6 +4,7 @@ import type {
   CardDef,
   Character,
   CurrentUser,
+  HpCondition,
   LibraryEntry,
   Recruitment,
   Scenario,
@@ -163,7 +164,7 @@ export const useSetMode = () =>
 export function useRunAutoCombat() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { sessionId: string; priority: string[] }) =>
+    mutationFn: (v: { sessionId: string; priority: { cardId: string; when: HpCondition }[] }) =>
       api.post<Session>(`/sessions/${v.sessionId}/auto-combat`, { priority: v.priority }),
     onSuccess: (s) => {
       qc.setQueryData(keys.session(s.id), s);

@@ -8,7 +8,7 @@ import {
   rollDice,
   validatePriority,
 } from './autoCombat';
-import type { CardDef, CombatEffect } from './index';
+import type { CardDef, CombatEffect, HpCondition, PriorityEntry } from './index';
 
 /** 与えた列を順に返し、尽きたら最後の値を返し続ける乱数 */
 const seq =
@@ -49,6 +49,10 @@ const card = (id: string, actionCost: number | undefined, effect?: CombatEffect)
   actionCost,
   combatEffect: effect,
 });
+/** カードを条件「いつでも」の優先順位の行にする */
+const list = (...cards: CardDef[]): PriorityEntry[] =>
+  cards.map((card) => ({ card, when: 'always' }));
+const when = (card: CardDef, cond: HpCondition): PriorityEntry => ({ card, when: cond });
 const hit = (n: number): CombatEffect => ({
   type: 'damage',
   dice: { count: 1, sides: 1, bonus: n - 1 },
@@ -64,58 +68,87 @@ describe('pickCard', () => {
   const aid = card('手当', 3, heal(4));
 
   it('先頭が使えれば先頭を選ぶ', () => {
-    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 10 }, [heavy, light])).toBe(heavy);
+    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 10 }, list(heavy, light))).toBe(heavy);
   });
 
   it('残り行動値がコストちょうどなら使える', () => {
-    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 5 }, [heavy, light])).toBe(heavy);
+    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 5 }, list(heavy, light))).toBe(heavy);
   });
 
   it('残り行動値がコストより1少なければ使えず、次の候補を選ぶ', () => {
-    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 4 }, [heavy, light])).toBe(light);
+    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 4 }, list(heavy, light))).toBe(light);
   });
 
   it('HPが最大なら回復を飛ばして次の候補を選ぶ', () => {
-    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 10 }, [aid, light])).toBe(light);
+    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 10 }, list(aid, light))).toBe(light);
   });
 
   it('HPが最大より1少なければ回復を選ぶ', () => {
-    expect(pickCard({ hp: 9, maxHp: 10, actionValue: 10 }, [aid, light])).toBe(aid);
+    expect(pickCard({ hp: 9, maxHp: 10, actionValue: 10 }, list(aid, light))).toBe(aid);
   });
 
   it('使えるカードが無ければ null', () => {
-    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 1 }, [heavy, light, aid])).toBeNull();
+    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 1 }, list(heavy, light, aid))).toBeNull();
+  });
+
+  describe('使う条件（HPの段階）', () => {
+    const at = (hp: number, maxHp: number) => ({ hp, maxHp, actionValue: 10 });
+
+    it('「半分以下」は、最大HP20ならHP10で使え、11では使えず次の候補へ', () => {
+      expect(pickCard(at(10, 20), [when(aid, 'half'), ...list(light)])).toBe(aid);
+      expect(pickCard(at(11, 20), [when(aid, 'half'), ...list(light)])).toBe(light);
+    });
+
+    it('「半分以下」は、最大HP21（奇数）ならHP10で使え、11では使えない', () => {
+      expect(pickCard(at(10, 21), [when(aid, 'half'), ...list(light)])).toBe(aid);
+      expect(pickCard(at(11, 21), [when(aid, 'half'), ...list(light)])).toBe(light);
+    });
+
+    it('「1/4以下」は、最大HP20ならHP5で使え、6では使えない', () => {
+      expect(pickCard(at(5, 20), [when(aid, 'quarter'), ...list(light)])).toBe(aid);
+      expect(pickCard(at(6, 20), [when(aid, 'quarter'), ...list(light)])).toBe(light);
+    });
+
+    it('攻撃カードにも条件を付けられる', () => {
+      expect(pickCard(at(15, 20), [when(heavy, 'half'), ...list(light)])).toBe(light);
+      expect(pickCard(at(10, 20), [when(heavy, 'half'), ...list(light)])).toBe(heavy);
+    });
   });
 
   it('空のリストなら null', () => {
-    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 10 }, [])).toBeNull();
+    expect(pickCard({ hp: 10, maxHp: 10, actionValue: 10 }, list())).toBeNull();
   });
 });
 
 describe('validatePriority', () => {
   it('1枚ちょうどの正しいリストなら null', () => {
-    expect(validatePriority([card('a', 1, hit(1))])).toBeNull();
+    expect(validatePriority(list(card('a', 1, hit(1))))).toBeNull();
   });
 
   it('0件はエラー', () => {
-    expect(validatePriority([])).toMatch(/1枚以上/);
+    expect(validatePriority(list())).toMatch(/1枚以上/);
   });
 
   it('自動戦闘の効果を持たないカードを含むとエラー', () => {
-    expect(validatePriority([card('a', 3, hit(1)), card('b', 3)])).toMatch(/効果/);
+    expect(validatePriority(list(card('a', 3, hit(1)), card('b', 3)))).toMatch(/効果/);
   });
 
   it('コストが未設定のカードを含むとエラー', () => {
-    expect(validatePriority([card('a', undefined, hit(1))])).toMatch(/コスト/);
+    expect(validatePriority(list(card('a', undefined, hit(1))))).toMatch(/コスト/);
   });
 
   it('コストが0のカードを含むとエラー（同じカウントで行動し続けてしまうため）', () => {
-    expect(validatePriority([card('a', 0, hit(1))])).toMatch(/コスト/);
+    expect(validatePriority(list(card('a', 0, hit(1))))).toMatch(/コスト/);
+  });
+
+  it('使う条件が3種のどれでもなければエラー', () => {
+    const bad = { card: card('a', 2, hit(1)), when: 'sometimes' } as unknown as PriorityEntry;
+    expect(validatePriority([bad])).toMatch(/条件/);
   });
 
   it('同じカードが重複しているとエラー', () => {
     const a = card('a', 2, hit(1));
-    expect(validatePriority([a, a])).toMatch(/重複/);
+    expect(validatePriority(list(a, a))).toMatch(/重複/);
   });
 });
 
@@ -125,7 +158,7 @@ describe('resolveAutoCombat', () => {
     maxHp: number,
     baseActionValue: number,
     priority: CardDef[],
-  ): Combatant => ({ name, maxHp, baseActionValue, priority });
+  ): Combatant => ({ name, maxHp, baseActionValue, priority: list(...priority) });
   const run = (pl: Combatant, enemy: Combatant, maxRounds = 20, rng: Rng = seq(0)) =>
     resolveAutoCombat({ pl, enemy, maxRounds, rng });
   /** ログを「行動者@カウント:カード名」の列にする */
@@ -175,17 +208,17 @@ describe('resolveAutoCombat', () => {
 
   describe('validatePriority の数値検査', () => {
     it('コストが整数でなければエラー', () => {
-      expect(validatePriority([card('a', 1.5, hit(1))])).toMatch(/コスト/);
+      expect(validatePriority(list(card('a', 1.5, hit(1))))).toMatch(/コスト/);
     });
 
     it('ダイスの面数が0ならエラー', () => {
       const bad: CombatEffect = { type: 'damage', dice: { count: 1, sides: 0, bonus: 0 } };
-      expect(validatePriority([card('a', 2, bad)])).toMatch(/ダイス/);
+      expect(validatePriority(list(card('a', 2, bad)))).toMatch(/ダイス/);
     });
 
     it('ダイスの個数が0ならエラー', () => {
       const bad: CombatEffect = { type: 'damage', dice: { count: 0, sides: 6, bonus: 0 } };
-      expect(validatePriority([card('a', 2, bad)])).toMatch(/ダイス/);
+      expect(validatePriority(list(card('a', 2, bad)))).toMatch(/ダイス/);
     });
   });
 
@@ -320,6 +353,28 @@ describe('resolveAutoCombat', () => {
     const enemy = fighter('敵', 100, 1, [card('打', 1, hit(1))]);
     const r = run(pl, enemy, 1, seq(0, 0.999));
     expect(r.log[0]).toMatchObject({ rolls: [1, 6], amount: 8, enemyHp: 92 });
+  });
+
+  it('「応急手当（HPが半分以下）→突き」なら、HPが半分を切るまでは攻撃し、切ったら回復する', () => {
+    // 敵は毎ラウンド4ダメージ。PL（最大20）は 16→12 の間は攻撃し、8 になったラウンドで回復する
+    const pl: Combatant = {
+      name: 'PL',
+      maxHp: 20,
+      baseActionValue: 6,
+      priority: [when(card('手当', 3, heal(5)), 'half'), ...list(card('突', 3, hit(1)))],
+    };
+    const enemy = fighter('敵', 100, 7, [card('打', 7, hit(4))]);
+    expect(trace(run(pl, enemy, 3).log)).toEqual([
+      'enemy@7:打',
+      'pl@6:突',
+      'pl@3:突',
+      'enemy@7:打',
+      'pl@6:突',
+      'pl@3:突',
+      'enemy@7:打',
+      'pl@6:手当',
+      'pl@3:突',
+    ]);
   });
 
   it('回復カードだけの優先順位でも、ループせず時間切れで終わる', () => {
