@@ -93,6 +93,11 @@ describe('unplayableReason', () => {
     expect(unplayableReason(learn, [voucher()])).toBeNull();
     expect(unplayableReason(learn, [])).toBe('『引換』のカードが必要');
   });
+  it('手放すタグのカードを持っていなければ、使える条件が無くても選べない', () => {
+    const learn = card('learn', [], { soloEffect: { consumeTag: '引換', gainCards: [slash] } });
+    expect(unplayableReason(learn, [])).toBe('『引換』のカードが必要');
+    expect(unplayableReason(learn, [voucher()])).toBeNull();
+  });
   it('持っていてはいけないタグ・カードを持っていれば、その旨の文', () => {
     const c = card('x', [], { playWhen: { lacksTags: ['回復'], lacksCards: ['c-slash'] } });
     expect(unplayableReason(c, [card('h', ['回復'])])).toBe(

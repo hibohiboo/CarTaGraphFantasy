@@ -29,8 +29,13 @@ export function meetsCondition(cond: CardCondition | undefined, held: CardDef[])
   return conditionFailure(cond, held) === null;
 }
 
-/** 使える条件を満たさない理由（満たすか条件が無ければ null）。例：「『引換』のカードが必要」 */
+/**
+ * 選べない理由（選べるなら null）。例：「『引換』のカードが必要」。
+ * 使える条件に加え、成長の効果で手放すタグのカードを持っていなければ選べない（solo-village.md「成長の効果」）
+ */
 export function unplayableReason(card: CardDef, held: CardDef[]): string | null {
+  const consume = card.soloEffect?.consumeTag;
+  if (consume && !hasTag(held, consume)) return `『${consume}』のカードが必要`;
   return conditionFailure(card.playWhen, held);
 }
 

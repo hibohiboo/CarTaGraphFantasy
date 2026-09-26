@@ -40,7 +40,8 @@ export function PlayPage() {
   // キャラクターを読み込むまでは判定せず、サーバーの 422 に任せる
   const held = character.data && heldCards(character.data, s.field);
   const reasonFor = held ? (card: CardDef) => unplayableReason(card, held) : undefined;
-  const hasSoloEffect = s.hand.some((c) => c.soloEffect);
+  // 仮ルール（成長の効果・使える条件）に関わるカードが手札にあれば「仮」と出す（architecture.md「境界」）
+  const usesSoloRules = soloGm && s.hand.some((c) => c.soloEffect || c.playWhen);
   const enemyName =
     s.field.plVisible.find((c) => c.id === s.autoCombat?.enemyCardId)?.name ?? '相手';
 
@@ -97,9 +98,9 @@ export function PlayPage() {
         />
       )}
       <StatusLine>
-        {hasSoloEffect && !ended && (
+        {usesSoloRules && !ended && (
           <span className="u-dim u-small">
-            能力値の上がり方・お店は仮ルール（GM不在のソロでの村の成長）
+            能力値の上がり方・お店・選べないカードの条件は仮ルール（GM不在のソロでの村の成長）
           </span>
         )}
         {play.error && <ErrorNote error={play.error} />}

@@ -11,6 +11,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routeObjects } from '../app/router';
 import { api } from '../lib/api';
+import { soloGrowth } from '../mocks/fixtures';
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -30,6 +31,10 @@ const characterOf = (s: Session) =>
   api.get<Character>(`/characters/${s.participants.find((p) => p.role === 'driver')?.characterId}`);
 
 const card = (name: RegExp | string) => screen.findByRole('button', { name });
+
+/** GM不在なので、どの段階でも「GMの描写を待っている」にならない（行き止まりにならない） */
+const expectNoWaitingForGm = () =>
+  expect(screen.queryByText(/GMの描写を待っている/)).not.toBeInTheDocument();
 
 /** 手札のカードを押し、そのカードが手札から消える（＝応答が反映される）まで待つ */
 async function play(user: UserEvent, name: RegExp) {
@@ -66,7 +71,7 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
       await play(user, quest);
       await play(user, solution);
       await card(/お店へ行く/);
-      expect(screen.queryByText(/GMの描写を待っている/)).not.toBeInTheDocument();
+      expectNoWaitingForGm();
     }
     // 解決した依頼は広場に残らない
     expect(screen.queryByRole('button', { name: /依頼「/ })).not.toBeInTheDocument();
@@ -77,16 +82,19 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
       await waitFor(() =>
         expect(screen.queryByRole('button', { name: learn })).not.toBeInTheDocument(),
       );
+      expectNoWaitingForGm();
     }
     // 引換カードを使い切ったので、残った応急手当は選べない
     expect(await card(/応急手当を習う/)).toBeDisabled();
     await play(user, /お店を出る/);
+    expectNoWaitingForGm();
     await playWhenEnabled(user, /街の冒険者ギルドへ向かう/);
 
     const panel = await screen.findByRole('region', { name: '戦い方を決める' });
     await user.click(within(panel).getByRole('button', { name: '「素早い突き」をリストに入れる' }));
     await user.click(within(panel).getByRole('button', { name: '戦闘を始める' }));
     expect(await screen.findByText(/^1回目：\d+ラウンドで試験官に勝利した$/)).toBeInTheDocument();
+    expectNoWaitingForGm();
     const won = await api.get<Session>(`/sessions/${s.id}`);
     expect(won.autoCombat?.lastResult?.log[0]).toMatchObject({
       actor: 'pl',
@@ -97,11 +105,12 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     expect(
       await screen.findByRole('heading', { name: '結末「冒険者として旅立つ」' }),
     ).toBeInTheDocument();
+    expectNoWaitingForGm();
 
     const pc = await characterOf(s);
     expect(pc.abilities).toEqual({ body: 2, skill: 2, mind: 2 });
-    expect(pc.hp).toEqual({ current: 20, max: 20 });
-    expect(pc.baseActionValue).toBe(10);
+    expect(pc.hp).toEqual({ current: soloGrowth.hp, max: soloGrowth.hp });
+    expect(pc.baseActionValue).toBe(soloGrowth.baseActionValue);
     expect(pc.deck.filter((c) => c.tags.includes('戦闘スキル')).map((c) => c.name)).toEqual([
       '斬撃',
       '渾身の一撃',
@@ -260,6 +269,19 @@ describe('村パート：依頼', () => {
     await play(user, /依頼「畑を荒らす猪」/);
     expect(await screen.findByText(/仮ルール/)).toBeInTheDocument();
   });
+
+  it('使える条件で選べないカードがある広場でも、仮ルールであることを表示する', async () => {
+    // テスト用シナリオの広場には成長の効果を持つ「迷い道」があるため、本物のシナリオで確かめる
+    await atSquare('sc-village-start');
+    expect(await screen.findByText(/仮ルール/)).toBeInTheDocument();
+  });
+
+  it('導入（条件も効果も無いカードだけ）では、仮ルールの表示を出さない', async () => {
+    const s = await start('sc-village-always-win');
+    renderAt(`/pl/sessions/${s.id}/play`);
+    await card(/村の広場へ向かう/);
+    expect(screen.queryByText(/仮ルール/)).not.toBeInTheDocument();
+  });
 });
 
 describe('村パート：お店', () => {
@@ -359,5 +381,36 @@ describe('村パート：お店', () => {
     expect(pc.deck.filter((c) => c.tags.includes('引換')).map((c) => c.name)).toEqual([
       '粉ひきの親方からの報酬',
     ]);
+  });
+});
+
+describe('村パート：人間GMのセッションでは働かない（GM不在のソロの仮ルール）', () => {
+  it('成長の効果を持つカードを選んでも、キャラクターも GM専用ゾーンも変わらない', async () => {
+    const before = await api.get<Character>('/characters/pc-mio');
+    const after = await api.post<Session>('/sessions/ss-village-human-gm/play', {
+      cardId: 'vw-quest-0-body',
+    });
+    expect(await api.get<Character>('/characters/pc-mio')).toEqual(before);
+    expect(after.field.gmOnly).toEqual([]);
+    expect(after.feed.some((f) => f.text.includes('上がった'))).toBe(false);
+    // 移った先の広場では、配る条件で絞らない（解決した扱いにもならない）
+    expect(after.hand.map((c) => c.name)).toContain('依頼「畑を荒らす猪」');
+  });
+
+  it('使える条件を満たさないカードも 422 にならず、成長の効果も働かない', async () => {
+    const before = await api.get<Character>('/characters/pc-mio');
+    const after = await api.post<Session>('/sessions/ss-village-human-gm/play', {
+      cardId: 'vw-learn-c-slash',
+    });
+    expect(after.flavor).toMatch(/GMの描写を待っている/);
+    expect(await api.get<Character>('/characters/pc-mio')).toEqual(before);
+  });
+
+  it('プレイ画面では、使える条件で選べなくしたり、仮ルールの表示を出したりしない', async () => {
+    renderAt('/pl/sessions/ss-village-human-gm/play');
+    const learn = await card(/斬撃を習う/);
+    expect(learn).toBeEnabled();
+    expect(within(learn).queryByText(/カードが必要/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/仮ルール/)).not.toBeInTheDocument();
   });
 });

@@ -398,7 +398,7 @@ function examScenario(o: {
 // ---------- 村パート（docs/cartagraph/solo-village.md、GM不在のソロの仮ルール） ----------
 
 /** 村パートで得る HP（探索者になったとき）と行動値（冒険者になったとき） */
-const soloGrowth: NonNullable<Scenario['soloGrowth']> = { hp: 20, baseActionValue: 10 };
+export const soloGrowth: NonNullable<Scenario['soloGrowth']> = { hp: 20, baseActionValue: 10 };
 
 /** お店で習える戦闘スキル */
 const shopSkills = [cards.slash, cards.heavyBlow, cards.quickThrust, cards.firstAid];
@@ -944,6 +944,16 @@ export const recruitments: Recruitment[] = [
 ];
 
 // ---------- セッション ----------
+/** シナリオのノードに置いたカードを ID で集める（テスト用セッションの手札に使う） */
+function villageCards(scenarioId: string, ids: string[]): CardDef[] {
+  const all = scenarios.find((s) => s.id === scenarioId)?.deck.flatMap((n) => n.cards) ?? [];
+  return ids.map((id) => {
+    const found = all.find((c) => c.id === id);
+    if (!found) throw new Error(`${scenarioId} にカード ${id} がありません`);
+    return found;
+  });
+}
+
 export const sessions: Session[] = [
   {
     id: 'ss-mansion',
@@ -1128,6 +1138,44 @@ export const sessions: Session[] = [
     feed: [{ id: 'fe-1', at: ago(24 * 12), text: '霧乃がセッションの終了を宣言した' }],
     lastActivityAt: ago(24 * 12),
     suspendAt: ago(24 * 11),
+  },
+  {
+    // テスト専用：人間GMのセッションで、村の成長（GM不在のソロの仮ルール）が働かないことの確認用。
+    // 手札は依頼の解決カード（成長の効果）とお店で習うカード（使える条件＋成長の効果）
+    id: 'ss-village-human-gm',
+    scenarioId: 'sc-village-always-win',
+    scenarioTitle: '（テスト用）必ず合格する村はずれ',
+    gmId: 'u-kirino',
+    gmName: '霧乃',
+    partyName: '村の子ら',
+    status: 'playing',
+    mode: 'light',
+    proposalHandling: 'gm-required',
+    currentScene: {
+      index: 2,
+      total: 9,
+      name: '畑を荒らす猪',
+      path: '畑を荒らす猪',
+      nodeId: 'vw-quest-0',
+    },
+    participants: [
+      {
+        userId: 'u-kaya',
+        name: 'カヤ',
+        role: 'driver',
+        characterId: 'pc-mio',
+        characterName: '澪',
+        lastSeenAt: ago(1),
+      },
+      { userId: 'u-kirino', name: '霧乃', role: 'gm', lastSeenAt: ago(1) },
+    ],
+    field: { gmOnly: [], plVisible: [] },
+    hand: villageCards('sc-village-always-win', ['vw-quest-0-body', 'vw-learn-c-slash']),
+    flavor: '農家のおばさんが困り顔で畑を指さしている。',
+    proposals: [],
+    feed: [],
+    lastActivityAt: ago(1),
+    suspendAt: later(24),
   },
 ];
 
