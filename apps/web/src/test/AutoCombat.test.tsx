@@ -212,6 +212,8 @@ describe('自動戦闘（敗北・時間切れ）', () => {
     expect(after1.autoCombat).toMatchObject({ status: 'awaiting-priority', attempts: 1 });
     const pc1 = await characterOf(s);
     expect(pc1.deck.filter((c) => c.name === '再挑戦の記憶')).toHaveLength(1);
+    // 内容を表すタグを付ける（ほかの特徴カードと同じ付け方。docs/plans/2026-09-27-村パート.md C3-12）
+    expect(pc1.deck.find((c) => c.name === '再挑戦の記憶')?.tags).toEqual(['経験']);
     // 戦闘後もキャラクターのHPは変わらない
     expect(pc1.hp).toEqual({ current: 20, max: 20 });
 

@@ -1,10 +1,11 @@
-import type { CardDef } from '@cartagraph/domain';
+import { type CardDef, SYSTEM_GM_ID } from '@cartagraph/domain';
+import { heldCards, unplayableReason } from '@cartagraph/domain/soloVillage';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '../../components/GameCard';
 import { HandDock, Hud, PlayScreen, ProposeForm, StatusLine, Table } from '../../components/play';
 import { Button, ErrorNote, Loading, StatusPill } from '../../components/ui';
-import { usePlayCard, usePropose, useSession } from '../../lib/queries';
+import { useCharacter, usePlayCard, usePropose, useSession } from '../../lib/queries';
 import { AutoCombatLog, AutoCombatPanel } from './AutoCombatPanel';
 
 const PROPOSE_CARD: CardDef = {
@@ -22,6 +23,11 @@ export function PlayPage() {
   const propose = usePropose();
   const [proposing, setProposing] = useState(false);
   const [text, setText] = useState('');
+  // GM不在のソロでは、使える条件（docs/cartagraph/solo-village.md、仮ルール）の判定にドライバーのキャラクターを使う
+  const soloGm = session.data?.gmId === SYSTEM_GM_ID;
+  const driverCharacterId =
+    session.data?.participants.find((p) => p.role === 'driver')?.characterId ?? '';
+  const character = useCharacter(soloGm ? driverCharacterId : '');
 
   if (session.isPending) return <Loading what="卓を準備中" />;
   if (session.error) return <ErrorNote error={session.error} />;
@@ -31,6 +37,10 @@ export function PlayPage() {
   const busy = play.isPending || propose.isPending;
   // 自動戦闘の設定中は、手札と提案の代わりに戦い方のパネルを出す（docs/cartagraph/auto-combat.md）
   const choosingTactics = !ended && s.autoCombat?.status === 'awaiting-priority';
+  // キャラクターを読み込むまでは判定せず、サーバーの 422 に任せる
+  const held = character.data && heldCards(character.data, s.field);
+  const reasonFor = held ? (card: CardDef) => unplayableReason(card, held) : undefined;
+  const hasSoloEffect = s.hand.some((c) => c.soloEffect);
   const enemyName =
     s.field.plVisible.find((c) => c.id === s.autoCombat?.enemyCardId)?.name ?? '相手';
 
@@ -87,6 +97,11 @@ export function PlayPage() {
         />
       )}
       <StatusLine>
+        {hasSoloEffect && !ended && (
+          <span className="u-dim u-small">
+            能力値の上がり方・お店は仮ルール（GM不在のソロでの村の成長）
+          </span>
+        )}
         {play.error && <ErrorNote error={play.error} />}
         {propose.error && <ErrorNote error={propose.error} />}
         {pending && (
@@ -138,6 +153,7 @@ export function PlayPage() {
         <HandDock
           hand={s.hand}
           disabled={busy || ended}
+          unplayableReason={reasonFor}
           onPlay={(card) => play.mutate({ sessionId, cardId: card.id })}
           extra={
             !ended &&
