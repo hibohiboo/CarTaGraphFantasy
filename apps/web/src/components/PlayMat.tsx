@@ -12,7 +12,7 @@ export interface PlayMatZone {
 }
 
 /**
- * 1画面で場の全体を俯瞰する簡易表示（docs/public/preview/play-mat.html の移植）。
+ * 1画面で場の全体を俯瞰する簡易表示（試作HTML play-mat.html の移植。試作は削除済みで git 履歴にある）。
  * GMが用意するもの（シーン・場に出たカード）を奥（上）、PLが操作するもの（選択肢・パーティー）を
  * 手前（下）に積む「プレイマット式の奥行き表現」（docs/architecture/prototype-handover.md）。
  * 普段は`hideMeta`（アイコン＋1行の名前だけ）の小さな表示に固定し、タップした1枚だけ
