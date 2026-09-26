@@ -3,7 +3,6 @@ import { GROUP_LABEL, type RouteGroup, routes } from '../../app/routes';
 import { PageHeader, Panel } from '../../components/ui';
 import s from '../pages.module.css';
 
-const PREVIEW_BASE = 'https://hibohiboo.github.io/CarTaGraphFantasy/preview/';
 const order: RouteGroup[] = ['common', 'pl', 'gm', 'creator', 'rulebook', 'admin'];
 
 /** サイトマップ。routes.ts をそのまま表にする（ナビと同じ情報源） */
@@ -24,7 +23,6 @@ export function SitemapPage() {
                     <th>パス</th>
                     <th>ページ</th>
                     <th>役割</th>
-                    <th>試作元</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -40,13 +38,6 @@ export function SitemapPage() {
                           {r.example && <span className="u-small u-dim">（例）</span>}
                         </td>
                         <td>{r.description}</td>
-                        <td>
-                          {r.prototype ? (
-                            <a href={`${PREVIEW_BASE}${r.prototype}`}>{r.prototype}</a>
-                          ) : (
-                            <span className="u-dim">—</span>
-                          )}
-                        </td>
                       </tr>
                     ))}
                 </tbody>

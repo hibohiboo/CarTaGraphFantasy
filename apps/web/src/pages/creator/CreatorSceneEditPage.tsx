@@ -17,7 +17,7 @@ const dataUrlBytes = (dataUrl: string) => Math.floor((dataUrl.length * 3) / 4);
 
 /**
  * シーン構築画面（シナリオ製作者専用）。
- * docs/public/preview/scene-builder.html の試作をもとにReact化したもの
+ * 試作HTML scene-builder.html をもとにReact化したもの（試作は削除済みで git 履歴にある）
  * （docs/plans/2026-09-16-scene-builder.md）。
  * シーンの目的・終了条件は未決の仮ルール（docs/open-questions.md）。
  */

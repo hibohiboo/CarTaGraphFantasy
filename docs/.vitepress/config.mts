@@ -76,41 +76,16 @@ export default defineConfig({
         // ページ遷移としてブラウザに読み込ませる。
         text: '試作',
         items: [
-          {
-            text: 'カルタグラフ図鑑（閲覧サイト試作）',
-            link: '/preview/cartagraph-zukan.html',
-            target: '_self',
-          },
-          {
-            text: 'プレイ画面（ドライバー視点）',
-            link: '/preview/session-play.html',
-            target: '_self',
-          },
-          { text: 'GM承認画面', link: '/preview/session-gm-review.html', target: '_self' },
+          // React化済みの試作は削除した（docs/plans/2026-09-27-試作HTMLの整理.md）。ここに残るのは未React化の画面だけ
           {
             text: 'チャット（ドライバー/ナビゲーター/GM）',
             link: '/preview/session-chat.html',
             target: '_self',
           },
-          { text: 'GMのセッション管理', link: '/preview/session-gm-manage.html', target: '_self' },
-          {
-            text: 'シナリオ製作者のシナリオ管理',
-            link: '/preview/scenario-manage.html',
-            target: '_self',
-          },
-          {
-            text: 'プレイヤーのセッション選択',
-            link: '/preview/session-browse.html',
-            target: '_self',
-          },
-          { text: 'キャラクター作成', link: '/preview/character-create.html', target: '_self' },
-          { text: 'シーン構築', link: '/preview/scene-builder.html', target: '_self' },
           { text: 'シーン進行（GM視点）', link: '/preview/scene-play.html', target: '_self' },
           { text: '戦闘画面（2次元）', link: '/preview/combat-play.html', target: '_self' },
           { text: '戦闘画面（1次元）', link: '/preview/combat-play-1d.html', target: '_self' },
           { text: '場の状況', link: '/preview/session-field.html', target: '_self' },
-          { text: 'キャラクターシート', link: '/preview/character-sheet.html', target: '_self' },
-          { text: 'プレイマット（簡易表示）', link: '/preview/play-mat.html', target: '_self' },
         ],
       },
     ],

@@ -21,8 +21,6 @@ export interface RouteMeta {
   nav?: boolean;
   /** サイトマップから辿るための具体例（動的ルート用） */
   example?: string;
-  /** 元になった試作HTML（docs/public/preview） */
-  prototype?: string;
 }
 
 export const routes: RouteMeta[] = [
@@ -46,7 +44,6 @@ export const routes: RouteMeta[] = [
     group: 'pl',
     description: '募集中のシナリオを見て、自分または借りたPCで応募する',
     nav: true,
-    prototype: 'session-browse.html',
   },
   {
     path: '/pl/sessions/:sessionId/play',
@@ -55,7 +52,6 @@ export const routes: RouteMeta[] = [
     description:
       'ドライバーとして手札からカードをプレイし、セッションに干渉する。1画面完結レイアウト',
     example: '/pl/sessions/ss-mansion/play',
-    prototype: 'session-play.html',
   },
   {
     path: '/pl/characters',
@@ -63,14 +59,12 @@ export const routes: RouteMeta[] = [
     group: 'pl',
     description: '所有PCと借りられるPCの一覧',
     nav: true,
-    prototype: 'character-sheet.html',
   },
   {
     path: '/pl/characters/new',
     title: 'キャラクター作成',
     group: 'pl',
     description: 'CP予算（ハード制約）の中でカードプールから選んでPCを作る',
-    prototype: 'character-create.html',
   },
   {
     path: '/pl/tutorial',
@@ -91,7 +85,6 @@ export const routes: RouteMeta[] = [
     group: 'pl',
     description: '能力値・HP・所持デッキ・称号タグ・結末タグの参照ビュー',
     example: '/pl/characters/pc-jin',
-    prototype: 'character-sheet.html',
   },
 
   {
@@ -100,7 +93,6 @@ export const routes: RouteMeta[] = [
     group: 'gm',
     description: '共有ライブラリからシナリオを選ぶ',
     nav: true,
-    prototype: 'scenario-manage.html',
   },
   {
     path: '/gm/scenarios/:scenarioId',
@@ -115,7 +107,6 @@ export const routes: RouteMeta[] = [
     group: 'gm',
     description: '自分がGMを務めるセッションの一覧',
     nav: true,
-    prototype: 'session-gm-manage.html',
   },
   {
     path: '/gm/sessions/:sessionId',
@@ -123,7 +114,6 @@ export const routes: RouteMeta[] = [
     group: 'gm',
     description: '参加者・場のゾーン・進行フィード・提案の裁定・モード切り替え・終了',
     example: '/gm/sessions/ss-galleon',
-    prototype: 'session-gm-review.html',
   },
 
   {
@@ -132,7 +122,6 @@ export const routes: RouteMeta[] = [
     group: 'creator',
     description: '自分が作ったシナリオの一覧と新規作成',
     nav: true,
-    prototype: 'scenario-manage.html',
   },
   {
     path: '/creator/scenarios/:scenarioId',
@@ -140,7 +129,6 @@ export const routes: RouteMeta[] = [
     group: 'creator',
     description: 'メタデータ・シナリオデッキの構造・結末タグを編集し、共有ライブラリへ公開する',
     example: '/creator/scenarios/sc-galleon',
-    prototype: 'scenario-manage.html',
   },
   {
     path: '/creator/scenarios/:scenarioId/scenes/:sceneId',
@@ -148,7 +136,6 @@ export const routes: RouteMeta[] = [
     group: 'creator',
     description: 'ロケーション・NPC・情報・イベントカードの配置、目的・終了条件（仮）の編集',
     example: '/creator/scenarios/sc-gray-mansion/scenes/d-s2',
-    prototype: 'scene-builder.html',
   },
 
   {
@@ -176,7 +163,6 @@ export const routes: RouteMeta[] = [
     group: 'rulebook',
     description:
       'セッションから積みあがった共有ライブラリ（正史グラフから格上げされた設定・カード）',
-    prototype: 'cartagraph-zukan.html',
   },
 
   {

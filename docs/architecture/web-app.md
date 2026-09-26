@@ -85,9 +85,14 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 
 ## 未React化の画面
 
-戦闘画面（1次元／2次元）は、まだ React 化していない。試作 HTML（`docs/public/preview/combat-play.html`・`combat-play-1d.html`）は残しており、このdocsサイトのサイドバー「試作」（`docs/.vitepress/config.mts`）から見られる。
+次の画面は、まだ React 化していない。試作 HTML は `docs/public/preview/` に残しており、このdocsサイトのサイドバー「試作」（`docs/.vitepress/config.mts`）から見られる。
 
-（**アプリ内のサイトマップ〈`/admin/sitemap`〉ではない** — サイトマップは `apps/web/src/app/routes.ts` の各ルートが持つ `prototype` フィールドから「試作元」リンクを出す仕組みで、routes.ts に存在するルート＝既にReact化済みのページの試作元しか出せない。まだルートが無い画面は、サイトマップには出てこない。React 化してルートを追加するときに `prototype: 'combat-play.html'` のように指定すると、以後はサイトマップからも辿れるようになる）
+- 戦闘画面（2次元／1次元）：`combat-play.html`・`combat-play-1d.html`
+- チャット：`session-chat.html`
+- シーン進行（GM視点）：`scene-play.html`
+- 場の状況：`session-field.html`
+
+**React 化したら、その画面の試作 HTML は削除する**（サイドバー「試作」の項目も外す）。React 化済みだった10画面の試作は 2026-09-27 に削除した（`docs/plans/2026-09-27-試作HTMLの整理.md`）。削除した試作を見たいときは、git 履歴から取り出す（例：`git show 89845da:docs/public/preview/session-play.html`）。
 
 シーン構築画面（カード編集）は`/creator/scenarios/:scenarioId/scenes/:sceneId`（`CreatorSceneEditPage.tsx`）としてReact化済み（`docs/plans/2026-09-16-scene-builder.md`、開発サイクルC4）。シーンの「目的」「終了条件」は未決の仮ルールとして実装しており、[未解決論点トラッカー](../open-questions.md)の該当項目は決着していない。
 

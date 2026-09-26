@@ -6,7 +6,7 @@
 
 [技術スタック](index.md)で決着した「まず閲覧サイト→後にセッション管理システム」という段階分けのうち、閲覧サイト（用語集・グラフの閲覧体験）の試作から着手した。その後ユーザーの依頼で、本来は後続フェーズのはずのセッション管理系UI（プレイ画面・GM承認・戦闘画面など）もデザイン探索として先行して試作することになり、結果的に全15画面まで広がった。**フェーズ分けの方針自体は変更していない** — ここでの試作はあくまで見た目・UI構造の検証であり、実装の着手順は改めて技術スタックの方針に従う。
 
-すべてGitHub Pages上で公開中（`https://hibohiboo.github.io/CarTaGraphFantasy/preview/<ファイル名>`）。VitePressの`public/`ディレクトリにそのまま置いた生のHTMLで、サイドバーの「試作」セクションから辿れる。
+GitHub Pages上で公開していた（`https://hibohiboo.github.io/CarTaGraphFantasy/preview/<ファイル名>`）。VitePressの`public/`ディレクトリにそのまま置いた生のHTMLで、サイドバーの「試作」セクションから辿れる。**2026-09-27 に React 化済みの10画面を削除し、いまは未React化の5画面だけを残している**（下記「削除した試作」）。
 
 ## 全15画面
 
@@ -27,6 +27,14 @@
 | `session-field.html` | 場の状況 | PL | シーン/ロケーション/情報/選択肢/パーティーを俯瞰する詳細ビュー |
 | `character-sheet.html` | キャラクターシート | PL | 能力値・HP・所持デッキの参照ビュー（作成フローとは別） |
 | `play-mat.html` | プレイマット | PL | 1画面に収まる簡易表示。GM=奥・PL=手前の奥行き順 |
+
+## 削除した試作（2026-09-27）
+
+React 化が済んだ次の10画面の試作HTMLは削除した（`docs/plans/2026-09-27-試作HTMLの整理.md`）。上の表は引き継ぎの記録として残している。
+
+- 削除：`cartagraph-zukan.html`・`session-play.html`・`session-gm-review.html`・`session-gm-manage.html`・`scenario-manage.html`・`session-browse.html`・`character-create.html`・`scene-builder.html`・`character-sheet.html`・`play-mat.html`
+- 残している（未React化）：`session-chat.html`・`scene-play.html`・`combat-play.html`・`combat-play-1d.html`・`session-field.html`。React 化したら同じく削除する（[Webアプリの構成](web-app.md#未react化の画面)）
+- 削除した試作を見たいときは git 履歴から取り出す（例：`git show 89845da:docs/public/preview/session-play.html`）
 
 ## デザインシステム
 
