@@ -75,6 +75,36 @@ export interface CardDef {
   combatEffect?: CombatEffect;
   /** 効果「次のシーンへ進む」の遷移先 DeckNode.id（docs/cartagraph/play-and-field.md 基本操作8） */
   nextNodeId?: string;
+  /** 配る条件。満たさなければ手札に配らない（docs/cartagraph/solo-village.md、GM不在のソロの仮ルール） */
+  dealWhen?: CardCondition;
+  /** 使える条件。満たさなければ手札に出すが選べない（同上、仮ルール） */
+  playWhen?: CardCondition;
+  /** 選んだときの成長の効果（同上、仮ルール） */
+  soloEffect?: SoloEffect;
+}
+
+/**
+ * 配る条件・使える条件（docs/cartagraph/solo-village.md、仮ルール）。
+ * 判定の対象はキャラクターデッキと GM専用ゾーンの達成カード。すべての項目を満たせば真
+ */
+export interface CardCondition {
+  /** これらのタグのカードをすべて持っている */
+  hasTags?: string[];
+  /** これらのタグのカードを1枚も持っていない */
+  lacksTags?: string[];
+  /** これらのIDのカードを持っていない（お店で習ったスキルを並べないため） */
+  lacksCards?: string[];
+}
+
+/** GM不在のソロで、選択肢カードを選んだときの成長の効果（docs/cartagraph/solo-village.md、仮ルール） */
+export interface SoloEffect {
+  raiseAbility?: keyof Abilities;
+  /** キャラクターデッキへ加える（引換カード・習ったスキル）。ID はそのまま保ち、オブジェクトだけ複製する */
+  gainCards?: CardDef[];
+  /** このタグのカードをキャラクターデッキから1枚手放す（引換カード） */
+  consumeTag?: string;
+  /** GM専用ゾーンに置く達成カード */
+  achievement?: CardDef;
 }
 
 /** ダイス式（例：2d6+1 は { count: 2, sides: 6, bonus: 1 }） */
@@ -186,10 +216,14 @@ export interface Character {
   createdAt: string;
 }
 
+/** 戦闘スキルカードを持つか（冒険者の条件） */
+export function hasCombatSkill(c: Pick<Character, 'deck'>): boolean {
+  return c.deck.some((card) => card.tags.includes('戦闘スキル'));
+}
+
 /** PCが現在持つデータから典型ロールを導く */
 export function deriveArchetype(c: Pick<Character, 'abilities' | 'deck'>): CharacterArchetype {
-  const hasCombat = c.deck.some((card) => card.tags.includes('戦闘スキル'));
-  if (hasCombat) return 'adventurer';
+  if (hasCombatSkill(c)) return 'adventurer';
   if (c.abilities) return 'explorer';
   return 'traveler';
 }
@@ -271,9 +305,14 @@ export interface Scenario {
   proposalHandling: ProposalHandling;
   /**
    * ソロ開始時にキャラクターへ無償で配る初期装備（docs/cartagraph/auto-combat.md「初期装備」、
-   * 仮ルール）。村パートの報酬・お店が実装されたら置き換える
+   * 仮ルール）。村パートを持たないシナリオ用（いまはテスト専用のシナリオだけが使う）
    */
   soloStarter?: { hp: number; baseActionValue: number; cards: CardDef[] };
+  /**
+   * GM不在のソロの成長で与える HP（探索者になったとき）と基本行動値（冒険者になったとき）
+   * （docs/cartagraph/solo-village.md「HP・＜行動値＞」、仮ルール）
+   */
+  soloGrowth?: { hp: number; baseActionValue: number };
   deck: DeckNode[];
   endings: EndingDef[];
   /** 共有ライブラリへの公開状態 */

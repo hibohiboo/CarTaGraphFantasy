@@ -9,6 +9,7 @@ import {
   type Session,
   SYSTEM_GM_ID,
 } from './index';
+import { meetsCondition } from './soloVillage';
 
 /** シナリオデッキを入れ子まで探す。path は最上位の祖先から見つかったノードまで */
 export function findDeckNode(
@@ -29,6 +30,20 @@ export function findDeckNode(
   return { node: path[path.length - 1], topIndex: deck.indexOf(path[0]), path };
 }
 
+/**
+ * ノードに入ったときに手札へ配る選択肢カード。人間GMのいないセッションでは、配る条件
+ * （docs/cartagraph/solo-village.md、仮ルール）を満たすものだけにする。held は判定に使うカード（heldCards）
+ */
+export function dealChoices(
+  node: Pick<DeckNode, 'cards'>,
+  held: CardDef[],
+  session: Pick<Session, 'gmId'>,
+): CardDef[] {
+  const choices = node.cards.filter((c) => c.kind === 'choice');
+  if (session.gmId !== SYSTEM_GM_ID) return choices;
+  return choices.filter((c) => meetsCondition(c.dealWhen, held));
+}
+
 export type TransitionPlan =
   | { ok: false; error: string }
   | {
@@ -46,6 +61,8 @@ export function planTransition(
   scenario: Pick<Scenario, 'deck'>,
   session: Pick<Session, 'gmId'>,
   nextNodeId: string,
+  /** 配る条件の判定に使うカード（heldCards）。遷移に伴う効果を適用した後の状態で渡す */
+  held: CardDef[],
 ): TransitionPlan {
   const found = findDeckNode(scenario.deck, nextNodeId);
   if (!found) return { ok: false, error: `移り先のシーン（${nextNodeId}）がシナリオにありません` };
@@ -65,7 +82,7 @@ export function planTransition(
       path: path.map((n) => n.name).join(' › '),
       nodeId: node.id,
     },
-    choices: node.autoCombat ? [] : node.cards.filter((c) => c.kind === 'choice'),
+    choices: node.autoCombat ? [] : dealChoices(node, held, session),
     ...(node.autoCombat && { autoCombat: node.autoCombat }),
     // 結末で自動終了するのは人間GMのいないセッションだけ（play-and-field.md「次のシーンへ進む」）
     ended: node.kind === 'ending' && session.gmId === SYSTEM_GM_ID,
