@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: fcb20a47-5151-4109-8489-8af7d7d5cc2f
-  modified: 2026-09-15T21:56:06.717Z
+  modified: 2026-09-26T17:37:33.230Z
 ---
 
 `docs/architecture/index.md`で決着した「まず閲覧サイト→後にセッション管理システム」というフェーズ分けの、見た目を確認する試作を`docs/public/preview/`配下（全15画面、HTML/CSSのみ、GitHub Pagesで公開）に作った。2026-09-16時点でユーザーから「reactでの本ページ作成に移りたい」と表明があり、**このHTML試作フェーズは区切りがついた**。
@@ -18,7 +18,7 @@ metadata:
 
 - `architecture/index.md`のモノレポ化（`apps/` `packages/` `infra/`）とVite+React実装に進む想定。
 - 試作フェーズで得たデザイントークン・コンポーネント境界（Card/HandDock/Hud/TurnChips/PlayMat等）はReact実装にそのまま移植可能。
-- 本実装が進んだら、`docs/public/preview/`の試作ページとVitePressサイドバーの「試作」セクションは役目を終えるので外す想定（[[push-then-report]]の通り、mainへの反映はユーザー確認なしで進めてよい）。
+- 2026-09-27、React化済みの10画面の試作を削除した（PR #7、`docs/plans/2026-09-27-試作HTMLの整理.md`）。残るのは未React化の5画面（戦闘2つ・チャット・シーン進行・場の状況）。運用は「React化したらその試作を削除し、サイドバー『試作』からも外す」で、正は `docs/architecture/web-app.md`「未React化の画面」。削除した試作は `git show 89845da:docs/public/preview/<ファイル>` で見られる。
 
 ## 運用上の学び（今後も有効）
 
