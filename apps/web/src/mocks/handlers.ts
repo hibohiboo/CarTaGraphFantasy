@@ -662,7 +662,7 @@ export const handlers = [
       proposalHandling: 'gm-required',
       deck: [
         { id: nextId('d'), kind: 'intro', name: '導入', cards: [] },
-        { id: nextId('d'), kind: 'ending', name: 'エンディング', cards: [] },
+        { id: nextId('d'), kind: 'ending', name: '結末', cards: [] },
       ],
       endings: [],
       libraryStatus: 'draft',

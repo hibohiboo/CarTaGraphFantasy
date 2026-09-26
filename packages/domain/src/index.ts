@@ -194,7 +194,7 @@ export function deriveArchetype(c: Pick<Character, 'abilities' | 'deck'>): Chara
   return 'traveler';
 }
 
-/** シナリオデッキの入れ子構造（導入→シーン→エンディング） */
+/** シナリオデッキの入れ子構造（導入→シーン→結末） */
 export type DeckNodeKind = 'intro' | 'scene' | 'ending' | 'npc' | 'info' | 'enemy' | 'location';
 
 export const DECK_NODE_LABEL: Record<DeckNodeKind, string> = {

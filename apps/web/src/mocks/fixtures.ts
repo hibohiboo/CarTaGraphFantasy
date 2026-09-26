@@ -432,7 +432,7 @@ export const scenarios: Scenario[] = [
           { id: 'npc-butler', kind: 'npc', name: '館の老従者', tags: ['正体は裏'], faceDown: true },
         ],
       },
-      { id: 'd-end', kind: 'ending', name: 'エンディング', cards: [] },
+      { id: 'd-end', kind: 'ending', name: '結末', cards: [] },
     ],
     endings: [
       { id: 'e1', name: '扉を壊して真相にたどり着いた結末', grantsTag: '館の秘密を知る' },
@@ -466,7 +466,7 @@ export const scenarios: Scenario[] = [
         cards: [{ id: 'en-ghost', kind: 'enemy', name: '鎖の亡霊', tags: ['弱点未判明'] }],
       },
       { id: 'g-s3', kind: 'scene', name: '3 船長室', cards: [] },
-      { id: 'g-end', kind: 'ending', name: 'エンディング', cards: [] },
+      { id: 'g-end', kind: 'ending', name: '結末', cards: [] },
     ],
     endings: [
       { id: 'g-e1', name: '船を解き放った結末', grantsTag: '鎖を断った者' },
@@ -490,7 +490,7 @@ export const scenarios: Scenario[] = [
     proposalHandling: 'gm-required',
     deck: [
       { id: 'a-intro', kind: 'intro', name: '再び回廊へ', cards: [] },
-      { id: 'a-end', kind: 'ending', name: 'エンディング', cards: [] },
+      { id: 'a-end', kind: 'ending', name: '結末', cards: [] },
     ],
     endings: [{ id: 'a-e1', name: '灯りを守った結末' }],
     libraryStatus: 'published',
@@ -597,7 +597,7 @@ export const scenarios: Scenario[] = [
         name: '村はずれ（提案不可）',
         cards: [{ id: 'vnp-look-around', kind: 'choice', name: '辺りを見回す', tags: [] }],
       },
-      { id: 'vnp-end', kind: 'ending', name: 'エンディング', cards: [] },
+      { id: 'vnp-end', kind: 'ending', name: '結末', cards: [] },
     ],
     endings: [],
     libraryStatus: 'draft',
@@ -842,7 +842,7 @@ export const sessions: Session[] = [
     status: 'ended',
     mode: 'light',
     proposalHandling: 'gm-required',
-    currentScene: { index: 5, total: 5, name: 'エンディング', path: 'エンディング' },
+    currentScene: { index: 5, total: 5, name: '結末', path: '結末' },
     participants: [
       {
         userId: 'u-me',

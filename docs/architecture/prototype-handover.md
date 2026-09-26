@@ -17,7 +17,7 @@
 | `session-gm-review.html` | GM承認画面 | GM | 提案の承認待ち／採用済み／却下の状態遷移（チケット型UI） |
 | `session-chat.html` | チャット | ドライバー/ナビゲーター/GM | 非同期セッションの会話ログ |
 | `session-gm-manage.html` | GMのセッション管理 | GM | 参加者・ゾーン枚数・進行フィード |
-| `scenario-manage.html` | シナリオ管理 | シナリオ製作者 | メタデータ・デッキ構造（導入→シーン→エンディング）・結末タグ |
+| `scenario-manage.html` | シナリオ管理 | シナリオ製作者 | メタデータ・デッキ構造（導入→シーン→結末）・結末タグ |
 | `session-browse.html` | セッション選択 | PL | 募集中シナリオのカード一覧、応募 |
 | `character-create.html` | キャラクター作成 | PL | CP予算（ハード制約）・能力値・カードプール選択 |
 | `scene-builder.html` | シーン構築 | シナリオ製作者/GM | ロケーション1枚＋NPC/イベント配置、ゾーン指定 |
