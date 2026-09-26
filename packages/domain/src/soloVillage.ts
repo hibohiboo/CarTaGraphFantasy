@@ -34,8 +34,10 @@ export function meetsCondition(cond: CardCondition | undefined, held: CardDef[])
  * 使える条件に加え、成長の効果で手放すタグのカードを持っていなければ選べない（solo-village.md「成長の効果」）
  */
 export function unplayableReason(card: CardDef, held: CardDef[]): string | null {
+  // 手放すのはキャラクターデッキのカードなので、達成カード（GM専用ゾーン）は数えない
   const consume = card.soloEffect?.consumeTag;
-  if (consume && !hasTag(held, consume)) return `『${consume}』のカードが必要`;
+  const deckCards = held.filter((c) => !c.tags.includes(ACHIEVEMENT_TAG));
+  if (consume && !hasTag(deckCards, consume)) return `『${consume}』のカードが必要`;
   return conditionFailure(card.playWhen, held);
 }
 

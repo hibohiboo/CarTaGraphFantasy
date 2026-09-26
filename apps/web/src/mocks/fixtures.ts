@@ -1153,7 +1153,7 @@ export const sessions: Session[] = [
     proposalHandling: 'gm-required',
     currentScene: {
       index: 2,
-      total: 9,
+      total: 8,
       name: '畑を荒らす猪',
       path: '畑を荒らす猪',
       nodeId: 'vw-quest-0',

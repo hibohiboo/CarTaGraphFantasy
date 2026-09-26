@@ -98,6 +98,10 @@ describe('unplayableReason', () => {
     expect(unplayableReason(learn, [])).toBe('『引換』のカードが必要');
     expect(unplayableReason(learn, [voucher()])).toBeNull();
   });
+  it('手放すタグは達成カードでは満たせない（手放すのはキャラクターデッキのカード）', () => {
+    const c = card('x', [], { soloEffect: { consumeTag: '達成' } });
+    expect(unplayableReason(c, [achievement])).toBe('『達成』のカードが必要');
+  });
   it('持っていてはいけないタグ・カードを持っていれば、その旨の文', () => {
     const c = card('x', [], { playWhen: { lacksTags: ['回復'], lacksCards: ['c-slash'] } });
     expect(unplayableReason(c, [card('h', ['回復'])])).toBe(
