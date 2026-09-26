@@ -20,10 +20,12 @@ import {
   validatePriority,
 } from '@cartagraph/domain/autoCombat';
 import {
+  dealChoices,
   findDeckNode,
   planTransition,
   type TransitionPlan,
 } from '@cartagraph/domain/sceneTransition';
+import { applySoloEffect, heldCards, unplayableReason } from '@cartagraph/domain/soloVillage';
 import { HttpResponse, http } from 'msw';
 import { toDictionaryForm } from '../lib/japanese';
 import * as fx from './fixtures';
@@ -143,7 +145,9 @@ function buildSoloCharacter(name: string, starter?: Scenario['soloStarter']): Ch
 function buildSoloSession(scenario: Scenario, character: Character): Session | null {
   const intro = scenario.deck.find((d) => d.kind === 'intro');
   if (!intro) return null;
-  const hand = intro.cards.filter((c) => c.kind === 'choice');
+  const hand = dealChoices(intro, heldCards(character, { gmOnly: [], plVisible: [] }), {
+    gmId: SYSTEM_GM_ID,
+  });
   return {
     id: nextId('ss'),
     scenarioId: scenario.id,
@@ -193,11 +197,14 @@ const autoCombatBusy = () =>
 
 const sessionEnded = () => unprocessable('このセッションは終了しています');
 
-/** 基本操作8「次のシーンへ進む」の計算結果（planTransition）をセッションへ書き込む */
-function applyTransition(s: Session, plan: Extract<TransitionPlan, { ok: true }>) {
+/**
+ * 基本操作8「次のシーンへ進む」の計算結果（planTransition）をセッションへ書き込む。
+ * flavor を渡すと、移った先のシーン名だけの描写の代わりにそれを使う（solo-village.md「解決の描写」）
+ */
+function applyTransition(s: Session, plan: Extract<TransitionPlan, { ok: true }>, flavor?: string) {
   s.currentScene = plan.currentScene;
   s.hand = [...plan.choices, ...s.hand.filter((c) => c.kind !== 'choice')];
-  s.flavor = `${plan.currentScene.name}へ進んだ。`;
+  s.flavor = flavor ?? `${plan.currentScene.name}へ進んだ。`;
   s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `「${plan.currentScene.path}」へ進んだ` });
   if (plan.autoCombat && plan.currentScene.nodeId) {
     // エネミーカードはシナリオの定義をコピーして場に出す（状態タグの変更をシナリオへ波及させない）
@@ -357,32 +364,71 @@ export const handlers = [
     const card = s.hand.find((c) => c.id === cardId);
     if (!card) return notFound('手札のカード');
     const driver = s.participants.find((p) => p.role === 'driver');
+    const character = db.characters.find((c) => c.id === driver?.characterId);
+    const soloGm = s.gmId === SYSTEM_GM_ID;
+    // GM不在のソロの村の成長（docs/cartagraph/solo-village.md、仮ルール）。人間GMのセッションでは働かせない。
+    // 使える条件の検査→効果の計算→（効果を適用した後の状態で）遷移の計算、と全部通ってから書き込む
+    let grown: { character: Character; lines: string[]; achievement?: CardDef } | undefined;
+    if (soloGm) {
+      const reason = unplayableReason(card, character ? heldCards(character, s.field) : []);
+      if (reason) return unprocessable(reason);
+      if (card.soloEffect) {
+        if (!character) return notFound('キャラクター');
+        const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
+        const r = applySoloEffect(character, card.soloEffect, scenario?.soloGrowth);
+        if (!r.ok) return unprocessable(r.error);
+        grown = { ...r, achievement: card.soloEffect.achievement };
+      }
+    }
+    const actor = grown?.character ?? character;
     // 基本操作8「次のシーンへ進む」。遷移できなければセッションを一切変えずに422を返す
     let transition: Extract<TransitionPlan, { ok: true }> | undefined;
     if (card.kind === 'choice' && card.nextNodeId) {
       const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
       if (!scenario) return notFound('シナリオ');
-      const plan = planTransition(scenario, s, card.nextNodeId);
+      const field = {
+        ...s.field,
+        gmOnly: [...s.field.gmOnly, ...(grown?.achievement ? [grown.achievement] : [])],
+      };
+      const plan = planTransition(
+        scenario,
+        s,
+        card.nextNodeId,
+        actor ? heldCards(actor, field) : [],
+      );
       if (!plan.ok) return unprocessable(plan.error);
       if (plan.autoCombat) {
         // 戦えないまま自動戦闘のシーンへ入ると、手札も提案も無い行き止まりになるため先に止める
-        const character = db.characters.find((c) => c.id === driver?.characterId);
-        if (!character) return notFound('キャラクター');
-        const reason = canFight(character);
-        if (reason) return unprocessable(`${character.name}は${reason}`);
+        if (!actor) return notFound('キャラクター');
+        const reason = canFight(actor);
+        if (reason) return unprocessable(`${actor.name}は${reason}`);
       }
       transition = plan;
+    }
+    // ここから書き込む
+    let grownFlavor: string | undefined;
+    if (grown && character) {
+      db.characters[db.characters.indexOf(character)] = grown.character;
+      // 達成カードは GM専用ゾーンに置く。PLには見せないので feed・描写には出さない
+      if (grown.achievement) s.field.gmOnly.push(clone(grown.achievement));
+      // feed は新しい順。プレイの記録の下に、効果の文が上から順に並ぶようにする
+      for (const line of [...grown.lines].reverse())
+        s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `${character.name}：${line}` });
+      grownFlavor = [card.description, ...grown.lines.map((l) => `${l}。`)]
+        .filter(Boolean)
+        .join(' ');
     }
     const script = playScript[cardId];
     // GM不在のセッションで、次のシーンへ進まず簡易スクリプトも無い選択肢は、描写する人がいない。
     // システムがカードの説明文（無ければ定型文）を描写として返し、選んだカードだけを手札から消して
     // 同じシーンに留まる（docs/cartagraph/play-and-field.md「GMレスセッションでの選択肢の描写」）
-    const selfNarrated =
-      card.kind === 'choice' && !transition && !script && s.gmId === SYSTEM_GM_ID;
+    const selfNarrated = card.kind === 'choice' && !transition && !script && soloGm;
     if (selfNarrated) {
       s.hand = s.hand.filter((c) => c.id !== card.id);
       s.flavor =
-        card.description ?? `${driver?.characterName ?? 'ドライバー'}は「${card.name}」を試みた。`;
+        grownFlavor ??
+        card.description ??
+        `${driver?.characterName ?? 'ドライバー'}は「${card.name}」を試みた。`;
     } else if (card.kind === 'choice') {
       s.hand = s.hand.filter((c) => c.kind !== 'choice');
       if (script?.addChoices) s.hand.unshift(...script.addChoices);
@@ -412,7 +458,7 @@ export const handlers = [
       text: `${driver?.characterName ?? 'ドライバー'}が「${card.name}」をプレイ`,
       cardName: card.name,
     });
-    if (transition) applyTransition(s, transition);
+    if (transition) applyTransition(s, transition, grownFlavor);
     s.lastActivityAt = nowIso();
     return HttpResponse.json(s);
   }),
@@ -576,7 +622,7 @@ export const handlers = [
       if (enemyCard && !enemyCard.tags.includes('戦闘不能')) enemyCard.tags.push('戦闘不能');
       ac.status = 'won';
       s.hand = [
-        ...node.cards.filter((c) => c.kind === 'choice'),
+        ...dealChoices(node, heldCards(character, s.field), s),
         ...s.hand.filter((c) => c.kind !== 'choice'),
       ];
       s.flavor = `${character.name}は${enemy.card.name}に勝利した。`;
@@ -608,7 +654,7 @@ export const handlers = [
           kind: 'trait',
           name: RETRY_TRAIT_NAME,
           description: '冒険者試験に一度敗れ、それでも立ち上がった記憶（自動戦闘の仮ルール）',
-          tags: ['特徴'],
+          tags: ['経験'],
         });
       }
     }

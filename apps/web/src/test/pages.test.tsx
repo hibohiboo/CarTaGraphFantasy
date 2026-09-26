@@ -265,7 +265,8 @@ describe('村はずれの一歩（C1: GMレス基盤の検証用）', () => {
     expect(await screen.findByText(/畑仕事/)).toBeInTheDocument();
     expect(screen.queryByText(/GMの描写を待っている/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /辺りを見回す/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /街の冒険者ギルドへ向かう/ })).toBeInTheDocument();
+    // 先へ進む選択肢が残っていて、行き止まりにならない
+    expect(screen.getByRole('button', { name: /村の広場へ向かう/ })).toBeInTheDocument();
   });
 
   it('GM不在で、自動採用された提案カードを選んでも行き止まりにならない', async () => {
@@ -278,7 +279,8 @@ describe('村はずれの一歩（C1: GMレス基盤の検証用）', () => {
     await user.click(await screen.findByRole('button', { name: /足跡を調べる/ }));
     expect(await screen.findByText(/新人は「足跡を調べる」を試みた/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /足跡を調べる/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /街の冒険者ギルドへ向かう/ })).toBeInTheDocument();
+    // 先へ進む選択肢が残っていて、行き止まりにならない
+    expect(screen.getByRole('button', { name: /村の広場へ向かう/ })).toBeInTheDocument();
   });
 
   it('異常系：名前が空だとAPIレベルでも拒否され、Character・Sessionが増えない（中途半端な状態が残らない）', async () => {
