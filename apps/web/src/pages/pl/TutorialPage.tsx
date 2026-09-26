@@ -3,8 +3,9 @@ import { ARCHETYPE_LABEL, deriveArchetype } from '@cartagraph/domain';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { CardGrid, GameCard } from '../../components/GameCard';
+import { NameProposal } from '../../components/NameProposal';
 import { PlayMat, type PlayMatZone } from '../../components/PlayMat';
-import { HandDock, ProposeForm, Table } from '../../components/play';
+import { HandDock, Table } from '../../components/play';
 import { Button, ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
 import { useCardPool, useCreateCharacter, useUpdateCharacter } from '../../lib/queries';
 import s from '../pages.module.css';
@@ -79,17 +80,6 @@ const NPC_CARD: CardDef = {
 };
 
 /**
- * 名乗りは自由入力なので、実際のプレイ画面と同じ「新たな選択肢を提案」の操作感
- * （提案カードを選ぶ→自由入力欄が開く→GMへの提案として送る）で練習させる。
- */
-const INTRODUCE_CARD: CardDef = {
-  id: 'introduce',
-  kind: 'choice',
-  name: '＋\n名を名乗る',
-  tags: [],
-};
-
-/**
  * ステップごとの台詞カード（1枚ずつクリックで進める）。'name'だけGMの情景描写→NPCの
  * 問いかけの2枚（いきなりNPCに話しかけられると唐突、という2026-09-22ユーザー指摘を反映）。
  * 他のステップは元々1枚だけなので、この仕組みに乗せても見え方は変わらない。
@@ -138,8 +128,6 @@ export function TutorialPage() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState<Step>('name');
-  const [introducing, setIntroducing] = useState(false);
-  const [name, setName] = useState('');
   // ロケーション／NPCカードは狭い画面でも邪魔にならないよう小さく出し、
   // タップで詳細（肖像・説明文）を見られるようにする
   const [locationExpanded, setLocationExpanded] = useState(false);
@@ -230,7 +218,7 @@ export function TutorialPage() {
     },
   ];
 
-  const startJourney = () => {
+  const startJourney = (name: string) => {
     if (busy) return;
     setBusy(true);
     create.mutate(
@@ -366,54 +354,7 @@ export function TutorialPage() {
 
         {step === 'name' && atLastLine && (
           <div className={s.form}>
-            <HandDock
-              hand={[]}
-              onPlay={() => {}}
-              extra={
-                <GameCard
-                  card={INTRODUCE_CARD}
-                  variant="propose"
-                  width={110}
-                  centerName
-                  selected={introducing}
-                  onClick={() => setIntroducing((v) => !v)}
-                />
-              }
-            />
-            {/* position:fixedのシートに乗せる。スマホでソフトキーボードが開いても、
-                入力欄とボタンが常にキーボードの上に見える（2026-09-22ユーザー指摘：
-                入力時に下の「名乗る」等のボタンが見えなかった問題への対応） */}
-            {introducing && (
-              <div className={s.sheetOverlay}>
-                <button
-                  type="button"
-                  className={s.sheetBackdrop}
-                  aria-label="入力をやめる"
-                  onClick={() => setIntroducing(false)}
-                />
-                <Panel className={s.proposeSheet}>
-                  <ProposeForm>
-                    <input
-                      type="text"
-                      aria-label="名前"
-                      placeholder="例：迅"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && startJourney()}
-                      // biome-ignore lint/a11y/noAutofocus: 提案カードを選んだ直後の主操作なので意図的にフォーカスする
-                      autoFocus
-                    />
-                    <Button size="sm" onClick={startJourney} disabled={busy || !name.trim()}>
-                      {busy ? '名乗っている…' : '名乗る'}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setIntroducing(false)}>
-                      やめる
-                    </Button>
-                  </ProposeForm>
-                </Panel>
-              </div>
-            )}
-            {create.error && <ErrorNote error={create.error} />}
+            <NameProposal busy={busy} error={create.error} onSubmit={startJourney} />
           </div>
         )}
 

@@ -45,7 +45,7 @@
 
 という役割分担を想定する。
 
-カードとデッキの詳細は [カード・デッキの考え方](card-and-deck.md)、場・手札・プレイの詳細は [場・手札・プレイ](play-and-field.md)、裏表の扱いは [カードの裏表](card-face-back.md)、グラフの役割の詳細は [グラフの役割](graph.md)、段階的な開示の仕組みは [段階的な開示・習熟によるアンロック](unlock.md)、パーティー編成・非同期セッション参加の詳細は [パーティー編成と非同期セッション参加](party-and-session.md)、PCのロールとシナリオタイプの対応は [PCのロールとシナリオタイプ](role-and-scenario.md)、戦闘ルールの詳細は [戦闘ルール](combat.md)、探索者向けの判定ルールは [探索者向けの判定ルール](exploration-check.md)、シナリオの構造とセッション開始までの流れは [シナリオの構造とセッション開始までの流れ](scenario-flow.md)、異なるPC間の比較体験と称号タグは [PC間の比較体験と称号タグ](comparison-and-titles.md)、キャラクターの成長とキャラメイクは [キャラクターの成長とキャラメイク（CP制）](character-growth.md)、数値バランスの相場観は [数値バランスの相場観](balance.md) を参照。
+カードとデッキの詳細は [カード・デッキの考え方](card-and-deck.md)、場・手札・プレイの詳細は [場・手札・プレイ](play-and-field.md)、裏表の扱いは [カードの裏表](card-face-back.md)、グラフの役割の詳細は [グラフの役割](graph.md)、段階的な開示の仕組みは [段階的な開示・習熟によるアンロック](unlock.md)、パーティー編成・非同期セッション参加の詳細は [パーティー編成と非同期セッション参加](party-and-session.md)、PCのロールとシナリオタイプの対応は [PCのロールとシナリオタイプ](role-and-scenario.md)、戦闘ルールの詳細は [戦闘ルール](combat.md)、GM不在のソロプレイの自動戦闘は [自動戦闘（仮ルール）](auto-combat.md)、探索者向けの判定ルールは [探索者向けの判定ルール](exploration-check.md)、シナリオの構造とセッション開始までの流れは [シナリオの構造とセッション開始までの流れ](scenario-flow.md)、異なるPC間の比較体験と称号タグは [PC間の比較体験と称号タグ](comparison-and-titles.md)、キャラクターの成長とキャラメイクは [キャラクターの成長とキャラメイク（CP制）](character-growth.md)、数値バランスの相場観は [数値バランスの相場観](balance.md) を参照。
 
 ## Webサイト
 

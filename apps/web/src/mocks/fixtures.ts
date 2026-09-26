@@ -1,10 +1,12 @@
 // モックデータ。試作フェーズ（docs/public/preview）のダミーデータを踏襲している。
 // 日時は「今」からの相対で作り、相対表示（3時間前など）が常に自然に見えるようにする。
 import type {
+  AutoCombatEnemy,
   CardDef,
   Character,
   CurrentUser,
   LibraryEntry,
+  PriorityEntry,
   Recruitment,
   Scenario,
   Session,
@@ -73,6 +75,8 @@ export const cards = {
     cpCost: 2,
     actionCost: 3,
     range: 1,
+    // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）での効果。数値はプレイテスト前の目安
+    combatEffect: { type: 'damage', dice: { count: 1, sides: 4, bonus: 0 } },
   },
   heavyBlow: {
     id: 'c-heavy-blow',
@@ -83,6 +87,7 @@ export const cards = {
     cpCost: 3,
     actionCost: 6,
     range: 1,
+    combatEffect: { type: 'damage', dice: { count: 2, sides: 4, bonus: 0 } },
   },
   guard: {
     id: 'c-guard',
@@ -103,6 +108,7 @@ export const cards = {
     cpCost: 2,
     actionCost: 4,
     range: 1,
+    combatEffect: { type: 'heal', dice: { count: 2, sides: 4, bonus: 2 } },
   },
   step: {
     id: 'c-step',
@@ -249,6 +255,130 @@ const inspectDoor: CardDef = {
 };
 const goBack: CardDef = { id: 'ch-back', kind: 'choice', name: '戻る', tags: [] };
 
+// ---------- 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール） ----------
+// 数値は docs/plans/2026-09-23-自動戦闘エンジン.md 3-6 のシミュレーションで選んだプレイテスト前の目安。
+// 素直な優先順位（斬撃のみ／渾身の一撃→斬撃）で勝率6〜7割、決着ラウンドの中央値4。
+
+/** ソロ開始時の初期装備（仮ルール。C3で村パートの報酬・お店に置き換える） */
+const soloStarter: NonNullable<Scenario['soloStarter']> = {
+  hp: 20,
+  baseActionValue: 10,
+  cards: [cards.slash, cards.heavyBlow, cards.firstAid],
+};
+
+/** テスト用シナリオの初期装備。自動戦闘の効果を持たないカード（短剣）も混ぜ、優先順位に入れられないことを確かめる */
+const testStarter: NonNullable<Scenario['soloStarter']> = {
+  ...soloStarter,
+  cards: [...soloStarter.cards, cards.shortSword],
+};
+
+const enemyAttack = (
+  id: string,
+  name: string,
+  actionCost: number,
+  dice: { count: number; sides: number; bonus: number },
+): CardDef => ({
+  id,
+  kind: 'skill',
+  name,
+  tags: ['戦闘スキル', '攻撃'],
+  actionCost,
+  combatEffect: { type: 'damage', dice },
+});
+
+const examinerCard: CardDef = {
+  id: 'en-examiner',
+  kind: 'enemy',
+  name: '試験官',
+  description: '冒険者ギルドの試験官。木剣を構えている',
+  tags: [],
+};
+
+/** 敵の優先順位の行（試験官は条件を付けず、すべて「いつでも」） */
+const always = (card: CardDef): PriorityEntry => ({ card, when: 'always' });
+
+const examinerActions = [
+  enemyAttack('ea-heavy', '重い打ち込み', 6, { count: 1, sides: 6, bonus: 0 }),
+  enemyAttack('ea-feint', '牽制', 3, { count: 1, sides: 3, bonus: 0 }),
+];
+
+const examiner: AutoCombatEnemy = {
+  card: examinerCard,
+  hp: 26,
+  baseActionValue: 9,
+  priority: examinerActions.map(always),
+};
+
+/**
+ * 導入→冒険者試験（自動戦闘）→結末 の一式を持つGMレスのソロ用シナリオを作る。
+ * ノードIDは `${prefix}-intro` / `${prefix}-exam` / `${prefix}-end`。
+ */
+function examScenario(o: {
+  id: string;
+  prefix: string;
+  title: string;
+  summary: string;
+  enemy: AutoCombatEnemy;
+  maxRounds?: number;
+  starter?: Scenario['soloStarter'];
+  introCards?: CardDef[];
+}): Scenario {
+  const p = o.prefix;
+  return {
+    id: o.id,
+    title: o.title,
+    authorId: 'system',
+    authorName: 'システム',
+    summary: o.summary,
+    referenceTags: ['HPを参照', '戦闘スキルを参照'],
+    prerequisiteTags: [],
+    partySize: { min: 1, max: 1 },
+    // 自動戦闘は空間モデルを使わない（docs/cartagraph/scenario-flow.md）
+    spaceModel: null,
+    recommendedCp: 0,
+    baseCp: 0,
+    // GMレス・ソロプレイ用（docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
+    proposalHandling: 'auto-resolve',
+    soloStarter: o.starter,
+    deck: [
+      {
+        id: `${p}-intro`,
+        kind: 'intro',
+        name: '村はずれ',
+        cards: [
+          ...(o.introCards ?? []),
+          {
+            id: `${p}-to-guild`,
+            kind: 'choice',
+            name: '街の冒険者ギルドへ向かう',
+            tags: [],
+            nextNodeId: `${p}-exam`,
+          },
+        ],
+      },
+      {
+        id: `${p}-exam`,
+        kind: 'scene',
+        name: '冒険者試験',
+        cards: [
+          {
+            id: `${p}-accept`,
+            kind: 'choice',
+            name: '合格の証を受け取る',
+            tags: [],
+            nextNodeId: `${p}-end`,
+          },
+        ],
+        autoCombat: { enemy: o.enemy, maxRounds: o.maxRounds ?? 20 },
+      },
+      { id: `${p}-end`, kind: 'ending', name: '冒険者として旅立つ', cards: [] },
+    ],
+    endings: [],
+    libraryStatus: 'draft',
+    updatedAt: ago(0),
+  };
+}
+
 export const scenarios: Scenario[] = [
   {
     id: 'sc-gray-mansion',
@@ -302,7 +432,7 @@ export const scenarios: Scenario[] = [
           { id: 'npc-butler', kind: 'npc', name: '館の老従者', tags: ['正体は裏'], faceDown: true },
         ],
       },
-      { id: 'd-end', kind: 'ending', name: 'エンディング', cards: [] },
+      { id: 'd-end', kind: 'ending', name: '結末', cards: [] },
     ],
     endings: [
       { id: 'e1', name: '扉を壊して真相にたどり着いた結末', grantsTag: '館の秘密を知る' },
@@ -336,7 +466,7 @@ export const scenarios: Scenario[] = [
         cards: [{ id: 'en-ghost', kind: 'enemy', name: '鎖の亡霊', tags: ['弱点未判明'] }],
       },
       { id: 'g-s3', kind: 'scene', name: '3 船長室', cards: [] },
-      { id: 'g-end', kind: 'ending', name: 'エンディング', cards: [] },
+      { id: 'g-end', kind: 'ending', name: '結末', cards: [] },
     ],
     endings: [
       { id: 'g-e1', name: '船を解き放った結末', grantsTag: '鎖を断った者' },
@@ -360,7 +490,7 @@ export const scenarios: Scenario[] = [
     proposalHandling: 'gm-required',
     deck: [
       { id: 'a-intro', kind: 'intro', name: '再び回廊へ', cards: [] },
-      { id: 'a-end', kind: 'ending', name: 'エンディング', cards: [] },
+      { id: 'a-end', kind: 'ending', name: '結末', cards: [] },
     ],
     endings: [{ id: 'a-e1', name: '灯りを守った結末' }],
     libraryStatus: 'published',
@@ -384,36 +514,78 @@ export const scenarios: Scenario[] = [
     libraryStatus: 'draft',
     updatedAt: ago(5),
   },
-  {
-    // C1（GMレス基盤）の動作確認用の最小シナリオ（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。
-    // 村パート・自動戦闘エンジンはまだ無いため、導入シーンだけを持つ仮データ。C3で正式な内容に置き換える。
+  // 村スタート冒険者キャンペーンの検証用シナリオ（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。
+  // 村パートはまだ無いため、導入→冒険者試験（自動戦闘、C2）→結末だけを持つ仮データ。C3〜C4で正式な内容に置き換える。
+  examScenario({
     id: 'sc-village-start',
+    prefix: 'vs',
     title: '（仮）村はずれの一歩',
-    authorId: 'system',
-    authorName: 'システム',
     summary: '朝もやの中、村はずれの道が街へと続いている。',
-    referenceTags: [],
-    prerequisiteTags: [],
-    partySize: { min: 1, max: 1 },
-    spaceModel: null,
-    recommendedCp: 0,
-    baseCp: 0,
-    // GMレス・ソロプレイ用（docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）。
-    // 人間GMの裁定を待たず、提案文をそのまま採用する。
-    proposalHandling: 'auto-resolve',
-    deck: [
+    enemy: examiner,
+    starter: soloStarter,
+    introCards: [
       {
-        id: 'vs-intro',
-        kind: 'intro',
-        name: '村はずれ',
-        cards: [{ id: 'vs-look-around', kind: 'choice', name: '辺りを見回す', tags: [] }],
+        id: 'vs-look-around',
+        kind: 'choice',
+        name: '辺りを見回す',
+        // GM不在のセッションでは、この説明文がそのまま描写として返る（handlers.ts の /play）
+        description:
+          '朝もやの向こうに、畑仕事に出る村人たちと、街へ続く一本道が見える。道の先に冒険者ギルドがあるはずだ。',
+        tags: [],
       },
-      { id: 'vs-end', kind: 'ending', name: 'エンディング', cards: [] },
     ],
-    endings: [],
-    libraryStatus: 'draft',
-    updatedAt: ago(0),
-  },
+  }),
+  // ---- 自動戦闘のテスト専用シナリオ。乱数の出目によらず結果が決まる数値にしてある ----
+  // 必ず勝つ：試験官の行動値9 < PLの10 なのでPLが先に動き、HP1は斬撃の最小ダメージ1で倒れる
+  examScenario({
+    id: 'sc-exam-always-win',
+    prefix: 'aw',
+    title: '（テスト用）必ず合格する試験',
+    summary: 'テスト専用シナリオ。',
+    enemy: { ...examiner, hp: 1 },
+    starter: testStarter,
+  }),
+  // 必ず負ける：試験官の行動値11 > PLの10 なので試験官が先に動き、最小ダメージ20でPLのHP20が尽きる
+  examScenario({
+    id: 'sc-exam-always-lose',
+    prefix: 'al',
+    title: '（テスト用）必ず不合格になる試験',
+    summary: 'テスト専用シナリオ。',
+    enemy: {
+      ...examiner,
+      baseActionValue: 11,
+      priority: [
+        always(enemyAttack('ea-finisher', '本気の一撃', 11, { count: 1, sides: 1, bonus: 19 })),
+      ],
+    },
+    starter: testStarter,
+  }),
+  // 必ず時間切れ：上限1ラウンドで、PLの1ラウンドの最大ダメージ12 < 試験官のHP100、試験官の攻撃は1ダメージのみ
+  examScenario({
+    id: 'sc-exam-always-timeout',
+    prefix: 'at',
+    title: '（テスト用）時間切れになる試験',
+    summary: 'テスト専用シナリオ。',
+    enemy: {
+      ...examiner,
+      hp: 100,
+      priority: [always(enemyAttack('ea-poke', '小突く', 9, { count: 1, sides: 1, bonus: 0 }))],
+    },
+    maxRounds: 1,
+    starter: testStarter,
+  }),
+  // 初期装備なし：HP・行動値を持たないキャラクターで自動戦闘に入った場合の確認用。
+  // 導入には、シナリオに無いノードを指す選択肢カード（遷移失敗の確認用）も置く
+  examScenario({
+    id: 'sc-exam-no-starter',
+    prefix: 'ns',
+    title: '（テスト用）初期装備なしの試験',
+    summary: 'テスト専用シナリオ。',
+    enemy: examiner,
+    introCards: [
+      { id: 'ns-lost', kind: 'choice', name: '迷い道へ入る', tags: [], nextNodeId: 'ns-nowhere' },
+    ],
+  }),
   {
     // C1境界値テスト専用：提案不可（disabled）のGMレスシナリオ確認用
     id: 'sc-village-no-propose',
@@ -435,7 +607,7 @@ export const scenarios: Scenario[] = [
         name: '村はずれ（提案不可）',
         cards: [{ id: 'vnp-look-around', kind: 'choice', name: '辺りを見回す', tags: [] }],
       },
-      { id: 'vnp-end', kind: 'ending', name: 'エンディング', cards: [] },
+      { id: 'vnp-end', kind: 'ending', name: '結末', cards: [] },
     ],
     endings: [],
     libraryStatus: 'draft',
@@ -680,7 +852,7 @@ export const sessions: Session[] = [
     status: 'ended',
     mode: 'light',
     proposalHandling: 'gm-required',
-    currentScene: { index: 5, total: 5, name: 'エンディング', path: 'エンディング' },
+    currentScene: { index: 5, total: 5, name: '結末', path: '結末' },
     participants: [
       {
         userId: 'u-me',

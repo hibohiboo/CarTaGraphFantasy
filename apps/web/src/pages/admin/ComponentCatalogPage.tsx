@@ -263,7 +263,7 @@ export function ComponentCatalogPage() {
                 },
                 { id: 's2', kind: 'scene', name: '3-2 奥の扉', cards: [] },
                 { id: 's3', kind: 'scene', name: '3-3 甲板の戦い', dense: true, cards: [] },
-                { id: 'e', kind: 'ending', name: 'エンディング', cards: [] },
+                { id: 'e', kind: 'ending', name: '結末', cards: [] },
               ]}
             />
           </div>

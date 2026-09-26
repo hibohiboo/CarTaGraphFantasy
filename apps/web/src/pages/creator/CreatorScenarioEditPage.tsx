@@ -228,7 +228,7 @@ function Editor({
         <div className="u-stack">
           <Panel
             title="シナリオデッキの構造"
-            sub="導入→シーン→エンディングの入れ子。カスタマイズはGMの仕事だが、土台となる構造・取捨選択肢はここで用意する。"
+            sub="導入→シーン→結末の入れ子。カスタマイズはGMの仕事だが、土台となる構造・取捨選択肢はここで用意する。"
             actions={
               <Button size="sm" variant="ghost" onClick={addScene}>
                 シーンを追加

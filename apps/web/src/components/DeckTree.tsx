@@ -2,7 +2,7 @@ import { DECK_NODE_LABEL, type DeckNode } from '@cartagraph/domain';
 import type { ReactNode } from 'react';
 import s from './DeckTree.module.css';
 
-/** シナリオデッキの入れ子構造（導入→シーン→エンディング）を1列で表示する */
+/** シナリオデッキの入れ子構造（導入→シーン→結末）を1列で表示する */
 export function DeckTree({
   nodes,
   currentId,

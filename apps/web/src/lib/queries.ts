@@ -4,6 +4,7 @@ import type {
   CardDef,
   Character,
   CurrentUser,
+  HpCondition,
   LibraryEntry,
   Recruitment,
   Scenario,
@@ -155,6 +156,23 @@ export const useSetMode = () =>
   useSessionMutation((v: { sessionId: string; mode: Session['mode'] }) =>
     api.post<Session>(`/sessions/${v.sessionId}/mode`, { mode: v.mode }),
   );
+
+/**
+ * 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）を優先順位リストで実行する。
+ * 敗北するとキャラクターデッキに「再挑戦の記憶」が加わるため、キャラクターのキャッシュも無効化する
+ */
+export function useRunAutoCombat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { sessionId: string; priority: { cardId: string; when: HpCondition }[] }) =>
+      api.post<Session>(`/sessions/${v.sessionId}/auto-combat`, { priority: v.priority }),
+    onSuccess: (s) => {
+      qc.setQueryData(keys.session(s.id), s);
+      void qc.invalidateQueries({ queryKey: keys.sessions });
+      void qc.invalidateQueries({ queryKey: keys.characters });
+    },
+  });
+}
 
 export const useEndSession = () =>
   useSessionMutation((v: { sessionId: string }) =>

@@ -1,23 +1,36 @@
 // MSW ハンドラ。バックエンドができるまでの代替。
 // 状態はメモリ上に持ち、リロードで初期化される（永続化はしない）。
 
-import type {
-  CardDef,
-  Character,
-  Proposal,
-  Recruitment,
-  Scenario,
-  Session,
+import {
+  type CardDef,
+  type Character,
+  type HpCondition,
+  type PriorityEntry,
+  type Proposal,
+  type Recruitment,
+  type Scenario,
+  type Session,
+  SYSTEM_GM_ID,
+  SYSTEM_GM_NAME,
 } from '@cartagraph/domain';
+import {
+  type AutoCombatResult,
+  canFight,
+  resolveAutoCombat,
+  validatePriority,
+} from '@cartagraph/domain/autoCombat';
+import {
+  findDeckNode,
+  planTransition,
+  type TransitionPlan,
+} from '@cartagraph/domain/sceneTransition';
 import { HttpResponse, http } from 'msw';
 import { toDictionaryForm } from '../lib/japanese';
 import * as fx from './fixtures';
 
-// GMレスのソロセッション用ダミーGM（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md 決定事項5）。
+// GMレスのソロセッションには SYSTEM_GM_ID のダミーGMを割り当てる（packages/domain）。
 // 提案の自動解決の可否は Session.gmId ではなく Session.proposalHandling で判定する
 // （docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」。シナリオ側が選ぶ設定）。
-const SYSTEM_GM_ID = 'system-gm';
-const SYSTEM_GM_NAME = '（自動進行）';
 const DEFAULT_PROPOSAL_CARD_NAME = '新たな選択肢';
 
 type Db = {
@@ -103,7 +116,11 @@ function autoApproveProposal(s: Session, p: Proposal) {
   resolveApprovedProposal(s, p, cardName);
 }
 
-function buildSoloCharacter(name: string): Character | null {
+/**
+ * starter はシナリオの「ソロ開始時の初期装備」（docs/cartagraph/auto-combat.md「初期装備」、仮ルール）。
+ * CP予算の外にある無償配布なので cp.spent は増やさない。
+ */
+function buildSoloCharacter(name: string, starter?: Scenario['soloStarter']): Character | null {
   const trimmed = name.trim();
   if (!trimmed) return null;
   return {
@@ -111,7 +128,11 @@ function buildSoloCharacter(name: string): Character | null {
     name: trimmed,
     ownerId: fx.me.id,
     ownerName: fx.me.name,
-    deck: [],
+    ...(starter && {
+      hp: { current: starter.hp, max: starter.hp },
+      baseActionValue: starter.baseActionValue,
+    }),
+    deck: starter ? clone(starter.cards) : [],
     titles: [],
     endingTags: [],
     cp: { total: fx.initialCpBudget, spent: 0 },
@@ -138,6 +159,7 @@ function buildSoloSession(scenario: Scenario, character: Character): Session | n
       total: scenario.deck.length,
       name: intro.name,
       path: intro.name,
+      nodeId: intro.id,
     },
     participants: [
       {
@@ -157,6 +179,52 @@ function buildSoloSession(scenario: Scenario, character: Character): Session | n
     lastActivityAt: nowIso(),
     suspendAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
   };
+}
+
+const RETRY_TRAIT_NAME = '再挑戦の記憶';
+
+/** 試験の戦闘中（優先順位の設定中）か。この間は提案もプレイもできない（auto-combat.md「戦闘中の提案とプレイ」） */
+const inAutoCombat = (s: Session) => s.autoCombat?.status === 'awaiting-priority';
+
+const unprocessable = (message: string) => HttpResponse.json({ message }, { status: 422 });
+
+const autoCombatBusy = () =>
+  unprocessable('戦闘中は、戦い方（優先順位）を決めて戦闘を終えるまで他の行動はできません');
+
+const sessionEnded = () => unprocessable('このセッションは終了しています');
+
+/** 基本操作8「次のシーンへ進む」の計算結果（planTransition）をセッションへ書き込む */
+function applyTransition(s: Session, plan: Extract<TransitionPlan, { ok: true }>) {
+  s.currentScene = plan.currentScene;
+  s.hand = [...plan.choices, ...s.hand.filter((c) => c.kind !== 'choice')];
+  s.flavor = `${plan.currentScene.name}へ進んだ。`;
+  s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `「${plan.currentScene.path}」へ進んだ` });
+  if (plan.autoCombat && plan.currentScene.nodeId) {
+    // エネミーカードはシナリオの定義をコピーして場に出す（状態タグの変更をシナリオへ波及させない）
+    const enemyCard: CardDef = {
+      ...clone(plan.autoCombat.enemy.card),
+      id: nextId('en'),
+      zone: 'pl',
+    };
+    s.field.plVisible.unshift(enemyCard);
+    s.autoCombat = {
+      nodeId: plan.currentScene.nodeId,
+      enemyCardId: enemyCard.id,
+      status: 'awaiting-priority',
+      attempts: 0,
+    };
+    s.flavor = `${enemyCard.name}が待ち構えている。戦い方（カードの優先順位）を決めよう。`;
+  } else {
+    delete s.autoCombat;
+  }
+  if (plan.ended) {
+    s.status = 'ended';
+    s.feed.unshift({
+      id: nextId('f'),
+      at: nowIso(),
+      text: `結末「${plan.currentScene.name}」に至り、セッションが終了した`,
+    });
+  }
 }
 
 export const handlers = [
@@ -283,12 +351,39 @@ export const handlers = [
   http.post('/api/sessions/:id/play', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
+    if (s.status === 'ended') return sessionEnded();
+    if (inAutoCombat(s)) return autoCombatBusy();
     const { cardId } = (await request.json()) as { cardId: string };
     const card = s.hand.find((c) => c.id === cardId);
     if (!card) return notFound('手札のカード');
     const driver = s.participants.find((p) => p.role === 'driver');
+    // 基本操作8「次のシーンへ進む」。遷移できなければセッションを一切変えずに422を返す
+    let transition: Extract<TransitionPlan, { ok: true }> | undefined;
+    if (card.kind === 'choice' && card.nextNodeId) {
+      const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
+      if (!scenario) return notFound('シナリオ');
+      const plan = planTransition(scenario, s, card.nextNodeId);
+      if (!plan.ok) return unprocessable(plan.error);
+      if (plan.autoCombat) {
+        // 戦えないまま自動戦闘のシーンへ入ると、手札も提案も無い行き止まりになるため先に止める
+        const character = db.characters.find((c) => c.id === driver?.characterId);
+        if (!character) return notFound('キャラクター');
+        const reason = canFight(character);
+        if (reason) return unprocessable(`${character.name}は${reason}`);
+      }
+      transition = plan;
+    }
     const script = playScript[cardId];
-    if (card.kind === 'choice') {
+    // GM不在のセッションで、次のシーンへ進まず簡易スクリプトも無い選択肢は、描写する人がいない。
+    // システムがカードの説明文（無ければ定型文）を描写として返し、選んだカードだけを手札から消して
+    // 同じシーンに留まる（docs/cartagraph/play-and-field.md「GMレスセッションでの選択肢の描写」）
+    const selfNarrated =
+      card.kind === 'choice' && !transition && !script && s.gmId === SYSTEM_GM_ID;
+    if (selfNarrated) {
+      s.hand = s.hand.filter((c) => c.id !== card.id);
+      s.flavor =
+        card.description ?? `${driver?.characterName ?? 'ドライバー'}は「${card.name}」を試みた。`;
+    } else if (card.kind === 'choice') {
       s.hand = s.hand.filter((c) => c.kind !== 'choice');
       if (script?.addChoices) s.hand.unshift(...script.addChoices);
       s.flavor = script?.flavor ?? `「${card.name}」を選んだ。GMの描写を待っている。`;
@@ -317,6 +412,7 @@ export const handlers = [
       text: `${driver?.characterName ?? 'ドライバー'}が「${card.name}」をプレイ`,
       cardName: card.name,
     });
+    if (transition) applyTransition(s, transition);
     s.lastActivityAt = nowIso();
     return HttpResponse.json(s);
   }),
@@ -324,6 +420,8 @@ export const handlers = [
   http.post('/api/sessions/:id/proposals', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
+    if (s.status === 'ended') return sessionEnded();
+    if (inAutoCombat(s)) return autoCombatBusy();
     if (s.proposalHandling === 'disabled')
       return HttpResponse.json(
         { message: 'このシナリオでは新たな選択肢を提案できません' },
@@ -406,6 +504,118 @@ export const handlers = [
     return HttpResponse.json(s);
   }),
 
+  // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）。優先順位リストを受け取り、決着まで一括で解決する。
+  // 判定・計算は packages/domain の resolveAutoCombat（乱数だけここで Math.random を渡す）
+  http.post('/api/sessions/:id/auto-combat', async ({ params, request }) => {
+    const s = findSession(String(params.id));
+    if (!s) return notFound('セッション');
+    if (s.status === 'ended') return sessionEnded();
+    const ac = s.autoCombat;
+    if (!ac) return unprocessable('いまのシーンでは自動戦闘を行いません');
+    if (ac.status === 'won') return unprocessable('この戦闘には既に勝利しています');
+    const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
+    const node = scenario && findDeckNode(scenario.deck, ac.nodeId)?.node;
+    if (!node?.autoCombat) return notFound('自動戦闘のシーン');
+    const driver = s.participants.find((p) => p.role === 'driver');
+    const character = db.characters.find((c) => c.id === driver?.characterId);
+    if (!character) return notFound('キャラクター');
+    const cannot = canFight(character);
+    if (cannot || !character.hp || !character.baseActionValue)
+      return unprocessable(`${character.name}は${cannot ?? '戦えません'}`);
+
+    // 本文は優先順位の各行（カードIDと使う条件）。条件の検査はドメインの validatePriority に任せる
+    const body = (await request.json()) as {
+      priority?: { cardId: string; when: HpCondition }[];
+    } | null;
+    const rows = Array.isArray(body?.priority) ? body.priority : [];
+    if (rows.some((r) => typeof r !== 'object' || r === null || typeof r.cardId !== 'string'))
+      return unprocessable('優先順位の行の形が正しくありません（各行はカードIDと使う条件の組）');
+    const chosen = rows.map((r) => {
+      const card = character.deck.find((c) => c.id === r.cardId);
+      return card && { card, when: r.when };
+    });
+    if (chosen.some((e) => !e))
+      return unprocessable('キャラクターのデッキに無いカードが含まれています');
+    const priorityEntries = chosen as PriorityEntry[];
+    const error = validatePriority(priorityEntries);
+    if (error) return unprocessable(error);
+
+    const { enemy, maxRounds } = node.autoCombat;
+    let result: AutoCombatResult;
+    try {
+      result = resolveAutoCombat({
+        pl: {
+          name: character.name,
+          maxHp: character.hp.max,
+          baseActionValue: character.baseActionValue,
+          priority: priorityEntries,
+        },
+        enemy: {
+          name: enemy.card.name,
+          maxHp: enemy.hp,
+          baseActionValue: enemy.baseActionValue,
+          priority: enemy.priority,
+        },
+        maxRounds,
+        rng: Math.random,
+      });
+    } catch (e) {
+      // 敵の定義などシナリオ側のデータが不正な場合。セッションは変えずに理由を返す
+      return unprocessable(e instanceof Error ? e.message : '自動戦闘を解決できませんでした');
+    }
+    ac.attempts += 1;
+    ac.lastResult = result;
+    s.combatHistory = [
+      ...(s.combatHistory ?? []),
+      { nodeId: ac.nodeId, attempt: ac.attempts, ...result },
+    ];
+    const nth = `${ac.attempts}回目`;
+    if (result.outcome === 'win') {
+      const enemyCard = s.field.plVisible.find((c) => c.id === ac.enemyCardId);
+      // HP0の敵は「戦闘不能」状態タグを付け、カードは場に残す（docs/cartagraph/combat.md）
+      if (enemyCard && !enemyCard.tags.includes('戦闘不能')) enemyCard.tags.push('戦闘不能');
+      ac.status = 'won';
+      s.hand = [
+        ...node.cards.filter((c) => c.kind === 'choice'),
+        ...s.hand.filter((c) => c.kind !== 'choice'),
+      ];
+      s.flavor = `${character.name}は${enemy.card.name}に勝利した。`;
+      s.feed.unshift({
+        id: nextId('f'),
+        at: nowIso(),
+        text: `${nth}：${character.name}は${result.rounds}ラウンドで${enemy.card.name}に勝利した`,
+      });
+    } else {
+      s.feed.unshift({
+        id: nextId('f'),
+        at: nowIso(),
+        text:
+          result.outcome === 'lose'
+            ? `${nth}：${character.name}は${result.rounds}ラウンドで${enemy.card.name}に敗れた`
+            : `${nth}：${result.rounds}ラウンドで決着がつかず、${character.name}は${enemy.card.name}に敗れた`,
+      });
+      // 敗北（時間切れを含む）はナレーションを挟んで再挑戦へ。PLには状態タグを付けない（auto-combat.md 差分6）
+      s.feed.unshift({
+        id: nextId('f'),
+        at: nowIso(),
+        text: `${character.name}は傷を癒し、再び武具を取った`,
+      });
+      s.flavor = `${character.name}は傷を癒し、再び武具を取った。戦い方を見直そう。`;
+      // 「再挑戦の記憶」は何度負けても1枚。ソロなので即時反映する（auto-combat.md「勝敗の扱い」）
+      if (!character.deck.some((c) => c.kind === 'trait' && c.name === RETRY_TRAIT_NAME)) {
+        character.deck.push({
+          id: nextId('c-retry'),
+          kind: 'trait',
+          name: RETRY_TRAIT_NAME,
+          description: '冒険者試験に一度敗れ、それでも立ち上がった記憶（自動戦闘の仮ルール）',
+          tags: ['特徴'],
+        });
+      }
+    }
+    s.lastActivityAt = nowIso();
+    return HttpResponse.json(s);
+  }),
+
   // 募集・応募を経由せず、1リクエストでGMレスのソロセッションを開始する
   // （docs/plans/2026-09-23-村スタート冒険者キャンペーン.md 決定事項5、3.詳細設計「GMレス基盤」）。
   // 既存のRecruitmentフローは変更しない。
@@ -413,7 +623,7 @@ export const handlers = [
     const scenario = db.scenarios.find((x) => x.id === params.id);
     if (!scenario) return notFound('シナリオ');
     const { name } = (await request.json()) as { name: string };
-    const character = buildSoloCharacter(name);
+    const character = buildSoloCharacter(name, scenario.soloStarter);
     if (!character)
       return HttpResponse.json({ message: '名前を入力してください' }, { status: 422 });
     const session = buildSoloSession(scenario, character);
@@ -461,7 +671,7 @@ export const handlers = [
       proposalHandling: 'gm-required',
       deck: [
         { id: nextId('d'), kind: 'intro', name: '導入', cards: [] },
-        { id: nextId('d'), kind: 'ending', name: 'エンディング', cards: [] },
+        { id: nextId('d'), kind: 'ending', name: '結末', cards: [] },
       ],
       endings: [],
       libraryStatus: 'draft',

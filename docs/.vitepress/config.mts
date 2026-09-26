@@ -38,6 +38,7 @@ export default defineConfig({
           { text: '技術スタック', link: '/architecture/' },
           { text: 'Webアプリ（apps/web）の構成', link: '/architecture/web-app' },
           { text: '試作の引き継ぎまとめ', link: '/architecture/prototype-handover' },
+          { text: '既知の問題', link: '/architecture/known-issues' },
           // アプリは VitePress 管理外の静的ファイルなので SPA 遷移を避ける
           { text: 'アプリを開く（モックAPI）', link: '/app/', target: '_self' },
         ],
