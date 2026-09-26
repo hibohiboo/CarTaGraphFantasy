@@ -3,7 +3,7 @@ import { useState } from 'react';
 import s from '../pages/pages.module.css';
 import { GameCard } from './GameCard';
 import { HandDock, ProposeForm } from './play';
-import { Button, Panel } from './ui';
+import { Button, ErrorNote, Panel } from './ui';
 
 /**
  * 名乗りは自由入力なので、実際のプレイ画面と同じ「新たな選択肢を提案」の操作感
@@ -20,10 +20,13 @@ const INTRODUCE_CARD: CardDef = {
 /** 「＋名を名乗る」の提案カードと、選ぶと開く名前の入力シート */
 export function NameProposal({
   busy,
+  error,
   onSubmit,
 }: {
   /** 名乗った後、応答が返るまで true（二重送信を防ぐ） */
   busy: boolean;
+  /** 名乗りに失敗したときのエラー。入力シートの暗幕の奥に隠れないよう、シートの中に出す */
+  error?: unknown;
   onSubmit: (name: string) => void;
 }) {
   const [introducing, setIntroducing] = useState(false);
@@ -79,9 +82,12 @@ export function NameProposal({
                 やめる
               </Button>
             </ProposeForm>
+            {error ? <ErrorNote error={error} /> : null}
           </Panel>
         </div>
       )}
+      {/* シートを閉じているときは、ここにエラーを出す */}
+      {!introducing && error ? <ErrorNote error={error} /> : null}
     </>
   );
 }

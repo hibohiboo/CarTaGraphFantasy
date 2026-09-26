@@ -60,6 +60,20 @@ describe('全ページの描画', () => {
 });
 
 describe('プレイページ', () => {
+  it('人間GMのセッションでは、スクリプトの無い選択肢を選ぶと、ほかの選択肢も外れてGMの描写を待つ', async () => {
+    // GMが採用した提案カード（説明文もスクリプトも無い）を使う。GM不在の「描写を返して留まる」挙動にならないこと
+    const pending = await api.get<Session>('/sessions/ss-mansion');
+    const proposal = pending.proposals.find((p) => p.status === 'pending');
+    const approved = await api.post<Session>(
+      `/sessions/ss-mansion/proposals/${proposal?.id}/approve`,
+      { cardName: '扉に耳を当てる' },
+    );
+    const card = approved.hand.find((c) => c.name === '扉に耳を当てる');
+    const after = await api.post<Session>('/sessions/ss-mansion/play', { cardId: card?.id });
+    expect(after.flavor).toBe('「扉に耳を当てる」を選んだ。GMの描写を待っている。');
+    expect(after.hand.filter((c) => c.kind === 'choice')).toEqual([]);
+  });
+
   it('卓上の描写は「GM」の台詞カードとして出る（人間GMのセッションでも）', async () => {
     renderAt('/pl/sessions/ss-mansion/play');
     const flavor = await screen.findByText('古びた扉の向こうから、かすかな音が聞こえる。');

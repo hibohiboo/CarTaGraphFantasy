@@ -354,8 +354,7 @@ export function TutorialPage() {
 
         {step === 'name' && atLastLine && (
           <div className={s.form}>
-            <NameProposal busy={busy} onSubmit={startJourney} />
-            {create.error && <ErrorNote error={create.error} />}
+            <NameProposal busy={busy} error={create.error} onSubmit={startJourney} />
           </div>
         )}
 

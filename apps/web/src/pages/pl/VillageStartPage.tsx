@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router';
 import { NameProposal } from '../../components/NameProposal';
 import { Table } from '../../components/play';
-import { ErrorNote, PageHeader, Panel } from '../../components/ui';
-import { useStartSoloSession } from '../../lib/queries';
+import { ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
+import { useScenario, useStartSoloSession } from '../../lib/queries';
 import s from '../pages.module.css';
 
 // 村スタート冒険者キャンペーンの検証用シナリオ（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。
@@ -15,6 +15,7 @@ const SCENARIO_ID = 'sc-village-start';
  * docs/plans/2026-09-23-自動戦闘エンジン.md 決定事項22）。C3〜C4で正式な村パートの導入に置き換える。
  */
 export function VillageStartPage() {
+  const scenario = useScenario(SCENARIO_ID);
   const start = useStartSoloSession();
   const navigate = useNavigate();
 
@@ -26,17 +27,17 @@ export function VillageStartPage() {
     );
   };
 
+  if (scenario.isPending) return <Loading />;
+  if (scenario.error) return <ErrorNote error={scenario.error} />;
+
   return (
     <>
-      <PageHeader title="（仮）村はずれの一歩" />
+      <PageHeader title={scenario.data.title} />
       <Panel>
-        <Table
-          speaker="GM"
-          flavor="朝もやの中、村はずれの道が街へと続いている。まずは名を聞かせてほしい。"
-        />
+        {/* 導入の情景描写はシナリオの概要（summary）から引き、名乗りを促す一言を添える */}
+        <Table speaker="GM" flavor={`${scenario.data.summary}まずは名を聞かせてほしい。`} />
         <div className={s.form}>
-          <NameProposal busy={start.isPending} onSubmit={introduce} />
-          {start.error && <ErrorNote error={start.error} />}
+          <NameProposal busy={start.isPending} error={start.error} onSubmit={introduce} />
         </div>
       </Panel>
     </>
