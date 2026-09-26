@@ -365,6 +365,7 @@ export const handlers = [
     if (!card) return notFound('手札のカード');
     const driver = s.participants.find((p) => p.role === 'driver');
     const character = db.characters.find((c) => c.id === driver?.characterId);
+    const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
     const soloGm = s.gmId === SYSTEM_GM_ID;
     // GM不在のソロの村の成長（docs/cartagraph/solo-village.md、仮ルール）。人間GMのセッションでは働かせない。
     // 使える条件の検査→効果の計算→（効果を適用した後の状態で）遷移の計算、と全部通ってから書き込む
@@ -374,7 +375,6 @@ export const handlers = [
       if (reason) return unprocessable(reason);
       if (card.soloEffect) {
         if (!character) return notFound('キャラクター');
-        const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
         const r = applySoloEffect(character, card.soloEffect, scenario?.soloGrowth);
         if (!r.ok) return unprocessable(r.error);
         grown = { ...r, achievement: card.soloEffect.achievement };
@@ -384,7 +384,6 @@ export const handlers = [
     // 基本操作8「次のシーンへ進む」。遷移できなければセッションを一切変えずに422を返す
     let transition: Extract<TransitionPlan, { ok: true }> | undefined;
     if (card.kind === 'choice' && card.nextNodeId) {
-      const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
       if (!scenario) return notFound('シナリオ');
       const field = {
         ...s.field,
