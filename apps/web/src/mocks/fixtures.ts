@@ -121,7 +121,7 @@ export const cards = {
     actionCost: 2,
     range: 1,
     // 数値は docs/plans/2026-09-27-村パート.md のシミュレーションで選んだプレイテスト前の目安
-    combatEffect: { type: 'damage', dice: { count: 1, sides: 3, bonus: 0 } },
+    combatEffect: { type: 'damage', dice: { count: 1, sides: 2, bonus: 0 } },
   },
   step: {
     id: 'c-step',
