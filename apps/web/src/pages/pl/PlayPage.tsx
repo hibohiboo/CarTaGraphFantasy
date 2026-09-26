@@ -63,7 +63,9 @@ export function PlayPage() {
           </>
         }
       />
+      {/* 卓上の描写（Session.flavor）はGMが用意した流れなので、すべてのセッションで「GM」の台詞カードとして出す */}
       <Table
+        speaker="GM"
         flavor={s.flavor}
         hint={
           ended

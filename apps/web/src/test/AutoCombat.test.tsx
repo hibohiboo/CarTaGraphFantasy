@@ -49,8 +49,9 @@ describe('試験シーンへの遷移（次のシーンへ進む）', () => {
   it('村はずれから「街の冒険者ギルドへ向かう」と、試験官が場に出て戦い方の設定画面になる', async () => {
     const user = userEvent.setup();
     const router = renderAt('/pl/village-start');
-    await user.type(await screen.findByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '始める' }));
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '名乗る' }));
     await user.click(await screen.findByRole('button', { name: /街の冒険者ギルドへ向かう/ }));
 
     const panel = await screen.findByRole('region', { name: '戦い方を決める' });

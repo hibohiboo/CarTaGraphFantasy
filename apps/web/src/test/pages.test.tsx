@@ -12,6 +12,13 @@ import { routes } from '../app/routes';
 import { ApiError, api } from '../lib/api';
 import { server } from '../mocks/node';
 
+/** 「＋名を名乗る」の提案カードから名乗る（旅立ちの酒場・村スタート共通の操作） */
+async function introduceAs(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+  await user.type(screen.getByLabelText('名前'), name);
+  await user.click(screen.getByRole('button', { name: '名乗る' }));
+}
+
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(routeObjects, { initialEntries: [path] });
@@ -53,6 +60,12 @@ describe('全ページの描画', () => {
 });
 
 describe('プレイページ', () => {
+  it('卓上の描写は「GM」の台詞カードとして出る（人間GMのセッションでも）', async () => {
+    renderAt('/pl/sessions/ss-mansion/play');
+    const flavor = await screen.findByText('古びた扉の向こうから、かすかな音が聞こえる。');
+    expect(within(flavor.closest('main') as HTMLElement).getByText('GM')).toBeInTheDocument();
+  });
+
   it('選択肢をプレイすると卓の描写が変わり、提案は「今回は未使用」になる', async () => {
     const user = userEvent.setup();
     renderAt('/pl/sessions/ss-mansion/play');
@@ -207,16 +220,51 @@ describe('村はずれの一歩（C1: GMレス基盤の検証用）', () => {
     const user = userEvent.setup();
     const router = renderAt('/pl/village-start');
     await screen.findByRole('heading', { level: 1, name: '（仮）村はずれの一歩' });
-    await user.type(screen.getByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '始める' }));
+    await introduceAs(user, '新人');
     expect(await screen.findByRole('button', { name: /新たな選択肢を提案/ })).toBeInTheDocument();
     expect(router.state.location.pathname).toMatch(/^\/pl\/sessions\/ss-\d+\/play$/);
   });
 
-  it('名前が空だと始められない', async () => {
+  it('名前が空だと名乗れない', async () => {
+    const user = userEvent.setup();
     renderAt('/pl/village-start');
-    await screen.findByRole('heading', { level: 1, name: '（仮）村はずれの一歩' });
-    expect(screen.getByRole('button', { name: '始める' })).toBeDisabled();
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    expect(screen.getByRole('button', { name: '名乗る' })).toBeDisabled();
+  });
+
+  it('GMの情景描写が台詞カードで出て、名乗りは「＋名を名乗る」の提案カードから行う', async () => {
+    renderAt('/pl/village-start');
+    const flavor = await screen.findByText(/朝もやの中、村はずれの道が街へと続いている/);
+    expect(within(flavor.closest('main') as HTMLElement).getByText('GM')).toBeInTheDocument();
+    // 名前の入力欄は、提案カードを選ぶまで出ない
+    expect(screen.queryByLabelText('名前')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /名を名乗る/ })).toBeInTheDocument();
+  });
+
+  it('GM不在で「辺りを見回す」を選ぶと、描写が返り、そのカードだけが手札から消えて先へ進める', async () => {
+    const user = userEvent.setup();
+    const session = await api.post<Session>('/scenarios/sc-village-start/start-solo', {
+      name: '新人',
+    });
+    renderAt(`/pl/sessions/${session.id}/play`);
+    await user.click(await screen.findByRole('button', { name: /辺りを見回す/ }));
+    expect(await screen.findByText(/畑仕事/)).toBeInTheDocument();
+    expect(screen.queryByText(/GMの描写を待っている/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /辺りを見回す/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /街の冒険者ギルドへ向かう/ })).toBeInTheDocument();
+  });
+
+  it('GM不在で、自動採用された提案カードを選んでも行き止まりにならない', async () => {
+    const user = userEvent.setup();
+    renderAt('/pl/village-start');
+    await introduceAs(user, '新人');
+    await user.click(await screen.findByRole('button', { name: /新たな選択肢を提案/ }));
+    await user.type(screen.getByLabelText('提案する行動'), '足跡を調べてみたい');
+    await user.click(screen.getByRole('button', { name: '提案を送る' }));
+    await user.click(await screen.findByRole('button', { name: /足跡を調べる/ }));
+    expect(await screen.findByText(/新人は「足跡を調べる」を試みた/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /足跡を調べる/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /街の冒険者ギルドへ向かう/ })).toBeInTheDocument();
   });
 
   it('異常系：名前が空だとAPIレベルでも拒否され、Character・Sessionが増えない（中途半端な状態が残らない）', async () => {
@@ -236,8 +284,7 @@ describe('村はずれの一歩（C1: GMレス基盤の検証用）', () => {
       ),
     );
     const router = renderAt('/pl/village-start');
-    await user.type(screen.getByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '始める' }));
+    await introduceAs(user, '新人');
     expect(await screen.findByText('シナリオ が見つかりません')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/pl/village-start');
   });
@@ -245,8 +292,7 @@ describe('村はずれの一歩（C1: GMレス基盤の検証用）', () => {
   it('新たな選択肢を提案すると、人間の操作なしに即座に採用される', async () => {
     const user = userEvent.setup();
     renderAt('/pl/village-start');
-    await user.type(screen.getByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '始める' }));
+    await introduceAs(user, '新人');
     await user.click(await screen.findByRole('button', { name: /新たな選択肢を提案/ }));
     await user.type(screen.getByLabelText('提案する行動'), '足跡を調べてみたい');
     await user.click(screen.getByRole('button', { name: '提案を送る' }));
@@ -259,8 +305,7 @@ describe('村はずれの一歩（C1: GMレス基盤の検証用）', () => {
     const user = userEvent.setup();
     const longText = '足跡をひとつひとつ辿って夜明けまで歩き続けてみたい';
     renderAt('/pl/village-start');
-    await user.type(screen.getByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '始める' }));
+    await introduceAs(user, '新人');
     await user.click(await screen.findByRole('button', { name: /新たな選択肢を提案/ }));
     await user.type(screen.getByLabelText('提案する行動'), longText);
     await user.click(screen.getByRole('button', { name: '提案を送る' }));

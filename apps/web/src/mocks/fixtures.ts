@@ -523,7 +523,17 @@ export const scenarios: Scenario[] = [
     summary: '朝もやの中、村はずれの道が街へと続いている。',
     enemy: examiner,
     starter: soloStarter,
-    introCards: [{ id: 'vs-look-around', kind: 'choice', name: '辺りを見回す', tags: [] }],
+    introCards: [
+      {
+        id: 'vs-look-around',
+        kind: 'choice',
+        name: '辺りを見回す',
+        // GM不在のセッションでは、この説明文がそのまま描写として返る（handlers.ts の /play）
+        description:
+          '朝もやの向こうに、畑仕事に出る村人たちと、街へ続く一本道が見える。道の先に冒険者ギルドがあるはずだ。',
+        tags: [],
+      },
+    ],
   }),
   // ---- 自動戦闘のテスト専用シナリオ。乱数の出目によらず結果が決まる数値にしてある ----
   // 必ず勝つ：試験官の行動値9 < PLの10 なのでPLが先に動き、HP1は斬撃の最小ダメージ1で倒れる

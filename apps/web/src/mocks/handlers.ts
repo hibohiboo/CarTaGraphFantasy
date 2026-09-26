@@ -374,7 +374,16 @@ export const handlers = [
       transition = plan;
     }
     const script = playScript[cardId];
-    if (card.kind === 'choice') {
+    // GM不在のセッションで、次のシーンへ進まず簡易スクリプトも無い選択肢は、描写する人がいない。
+    // システムがカードの説明文（無ければ定型文）を描写として返し、選んだカードだけを手札から消して
+    // 同じシーンに留まる（docs/cartagraph/play-and-field.md「GMレスセッションでの選択肢の描写」）
+    const selfNarrated =
+      card.kind === 'choice' && !transition && !script && s.gmId === SYSTEM_GM_ID;
+    if (selfNarrated) {
+      s.hand = s.hand.filter((c) => c.id !== card.id);
+      s.flavor =
+        card.description ?? `${driver?.characterName ?? 'ドライバー'}は「${card.name}」を試みた。`;
+    } else if (card.kind === 'choice') {
       s.hand = s.hand.filter((c) => c.kind !== 'choice');
       if (script?.addChoices) s.hand.unshift(...script.addChoices);
       s.flavor = script?.flavor ?? `「${card.name}」を選んだ。GMの描写を待っている。`;
