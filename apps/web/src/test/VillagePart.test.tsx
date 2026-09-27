@@ -128,7 +128,7 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
       '「冒険者として旅立つ」へ進んだ',
       '新人が「合格の証を受け取る」をプレイ',
     ]);
-    expect(screen.getByText(/結末タグの即時付与は仮ルール/)).toBeInTheDocument();
+    expect(screen.getByText(/結末タグの即時反映は仮ルール/)).toBeInTheDocument();
 
     const pc = await characterOf(s);
     expect(pc.abilities).toEqual({ body: 2, skill: 2, mind: 2 });
@@ -309,10 +309,18 @@ describe('村パート：依頼', () => {
     expect(await screen.findByText(/仮ルール/)).toBeInTheDocument();
   });
 
-  it('導入（条件も効果も無いカードだけ）では、仮ルールの表示を出さない', async () => {
+  it('導入に説明文を持つ遷移カード（村の広場へ向かう）があれば、シーンに入ったときの描写の仮ルールとして表示する', async () => {
     const s = await start('sc-village-always-win');
     renderAt(`/pl/sessions/${s.id}/play`);
     await card(/村の広場へ向かう/);
+    expect(screen.getByText(/シーンに入ったときの描写は仮ルール/)).toBeInTheDocument();
+  });
+
+  it('条件・効果・説明文つきの遷移カードの無い手札では、仮ルールの表示を出さない', async () => {
+    // 試験用シナリオの導入は、説明文の無い「街の冒険者ギルドへ向かう」だけ
+    const s = await start('sc-exam-always-win');
+    renderAt(`/pl/sessions/${s.id}/play`);
+    await card(/街の冒険者ギルドへ向かう/);
     expect(screen.queryByText(/仮ルール/)).not.toBeInTheDocument();
   });
 });
@@ -508,5 +516,23 @@ describe('街道', () => {
     expect(looked.currentScene.name).toBe('街道');
     expect(looked.flavor).toBe(descriptionOf('sc-village-always-win', 'vw-road-look'));
     expect(looked.hand.map((c) => c.name)).toEqual(['街の門をくぐる']);
+  });
+});
+
+describe('結末の「仮ルール」表示', () => {
+  it('結末タグを持たないシナリオで GM不在のソロが終わっても、結末タグの仮ルールの表示は出ない', async () => {
+    const user = userEvent.setup();
+    const s = await start('sc-exam-always-win');
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'aw-to-guild' });
+    await api.post(`/sessions/${s.id}/auto-combat`, {
+      priority: [{ cardId: 'c-slash', when: 'always' }],
+    });
+    renderAt(`/pl/sessions/${s.id}/play`);
+    await user.click(await card(/合格の証を受け取る/));
+    expect(
+      await screen.findByRole('heading', { name: '結末「冒険者として旅立つ」' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/結末タグの即時反映は仮ルール/)).not.toBeInTheDocument();
+    expect((await characterOf(s)).endingTags).toEqual([]);
   });
 });

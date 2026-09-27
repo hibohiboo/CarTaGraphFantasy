@@ -823,8 +823,8 @@ export const scenarios: Scenario[] = [
     libraryStatus: 'draft',
     updatedAt: ago(5),
   },
-  // 村スタート冒険者キャンペーンの検証用シナリオ（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。
-  // 村パート（C3）→冒険者試験（自動戦闘、C2）→結末。街道と旧チュートリアルの置き換えは C4。
+  // 村スタート冒険者キャンペーンのシナリオ（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。
+  // 村パート（C3）→街道→冒険者試験（自動戦闘、C2）→結末（C4）
   villageScenario({
     id: 'sc-village-start',
     prefix: 'vs',
@@ -1211,7 +1211,7 @@ export const sessions: Session[] = [
     mode: 'light',
     proposalHandling: 'gm-required',
     currentScene: {
-      index: 2,
+      index: 3,
       total: 9,
       name: '畑を荒らす猪',
       path: '畑を荒らす猪',

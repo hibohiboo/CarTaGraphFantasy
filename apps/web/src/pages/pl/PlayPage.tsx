@@ -43,8 +43,10 @@ export function PlayPage() {
   // キャラクターを読み込むまでは判定せず、サーバーの 422 に任せる
   const held = character.data && heldCards(character.data, s.field);
   const reasonFor = held ? (card: CardDef) => unplayableReason(card, held) : undefined;
-  // 仮ルール（成長の効果・使える条件）に関わるカードが手札にあれば「仮」と出す（architecture.md「境界」）
-  const usesSoloRules = soloGm && s.hand.some((c) => c.soloEffect || c.playWhen);
+  // 仮ルール（成長の効果・使える条件・シーンに入ったときの描写）に関わるカードが手札にあれば
+  // 「仮」と出す（architecture.md「境界」）
+  const usesSoloRules =
+    soloGm && s.hand.some((c) => c.soloEffect || c.playWhen || (c.nextNodeId && c.description));
   const gotEndingTag = scenario.data?.endings.some(
     (e) => e.grantsTag && character.data?.endingTags.includes(e.grantsTag),
   );
@@ -105,13 +107,11 @@ export function PlayPage() {
       )}
       <StatusLine>
         {endedSolo && gotEndingTag && (
-          <span className="u-dim u-small">
-            結末タグの即時付与は仮ルール（GM不在のソロでの村の成長）
-          </span>
+          <span className="u-dim u-small">結末タグの即時反映は仮ルール（GM不在のソロ）</span>
         )}
         {usesSoloRules && !ended && (
           <span className="u-dim u-small">
-            能力値の上がり方・お店・選べないカードの条件は仮ルール（GM不在のソロでの村の成長）
+            能力値の上がり方・お店・選べないカードの条件・シーンに入ったときの描写は仮ルール（GM不在のソロ）
           </span>
         )}
         {play.error && <ErrorNote error={play.error} />}

@@ -205,12 +205,12 @@ const sessionEnded = () => unprocessable('このセッションは終了して�
 /**
  * 基本操作8「次のシーンへ進む」の計算結果（planTransition）をセッションへ書き込む。
  * flavor を渡すと、移った先のシーン名だけの描写の代わりにそれを使い、自動戦闘のシーンでは
- * そのあとに相手の登場の文を続ける（solo-village.md「描写」）
+ * そのあとに相手の登場の文を続ける（solo-village.md「描写」、仮ルール）
  */
 function applyTransition(s: Session, plan: Extract<TransitionPlan, { ok: true }>, flavor?: string) {
   s.currentScene = plan.currentScene;
   s.hand = [...plan.choices, ...s.hand.filter((c) => c.kind !== 'choice')];
-  s.flavor = flavor ?? `${plan.currentScene.name}へ進んだ。`;
+  s.flavor = flavor || `${plan.currentScene.name}へ進んだ。`;
   s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `「${plan.currentScene.path}」へ進んだ` });
   if (plan.autoCombat && plan.currentScene.nodeId) {
     // エネミーカードはシナリオの定義をコピーして場に出す（状態タグの変更をシナリオへ波及させない）
@@ -465,15 +465,22 @@ export const handlers = [
       cardName: card.name,
     });
     if (transition) {
-      // GM不在のソロでは、成長の効果の描写、なければ遷移カードの説明文を、移った先の描写にする（solo-village.md「描写」）
-      applyTransition(s, transition, soloGm ? (grownFlavor ?? card.description) : undefined);
-      // 結末タグは、GM不在のソロでは結末に至った時点で即時に付ける（solo-village.md「結末タグ」）
+      // GM不在のソロでは、成長の効果の描写、なければ遷移カードの説明文を、移った先の描写にする（solo-village.md「描写」、仮ルール）
+      // 空文字の説明文は無いものとして扱う
+      applyTransition(
+        s,
+        transition,
+        soloGm ? grownFlavor || card.description || undefined : undefined,
+      );
+      // 結末タグは、GM不在のソロでは結末に至った時点で即時に付ける（solo-village.md「結末タグ」、仮ルール）
       const actorNow = db.characters.find((c) => c.id === driver?.characterId);
-      if (soloGm && transition.endingTag && actorNow) {
-        db.characters[db.characters.indexOf(actorNow)] = grantEndingTag(
-          actorNow,
-          transition.endingTag,
-        );
+      const granted =
+        soloGm && transition.endingTag && actorNow
+          ? grantEndingTag(actorNow, transition.endingTag)
+          : undefined;
+      // すでに持っていれば grantEndingTag は同じキャラクターを返す。そのときは「得た」と記録しない
+      if (actorNow && granted && granted !== actorNow) {
+        db.characters[db.characters.indexOf(actorNow)] = granted;
         s.feed.unshift({
           id: nextId('f'),
           at: nowIso(),
