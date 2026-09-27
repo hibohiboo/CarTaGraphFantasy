@@ -23,7 +23,6 @@ function renderAt(path: string) {
 }
 
 const PREFIX: Record<string, string> = {
-  'sc-village-start': 'vs',
   'sc-exam-always-win': 'aw',
   'sc-exam-always-lose': 'al',
   'sc-exam-always-timeout': 'at',
@@ -48,21 +47,24 @@ const runAutoCombat = (s: Session, cardIds: string[]) =>
 describe('試験シーンへの遷移（次のシーンへ進む）', () => {
   it('村はずれから「街の冒険者ギルドへ向かう」と、試験官が場に出て戦い方の設定画面になる', async () => {
     const user = userEvent.setup();
-    const router = renderAt('/pl/village-start');
-    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
-    await user.type(screen.getByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '名乗る' }));
+    // 村スタートのシナリオは村パートを経るため、初期装備を持つ試験シナリオで確かめる
+    const started = await api.post<Session>('/scenarios/sc-exam-always-win/start-solo', {
+      name: '新人',
+    });
+    const router = renderAt(`/pl/sessions/${started.id}/play`);
     await user.click(await screen.findByRole('button', { name: /街の冒険者ギルドへ向かう/ }));
 
     const panel = await screen.findByRole('region', { name: '戦い方を決める' });
     expect(within(panel).getByText(/仮ルール/)).toBeInTheDocument();
     // 手札の選択肢カードと「新たな選択肢を提案」は出ない
     expect(screen.queryByRole('button', { name: /新たな選択肢を提案/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /辺りを見回す/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /街の冒険者ギルドへ向かう/ }),
+    ).not.toBeInTheDocument();
 
     const sessionId = router.state.location.pathname.split('/')[3];
     const s = await api.get<Session>(`/sessions/${sessionId}`);
-    expect(s.currentScene).toMatchObject({ name: '冒険者試験', nodeId: 'vs-exam' });
+    expect(s.currentScene).toMatchObject({ name: '冒険者試験', nodeId: 'aw-exam' });
     expect(s.autoCombat).toMatchObject({ status: 'awaiting-priority', attempts: 0 });
     expect(s.field.plVisible.map((c) => c.name)).toContain('試験官');
     expect(s.hand.filter((c) => c.kind === 'choice')).toEqual([]);
@@ -210,6 +212,8 @@ describe('自動戦闘（敗北・時間切れ）', () => {
     expect(after1.autoCombat).toMatchObject({ status: 'awaiting-priority', attempts: 1 });
     const pc1 = await characterOf(s);
     expect(pc1.deck.filter((c) => c.name === '再挑戦の記憶')).toHaveLength(1);
+    // 内容を表すタグを付ける（ほかの特徴カードと同じ付け方。docs/plans/2026-09-27-村パート.md C3-12）
+    expect(pc1.deck.find((c) => c.name === '再挑戦の記憶')?.tags).toEqual(['経験']);
     // 戦闘後もキャラクターのHPは変わらない
     expect(pc1.hp).toEqual({ current: 20, max: 20 });
 
@@ -358,11 +362,11 @@ describe('自動戦闘の異常系', () => {
 
 describe('ソロ開始時の初期装備（仮ルール）', () => {
   it('初期装備を持つシナリオで始めると、HP・行動値・戦闘スキルを持つ冒険者になる', async () => {
-    const s = await api.post<Session>('/scenarios/sc-village-start/start-solo', { name: '新人' });
+    const s = await api.post<Session>('/scenarios/sc-exam-always-win/start-solo', { name: '新人' });
     const pc = await characterOf(s);
     expect(pc.hp).toEqual({ current: 20, max: 20 });
     expect(pc.baseActionValue).toBe(10);
-    expect(pc.deck.map((c) => c.name)).toEqual(['斬撃', '渾身の一撃', '応急手当']);
+    expect(pc.deck.map((c) => c.name)).toEqual(['斬撃', '渾身の一撃', '応急手当', '短剣']);
     expect(deriveArchetype(pc)).toBe('adventurer');
   });
 

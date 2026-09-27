@@ -35,10 +35,12 @@ export const useRecruitments = () =>
 export const useCharacters = () =>
   useQuery({ queryKey: keys.characters, queryFn: () => api.get<Character[]>('/characters') });
 
+/** id が空なら取りに行かない（プレイ画面で、キャラクターが要らないセッションのとき） */
 export const useCharacter = (id: string) =>
   useQuery({
     queryKey: keys.character(id),
     queryFn: () => api.get<Character>(`/characters/${id}`),
+    enabled: id !== '',
   });
 
 export const useCardPool = () =>
@@ -128,10 +130,22 @@ function useSessionMutation<V>(fn: (v: V) => Promise<Session>) {
   });
 }
 
-export const usePlayCard = () =>
-  useSessionMutation((v: { sessionId: string; cardId: string }) =>
-    api.post<Session>(`/sessions/${v.sessionId}/play`, { cardId: v.cardId }),
-  );
+/**
+ * GM不在のソロでは、選んだカードの成長の効果（docs/cartagraph/solo-village.md、仮ルール）で
+ * 能力値・デッキが変わるため、キャラクターのキャッシュも無効化する
+ */
+export function usePlayCard() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { sessionId: string; cardId: string }) =>
+      api.post<Session>(`/sessions/${v.sessionId}/play`, { cardId: v.cardId }),
+    onSuccess: (s) => {
+      qc.setQueryData(keys.session(s.id), s);
+      void qc.invalidateQueries({ queryKey: keys.sessions });
+      void qc.invalidateQueries({ queryKey: keys.characters });
+    },
+  });
+}
 
 export const usePropose = () =>
   useSessionMutation((v: { sessionId: string; text: string }) =>

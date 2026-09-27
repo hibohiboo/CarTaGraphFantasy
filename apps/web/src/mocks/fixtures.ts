@@ -5,6 +5,7 @@ import type {
   CardDef,
   Character,
   CurrentUser,
+  DeckNode,
   LibraryEntry,
   PriorityEntry,
   Recruitment,
@@ -109,6 +110,18 @@ export const cards = {
     actionCost: 4,
     range: 1,
     combatEffect: { type: 'heal', dice: { count: 2, sides: 4, bonus: 2 } },
+  },
+  quickThrust: {
+    id: 'c-quick-thrust',
+    kind: 'skill',
+    name: '素早い突き',
+    description: '射程1。軽いぶん手数を稼げる',
+    tags: ['戦闘スキル', '攻撃'],
+    cpCost: 1,
+    actionCost: 2,
+    range: 1,
+    // 数値は docs/plans/2026-09-27-村パート.md のシミュレーションで選んだプレイテスト前の目安
+    combatEffect: { type: 'damage', dice: { count: 1, sides: 2, bonus: 0 } },
   },
   step: {
     id: 'c-step',
@@ -259,7 +272,10 @@ const goBack: CardDef = { id: 'ch-back', kind: 'choice', name: '戻る', tags: [
 // 数値は docs/plans/2026-09-23-自動戦闘エンジン.md 3-6 のシミュレーションで選んだプレイテスト前の目安。
 // 素直な優先順位（斬撃のみ／渾身の一撃→斬撃）で勝率6〜7割、決着ラウンドの中央値4。
 
-/** ソロ開始時の初期装備（仮ルール。C3で村パートの報酬・お店に置き換える） */
+/**
+ * ソロ開始時の初期装備（仮ルール）。村スタートのシナリオは村パートで得るようになったため、
+ * いまはテスト専用の試験シナリオ（sc-exam-*）だけが使う
+ */
 const soloStarter: NonNullable<Scenario['soloStarter']> = {
   hp: 20,
   baseActionValue: 10,
@@ -376,6 +392,240 @@ function examScenario(o: {
     endings: [],
     libraryStatus: 'draft',
     updatedAt: ago(0),
+  };
+}
+
+// ---------- 村パート（docs/cartagraph/solo-village.md、GM不在のソロの仮ルール） ----------
+
+/** 村パートで得る HP（探索者になったとき）と行動値（冒険者になったとき） */
+export const soloGrowth: NonNullable<Scenario['soloGrowth']> = { hp: 20, baseActionValue: 10 };
+
+/** お店で習える戦闘スキル */
+const shopSkills = [cards.slash, cards.heavyBlow, cards.quickThrust, cards.firstAid];
+
+/** 依頼1件の定義。解決方法は体・技・心の順に [名前, 解決の描写] */
+interface Quest {
+  key: string;
+  name: string;
+  from: string;
+  achievementName: string;
+  solutions: [string, string][];
+}
+
+const quests: Quest[] = [
+  {
+    key: '猪',
+    name: '畑を荒らす猪',
+    from: '農家のおばさん',
+    achievementName: '猪の件を片づけた',
+    solutions: [
+      ['柵で畑を囲む', '杭を打ち、柵で畑をぐるりと囲んだ。これで猪も入ってこられない。'],
+      ['罠を仕掛ける', '獣道に括り罠を仕掛けた。翌朝、猪は罠を嫌って山へ帰っていった。'],
+      [
+        '山の番人に猪の通り道を聞く',
+        '山の番人から猪の通り道を聞き出し、そこに鳴子を吊るした。猪は畑に近寄らなくなった。',
+      ],
+    ],
+  },
+  {
+    key: '水車',
+    name: '壊れた水車',
+    from: '粉ひきの親方',
+    achievementName: '水車の件を片づけた',
+    solutions: [
+      [
+        '水の中で軸を押し戻す',
+        '冷たい川に入り、ずれた軸を力ずくで押し戻した。水車がまた回りはじめた。',
+      ],
+      [
+        '歯車を組み直す',
+        '欠けた歯車を外し、予備の歯車に組み直した。水車は前より静かに回っている。',
+      ],
+      [
+        '親方の昔話から直し方を思い出させる',
+        '若いころの話に耳を傾けるうち、親方は昔の直し方を思い出した。二人で水車を直した。',
+      ],
+    ],
+  },
+  {
+    key: '子ヤギ',
+    name: '迷子の子ヤギ',
+    from: '村長',
+    achievementName: '子ヤギの件を片づけた',
+    solutions: [
+      ['崖の下まで降りて抱えて戻る', '崖の下で震えていた子ヤギを抱え、岩場をよじ登って戻った。'],
+      ['足跡をたどる', 'ぬかるみに残った小さな足跡をたどり、茂みの奥で子ヤギを見つけた。'],
+      [
+        '泣いている孫を落ち着かせ、ヤギの好物を聞き出す',
+        '村長の孫をなだめて好物を聞き出し、クローバーの束で子ヤギを呼び戻した。',
+      ],
+    ],
+  },
+];
+
+const ABILITY_ORDER = ['body', 'skill', 'mind'] as const;
+
+/** 依頼のノード：解決方法3枚（能力値＋1・引換カード・達成カードを得て広場へ戻る）と「広場へ戻る」 */
+function questNode(p: string, q: Quest, index: number): DeckNode {
+  const square = `${p}-square`;
+  return {
+    id: `${p}-quest-${index}`,
+    kind: 'scene',
+    name: `${q.name}（${q.from}の依頼）`,
+    cards: [
+      ...q.solutions.map(
+        ([name, description], i): CardDef => ({
+          id: `${p}-quest-${index}-${ABILITY_ORDER[i]}`,
+          kind: 'choice',
+          name,
+          description,
+          tags: [],
+          nextNodeId: square,
+          soloEffect: {
+            raiseAbility: ABILITY_ORDER[i],
+            // 引換カード（「〇〇からの報酬」。character-growth.md の報酬カードとは別物）
+            gainCards: [
+              {
+                id: `c-voucher-${index}`,
+                kind: 'item',
+                name: `${q.from}からの報酬`,
+                description: 'お店で戦闘スキル1つと交換できる',
+                tags: ['引換'],
+              },
+            ],
+            achievement: {
+              id: `${p}-ach-${index}`,
+              kind: 'info',
+              name: q.achievementName,
+              tags: ['達成', `達成:${q.key}`],
+            },
+          },
+        }),
+      ),
+      {
+        id: `${p}-quest-${index}-back`,
+        kind: 'choice',
+        name: '広場へ戻る',
+        tags: [],
+        nextNodeId: square,
+      },
+    ],
+  };
+}
+
+/** お店のノード：習うカード（引換カード1枚と交換。習ったスキルは並ばない）と「お店を出る」 */
+function shopNode(p: string): DeckNode {
+  return {
+    id: `${p}-shop`,
+    kind: 'scene',
+    name: '村のお店',
+    cards: [
+      ...shopSkills.map(
+        (skill): CardDef => ({
+          id: `${p}-learn-${skill.id}`,
+          kind: 'choice',
+          name: `${skill.name}を習う`,
+          description: `店主の手ほどきで「${skill.name}」を身につけた。`,
+          tags: [],
+          dealWhen: { lacksCards: [skill.id] },
+          playWhen: { hasTags: ['引換'] },
+          soloEffect: { consumeTag: '引換', gainCards: [skill] },
+        }),
+      ),
+      {
+        id: `${p}-shop-leave`,
+        kind: 'choice',
+        name: 'お店を出る',
+        tags: [],
+        nextNodeId: `${p}-square`,
+      },
+    ],
+  };
+}
+
+/**
+ * 村パート（導入→村の広場⇄依頼3件・お店）→冒険者試験→結末 のGMレスのソロ用シナリオを作る。
+ * キャラクターは旅人で始まり、依頼で能力値とHP、お店で戦闘スキルと行動値を得る。
+ * 試験・結末のノードと共通の設定は examScenario() のものを使う
+ */
+function villageScenario(o: {
+  id: string;
+  prefix: string;
+  title: string;
+  summary: string;
+  enemy: AutoCombatEnemy;
+  squareCards?: CardDef[];
+}): Scenario {
+  const p = o.prefix;
+  const square = `${p}-square`;
+  const base = examScenario(o);
+  const examAndEnding = base.deck.filter((n) => n.id !== `${p}-intro`);
+  return {
+    ...base,
+    referenceTags: ['体・技・心を参照', 'HPを参照', '戦闘スキルを参照'],
+    soloGrowth,
+    deck: [
+      {
+        id: `${p}-intro`,
+        kind: 'intro',
+        name: '村はずれ',
+        cards: [
+          {
+            id: `${p}-look-around`,
+            kind: 'choice',
+            name: '辺りを見回す',
+            // GM不在のセッションでは、この説明文がそのまま描写として返る（handlers.ts の /play）
+            description:
+              '朝もやの向こうに、畑仕事に出る村人たちと、街へ続く一本道が見える。道の先に冒険者ギルドがあるはずだ。',
+            tags: [],
+          },
+          {
+            id: `${p}-to-square`,
+            kind: 'choice',
+            name: '村の広場へ向かう',
+            tags: [],
+            nextNodeId: square,
+          },
+        ],
+      },
+      {
+        id: square,
+        kind: 'scene',
+        name: '村の広場',
+        cards: [
+          ...quests.map(
+            (q, i): CardDef => ({
+              id: `${p}-to-quest-${i}`,
+              kind: 'choice',
+              name: `依頼「${q.name}」`,
+              tags: [],
+              nextNodeId: `${p}-quest-${i}`,
+              dealWhen: { lacksTags: [`達成:${q.key}`] },
+            }),
+          ),
+          {
+            id: `${p}-to-shop`,
+            kind: 'choice',
+            name: 'お店へ行く',
+            tags: [],
+            nextNodeId: `${p}-shop`,
+          },
+          {
+            id: `${p}-to-guild`,
+            kind: 'choice',
+            name: '街の冒険者ギルドへ向かう',
+            tags: [],
+            nextNodeId: `${p}-exam`,
+            // 攻撃の手段が無いまま試験に入ると勝てず、戻る手段も無いため（solo-village.md「配る条件・使える条件」）
+            playWhen: { hasTags: ['攻撃'] },
+          },
+          ...(o.squareCards ?? []),
+        ],
+      },
+      ...quests.map((q, i) => questNode(p, q, i)),
+      shopNode(p),
+      ...examAndEnding,
+    ],
   };
 }
 
@@ -515,23 +765,30 @@ export const scenarios: Scenario[] = [
     updatedAt: ago(5),
   },
   // 村スタート冒険者キャンペーンの検証用シナリオ（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。
-  // 村パートはまだ無いため、導入→冒険者試験（自動戦闘、C2）→結末だけを持つ仮データ。C3〜C4で正式な内容に置き換える。
-  examScenario({
+  // 村パート（C3）→冒険者試験（自動戦闘、C2）→結末。街道と旧チュートリアルの置き換えは C4。
+  villageScenario({
     id: 'sc-village-start',
     prefix: 'vs',
     title: '（仮）村はずれの一歩',
     summary: '朝もやの中、村はずれの道が街へと続いている。',
     enemy: examiner,
-    starter: soloStarter,
-    introCards: [
+  }),
+  // ---- 村パートのテスト専用シナリオ。試験官は sc-exam-always-win と同じく必ず倒せる数値 ----
+  villageScenario({
+    id: 'sc-village-always-win',
+    prefix: 'vw',
+    title: '（テスト用）必ず合格する村はずれ',
+    summary: 'テスト専用シナリオ。',
+    enemy: { ...examiner, hp: 1 },
+    // 成長の効果を持ち、シナリオに無いノードを指す選択肢（効果と遷移をまとめて失敗させる確認用）
+    squareCards: [
       {
-        id: 'vs-look-around',
+        id: 'vw-lost',
         kind: 'choice',
-        name: '辺りを見回す',
-        // GM不在のセッションでは、この説明文がそのまま描写として返る（handlers.ts の /play）
-        description:
-          '朝もやの向こうに、畑仕事に出る村人たちと、街へ続く一本道が見える。道の先に冒険者ギルドがあるはずだ。',
+        name: '（テスト用）迷い道',
         tags: [],
+        nextNodeId: 'vw-nowhere',
+        soloEffect: { raiseAbility: 'mind' },
       },
     ],
   }),
@@ -687,6 +944,16 @@ export const recruitments: Recruitment[] = [
 ];
 
 // ---------- セッション ----------
+/** シナリオのノードに置いたカードを ID で集める（テスト用セッションの手札に使う） */
+function villageCards(scenarioId: string, ids: string[]): CardDef[] {
+  const all = scenarios.find((s) => s.id === scenarioId)?.deck.flatMap((n) => n.cards) ?? [];
+  return ids.map((id) => {
+    const found = all.find((c) => c.id === id);
+    if (!found) throw new Error(`${scenarioId} にカード ${id} がありません`);
+    return found;
+  });
+}
+
 export const sessions: Session[] = [
   {
     id: 'ss-mansion',
@@ -871,6 +1138,44 @@ export const sessions: Session[] = [
     feed: [{ id: 'fe-1', at: ago(24 * 12), text: '霧乃がセッションの終了を宣言した' }],
     lastActivityAt: ago(24 * 12),
     suspendAt: ago(24 * 11),
+  },
+  {
+    // テスト専用：人間GMのセッションで、村の成長（GM不在のソロの仮ルール）が働かないことの確認用。
+    // 手札は依頼の解決カード（成長の効果）とお店で習うカード（使える条件＋成長の効果）
+    id: 'ss-village-human-gm',
+    scenarioId: 'sc-village-always-win',
+    scenarioTitle: '（テスト用）必ず合格する村はずれ',
+    gmId: 'u-kirino',
+    gmName: '霧乃',
+    partyName: '村の子ら',
+    status: 'playing',
+    mode: 'light',
+    proposalHandling: 'gm-required',
+    currentScene: {
+      index: 2,
+      total: 8,
+      name: '畑を荒らす猪',
+      path: '畑を荒らす猪',
+      nodeId: 'vw-quest-0',
+    },
+    participants: [
+      {
+        userId: 'u-kaya',
+        name: 'カヤ',
+        role: 'driver',
+        characterId: 'pc-mio',
+        characterName: '澪',
+        lastSeenAt: ago(1),
+      },
+      { userId: 'u-kirino', name: '霧乃', role: 'gm', lastSeenAt: ago(1) },
+    ],
+    field: { gmOnly: [], plVisible: [] },
+    hand: villageCards('sc-village-always-win', ['vw-quest-0-body', 'vw-learn-c-slash']),
+    flavor: '農家のおばさんが困り顔で畑を指さしている。',
+    proposals: [],
+    feed: [],
+    lastActivityAt: ago(1),
+    suspendAt: later(24),
   },
 ];
 

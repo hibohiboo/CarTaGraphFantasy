@@ -1,5 +1,6 @@
 // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）の数値バランスを確かめるシミュレーション。
-// 検証用シナリオ sc-village-start（apps/web/src/mocks/fixtures.ts）の初期装備と試験官を使い、
+// 検証用シナリオ sc-village-start（apps/web/src/mocks/fixtures.ts）で村パートを終えたときの HP・行動値（soloGrowth）、
+// お店で習える戦闘スキル、試験官を使い、
 // 代表的な戦い方ごとに何千回も戦わせて、勝率と決着ラウンドを docs/cartagraph/auto-combat-simulation.md に書き出す。
 //
 // 実行は任意のタイミングで `pnpm sim:auto-combat`（CI・git フックでは回さない）。
@@ -20,9 +21,10 @@ import { findDeckNode } from '../packages/domain/src/sceneTransition';
 
 const SCENARIO_ID = 'sc-village-start';
 const EXAM_NODE_ID = 'vs-exam';
+const SHOP_NODE_ID = 'vs-shop';
 const OUTPUT = resolve('docs/cartagraph/auto-combat-simulation.md');
 
-/** 比べる戦い方。カードIDは初期装備（soloStarter）のカード */
+/** 比べる戦い方。カードIDはお店で習える戦闘スキル */
 const STRATEGIES: { rows: [cardId: string, when: HpCondition][] }[] = [
   { rows: [['c-slash', 'always']] },
   {
@@ -55,6 +57,19 @@ const STRATEGIES: { rows: [cardId: string, when: HpCondition][] }[] = [
       ['c-first-aid', 'quarter'],
       ['c-heavy-blow', 'always'],
       ['c-slash', 'always'],
+    ],
+  },
+  { rows: [['c-quick-thrust', 'always']] },
+  {
+    rows: [
+      ['c-heavy-blow', 'always'],
+      ['c-quick-thrust', 'always'],
+    ],
+  },
+  {
+    rows: [
+      ['c-first-aid', 'half'],
+      ['c-quick-thrust', 'always'],
     ],
   },
 ];
@@ -102,14 +117,22 @@ const strategyLabel = (rows: PriorityEntry[]) =>
 function main() {
   const { runs, seed } = parseArgs();
   const scenario = scenarios.find((s) => s.id === SCENARIO_ID);
-  const starter = scenario?.soloStarter;
+  const growth = scenario?.soloGrowth;
   const combat = scenario && findDeckNode(scenario.deck, EXAM_NODE_ID)?.node.autoCombat;
-  if (!starter || !combat)
-    throw new Error(`${SCENARIO_ID} に初期装備か試験（${EXAM_NODE_ID}）がありません`);
+  const shop = scenario && findDeckNode(scenario.deck, SHOP_NODE_ID)?.node;
+  if (!growth || !combat || !shop)
+    throw new Error(
+      `${SCENARIO_ID} に成長の値（soloGrowth）・試験（${EXAM_NODE_ID}）・お店（${SHOP_NODE_ID}）のどれかがありません`,
+    );
+  // 村パートを終えたPL：HP・行動値は soloGrowth、カードはお店で習える戦闘スキル
+  const starter = {
+    ...growth,
+    cards: shop.cards.flatMap((c) => c.soloEffect?.gainCards ?? []),
+  };
   const { enemy, maxRounds } = combat;
   const cardById = (id: string) => {
     const card = starter.cards.find((c) => c.id === id);
-    if (!card) throw new Error(`初期装備にカード ${id} がありません`);
+    if (!card) throw new Error(`お店にカード ${id} がありません`);
     return card;
   };
 
@@ -141,7 +164,7 @@ function main() {
 
 <!-- このページは scripts/simulate-auto-combat.ts が生成する。手で編集しない（pnpm sim:auto-combat で作り直す） -->
 
-[自動戦闘（仮ルール）](auto-combat.md)の数値バランスを確かめるため、検証用シナリオ「${scenario.title}」の初期装備と試験官で、代表的な戦い方ごとに${runs.toLocaleString('ja-JP')}回ずつ戦わせた結果。**仕様ではなく、数値を調整するときの参考資料**である。数値の相場観は[数値バランスの相場観](balance.md)を参照。
+[自動戦闘（仮ルール）](auto-combat.md)の数値バランスを確かめるため、検証用シナリオ「${scenario.title}」で村パートを終えたとき（HP・行動値と、お店で習える戦闘スキル）と試験官で、代表的な戦い方ごとに${runs.toLocaleString('ja-JP')}回ずつ戦わせた結果。**仕様ではなく、数値を調整するときの参考資料**である。数値の相場観は[数値バランスの相場観](balance.md)を参照。
 
 - 生成日：${new Date().toISOString().slice(0, 10)}
 - 回数：戦い方ごとに${runs.toLocaleString('ja-JP')}回（乱数の種：${seed}。数値が同じなら何度回しても同じ結果になる）
@@ -151,7 +174,7 @@ function main() {
 
 | | HP | 基本行動値 | 優先順位（カード） |
 |---|---|---|---|
-| PL（初期装備） | ${starter.hp} | ${starter.baseActionValue} | ${starter.cards.map(cardLine).join('、')} |
+| PL（村パートを終えたとき） | ${starter.hp} | ${starter.baseActionValue} | ${starter.cards.map(cardLine).join('、')} |
 | ${enemy.card.name} | ${enemy.hp} | ${enemy.baseActionValue} | ${enemy.priority.map((r) => cardLine(r.card)).join(' → ')} |
 
 ラウンド上限は${maxRounds}ラウンド（超えたら時間切れ＝PLの敗北扱い）。

@@ -127,6 +127,7 @@ export function HandDock({
   selectedId,
   disabled,
   extra,
+  unplayableReason,
 }: {
   hand: CardDef[];
   onPlay: (card: CardDef) => void;
@@ -134,24 +135,32 @@ export function HandDock({
   disabled?: boolean;
   /** 選択肢の末尾に置く追加カード（「新たな選択肢を提案」など） */
   extra?: ReactNode;
+  /** 選べない選択肢カードの理由（GM不在のソロの使える条件。docs/cartagraph/solo-village.md、仮ルール） */
+  unplayableReason?: (card: CardDef) => string | null;
 }) {
   const choices = hand.filter((c) => c.kind === 'choice');
   const rest = hand.filter((c) => c.kind !== 'choice');
   return (
     <div className={s.dock}>
       <div className={s.dockRow}>
-        {choices.map((c) => (
-          <GameCard
-            key={c.id}
-            card={c}
-            width={110}
-            centerName
-            onClick={() => onPlay(c)}
-            selected={c.id === selectedId}
-            disabled={disabled}
-            showCost="action"
-          />
-        ))}
+        {choices.map((c) => {
+          const reason = unplayableReason?.(c) ?? null;
+          return (
+            <GameCard
+              key={c.id}
+              card={c}
+              width={110}
+              centerName
+              onClick={() => onPlay(c)}
+              selected={c.id === selectedId}
+              disabled={disabled || reason !== null}
+              title={reason ?? undefined}
+              showCost="action"
+            >
+              {reason && <span className={s.unplayable}>{reason}</span>}
+            </GameCard>
+          );
+        })}
         {extra}
         {rest.length > 0 && <div className={s.dockDivider} />}
         {rest.map((c) => (
