@@ -20,6 +20,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 - `docs/interviews/` … 議論ログの一次資料。正式仕様ではない
 - `docs/process/` … 開発プロセス（開発サイクル・ルール・依頼文雛形・体制の進化ログ）。**正式仕様の一部**
 - `docs/plans/` … プランドキュメント（作業単位の設計書。VitePress のビルド対象外）
+- `docs/backlog/` … 要望（PBI）を1要望1ファイルで置く。先頭の状態・判断待ちから、トップページのダッシュボードをビルド時に組み立てる（`docs/.vitepress/*.data.ts`）
 - `docs/public/preview/` … HTML/CSS のみのUI試作。未React化の画面だけを残し、React 化したら削除する（`docs/architecture/web-app.md`「未React化の画面」）
 - `apps/web/src/` … `app/`（ルート一覧・ルーター・シェル）、`pages/`（ロール別ページ）、`components/`、`lib/`（API・クエリ）、`mocks/`（MSW）、`content/`（ルールブック要約）、`styles/`
 - `packages/domain/src/` … ドメイン型

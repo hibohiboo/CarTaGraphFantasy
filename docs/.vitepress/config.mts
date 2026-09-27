@@ -1,18 +1,5 @@
 import { defineConfig } from 'vitepress';
-
-/**
- * 見出しのID（アンカー）を GitHub と同じ規則で作る。英字は小文字にし、文字・数字・連結用の記号・
- * ハイフン・空白以外（括弧・中黒・全角記号など）を消して、空白をハイフンにする。Unicode の正規化はしない。
- * VitePress 既定の規則は NFKD 正規化で濁点を分解するため、「タグ」のような見出しへのリンクが
- * ブラウザで飛ばない。GitHub 上で読んでもサイトで読んでも同じリンクで飛べるようにする
- * （村スタート冒険者キャンペーン C5。リンク先の見出しの実在は scripts/check-doc-anchors.mjs で検査する）
- */
-const githubSlug = (heading: string) =>
-  heading
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{M}\p{N}\p{Pc}\- ]/gu, '')
-    .replace(/ /g, '-');
+import { githubSlug } from './slug';
 
 export default defineConfig({
   base: '/CarTaGraphFantasy/',
@@ -51,11 +38,24 @@ export default defineConfig({
         text: 'アーキテクチャ',
         items: [
           { text: '技術スタック', link: '/architecture/' },
-          { text: 'Webアプリ（apps/web）の構成', link: '/architecture/web-app' },
-          { text: '試作の引き継ぎまとめ', link: '/architecture/prototype-handover' },
+          {
+            text: 'Webアプリ（apps/web）の構成',
+            link: '/architecture/web-app',
+          },
+          {
+            text: '試作の引き継ぎまとめ',
+            link: '/architecture/prototype-handover',
+          },
           { text: '既知の問題', link: '/architecture/known-issues' },
           // アプリは VitePress 管理外の静的ファイルなので SPA 遷移を避ける
           { text: 'アプリを開く（モックAPI）', link: '/app/', target: '_self' },
+        ],
+      },
+      {
+        text: '要望と進み具合',
+        items: [
+          { text: 'ダッシュボード', link: '/' },
+          { text: '要望（バックログ）', link: '/backlog/' },
         ],
       },
       {
@@ -79,7 +79,10 @@ export default defineConfig({
       {
         text: '議論ログ（アーカイブ）',
         items: [
-          { text: '追加インタビュー (2025-09)', link: '/interviews/2025-09-追加インタビュー' },
+          {
+            text: '追加インタビュー (2025-09)',
+            link: '/interviews/2025-09-追加インタビュー',
+          },
         ],
       },
       {
@@ -97,10 +100,26 @@ export default defineConfig({
             link: '/preview/session-chat.html',
             target: '_self',
           },
-          { text: 'シーン進行（GM視点）', link: '/preview/scene-play.html', target: '_self' },
-          { text: '戦闘画面（2次元）', link: '/preview/combat-play.html', target: '_self' },
-          { text: '戦闘画面（1次元）', link: '/preview/combat-play-1d.html', target: '_self' },
-          { text: '場の状況', link: '/preview/session-field.html', target: '_self' },
+          {
+            text: 'シーン進行（GM視点）',
+            link: '/preview/scene-play.html',
+            target: '_self',
+          },
+          {
+            text: '戦闘画面（2次元）',
+            link: '/preview/combat-play.html',
+            target: '_self',
+          },
+          {
+            text: '戦闘画面（1次元）',
+            link: '/preview/combat-play-1d.html',
+            target: '_self',
+          },
+          {
+            text: '場の状況',
+            link: '/preview/session-field.html',
+            target: '_self',
+          },
         ],
       },
     ],
@@ -109,6 +128,11 @@ export default defineConfig({
       level: [2, 3],
     },
 
-    socialLinks: [{ icon: 'github', link: 'https://github.com/hibohiboo/CarTaGraphFantasy' }],
+    socialLinks: [
+      {
+        icon: 'github',
+        link: 'https://github.com/hibohiboo/CarTaGraphFantasy',
+      },
+    ],
   },
 });

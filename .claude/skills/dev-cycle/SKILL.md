@@ -16,6 +16,7 @@ description: 機能追加・振る舞いの変更を「プラン作成→AIレ�
 - `docs/process/prompt-sample.md` の「1」の依頼文に沿う。質問は `grilling` スキルの手法（フロンティア単位のラウンド）で尽くす
 - 仕様ページ（`docs/cartagraph/`）に書いてあることは質問せず読む。未解決論点（`docs/open-questions.md`）に関わる判断だけ人間に聞く
 - 質問が尽きたら `docs/plans/<日付>-<機能>.md` に8項目で書く
+- 要望ファイル（`docs/backlog/`）の状態を「検討中」にし、プランのファイル名を足す（手順の本文は `docs/process/index.md`）
 - 書き終えたら、「背景」に挙げた正式仕様の決着と各決定事項を突き合わせる（食い違いは人間に確認）
 
 ## 2〜3. プランのレビュー
@@ -41,4 +42,5 @@ description: 機能追加・振る舞いの変更を「プラン作成→AIレ�
 ## 8. push・振り返り
 
 - `eng-practices` でセルフレビューしてから push（PR 運用なら `create-pr`）
+- マージしたら、要望ファイルのサイクルの状態・PR 番号・更新日を直す
 - 依頼文「9」で振り返り、`docs/process/evolution.md` の候補への追記案を出す。採用は人間が決める
