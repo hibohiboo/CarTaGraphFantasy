@@ -1,6 +1,6 @@
 ---
 name: village-campaign-progress
-description: "村スタート冒険者キャンペーン（C1〜C4）の進み具合。C3はPR #8で人間レビュー済み、次はC4（街道・旧チュートリアル置き換え）"
+description: "村スタート冒険者キャンペーン（C1〜C4）の進み具合。C3まで完了（PR #8 マージ済み）、次はC4（街道・旧チュートリアル置き換え）"
 metadata:
   node_type: memory
   type: project
@@ -12,9 +12,9 @@ metadata:
 
 - C1（GMレス基盤）：PR #5 でマージ済み
 - C2（自動戦闘エンジン）：PR #6 で 2026-09-27 マージ済み
-- C3（村パート）：PR #8 を 2026-09-27 に作成（人間レビューは承認済み、マージ待ち）。仮ルールは `docs/cartagraph/solo-village.md`
+- C3（村パート）：PR #8 で 2026-09-27 マージ済み。振り返りは未実施。仮ルールは `docs/cartagraph/solo-village.md`
 - 次は C4（街道・旧チュートリアル置き換え・結末タグ「冒険者になった」）。着手時に決めること：依頼や街道のシーンに入ったときの描写（known-issues に記録済み）
 - 見送った課題は `docs/architecture/known-issues.md` が正。見出しアンカー97か所の食い違いの直し方は人間の判断待ち
 
 **Why:** 次のセッションで「C4から再開」と言われたときに、どのプランを開けばよいかをすぐ辿れるようにする。
-**How to apply:** 再開時はこのメモではなく、上のプランと known-issues.md を読んでから始める。PR #8 がマージ済みか先に確かめる。関連：[[dev-process-structure]]
+**How to apply:** 再開時はこのメモではなく、上のプランと known-issues.md を読んでから始める。関連：[[dev-process-structure]]
