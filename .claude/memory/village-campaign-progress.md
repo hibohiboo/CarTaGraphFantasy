@@ -1,19 +1,20 @@
 ---
 name: village-campaign-progress
-description: 村スタート冒険者キャンペーン（C1〜C4）の進み具合。C2まで完了、次はC3（村パート）
+description: "村スタート冒険者キャンペーン（C1〜C4）の進み具合。C3はPR #8で人間レビュー済み、次はC4（街道・旧チュートリアル置き換え）"
 metadata:
   node_type: memory
   type: project
-  originSessionId: 38cc8413-59aa-40fd-b817-2b8aa2621a3b
-  modified: 2026-09-26T18:13:51.998Z
+  originSessionId: db88d7eb-f4c1-448a-823f-e76e818e9fd2
+  modified: 2026-09-27T00:09:10.137Z
 ---
 
-村スタート冒険者キャンペーンは4サイクル構成。正は `docs/plans/2026-09-23-村スタート冒険者キャンペーン.md`（親）と `docs/plans/2026-09-23-自動戦闘エンジン.md`（C2）。
+村スタート冒険者キャンペーンは4サイクル構成。正は `docs/plans/2026-09-23-村スタート冒険者キャンペーン.md`（親）と各サイクルの個別プラン（C2：`2026-09-23-自動戦闘エンジン.md`、C3：`2026-09-27-村パート.md`）。
 
 - C1（GMレス基盤）：PR #5 でマージ済み
-- C2（自動戦闘エンジン）：PR #6 で 2026-09-27 マージ済み。振り返りの5件は採用し `docs/process/` に反映済み
-- 次は C3（村パート：依頼・能力値・お店）。着手時に決めることとして、シーンを移るときの場の片付け（敵カードの再入場）、`soloStarter` の置き換え、依頼内容の grilling がある
-- 見送った課題は `docs/architecture/known-issues.md` が正（C3 で扱う項目が含まれる）
+- C2（自動戦闘エンジン）：PR #6 で 2026-09-27 マージ済み
+- C3（村パート）：PR #8 を 2026-09-27 に作成（人間レビューは承認済み、マージ待ち）。仮ルールは `docs/cartagraph/solo-village.md`
+- 次は C4（街道・旧チュートリアル置き換え・結末タグ「冒険者になった」）。着手時に決めること：依頼や街道のシーンに入ったときの描写（known-issues に記録済み）
+- 見送った課題は `docs/architecture/known-issues.md` が正。見出しアンカー97か所の食い違いの直し方は人間の判断待ち
 
-**Why:** 次のセッションで「C3から再開」と言われたときに、どのプランを開けばよいかをすぐ辿れるようにする。
-**How to apply:** 再開時はこのメモではなく、上のプランと known-issues.md を読んでから始める。関連：[[dev-process-structure]]
+**Why:** 次のセッションで「C4から再開」と言われたときに、どのプランを開けばよいかをすぐ辿れるようにする。
+**How to apply:** 再開時はこのメモではなく、上のプランと known-issues.md を読んでから始める。PR #8 がマージ済みか先に確かめる。関連：[[dev-process-structure]]
