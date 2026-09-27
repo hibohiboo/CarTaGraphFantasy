@@ -6,6 +6,7 @@ import type {
   Character,
   CurrentUser,
   DeckNode,
+  EndingDef,
   LibraryEntry,
   PriorityEntry,
   Recruitment,
@@ -338,6 +339,10 @@ function examScenario(o: {
   maxRounds?: number;
   starter?: Scenario['soloStarter'];
   introCards?: CardDef[];
+  /** 「合格の証を受け取る」の説明文（GM不在のソロでは結末の描写になる） */
+  acceptDescription?: string;
+  /** 結末のノードが指す結末（docs/cartagraph/solo-village.md「結末タグ」） */
+  ending?: EndingDef;
 }): Scenario {
   const p = o.prefix;
   return {
@@ -381,15 +386,22 @@ function examScenario(o: {
             id: `${p}-accept`,
             kind: 'choice',
             name: '合格の証を受け取る',
+            description: o.acceptDescription,
             tags: [],
             nextNodeId: `${p}-end`,
           },
         ],
         autoCombat: { enemy: o.enemy, maxRounds: o.maxRounds ?? 20 },
       },
-      { id: `${p}-end`, kind: 'ending', name: '冒険者として旅立つ', cards: [] },
+      {
+        id: `${p}-end`,
+        kind: 'ending',
+        name: '冒険者として旅立つ',
+        cards: [],
+        endingId: o.ending?.id,
+      },
     ],
-    endings: [],
+    endings: o.ending ? [o.ending] : [],
     libraryStatus: 'draft',
     updatedAt: ago(0),
   };
@@ -408,6 +420,8 @@ interface Quest {
   key: string;
   name: string;
   from: string;
+  /** 依頼へ向かうときの描写（依頼人の困りごと） */
+  request: string;
   achievementName: string;
   solutions: [string, string][];
 }
@@ -417,6 +431,8 @@ const quests: Quest[] = [
     key: '猪',
     name: '畑を荒らす猪',
     from: '農家のおばさん',
+    request:
+      '畑の脇で、農家のおばさんが荒らされた畝を前にため息をついている。「夜ごと猪が出て、芋を掘り返していくんだよ」',
     achievementName: '猪の件を片づけた',
     solutions: [
       ['柵で畑を囲む', '杭を打ち、柵で畑をぐるりと囲んだ。これで猪も入ってこられない。'],
@@ -431,6 +447,8 @@ const quests: Quest[] = [
     key: '水車',
     name: '壊れた水車',
     from: '粉ひきの親方',
+    request:
+      '川べりの粉ひき小屋で、水車が軋んだまま止まっている。親方が腕を組んで唸っている。「軸がずれちまって、粉がひけねえ」',
     achievementName: '水車の件を片づけた',
     solutions: [
       [
@@ -451,6 +469,8 @@ const quests: Quest[] = [
     key: '子ヤギ',
     name: '迷子の子ヤギ',
     from: '村長',
+    request:
+      '村長の家の前で、村長の孫が泣きじゃくっている。可愛がっていた子ヤギが、柵を抜けて丘の方へ行ったきり戻らないという。',
     achievementName: '子ヤギの件を片づけた',
     solutions: [
       ['崖の下まで降りて抱えて戻る', '崖の下で震えていた子ヤギを抱え、岩場をよじ登って戻った。'],
@@ -536,6 +556,7 @@ function shopNode(p: string): DeckNode {
         id: `${p}-shop-leave`,
         kind: 'choice',
         name: 'お店を出る',
+        description: '店主に礼を言って、村の広場へ戻った。',
         tags: [],
         nextNodeId: `${p}-square`,
       },
@@ -544,9 +565,9 @@ function shopNode(p: string): DeckNode {
 }
 
 /**
- * 村パート（導入→村の広場⇄依頼3件・お店）→冒険者試験→結末 のGMレスのソロ用シナリオを作る。
- * キャラクターは旅人で始まり、依頼で能力値とHP、お店で戦闘スキルと行動値を得る。
- * 試験・結末のノードと共通の設定は examScenario() のものを使う
+ * 村パート（導入→村の広場⇄依頼3件・お店）→街道→冒険者試験→結末 のGMレスのソロ用シナリオを作る。
+ * キャラクターは旅人で始まり、依頼で能力値とHP、お店で戦闘スキルと行動値を得て、結末で結末タグを得る。
+ * 試験・結末のノードと共通の設定は examScenario() のもの（合格の証の説明文と結末を与える）を使う
  */
 function villageScenario(o: {
   id: string;
@@ -558,7 +579,12 @@ function villageScenario(o: {
 }): Scenario {
   const p = o.prefix;
   const square = `${p}-square`;
-  const base = examScenario(o);
+  const base = examScenario({
+    ...o,
+    acceptDescription:
+      'ギルドマスターが、真新しい冒険者の証を手渡してくれた。「今日からお前も冒険者だ。村の皆にも胸を張れ」',
+    ending: { id: `${p}-e-adventurer`, name: '冒険者として旅立つ', grantsTag: '冒険者になった' },
+  });
   const examAndEnding = base.deck.filter((n) => n.id !== `${p}-intro`);
   return {
     ...base,
@@ -583,6 +609,8 @@ function villageScenario(o: {
             id: `${p}-to-square`,
             kind: 'choice',
             name: '村の広場へ向かう',
+            description:
+              '村の広場では、井戸端で村人たちが話し込んでいる。困りごとを抱えた顔がいくつか見える。',
             tags: [],
             nextNodeId: square,
           },
@@ -598,6 +626,7 @@ function villageScenario(o: {
               id: `${p}-to-quest-${i}`,
               kind: 'choice',
               name: `依頼「${q.name}」`,
+              description: q.request,
               tags: [],
               nextNodeId: `${p}-quest-${i}`,
               dealWhen: { lacksTags: [`達成:${q.key}`] },
@@ -607,6 +636,8 @@ function villageScenario(o: {
             id: `${p}-to-shop`,
             kind: 'choice',
             name: 'お店へ行く',
+            description:
+              '雑貨と古い武具が並ぶ村のお店。店主が「依頼の礼の品を持ってくれば、技を一つ教えてやろう」と笑う。',
             tags: [],
             nextNodeId: `${p}-shop`,
           },
@@ -614,12 +645,40 @@ function villageScenario(o: {
             id: `${p}-to-guild`,
             kind: 'choice',
             name: '街の冒険者ギルドへ向かう',
+            description:
+              '村人たちに見送られ、村はずれの一本道を歩き出した。振り返ると、村の屋根が朝日に光っている。',
             tags: [],
-            nextNodeId: `${p}-exam`,
-            // 攻撃の手段が無いまま試験に入ると勝てず、戻る手段も無いため（solo-village.md「配る条件・使える条件」）
+            nextNodeId: `${p}-road`,
+            // 街道から村へは戻れず、その先の試験は攻撃の手段が無いと勝てないため、村を出る前に止める。
+            // 依頼で HP、お店で行動値を得るので、攻撃のスキルがあれば戦える（solo-village.md「配る条件・使える条件」）
             playWhen: { hasTags: ['攻撃'] },
           },
           ...(o.squareCards ?? []),
+        ],
+      },
+      // 街道：村から街へ出る区切り。村へ戻る選択肢は置かない（docs/plans/2026-09-27-街道と結末タグ.md）
+      {
+        id: `${p}-road`,
+        kind: 'scene',
+        name: '街道',
+        cards: [
+          {
+            id: `${p}-road-look`,
+            kind: 'choice',
+            name: '辺りを眺める',
+            description:
+              '街道の両側に麦畑が広がり、遠くに街の城壁がかすんで見える。荷馬車がゆっくりと追い越していった。',
+            tags: [],
+          },
+          {
+            id: `${p}-to-exam`,
+            kind: 'choice',
+            name: '街の門をくぐる',
+            description:
+              '街の門をくぐり、冒険者ギルドの扉を叩いた。受付に名を告げると、裏手の試験場へ通された。',
+            tags: [],
+            nextNodeId: `${p}-exam`,
+          },
         ],
       },
       ...quests.map((q, i) => questNode(p, q, i)),
@@ -769,7 +828,7 @@ export const scenarios: Scenario[] = [
   villageScenario({
     id: 'sc-village-start',
     prefix: 'vs',
-    title: '（仮）村はずれの一歩',
+    title: '村はずれの一歩',
     summary: '朝もやの中、村はずれの道が街へと続いている。',
     enemy: examiner,
   }),
@@ -1153,7 +1212,7 @@ export const sessions: Session[] = [
     proposalHandling: 'gm-required',
     currentScene: {
       index: 2,
-      total: 8,
+      total: 9,
       name: '畑を荒らす猪',
       path: '畑を荒らす猪',
       nodeId: 'vw-quest-0',
@@ -1170,7 +1229,11 @@ export const sessions: Session[] = [
       { userId: 'u-kirino', name: '霧乃', role: 'gm', lastSeenAt: ago(1) },
     ],
     field: { gmOnly: [], plVisible: [] },
-    hand: villageCards('sc-village-always-win', ['vw-quest-0-body', 'vw-learn-c-slash']),
+    hand: villageCards('sc-village-always-win', [
+      'vw-quest-0-body',
+      'vw-learn-c-slash',
+      'vw-to-shop',
+    ]),
     flavor: '農家のおばさんが困り顔で畑を指さしている。',
     proposals: [],
     feed: [],
