@@ -13,6 +13,8 @@ export interface Cycle {
 export interface BacklogItem {
   url: string;
   title: string;
+  /** どのマイルストーンのための要望か（docs/roadmap.md の id）。無ければ空文字 */
+  milestone: string;
   status: BacklogStatus;
   summary: string;
   decisions: string[];
@@ -35,6 +37,7 @@ export default createContentLoader('backlog/*.md', {
       .map(({ url, frontmatter: f }) => ({
         url,
         title: f.title,
+        milestone: f.milestone ?? '',
         status: f.status,
         summary: f.summary ?? '',
         decisions: f.decisions ?? [],

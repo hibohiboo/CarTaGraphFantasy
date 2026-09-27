@@ -5,6 +5,7 @@ import { withBase } from 'vitepress';
 import { computed } from 'vue';
 import { type BacklogItem, type BacklogStatus, data as backlog } from '../backlog.data';
 import { data as decisions } from '../decisions.data';
+import { data as roadmap } from '../roadmap.data';
 
 const REPO = 'https://github.com/hibohiboo/CarTaGraphFantasy';
 const planUrl = (file: string) => `${REPO}/blob/main/docs/plans/${encodeURIComponent(file)}`;
@@ -25,12 +26,52 @@ const closedItems = computed(() => backlog.filter(closed));
 const poDecisions = computed(() =>
   backlog.flatMap((b) => b.decisions.map((d) => ({ item: b, decision: d }))),
 );
+/** マイルストーンごとの要望と完了数。いま取り組むのは、未完了の要望が残る最初のマイルストーン */
+const milestones = computed(() =>
+  roadmap.milestones.map((m) => {
+    const items = backlog.filter((b) => b.milestone === m.id);
+    const done = items.filter(closed).length;
+    return { ...m, items, done, remaining: items.filter((b) => !closed(b)) };
+  }),
+);
+const current = computed(() => milestones.value.find((m) => m.remaining.length > 0));
+
 const withCycles = (items: BacklogItem[]) =>
   items.filter((b) => b.cycles.length > 0 || b.plans.length > 0);
 </script>
 
 <template>
   <div class="dashboard">
+    <h2 id="ゴールとマイルストーン">ゴールとマイルストーン</h2>
+    <p class="goal">{{ roadmap.goal }}</p>
+    <ol class="milestones">
+      <li v-for="m in milestones" :key="m.id" :class="{ current: m.id === current?.id }">
+        <div class="ms-head">
+          <strong>{{ m.id }} {{ m.title }}</strong>
+          <span v-if="m.id === current?.id" class="ms-now">いま取り組んでいる</span>
+          <span v-if="m.items.length" class="ms-count">要望 {{ m.done }} / {{ m.items.length }} 完了</span>
+          <span v-else class="ms-count">要望はまだ無い（前のマイルストーンの完成時に詰める）</span>
+        </div>
+        <progress v-if="m.items.length" :value="m.done" :max="m.items.length" />
+        <p class="ms-summary">{{ m.summary }}</p>
+      </li>
+    </ol>
+    <template v-if="current">
+      <h3>{{ current.id }} の完成までに残っている要望</h3>
+      <table>
+        <tbody>
+          <tr v-for="b in current.remaining" :key="b.url">
+            <td><a :href="withBase(b.url)">{{ b.title }}</a></td>
+            <td><Badge :type="BADGE[b.status]" :text="b.status" /></td>
+            <td>{{ b.summary }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="plans">
+        完成の条件は<a :href="withBase(`/roadmap#${current.id.toLowerCase()}`)">ロードマップの {{ current.id }}</a>を参照。
+      </p>
+    </template>
+
     <h2 id="po-決めないといけないこと">PO：決めないといけないこと</h2>
 
     <h3>要望の判断待ち</h3>
@@ -146,6 +187,50 @@ const withCycles = (items: BacklogItem[]) =>
 </template>
 
 <style scoped>
+.goal {
+  font-size: 1.15em;
+  font-weight: 600;
+}
+.milestones {
+  list-style: none;
+  padding: 0;
+}
+.milestones li {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0;
+}
+.milestones li.current {
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 0 0 1px var(--vp-c-brand-1);
+}
+.ms-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+}
+.ms-now {
+  color: var(--vp-c-brand-1);
+  font-size: 0.85em;
+  font-weight: 600;
+}
+.ms-count {
+  color: var(--vp-c-text-2);
+  font-size: 0.85em;
+  margin-left: auto;
+}
+.milestones progress {
+  width: 100%;
+  height: 0.5rem;
+  margin-top: 0.4rem;
+}
+.ms-summary {
+  margin: 0.4rem 0 0;
+  color: var(--vp-c-text-2);
+  font-size: 0.9em;
+}
 .dashboard {
   max-width: 1152px;
   margin: 0 auto;

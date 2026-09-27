@@ -2,9 +2,8 @@
 layout: home
 
 hero:
-  name: "カルタグラフTRPG"
-  text: "進化型カードTRPGの開発ダッシュボード"
-  tagline: 遊ぶことでゲーム自体が進化していくTRPGを、AI と共同で設計・開発しています。ここでは、いま決めないといけないことと、要望の進み具合を見られます。
+  name: "カルタグラフTRPG 開発ダッシュボード"
+  tagline: 遊ぶことでゲーム自体が進化していくTRPGを、AI と共同で設計・開発しています。
   actions:
     - theme: alt
       text: コンセプトを読む

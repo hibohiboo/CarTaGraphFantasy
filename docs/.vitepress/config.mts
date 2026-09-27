@@ -55,6 +55,7 @@ export default defineConfig({
         text: '要望と進み具合',
         items: [
           { text: 'ダッシュボード', link: '/' },
+          { text: 'ロードマップ', link: '/roadmap' },
           { text: '要望（バックログ）', link: '/backlog/' },
         ],
       },
