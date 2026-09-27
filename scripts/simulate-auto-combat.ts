@@ -1,5 +1,5 @@
 // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）の数値バランスを確かめるシミュレーション。
-// 検証用シナリオ sc-village-start（apps/web/src/mocks/fixtures.ts）で村パートを終えたときの HP・行動値（soloGrowth）、
+// 村スタートのシナリオ sc-village-start（apps/web/src/mocks/fixtures.ts）で村パートを終えたときの HP・行動値（soloGrowth）、
 // お店で習える戦闘スキル、試験官を使い、
 // 代表的な戦い方ごとに何千回も戦わせて、勝率と決着ラウンドを docs/cartagraph/auto-combat-simulation.md に書き出す。
 //
@@ -164,7 +164,7 @@ function main() {
 
 <!-- このページは scripts/simulate-auto-combat.ts が生成する。手で編集しない（pnpm sim:auto-combat で作り直す） -->
 
-[自動戦闘（仮ルール）](auto-combat.md)の数値バランスを確かめるため、検証用シナリオ「${scenario.title}」で村パートを終えたとき（HP・行動値と、お店で習える戦闘スキル）と試験官で、代表的な戦い方ごとに${runs.toLocaleString('ja-JP')}回ずつ戦わせた結果。**仕様ではなく、数値を調整するときの参考資料**である。数値の相場観は[数値バランスの相場観](balance.md)を参照。
+[自動戦闘（仮ルール）](auto-combat.md)の数値バランスを確かめるため、シナリオ「${scenario.title}」で村パートを終えたとき（HP・行動値と、お店で習える戦闘スキル）と試験官で、代表的な戦い方ごとに${runs.toLocaleString('ja-JP')}回ずつ戦わせた結果。**仕様ではなく、数値を調整するときの参考資料**である。数値の相場観は[数値バランスの相場観](balance.md)を参照。
 
 - 生成日：${new Date().toISOString().slice(0, 10)}
 - 回数：戦い方ごとに${runs.toLocaleString('ja-JP')}回（乱数の種：${seed}。数値が同じなら何度回しても同じ結果になる）

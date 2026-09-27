@@ -1,11 +1,11 @@
 import { type CardDef, SYSTEM_GM_ID } from '@cartagraph/domain';
-import { heldCards, unplayableReason } from '@cartagraph/domain/soloVillage';
+import { heldCards, isSoloRuleCard, unplayableReason } from '@cartagraph/domain/soloVillage';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '../../components/GameCard';
 import { HandDock, Hud, PlayScreen, ProposeForm, StatusLine, Table } from '../../components/play';
 import { Button, ErrorNote, Loading, StatusPill } from '../../components/ui';
-import { useCharacter, usePlayCard, usePropose, useSession } from '../../lib/queries';
+import { useCharacter, usePlayCard, usePropose, useScenario, useSession } from '../../lib/queries';
 import { AutoCombatLog, AutoCombatPanel } from './AutoCombatPanel';
 
 const PROPOSE_CARD: CardDef = {
@@ -28,6 +28,9 @@ export function PlayPage() {
   const driverCharacterId =
     session.data?.participants.find((p) => p.role === 'driver')?.characterId ?? '';
   const character = useCharacter(soloGm ? driverCharacterId : '');
+  // 結末タグの即時反映（仮ルール）を示すため、GM不在のソロが終わったらシナリオの結末を読む
+  const endedSolo = soloGm && session.data?.status === 'ended';
+  const scenario = useScenario(endedSolo ? (session.data?.scenarioId ?? '') : '');
 
   if (session.isPending) return <Loading what="卓を準備中" />;
   if (session.error) return <ErrorNote error={session.error} />;
@@ -40,8 +43,11 @@ export function PlayPage() {
   // キャラクターを読み込むまでは判定せず、サーバーの 422 に任せる
   const held = character.data && heldCards(character.data, s.field);
   const reasonFor = held ? (card: CardDef) => unplayableReason(card, held) : undefined;
-  // 仮ルール（成長の効果・使える条件）に関わるカードが手札にあれば「仮」と出す（architecture.md「境界」）
-  const usesSoloRules = soloGm && s.hand.some((c) => c.soloEffect || c.playWhen);
+  // 仮ルールに関わるカードが手札にあれば「仮」と出す（architecture.md「境界」）
+  const usesSoloRules = soloGm && s.hand.some(isSoloRuleCard);
+  const gotEndingTag = scenario.data?.endings.some(
+    (e) => e.grantsTag && character.data?.endingTags.includes(e.grantsTag),
+  );
   const enemyName =
     s.field.plVisible.find((c) => c.id === s.autoCombat?.enemyCardId)?.name ?? '相手';
 
@@ -98,9 +104,12 @@ export function PlayPage() {
         />
       )}
       <StatusLine>
+        {endedSolo && gotEndingTag && (
+          <span className="u-dim u-small">結末タグの即時反映は仮ルール（GM不在のソロ）</span>
+        )}
         {usesSoloRules && !ended && (
           <span className="u-dim u-small">
-            能力値の上がり方・お店・選べないカードの条件は仮ルール（GM不在のソロでの村の成長）
+            能力値の上がり方・お店・選べないカードの条件・シーンに入ったときの描写は仮ルール（GM不在のソロ）
           </span>
         )}
         {play.error && <ErrorNote error={play.error} />}

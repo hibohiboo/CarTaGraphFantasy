@@ -61,8 +61,13 @@ export const useScenarios = (mine = false) =>
     queryFn: () => api.get<Scenario[]>(`/scenarios${mine ? '?mine=1' : ''}`),
   });
 
+/** id が空なら取りに行かない */
 export const useScenario = (id: string) =>
-  useQuery({ queryKey: keys.scenario(id), queryFn: () => api.get<Scenario>(`/scenarios/${id}`) });
+  useQuery({
+    queryKey: keys.scenario(id),
+    queryFn: () => api.get<Scenario>(`/scenarios/${id}`),
+    enabled: id !== '',
+  });
 
 export const useLibrary = () =>
   useQuery({ queryKey: keys.library, queryFn: () => api.get<LibraryEntry[]>('/library') });

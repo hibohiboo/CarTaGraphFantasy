@@ -55,10 +55,12 @@ export type TransitionPlan =
       autoCombat?: { enemy: AutoCombatEnemy; maxRounds: number };
       /** 人間GMのいないセッションで結末ノードへ移ったら true */
       ended: boolean;
+      /** ended のとき、結末のノードが指す結末の結末タグ（docs/cartagraph/solo-village.md「結末タグ」、仮ルール） */
+      endingTag?: string;
     };
 
 export function planTransition(
-  scenario: Pick<Scenario, 'deck'>,
+  scenario: Pick<Scenario, 'deck' | 'endings'>,
   session: Pick<Session, 'gmId'>,
   nextNodeId: string,
   /** 配る条件の判定に使うカード（heldCards）。遷移に伴う効果を適用した後の状態で渡す */
@@ -73,6 +75,11 @@ export function planTransition(
       ok: false,
       error: `「${node.name}」は自動戦闘のシーンのため、人間GMのセッションでは進めません`,
     };
+  // 結末で自動終了するのは人間GMのいないセッションだけ（play-and-field.md「次のシーンへ進む」）
+  const ended = node.kind === 'ending' && session.gmId === SYSTEM_GM_ID;
+  const endingTag = ended
+    ? scenario.endings.find((e) => e.id === node.endingId)?.grantsTag
+    : undefined;
   return {
     ok: true,
     currentScene: {
@@ -84,7 +91,7 @@ export function planTransition(
     },
     choices: node.autoCombat ? [] : dealChoices(node, held, session),
     ...(node.autoCombat && { autoCombat: node.autoCombat }),
-    // 結末で自動終了するのは人間GMのいないセッションだけ（play-and-field.md「次のシーンへ進む」）
-    ended: node.kind === 'ending' && session.gmId === SYSTEM_GM_ID,
+    ended,
+    ...(endingTag && { endingTag }),
   };
 }

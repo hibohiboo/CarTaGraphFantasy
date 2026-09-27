@@ -229,11 +229,11 @@ describe('チュートリアル（旅立ちの酒場）', () => {
   });
 });
 
-describe('村はずれの一歩（C1: GMレス基盤の検証用）', () => {
+describe('村はずれの一歩（GM不在のソロの入口）', () => {
   it('名前を入力して始めると、GMレスのセッションが開始されプレイページへ進む', async () => {
     const user = userEvent.setup();
     const router = renderAt('/pl/village-start');
-    await screen.findByRole('heading', { level: 1, name: '（仮）村はずれの一歩' });
+    await screen.findByRole('heading', { level: 1, name: '村はずれの一歩' });
     await introduceAs(user, '新人');
     expect(await screen.findByRole('button', { name: /新たな選択肢を提案/ })).toBeInTheDocument();
     expect(router.state.location.pathname).toMatch(/^\/pl\/sessions\/ss-\d+\/play$/);
@@ -373,11 +373,11 @@ describe('ホーム画面のチュートリアル導線', () => {
     expect(screen.queryByRole('link', { name: '旅立ちの酒場へ行く' })).not.toBeInTheDocument();
   });
 
-  it('所持キャラクターが0件のときだけ、村はずれの一歩（C1検証用）へのリンクも出る', async () => {
+  it('所持キャラクターが0件のときだけ、村はずれの一歩へのリンクも出る', async () => {
     server.use(http.get('/api/characters', () => HttpResponse.json([])));
     renderAt('/home');
     expect(
-      await screen.findByRole('link', { name: /（仮）村はずれの一歩を試す/ }),
+      await screen.findByRole('link', { name: /村はずれの一歩から始める/ }),
     ).toBeInTheDocument();
   });
 
@@ -385,7 +385,7 @@ describe('ホーム画面のチュートリアル導線', () => {
     renderAt('/home');
     await screen.findByRole('heading', { level: 1, name: 'ホーム' });
     expect(
-      screen.queryByRole('link', { name: /（仮）村はずれの一歩を試す/ }),
+      screen.queryByRole('link', { name: /村はずれの一歩から始める/ }),
     ).not.toBeInTheDocument();
   });
 });

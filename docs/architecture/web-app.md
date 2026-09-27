@@ -68,7 +68,7 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 
 ## 自動戦闘の数値シミュレーション
 
-[自動戦闘（仮ルール）](../cartagraph/auto-combat.md)の数値バランスを確かめるスクリプト（`scripts/simulate-auto-combat.ts`）。検証用シナリオ `sc-village-start`（`apps/web/src/mocks/fixtures.ts`）で村パートを終えたときの HP・行動値（`soloGrowth`）、お店で習える戦闘スキル、試験官の数値のまま、代表的な戦い方ごとに5,000回ずつ戦わせ、勝率と決着ラウンドの表を [シミュレーション結果](../cartagraph/auto-combat-simulation.md) に書き出す。
+[自動戦闘（仮ルール）](../cartagraph/auto-combat.md)の数値バランスを確かめるスクリプト（`scripts/simulate-auto-combat.ts`）。村スタートのシナリオ `sc-village-start`（`apps/web/src/mocks/fixtures.ts`）で村パートを終えたときの HP・行動値（`soloGrowth`）、お店で習える戦闘スキル、試験官の数値のまま、代表的な戦い方ごとに5,000回ずつ戦わせ、勝率と決着ラウンドの表を [シミュレーション結果](../cartagraph/auto-combat-simulation.md) に書き出す。
 
 - **実行** — `pnpm sim:auto-combat`。回数・乱数の種は `pnpm sim:auto-combat -- --runs=10000 --seed=42` のように変えられる
 - **いつ回すか** — CI・git フックでは回さない。次のようなときに手で回し、書き出された `docs/cartagraph/auto-combat-simulation.md` も一緒にコミットする

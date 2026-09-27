@@ -11,7 +11,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routeObjects } from '../app/router';
 import { api } from '../lib/api';
-import { soloGrowth } from '../mocks/fixtures';
+import { scenarios, soloGrowth } from '../mocks/fixtures';
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -31,6 +31,16 @@ const characterOf = (s: Session) =>
   api.get<Character>(`/characters/${s.participants.find((p) => p.role === 'driver')?.characterId}`);
 
 const card = (name: RegExp | string) => screen.findByRole('button', { name });
+
+/** fixtures のシナリオに置いたカードの説明文（テストに文面を書き写さないため） */
+function descriptionOf(scenarioId: string, cardId: string): string {
+  const found = scenarios
+    .find((x) => x.id === scenarioId)
+    ?.deck.flatMap((n) => n.cards)
+    .find((c) => c.id === cardId);
+  if (!found?.description) throw new Error(`${scenarioId} のカード ${cardId} に説明文がありません`);
+  return found.description;
+}
 
 /** GM不在なので、どの段階でも「GMの描写を待っている」にならない（行き止まりにならない） */
 const expectNoWaitingForGm = () =>
@@ -89,6 +99,7 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     await play(user, /お店を出る/);
     expectNoWaitingForGm();
     await playWhenEnabled(user, /街の冒険者ギルドへ向かう/);
+    await play(user, /街の門をくぐる/);
 
     const panel = await screen.findByRole('region', { name: '戦い方を決める' });
     await user.click(within(panel).getByRole('button', { name: '「素早い突き」をリストに入れる' }));
@@ -106,6 +117,18 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
       await screen.findByRole('heading', { name: '結末「冒険者として旅立つ」' }),
     ).toBeInTheDocument();
     expectNoWaitingForGm();
+    // 結末タグを即時に付け、描写とログに出す（solo-village.md「結末タグ」、仮ルール）
+    const ended = await api.get<Session>(`/sessions/${s.id}`);
+    expect(ended.flavor).toBe(
+      `${descriptionOf('sc-village-always-win', 'vw-accept')} 結末タグ『冒険者になった』を得た。`,
+    );
+    expect(ended.feed.slice(0, 4).map((f) => f.text)).toEqual([
+      '新人は結末タグ『冒険者になった』を得た',
+      '結末「冒険者として旅立つ」に至り、セッションが終了した',
+      '「冒険者として旅立つ」へ進んだ',
+      '新人が「合格の証を受け取る」をプレイ',
+    ]);
+    expect(screen.getByText(/結末タグの即時反映は仮ルール/)).toBeInTheDocument();
 
     const pc = await characterOf(s);
     expect(pc.abilities).toEqual({ body: 2, skill: 2, mind: 2 });
@@ -118,9 +141,17 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     ]);
     expect(pc.deck.filter((c) => c.tags.includes('引換'))).toEqual([]);
     expect(deriveArchetype(pc)).toBe('adventurer');
+    expect(pc.endingTags).toEqual(['冒険者になった']);
   });
 
-  it('本物のシナリオ（sc-village-start）でも、依頼1件→お店で斬撃→試験の戦い方の設定まで進める', async () => {
+  it('本物のシナリオ（sc-village-start）でも、依頼1件→お店で斬撃→街道→試験の戦い方の設定まで進める', async () => {
+    const scenario = scenarios.find((x) => x.id === 'sc-village-start');
+    expect(scenario?.title).toBe('村はずれの一歩');
+    // 結末のノードが、結末タグを持つ結末を指している
+    const endNode = scenario?.deck.find((n) => n.kind === 'ending');
+    expect(scenario?.endings.find((e) => e.id === endNode?.endingId)?.grantsTag).toBe(
+      '冒険者になった',
+    );
     const s = await start('sc-village-start');
     const playCard = (cardId: string) => api.post<Session>(`/sessions/${s.id}/play`, { cardId });
     await playCard('vs-to-square');
@@ -129,7 +160,9 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     await playCard('vs-to-shop');
     await playCard('vs-learn-c-slash');
     await playCard('vs-shop-leave');
-    const exam = await playCard('vs-to-guild');
+    const road = await playCard('vs-to-guild');
+    expect(road.currentScene.name).toBe('街道');
+    const exam = await playCard('vs-to-exam');
     expect(exam.autoCombat).toMatchObject({ status: 'awaiting-priority' });
     expect(exam.currentScene.name).toBe('冒険者試験');
   });
@@ -276,10 +309,18 @@ describe('村パート：依頼', () => {
     expect(await screen.findByText(/仮ルール/)).toBeInTheDocument();
   });
 
-  it('導入（条件も効果も無いカードだけ）では、仮ルールの表示を出さない', async () => {
+  it('導入に説明文を持つ遷移カード（村の広場へ向かう）があれば、シーンに入ったときの描写の仮ルールとして表示する', async () => {
     const s = await start('sc-village-always-win');
     renderAt(`/pl/sessions/${s.id}/play`);
     await card(/村の広場へ向かう/);
+    expect(screen.getByText(/シーンに入ったときの描写は仮ルール/)).toBeInTheDocument();
+  });
+
+  it('条件・効果・説明文つきの遷移カードの無い手札では、仮ルールの表示を出さない', async () => {
+    // 試験用シナリオの導入は、説明文の無い「街の冒険者ギルドへ向かう」だけ
+    const s = await start('sc-exam-always-win');
+    renderAt(`/pl/sessions/${s.id}/play`);
+    await card(/街の冒険者ギルドへ向かう/);
     expect(screen.queryByText(/仮ルール/)).not.toBeInTheDocument();
   });
 });
@@ -376,6 +417,8 @@ describe('村パート：お店', () => {
     await playWhenEnabled(user, /素早い突きを習う/);
     await play(user, /お店を出る/);
     await playWhenEnabled(user, /街の冒険者ギルドへ向かう/);
+    // 街道を経て、門をくぐると試験の戦い方の設定になる
+    await play(user, /街の門をくぐる/);
     expect(await screen.findByRole('region', { name: '戦い方を決める' })).toBeInTheDocument();
     const pc = await characterOf(s);
     expect(pc.deck.filter((c) => c.tags.includes('引換')).map((c) => c.name)).toEqual([
@@ -406,11 +449,93 @@ describe('村パート：人間GMのセッションでは働かない（GM不在
     expect(await api.get<Character>('/characters/pc-mio')).toEqual(before);
   });
 
+  it('説明文を持つ遷移カードを選んでも、描写は説明文にならずシーン名だけ', async () => {
+    const after = await api.post<Session>('/sessions/ss-village-human-gm/play', {
+      cardId: 'vw-to-shop',
+    });
+    expect(after.flavor).toBe('村のお店へ進んだ。');
+  });
+
   it('プレイ画面では、使える条件で選べなくしたり、仮ルールの表示を出したりしない', async () => {
     renderAt('/pl/sessions/ss-village-human-gm/play');
     const learn = await card(/斬撃を習う/);
     expect(learn).toBeEnabled();
     expect(within(learn).queryByText(/カードが必要/)).not.toBeInTheDocument();
     expect(screen.queryByText(/仮ルール/)).not.toBeInTheDocument();
+  });
+});
+
+describe('シーンに入ったときの描写（GM不在のソロ。solo-village.md「描写」、仮ルール）', () => {
+  it('依頼へ行くと、依頼へ行くカードの説明文が描写になる', async () => {
+    const { user, s } = await atSquare();
+    await play(user, /依頼「畑を荒らす猪」/);
+    await card(/柵で畑を囲む/);
+    const after = await api.get<Session>(`/sessions/${s.id}`);
+    expect(after.flavor).toBe(descriptionOf('sc-village-always-win', 'vw-to-quest-0'));
+  });
+
+  it('説明文の無い遷移カード（依頼の中の「広場へ戻る」）では、従来どおりシーン名だけの描写', async () => {
+    const { user, s } = await atSquare();
+    await play(user, /依頼「畑を荒らす猪」/);
+    await play(user, /広場へ戻る/);
+    await card(/お店へ行く/);
+    expect((await api.get<Session>(`/sessions/${s.id}`)).flavor).toBe('村の広場へ進んだ。');
+  });
+
+  it('自動戦闘のシーンへ説明文のあるカードで進むと、説明文のあとに相手の登場の文が続く', async () => {
+    const s = await start('sc-village-always-win');
+    for (const id of ['vw-to-square', 'vw-to-quest-0', 'vw-quest-0-body', 'vw-to-shop'])
+      await api.post(`/sessions/${s.id}/play`, { cardId: id });
+    for (const id of ['vw-learn-c-slash', 'vw-shop-leave', 'vw-to-guild'])
+      await api.post(`/sessions/${s.id}/play`, { cardId: id });
+    const exam = await api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'vw-to-exam' });
+    expect(exam.flavor).toBe(
+      `${descriptionOf('sc-village-always-win', 'vw-to-exam')} 試験官が待ち構えている。戦い方（カードの優先順位）を決めよう。`,
+    );
+  });
+
+  it('自動戦闘のシーンへ説明文の無いカードで進むと、相手の登場の文だけ', async () => {
+    const s = await start('sc-exam-always-win');
+    const exam = await api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'aw-to-guild' });
+    expect(exam.flavor).toBe('試験官が待ち構えている。戦い方（カードの優先順位）を決めよう。');
+  });
+});
+
+describe('街道', () => {
+  it('手札は「辺りを眺める」と「街の門をくぐる」だけで、眺めるとその場に留まる', async () => {
+    const s = await start('sc-village-always-win');
+    for (const id of ['vw-to-square', 'vw-to-quest-0', 'vw-quest-0-body', 'vw-to-shop'])
+      await api.post(`/sessions/${s.id}/play`, { cardId: id });
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'vw-learn-c-slash' });
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'vw-shop-leave' });
+    const road = await api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'vw-to-guild' });
+    expect(road.flavor).toBe(descriptionOf('sc-village-always-win', 'vw-to-guild'));
+    expect(road.hand.map((c) => c.name)).toEqual(['辺りを眺める', '街の門をくぐる']);
+
+    const looked = await api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'vw-road-look' });
+    expect(looked.currentScene.name).toBe('街道');
+    expect(looked.flavor).toBe(descriptionOf('sc-village-always-win', 'vw-road-look'));
+    expect(looked.hand.map((c) => c.name)).toEqual(['街の門をくぐる']);
+  });
+});
+
+describe('結末の「仮ルール」表示', () => {
+  it('結末タグを持たないシナリオで GM不在のソロが終わっても、結末タグの仮ルールの表示は出ない', async () => {
+    const user = userEvent.setup();
+    const s = await start('sc-exam-always-win');
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'aw-to-guild' });
+    await api.post(`/sessions/${s.id}/auto-combat`, {
+      priority: [{ cardId: 'c-slash', when: 'always' }],
+    });
+    renderAt(`/pl/sessions/${s.id}/play`);
+    await user.click(await card(/合格の証を受け取る/));
+    expect(
+      await screen.findByRole('heading', { name: '結末「冒険者として旅立つ」' }),
+    ).toBeInTheDocument();
+    // 終了後に読むシナリオ（結末の定義）とキャラクターの応答を待ってから確かめる
+    expect((await characterOf(s)).endingTags).toEqual([]);
+    await api.get(`/scenarios/sc-exam-always-win`);
+    expect(screen.queryByText(/結末タグの即時反映は仮ルール/)).not.toBeInTheDocument();
+    expect((await characterOf(s)).endingTags).toEqual([]);
   });
 });

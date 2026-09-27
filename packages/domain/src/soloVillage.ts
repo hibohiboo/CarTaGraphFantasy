@@ -53,6 +53,24 @@ function conditionFailure(cond: CardCondition | undefined, held: CardDef[]): str
 }
 
 /**
+ * 画面に「仮ルール」と出すべきカードか（architecture.md「境界」）。成長の効果・使える条件を持つカードと、
+ * 説明文つきで次のシーンへ進むカード（シーンに入ったときの描写。solo-village.md「描写」）。
+ * 説明文を持つが次のシーンへ進まないカードは、決着済みの「GMレスセッションでの選択肢の描写」なので含めない
+ */
+export function isSoloRuleCard(card: CardDef): boolean {
+  return Boolean(card.soloEffect || card.playWhen || (card.nextNodeId && card.description));
+}
+
+/**
+ * 結末タグを重ねずに足した新しいキャラクターを返す（solo-village.md「結末タグ」、仮ルール）。入力は書き換えない。
+ * すでに持っていれば、入力と同じキャラクターを返す
+ */
+export function grantEndingTag(character: Character, tag: string): Character {
+  if (character.endingTags.includes(tag)) return character;
+  return { ...character, endingTags: [...character.endingTags, tag] };
+}
+
+/**
  * 成長の効果を適用した後のキャラクターと、描写・feed に出す文を返す。入力は書き換えない。
  * 文には達成カードを書かない（GM専用ゾーンの存在をPLに見せないため）。
  * 達成カードを場に置くのは呼び出し側の仕事。

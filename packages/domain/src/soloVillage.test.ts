@@ -7,7 +7,14 @@ import {
   deriveArchetype,
   type Session,
 } from './index';
-import { applySoloEffect, heldCards, meetsCondition, unplayableReason } from './soloVillage';
+import {
+  applySoloEffect,
+  grantEndingTag,
+  heldCards,
+  isSoloRuleCard,
+  meetsCondition,
+  unplayableReason,
+} from './soloVillage';
 
 const card = (id: string, tags: string[], extra: Partial<CardDef> = {}): CardDef => ({
   id,
@@ -247,5 +254,42 @@ describe('applySoloEffect：カードの出入り', () => {
     });
     expect(c).toEqual(snapshot);
     expect(character.cp).toEqual({ total: 5, spent: 0 });
+  });
+});
+
+describe('grantEndingTag（結末タグの即時反映。仮ルール）', () => {
+  it('持っていなければ足し、入力は書き換えない', () => {
+    const c = traveler({ endingTags: ['灯りの回廊を経験'] });
+    const next = grantEndingTag(c, '冒険者になった');
+    expect(next.endingTags).toEqual(['灯りの回廊を経験', '冒険者になった']);
+    expect(c.endingTags).toEqual(['灯りの回廊を経験']);
+  });
+  it('すでに持っていれば重ねない', () => {
+    const c = traveler({ endingTags: ['冒険者になった'] });
+    // 同じキャラクターを返す（呼び出し側は、これで「得た」と記録しないことを判断する）
+    expect(grantEndingTag(c, '冒険者になった')).toBe(c);
+  });
+});
+
+describe('isSoloRuleCard（画面に「仮ルール」と出すカードか）', () => {
+  it.each<[string, Partial<CardDef>, boolean]>([
+    ['成長の効果を持つ', { soloEffect: { raiseAbility: 'body' } }, true],
+    ['使える条件を持つ', { playWhen: { hasTags: ['攻撃'] } }, true],
+    ['説明文つきで次のシーンへ進む', { description: '門をくぐった。', nextNodeId: 'exam' }, true],
+    [
+      '説明文を持つが次のシーンへ進まない（GMレスの選択肢の描写。決着済み）',
+      { description: '辺りを見回した。' },
+      false,
+    ],
+    ['次のシーンへ進むが説明文が無い', { nextNodeId: 'exam' }, false],
+    ['空文字の説明文で次のシーンへ進む', { description: '', nextNodeId: 'exam' }, false],
+    [
+      '配る条件だけを持つ（手札に出た時点で満たしている）',
+      { dealWhen: { lacksTags: ['達成:猪'] } },
+      false,
+    ],
+    ['どれも持たない', {}, false],
+  ])('%s → %s', (_, extra, expected) => {
+    expect(isSoloRuleCard(card('x', [], { kind: 'choice', ...extra }))).toBe(expected);
   });
 });
