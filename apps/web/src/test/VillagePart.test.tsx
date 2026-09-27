@@ -532,6 +532,9 @@ describe('結末の「仮ルール」表示', () => {
     expect(
       await screen.findByRole('heading', { name: '結末「冒険者として旅立つ」' }),
     ).toBeInTheDocument();
+    // 終了後に読むシナリオ（結末の定義）とキャラクターの応答を待ってから確かめる
+    expect((await characterOf(s)).endingTags).toEqual([]);
+    await api.get(`/scenarios/sc-exam-always-win`);
     expect(screen.queryByText(/結末タグの即時反映は仮ルール/)).not.toBeInTheDocument();
     expect((await characterOf(s)).endingTags).toEqual([]);
   });

@@ -1,5 +1,5 @@
 import { type CardDef, SYSTEM_GM_ID } from '@cartagraph/domain';
-import { heldCards, unplayableReason } from '@cartagraph/domain/soloVillage';
+import { heldCards, isSoloRuleCard, unplayableReason } from '@cartagraph/domain/soloVillage';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '../../components/GameCard';
@@ -28,7 +28,7 @@ export function PlayPage() {
   const driverCharacterId =
     session.data?.participants.find((p) => p.role === 'driver')?.characterId ?? '';
   const character = useCharacter(soloGm ? driverCharacterId : '');
-  // 結末タグの即時付与（仮ルール）を示すため、GM不在のソロが終わったらシナリオの結末を読む
+  // 結末タグの即時反映（仮ルール）を示すため、GM不在のソロが終わったらシナリオの結末を読む
   const endedSolo = soloGm && session.data?.status === 'ended';
   const scenario = useScenario(endedSolo ? (session.data?.scenarioId ?? '') : '');
 
@@ -43,10 +43,8 @@ export function PlayPage() {
   // キャラクターを読み込むまでは判定せず、サーバーの 422 に任せる
   const held = character.data && heldCards(character.data, s.field);
   const reasonFor = held ? (card: CardDef) => unplayableReason(card, held) : undefined;
-  // 仮ルール（成長の効果・使える条件・シーンに入ったときの描写）に関わるカードが手札にあれば
-  // 「仮」と出す（architecture.md「境界」）
-  const usesSoloRules =
-    soloGm && s.hand.some((c) => c.soloEffect || c.playWhen || (c.nextNodeId && c.description));
+  // 仮ルールに関わるカードが手札にあれば「仮」と出す（architecture.md「境界」）
+  const usesSoloRules = soloGm && s.hand.some(isSoloRuleCard);
   const gotEndingTag = scenario.data?.endings.some(
     (e) => e.grantsTag && character.data?.endingTags.includes(e.grantsTag),
   );

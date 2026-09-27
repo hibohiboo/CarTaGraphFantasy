@@ -431,9 +431,10 @@ export const handlers = [
     const selfNarrated = card.kind === 'choice' && !transition && !script && soloGm;
     if (selfNarrated) {
       s.hand = s.hand.filter((c) => c.id !== card.id);
+      // 空文字の説明文は無いものとして扱う（遷移するときと同じ）
       s.flavor =
-        grownFlavor ??
-        card.description ??
+        grownFlavor ||
+        card.description ||
         `${driver?.characterName ?? 'ドライバー'}は「${card.name}」を試みた。`;
     } else if (card.kind === 'choice') {
       s.hand = s.hand.filter((c) => c.kind !== 'choice');
