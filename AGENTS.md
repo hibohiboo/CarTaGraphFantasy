@@ -36,7 +36,7 @@ pnpm domain:test      # Vitest（packages/domain の純粋関数）
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
 pnpm sim:auto-combat  # 自動戦闘のシミュレーションを回し docs/cartagraph/auto-combat-simulation.md を作り直す（任意。CIでは回さない）
 pnpm docs:dev         # 仕様書サイトをローカルで確認
-pnpm docs:build       # 仕様書サイトのビルド（リンク切れがあると失敗する）
+pnpm docs:build       # 仕様書サイトのビルド（リンク切れ・見出しへのリンクの食い違いがあると失敗する）
 pnpm build:pages      # docs + app をまとめてビルド（CI と同じ）
 pnpm lint             # Biome（フォーマット・import整理・lintをまとめてチェック）
 pnpm lint:fix         # 同上、安全な修正を自動適用
