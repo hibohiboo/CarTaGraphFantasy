@@ -262,6 +262,8 @@ export interface DeckNode {
    * 自動戦闘中もセッションは軽量モードのまま
    */
   autoCombat?: { enemy: AutoCombatEnemy; maxRounds: number };
+  /** 結末のノードが指す結末（Scenario.endings の id）。意味を持つのは kind === 'ending' のときだけ */
+  endingId?: string;
 }
 
 /** 結末タグの定義（成功／失敗に限らず任意の数） */

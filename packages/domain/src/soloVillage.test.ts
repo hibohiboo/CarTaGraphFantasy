@@ -7,7 +7,13 @@ import {
   deriveArchetype,
   type Session,
 } from './index';
-import { applySoloEffect, heldCards, meetsCondition, unplayableReason } from './soloVillage';
+import {
+  applySoloEffect,
+  grantEndingTag,
+  heldCards,
+  meetsCondition,
+  unplayableReason,
+} from './soloVillage';
 
 const card = (id: string, tags: string[], extra: Partial<CardDef> = {}): CardDef => ({
   id,
@@ -247,5 +253,18 @@ describe('applySoloEffect：カードの出入り', () => {
     });
     expect(c).toEqual(snapshot);
     expect(character.cp).toEqual({ total: 5, spent: 0 });
+  });
+});
+
+describe('grantEndingTag（結末タグの即時付与。仮ルール）', () => {
+  it('持っていなければ足し、入力は書き換えない', () => {
+    const c = traveler({ endingTags: ['灯りの回廊を経験'] });
+    const next = grantEndingTag(c, '冒険者になった');
+    expect(next.endingTags).toEqual(['灯りの回廊を経験', '冒険者になった']);
+    expect(c.endingTags).toEqual(['灯りの回廊を経験']);
+  });
+  it('すでに持っていれば重ねない', () => {
+    const c = traveler({ endingTags: ['冒険者になった'] });
+    expect(grantEndingTag(c, '冒険者になった').endingTags).toEqual(['冒険者になった']);
   });
 });
