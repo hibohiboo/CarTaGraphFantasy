@@ -4,4 +4,4 @@
 - [React実装フェーズ（apps/web）の状況](web-app-react-phase.md) — 詳細はdocs/architecture/web-app.mdへ移した（2026-09-16）。ここは要点とポインタのみ
 - [開発プロセスの置き場所と2ルート運用](dev-process-structure.md) — docs/processがSSOT、AGENTS.mdが入口、.claudeは呼び出し口。基盤整備計画はdocs/plans/2026-09-16-dev-process-foundation.md（順序・方針はユーザー決定済み、C1〜C2完了）
 - [lintは作業中に都度かけない](feedback-lint-cadence.md) — pre-commitフックに任せる。型検査・テストは節目で実行を継続
-- [村スタート冒険者キャンペーンの進み具合](village-campaign-progress.md) — C4まで完了（PR #9）、次はC5（アンカー修正）。酒場チュートリアルは別PBIで保留
+- [村スタート冒険者キャンペーンの進み具合](village-campaign-progress.md) — 2026-09-27完了（C1〜C5）。残りは別PBI（酒場の扱い・結末タグのカード化）
