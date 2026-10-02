@@ -14,10 +14,11 @@ import { api } from '../lib/api';
 import { scenarios } from '../mocks/fixtures';
 
 /** 村パートで得る HP・行動値（村はずれの一歩の JSON の値） */
-const soloGrowth = scenarios.find((x) => x.id === 'sc-village-start')?.soloGrowth ?? {
-  hp: NaN,
-  baseActionValue: NaN,
-};
+const soloGrowth = (() => {
+  const g = scenarios.find((x) => x.id === 'sc-village-start')?.soloGrowth;
+  if (!g) throw new Error('sc-village-start に soloGrowth がありません');
+  return g;
+})();
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -208,7 +209,8 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     const ended = await api.get<Session>(`/sessions/${s.id}`);
     expect(ended.status).toBe('ended');
     expect((await characterOf(s)).endingTags).toEqual(['冒険者になった']);
-  });
+    // 負けが続いたときのやり直し（最大20回）の分だけ、既定の5秒より長く待つ
+  }, 30_000);
 });
 
 describe('村パート：旅人から始まる', () => {

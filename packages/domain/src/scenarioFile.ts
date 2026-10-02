@@ -13,7 +13,8 @@ export function parseScenarioFile(path: string, raw: unknown): Scenario {
     throw new Error(`${path} の形が誤っている:\n${z.prettifyError(parsed.error)}`);
   }
   const scenario = parsed.data;
-  const fileId = (path.split(/[\\/]/).pop() ?? '').replace(/\.json$/, '');
+  // glob のキー（../scenarios/x.json）と Windows の絶対パス（D:\...\x.json）の両方を受ける
+  const fileId = path.replace(/^.*[\\/]/, '').replace(/\.json$/, '');
   if (scenario.id !== fileId) {
     throw new Error(`${path} のファイル名と id「${scenario.id}」が食い違っている`);
   }

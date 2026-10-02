@@ -7,6 +7,9 @@
 
 import { z } from 'zod';
 
+/** id とその参照。空文字は書けない（参照の整合の検査をすり抜けるため） */
+const idSchema = z.string().min(1);
+
 /** 探索者の能力値のキー（docs/cartagraph/exploration-check.md）。index.ts の Abilities と一致させる */
 export const abilityKeySchema = z.enum(['body', 'skill', 'mind']);
 
@@ -81,7 +84,7 @@ export const soloEffectSchema = z.strictObject({
 /** カード1枚。生成元（作者／GM／進化）に関わらず同じ構造を持つ */
 export const cardDefSchema = z.strictObject({
   $comment: comment,
-  id: z.string(),
+  id: idSchema,
   kind: cardKindSchema,
   name: z.string(),
   description: z.string().optional(),
@@ -103,7 +106,7 @@ export const cardDefSchema = z.strictObject({
   /** 自動戦闘での効果（docs/cartagraph/auto-combat.md、仮ルール）。無ければ優先順位リストに入れられない */
   combatEffect: combatEffectSchema.optional(),
   /** 効果「次のシーンへ進む」の遷移先 DeckNode.id（docs/cartagraph/play-and-field.md 基本操作8） */
-  nextNodeId: z.string().optional(),
+  nextNodeId: idSchema.optional(),
   /** 配る条件。満たさなければ手札に配らない（docs/cartagraph/solo-village.md、GM不在のソロの仮ルール） */
   dealWhen: cardConditionSchema.optional(),
   /** 使える条件。満たさなければ手札に出すが選べない（同上、仮ルール） */
@@ -149,7 +152,7 @@ export const deckNodeKindSchema = z.enum([
 
 export const deckNodeSchema = z.strictObject({
   $comment: comment,
-  id: z.string(),
+  id: idSchema,
   kind: deckNodeKindSchema,
   name: z.string(),
   /** 濃密モードを要求するシーンか */
@@ -172,12 +175,12 @@ export const deckNodeSchema = z.strictObject({
    */
   autoCombat: z.strictObject({ enemy: autoCombatEnemySchema, maxRounds: z.number() }).optional(),
   /** 結末のノードが指す結末（Scenario.endings の id）。意味を持つのは kind === 'ending' のときだけ */
-  endingId: z.string().optional(),
+  endingId: idSchema.optional(),
 });
 
 /** 結末タグの定義（成功／失敗に限らず任意の数） */
 export const endingDefSchema = z.strictObject({
-  id: z.string(),
+  id: idSchema,
   name: z.string(),
   /** 後続シナリオの前提タグとして配るタグ。無ければ単発扱い */
   grantsTag: z.string().optional(),
@@ -190,7 +193,7 @@ export const proposalHandlingSchema = z.enum(['gm-required', 'disabled', 'auto-r
 
 export const scenarioSchema = z.strictObject({
   $comment: comment,
-  id: z.string(),
+  id: idSchema,
   title: z.string(),
   authorId: z.string(),
   authorName: z.string(),
@@ -221,5 +224,6 @@ export const scenarioSchema = z.strictObject({
   endings: z.array(endingDefSchema),
   /** 共有ライブラリへの公開状態 */
   libraryStatus: z.enum(['draft', 'published']),
-  updatedAt: z.iso.datetime(),
+  /** ISO 8601 の日時。時差付き（+09:00 など）も書ける */
+  updatedAt: z.iso.datetime({ offset: true }),
 });

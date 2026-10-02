@@ -1,5 +1,5 @@
 {
-  "$comment": "村スタート冒険者キャンペーン（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。村パート（導入→村の広場⇄依頼3件・お店）→街道→冒険者試験（自動戦闘）→結末。キャラクターは旅人で始まり、依頼で能力値とHP、お店で戦闘スキルと行動値を得て、結末で結末タグを得る（docs/cartagraph/solo-village.md、仮ルール）。spaceModel が null なのは、自動戦闘が空間モデルを使わないため（docs/cartagraph/scenario-flow.md）。proposalHandling の auto-resolve は GMレスのソロ用（docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）",
+  "$comment": "村スタート冒険者キャンペーン（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。村パート（導入→村の広場⇄依頼3件・お店）→街道→冒険者試験（自動戦闘）→結末。キャラクターは旅人で始まり、依頼で能力値とHP、お店で戦闘スキルと行動値を得て、結末で結末タグを得る（docs/cartagraph/solo-village.md、仮ルール）。spaceModel が null なのは、自動戦闘が空間モデルを使わないため（docs/cartagraph/scenario-flow.md）。proposalHandling の auto-resolve は GMレスのソロ用（docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い（決着）」）",
   "id": "sc-village-start",
   "title": "村はずれの一歩",
   "authorId": "system",
@@ -22,7 +22,7 @@
       "name": "村はずれ",
       "cards": [
         {
-          "$comment": "GM不在のセッションでは、この説明文がそのまま描写として返る（handlers.ts の /play）",
+          "$comment": "GM不在のセッションでは、この説明文がそのまま描写になる（docs/cartagraph/play-and-field.md「GMレスセッションでの選択肢の描写（決着）」）",
           "id": "vs-look-around",
           "kind": "choice",
           "name": "辺りを見回す",
@@ -575,7 +575,7 @@
       ],
       "autoCombat": {
         "enemy": {
-          "$comment": "試験官。優先順位は条件を付けず、すべて「いつでも」。数値は docs/plans/2026-09-23-自動戦闘エンジン.md 3-6 のシミュレーションで選んだプレイテスト前の目安（仮ルール）。斬撃のみ／渾身の一撃→斬撃で勝率6〜7割、決着ラウンドの中央値4",
+          "$comment": "試験官。優先順位は条件を付けず、すべて「いつでも」。数値は docs/plans/2026-09-23-自動戦闘エンジン.md 3-6 のシミュレーションで選んだプレイテスト前の目安（仮ルール）。いまの勝率・決着ラウンドは docs/cartagraph/auto-combat-simulation.md（pnpm sim:auto-combat で作り直す）",
           "card": {
             "id": "en-examiner",
             "kind": "enemy",

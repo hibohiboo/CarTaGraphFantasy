@@ -193,7 +193,19 @@ describe('scenarioSchema', () => {
     expect(scenarioSchema.safeParse({ ...minimal(), soloGrowth: null }).success).toBe(false);
   });
 
+  it('id と参照（nextNodeId・endingId）は空文字だと失敗する', () => {
+    expect(failsWhen((s) => Object.assign(s, { id: '' }))).toBe(false);
+    expect(failsWhen((s) => Object.assign(s.deck[0], { id: '' }))).toBe(false);
+    expect(failsWhen((s) => Object.assign(s.deck[0].cards[0], { id: '' }))).toBe(false);
+    expect(failsWhen((s) => Object.assign(s.deck[0].cards[0], { nextNodeId: '' }))).toBe(false);
+    expect(failsWhen((s) => Object.assign(s.deck[2], { endingId: '' }))).toBe(false);
+    expect(failsWhen((s) => Object.assign(s.endings[0], { id: '' }))).toBe(false);
+  });
+
   it('updatedAt は ISO 8601 の日時なら通り、日付だけや不正な文字列なら失敗する', () => {
+    expect(
+      scenarioSchema.safeParse({ ...minimal(), updatedAt: '2026-09-30T21:00:00+09:00' }).success,
+    ).toBe(true);
     expect(
       scenarioSchema.safeParse({ ...minimal(), updatedAt: '2026-09-30T12:34:56.000Z' }).success,
     ).toBe(true);

@@ -31,6 +31,11 @@ describe('parseScenarioFile', () => {
     expect(parseScenarioFile(PATH, raw())).toEqual(raw());
   });
 
+  it('Windows の区切り（シミュレーションのスクリプトが渡す絶対パス）でも、ファイル名を id と比べる', () => {
+    expect(parseScenarioFile('D:\\repo\\scenarios\\sc-x.json', raw()).id).toBe('sc-x');
+    expect(() => parseScenarioFile('D:\\repo\\scenarios\\sc-y.json', raw())).toThrow(/sc-y\.json/);
+  });
+
   it('ファイル名と id が食い違うと、パスを含む例外を投げる', () => {
     expect(() => parseScenarioFile(PATH, raw({ id: 'sc-y' }))).toThrow(
       /scenarios\/sc-x\.json.*sc-y/s,

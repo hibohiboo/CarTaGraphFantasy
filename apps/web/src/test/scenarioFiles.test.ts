@@ -41,18 +41,16 @@ describe('scenarios/*.json の読み込み', () => {
     const ids = scenarios.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids.slice(0, 4)).toEqual(scenarioFiles.map((s) => s.id));
-    expect(ids).toEqual(
-      expect.arrayContaining([
-        'sc-draft-well',
-        'sc-village-always-win',
-        'sc-exam-always-win',
-        'sc-exam-always-lose',
-        'sc-exam-always-timeout',
-        'sc-exam-no-starter',
-        'sc-village-no-propose',
-        'sc-no-intro',
-      ]),
-    );
+    expect(ids.slice(4)).toEqual([
+      'sc-draft-well',
+      'sc-village-always-win',
+      'sc-exam-always-win',
+      'sc-exam-always-lose',
+      'sc-exam-always-timeout',
+      'sc-exam-no-starter',
+      'sc-village-no-propose',
+      'sc-no-intro',
+    ]);
   });
 });
 
@@ -78,9 +76,12 @@ describe('テスト専用の sc-village-always-win（村はずれの一歩の JS
     expect(byId('sc-village-always-win')).toEqual(expected);
   });
 
-  it('複製で元を汚さない（sc-village-start の試験官の HP は26のまま、広場にテスト用カードが無い）', () => {
+  it('複製で元を汚さない（sc-village-start の試験官の HP は JSON の値のまま、広場にテスト用カードが無い）', () => {
     const start = byId('sc-village-start');
-    expect(start.deck.find((n) => n.id === 'vs-exam')?.autoCombat?.enemy.hp).toBe(26);
+    const raw = rawFiles['../../../../scenarios/sc-village-start.json'] as typeof start;
+    const rawHp = raw.deck.find((n) => n.id === 'vs-exam')?.autoCombat?.enemy.hp;
+    expect(rawHp).toBeGreaterThan(1);
+    expect(start.deck.find((n) => n.id === 'vs-exam')?.autoCombat?.enemy.hp).toBe(rawHp);
     expect(
       start.deck.find((n) => n.id === 'vs-square')?.cards.some((c) => c.id === 'vw-lost'),
     ).toBe(false);
