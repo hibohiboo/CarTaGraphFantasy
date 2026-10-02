@@ -72,8 +72,14 @@ const nowIso = () => new Date().toISOString();
 const notFound = (what: string) =>
   HttpResponse.json({ message: `${what} が見つかりません` }, { status: 404 });
 
-/** 選択肢カードをプレイしたときの卓上の変化（シナリオ側の「効果」の代わりに簡易スクリプトで表現） */
-const playScript: Record<string, { flavor: string; addChoices?: CardDef[]; reveal?: string }> = {
+/**
+ * 選択肢カードをプレイしたときの卓上の変化（シナリオ側の「効果」の代わりに簡易スクリプトで表現）。
+ * キーは scenarios/sc-gray-mansion.json のカード id（docs/architecture/known-issues.md）。テストのために公開
+ */
+export const playScript: Record<
+  string,
+  { flavor: string; addChoices?: CardDef[]; reveal?: string }
+> = {
   'ch-open': {
     flavor: '扉が軋みながら開いた。冷たい空気とともに、書架の影が見える。',
     addChoices: [

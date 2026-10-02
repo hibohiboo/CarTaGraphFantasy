@@ -1,0 +1,39 @@
+{
+  "id": "sc-corridor-after",
+  "title": "灯りの回廊・後日談",
+  "authorId": "u-kotone",
+  "authorName": "琴音",
+  "summary": "「灯りの回廊」を経験したPCだけが辿れる短い後日談。",
+  "referenceTags": [],
+  "prerequisiteTags": ["灯りの回廊を経験"],
+  "partySize": {
+    "min": 1,
+    "max": 3
+  },
+  "spaceModel": null,
+  "recommendedCp": 2,
+  "baseCp": 2,
+  "proposalHandling": "gm-required",
+  "deck": [
+    {
+      "id": "a-intro",
+      "kind": "intro",
+      "name": "再び回廊へ",
+      "cards": []
+    },
+    {
+      "id": "a-end",
+      "kind": "ending",
+      "name": "結末",
+      "cards": []
+    }
+  ],
+  "endings": [
+    {
+      "id": "a-e1",
+      "name": "灯りを守った結末"
+    }
+  ],
+  "libraryStatus": "published",
+  "updatedAt": "2026-09-13T00:00:00.000Z"
+}

@@ -5,14 +5,13 @@ import type {
   CardDef,
   Character,
   CurrentUser,
-  DeckNode,
-  EndingDef,
   LibraryEntry,
   PriorityEntry,
   Recruitment,
   Scenario,
   Session,
 } from '@cartagraph/domain';
+import { scenarioFiles } from './scenarioFiles';
 
 const now = Date.now();
 const ago = (hours: number) => new Date(now - hours * 3600_000).toISOString();
@@ -319,7 +318,7 @@ const examinerActions = [
   enemyAttack('ea-feint', '牽制', 3, { count: 1, sides: 3, bonus: 0 }),
 ];
 
-const examiner: AutoCombatEnemy = {
+export const examiner: AutoCombatEnemy = {
   card: examinerCard,
   hp: 26,
   baseActionValue: 9,
@@ -339,10 +338,6 @@ function examScenario(o: {
   maxRounds?: number;
   starter?: Scenario['soloStarter'];
   introCards?: CardDef[];
-  /** 「合格の証を受け取る」の説明文（GM不在のソロでは結末の描写になる） */
-  acceptDescription?: string;
-  /** 結末のノードが指す結末（docs/cartagraph/solo-village.md「結末タグ」） */
-  ending?: EndingDef;
 }): Scenario {
   const p = o.prefix;
   return {
@@ -386,7 +381,6 @@ function examScenario(o: {
             id: `${p}-accept`,
             kind: 'choice',
             name: '合格の証を受け取る',
-            description: o.acceptDescription,
             tags: [],
             nextNodeId: `${p}-end`,
           },
@@ -398,413 +392,44 @@ function examScenario(o: {
         kind: 'ending',
         name: '冒険者として旅立つ',
         cards: [],
-        endingId: o.ending?.id,
       },
     ],
-    endings: o.ending ? [o.ending] : [],
+    endings: [],
     libraryStatus: 'draft',
     updatedAt: ago(0),
   };
 }
 
-// ---------- 村パート（docs/cartagraph/solo-village.md、GM不在のソロの仮ルール） ----------
-
-/** 村パートで得る HP（探索者になったとき）と行動値（冒険者になったとき） */
-export const soloGrowth: NonNullable<Scenario['soloGrowth']> = { hp: 20, baseActionValue: 10 };
-
-/** お店で習える戦闘スキル */
-const shopSkills = [cards.slash, cards.heavyBlow, cards.quickThrust, cards.firstAid];
-
-/** 依頼1件の定義。解決方法は体・技・心の順に [名前, 解決の描写] */
-interface Quest {
-  key: string;
-  name: string;
-  from: string;
-  /** 依頼へ向かうときの描写（依頼人の困りごと） */
-  request: string;
-  achievementName: string;
-  solutions: [string, string][];
-}
-
-const quests: Quest[] = [
-  {
-    key: '猪',
-    name: '畑を荒らす猪',
-    from: '農家のおばさん',
-    request:
-      '畑の脇で、農家のおばさんが荒らされた畝を前にため息をついている。「夜ごと猪が出て、芋を掘り返していくんだよ」',
-    achievementName: '猪の件を片づけた',
-    solutions: [
-      ['柵で畑を囲む', '杭を打ち、柵で畑をぐるりと囲んだ。これで猪も入ってこられない。'],
-      ['罠を仕掛ける', '獣道に括り罠を仕掛けた。翌朝、猪は罠を嫌って山へ帰っていった。'],
-      [
-        '山の番人に猪の通り道を聞く',
-        '山の番人から猪の通り道を聞き出し、そこに鳴子を吊るした。猪は畑に近寄らなくなった。',
-      ],
-    ],
-  },
-  {
-    key: '水車',
-    name: '壊れた水車',
-    from: '粉ひきの親方',
-    request:
-      '川べりの粉ひき小屋で、水車が軋んだまま止まっている。親方が腕を組んで唸っている。「軸がずれちまって、粉がひけねえ」',
-    achievementName: '水車の件を片づけた',
-    solutions: [
-      [
-        '水の中で軸を押し戻す',
-        '冷たい川に入り、ずれた軸を力ずくで押し戻した。水車がまた回りはじめた。',
-      ],
-      [
-        '歯車を組み直す',
-        '欠けた歯車を外し、予備の歯車に組み直した。水車は前より静かに回っている。',
-      ],
-      [
-        '親方の昔話から直し方を思い出させる',
-        '若いころの話に耳を傾けるうち、親方は昔の直し方を思い出した。二人で水車を直した。',
-      ],
-    ],
-  },
-  {
-    key: '子ヤギ',
-    name: '迷子の子ヤギ',
-    from: '村長',
-    request:
-      '村長の家の前で、村長の孫が泣きじゃくっている。可愛がっていた子ヤギが、柵を抜けて丘の方へ行ったきり戻らないという。',
-    achievementName: '子ヤギの件を片づけた',
-    solutions: [
-      ['崖の下まで降りて抱えて戻る', '崖の下で震えていた子ヤギを抱え、岩場をよじ登って戻った。'],
-      ['足跡をたどる', 'ぬかるみに残った小さな足跡をたどり、茂みの奥で子ヤギを見つけた。'],
-      [
-        '泣いている孫を落ち着かせ、ヤギの好物を聞き出す',
-        '村長の孫をなだめて好物を聞き出し、クローバーの束で子ヤギを呼び戻した。',
-      ],
-    ],
-  },
-];
-
-const ABILITY_ORDER = ['body', 'skill', 'mind'] as const;
-
-/** 依頼のノード：解決方法3枚（能力値＋1・引換カード・達成カードを得て広場へ戻る）と「広場へ戻る」 */
-function questNode(p: string, q: Quest, index: number): DeckNode {
-  const square = `${p}-square`;
-  return {
-    id: `${p}-quest-${index}`,
-    kind: 'scene',
-    name: `${q.name}（${q.from}の依頼）`,
-    cards: [
-      ...q.solutions.map(
-        ([name, description], i): CardDef => ({
-          id: `${p}-quest-${index}-${ABILITY_ORDER[i]}`,
-          kind: 'choice',
-          name,
-          description,
-          tags: [],
-          nextNodeId: square,
-          soloEffect: {
-            raiseAbility: ABILITY_ORDER[i],
-            // 引換カード（「〇〇からの報酬」。character-growth.md の報酬カードとは別物）
-            gainCards: [
-              {
-                id: `c-voucher-${index}`,
-                kind: 'item',
-                name: `${q.from}からの報酬`,
-                description: 'お店で戦闘スキル1つと交換できる',
-                tags: ['引換'],
-              },
-            ],
-            achievement: {
-              id: `${p}-ach-${index}`,
-              kind: 'info',
-              name: q.achievementName,
-              tags: ['達成', `達成:${q.key}`],
-            },
-          },
-        }),
-      ),
-      {
-        id: `${p}-quest-${index}-back`,
-        kind: 'choice',
-        name: '広場へ戻る',
-        tags: [],
-        nextNodeId: square,
-      },
-    ],
-  };
-}
-
-/** お店のノード：習うカード（引換カード1枚と交換。習ったスキルは並ばない）と「お店を出る」 */
-function shopNode(p: string): DeckNode {
-  return {
-    id: `${p}-shop`,
-    kind: 'scene',
-    name: '村のお店',
-    cards: [
-      ...shopSkills.map(
-        (skill): CardDef => ({
-          id: `${p}-learn-${skill.id}`,
-          kind: 'choice',
-          name: `${skill.name}を習う`,
-          description: `店主の手ほどきで「${skill.name}」を身につけた。`,
-          tags: [],
-          dealWhen: { lacksCards: [skill.id] },
-          playWhen: { hasTags: ['引換'] },
-          soloEffect: { consumeTag: '引換', gainCards: [skill] },
-        }),
-      ),
-      {
-        id: `${p}-shop-leave`,
-        kind: 'choice',
-        name: 'お店を出る',
-        description: '店主に礼を言って、村の広場へ戻った。',
-        tags: [],
-        nextNodeId: `${p}-square`,
-      },
-    ],
-  };
-}
-
 /**
- * 村パート（導入→村の広場⇄依頼3件・お店）→街道→冒険者試験→結末 のGMレスのソロ用シナリオを作る。
- * キャラクターは旅人で始まり、依頼で能力値とHP、お店で戦闘スキルと行動値を得て、結末で結末タグを得る。
- * 試験・結末のノードと共通の設定は examScenario() のもの（合格の証の説明文と結末を与える）を使う
+ * テスト専用の sc-village-always-win。村はずれの一歩の JSON を深く複製し（元を汚さない）、id・題名・概要と
+ * 試験官の HP を差し替え、広場にテスト用カードを足す。ノード・カードの id は vs- のまま
  */
-function villageScenario(o: {
-  id: string;
-  prefix: string;
-  title: string;
-  summary: string;
-  enemy: AutoCombatEnemy;
-  squareCards?: CardDef[];
-}): Scenario {
-  const p = o.prefix;
-  const square = `${p}-square`;
-  const base = examScenario({
-    ...o,
-    acceptDescription:
-      'ギルドマスターが、真新しい冒険者の証を手渡してくれた。「今日からお前も冒険者だ。村の皆にも胸を張れ」',
-    ending: { id: `${p}-e-adventurer`, name: '冒険者として旅立つ', grantsTag: '冒険者になった' },
+function villageAlwaysWin(): Scenario {
+  const base = scenarioFiles.find((s) => s.id === 'sc-village-start');
+  if (!base) throw new Error('scenarios/sc-village-start.json がありません');
+  const s = structuredClone(base);
+  s.id = 'sc-village-always-win';
+  s.title = '（テスト用）必ず合格する村はずれ';
+  s.summary = 'テスト専用シナリオ。';
+  const exam = s.deck.find((n) => n.id === 'vs-exam');
+  const square = s.deck.find((n) => n.id === 'vs-square');
+  if (!exam?.autoCombat || !square) throw new Error('村はずれの一歩に試験か広場がありません');
+  exam.autoCombat.enemy.hp = 1;
+  // 成長の効果を持ち、シナリオに無いノードを指す選択肢（効果と遷移をまとめて失敗させる確認用）
+  square.cards.push({
+    id: 'vw-lost',
+    kind: 'choice',
+    name: '（テスト用）迷い道',
+    tags: [],
+    nextNodeId: 'vw-nowhere',
+    soloEffect: { raiseAbility: 'mind' },
   });
-  const examAndEnding = base.deck.filter((n) => n.id !== `${p}-intro`);
-  return {
-    ...base,
-    referenceTags: ['体・技・心を参照', 'HPを参照', '戦闘スキルを参照'],
-    soloGrowth,
-    deck: [
-      {
-        id: `${p}-intro`,
-        kind: 'intro',
-        name: '村はずれ',
-        cards: [
-          {
-            id: `${p}-look-around`,
-            kind: 'choice',
-            name: '辺りを見回す',
-            // GM不在のセッションでは、この説明文がそのまま描写として返る（handlers.ts の /play）
-            description:
-              '朝もやの向こうに、畑仕事に出る村人たちと、街へ続く一本道が見える。道の先に冒険者ギルドがあるはずだ。',
-            tags: [],
-          },
-          {
-            id: `${p}-to-square`,
-            kind: 'choice',
-            name: '村の広場へ向かう',
-            description:
-              '村の広場では、井戸端で村人たちが話し込んでいる。困りごとを抱えた顔がいくつか見える。',
-            tags: [],
-            nextNodeId: square,
-          },
-        ],
-      },
-      {
-        id: square,
-        kind: 'scene',
-        name: '村の広場',
-        cards: [
-          ...quests.map(
-            (q, i): CardDef => ({
-              id: `${p}-to-quest-${i}`,
-              kind: 'choice',
-              name: `依頼「${q.name}」`,
-              description: q.request,
-              tags: [],
-              nextNodeId: `${p}-quest-${i}`,
-              dealWhen: { lacksTags: [`達成:${q.key}`] },
-            }),
-          ),
-          {
-            id: `${p}-to-shop`,
-            kind: 'choice',
-            name: 'お店へ行く',
-            description:
-              '雑貨と古い武具が並ぶ村のお店。店主が「依頼の礼の品を持ってくれば、技を一つ教えてやろう」と笑う。',
-            tags: [],
-            nextNodeId: `${p}-shop`,
-          },
-          {
-            id: `${p}-to-guild`,
-            kind: 'choice',
-            name: '街の冒険者ギルドへ向かう',
-            description:
-              '村人たちに見送られ、村はずれの一本道を歩き出した。振り返ると、村の屋根が朝日に光っている。',
-            tags: [],
-            nextNodeId: `${p}-road`,
-            // 街道から村へは戻れず、その先の試験は攻撃の手段が無いと勝てないため、村を出る前に止める。
-            // 依頼で HP、お店で行動値を得るので、攻撃のスキルがあれば戦える（solo-village.md「配る条件・使える条件」）
-            playWhen: { hasTags: ['攻撃'] },
-          },
-          ...(o.squareCards ?? []),
-        ],
-      },
-      // 街道：村から街へ出る区切り。村へ戻る選択肢は置かない（docs/plans/2026-09-27-街道と結末タグ.md）
-      {
-        id: `${p}-road`,
-        kind: 'scene',
-        name: '街道',
-        cards: [
-          {
-            id: `${p}-road-look`,
-            kind: 'choice',
-            name: '辺りを眺める',
-            description:
-              '街道の両側に麦畑が広がり、遠くに街の城壁がかすんで見える。荷馬車がゆっくりと追い越していった。',
-            tags: [],
-          },
-          {
-            id: `${p}-to-exam`,
-            kind: 'choice',
-            name: '街の門をくぐる',
-            description:
-              '街の門をくぐり、冒険者ギルドの扉を叩いた。受付に名を告げると、裏手の試験場へ通された。',
-            tags: [],
-            nextNodeId: `${p}-exam`,
-          },
-        ],
-      },
-      ...quests.map((q, i) => questNode(p, q, i)),
-      shopNode(p),
-      ...examAndEnding,
-    ],
-  };
+  return s;
 }
 
 export const scenarios: Scenario[] = [
-  {
-    id: 'sc-gray-mansion',
-    title: '灰色館の一夜',
-    authorId: 'u-kotone',
-    authorName: '琴音',
-    summary: '嵐の夜、灰色の館に迷い込んだ一行。地下回廊の奥の扉の向こうに、館の秘密が眠っている。',
-    referenceTags: ['体・技・心を参照', 'HPを参照'],
-    prerequisiteTags: [],
-    partySize: { min: 2, max: 4 },
-    spaceModel: null,
-    recommendedCp: 3,
-    baseCp: 3,
-    proposalHandling: 'gm-required',
-    deck: [
-      {
-        id: 'd-intro',
-        kind: 'intro',
-        name: '灰色館へ到着',
-        cards: [{ id: 'loc-gate', kind: 'location', name: '館の正門', tags: [] }],
-      },
-      {
-        id: 'd-s1',
-        kind: 'scene',
-        name: '3-1 地下回廊',
-        cards: [{ id: 'loc-corridor', kind: 'location', name: '地下回廊', tags: [] }],
-      },
-      {
-        id: 'd-s2',
-        kind: 'scene',
-        name: '3-2 奥の扉',
-        cards: [
-          { id: 'loc-door', kind: 'location', name: '奥の扉', tags: [] },
-          openDoor,
-          inspectDoor,
-          goBack,
-          { id: 'info-letter', kind: 'info', name: '何かが書かれた紙', tags: [], faceDown: true },
-        ],
-      },
-      {
-        id: 'd-s3',
-        kind: 'scene',
-        name: '3-3 隠し書庫',
-        cards: [{ id: 'loc-library', kind: 'location', name: '隠し書庫', tags: [] }],
-      },
-      {
-        id: 'd-npc',
-        kind: 'npc',
-        name: '館の老従者',
-        cards: [
-          { id: 'npc-butler', kind: 'npc', name: '館の老従者', tags: ['正体は裏'], faceDown: true },
-        ],
-      },
-      { id: 'd-end', kind: 'ending', name: '結末', cards: [] },
-    ],
-    endings: [
-      { id: 'e1', name: '扉を壊して真相にたどり着いた結末', grantsTag: '館の秘密を知る' },
-      { id: 'e2', name: '扉を開けず引き返した結末', grantsTag: '館に未練を残す' },
-      { id: 'e3', name: '老従者と和解した結末' },
-    ],
-    libraryStatus: 'published',
-    updatedAt: ago(24 * 3),
-  },
-  {
-    id: 'sc-galleon',
-    title: '鉄鎖のガレオン船',
-    authorId: 'u-me',
-    authorName: 'ユウ',
-    summary: '鎖で繋がれた幽霊船を舞台にした冒険者向けシナリオ。甲板での戦闘を含む。',
-    referenceTags: ['体・技・心を参照', 'HPを参照', '戦闘スキルを参照'],
-    prerequisiteTags: ['航海の心得', '戦闘スキル'],
-    partySize: { min: 3, max: 5 },
-    spaceModel: '2d',
-    recommendedCp: 5,
-    baseCp: 4,
-    proposalHandling: 'gm-required',
-    deck: [
-      { id: 'g-intro', kind: 'intro', name: '港の酒場', cards: [] },
-      { id: 'g-s1', kind: 'scene', name: '1 鎖の桟橋', cards: [] },
-      {
-        id: 'g-s2',
-        kind: 'scene',
-        name: '2 甲板の戦い',
-        dense: true,
-        cards: [{ id: 'en-ghost', kind: 'enemy', name: '鎖の亡霊', tags: ['弱点未判明'] }],
-      },
-      { id: 'g-s3', kind: 'scene', name: '3 船長室', cards: [] },
-      { id: 'g-end', kind: 'ending', name: '結末', cards: [] },
-    ],
-    endings: [
-      { id: 'g-e1', name: '船を解き放った結末', grantsTag: '鎖を断った者' },
-      { id: 'g-e2', name: '船と共に沈んだ結末' },
-    ],
-    libraryStatus: 'published',
-    updatedAt: ago(24 * 10),
-  },
-  {
-    id: 'sc-corridor-after',
-    title: '灯りの回廊・後日談',
-    authorId: 'u-kotone',
-    authorName: '琴音',
-    summary: '「灯りの回廊」を経験したPCだけが辿れる短い後日談。',
-    referenceTags: [],
-    prerequisiteTags: ['灯りの回廊を経験'],
-    partySize: { min: 1, max: 3 },
-    spaceModel: null,
-    recommendedCp: 2,
-    baseCp: 2,
-    proposalHandling: 'gm-required',
-    deck: [
-      { id: 'a-intro', kind: 'intro', name: '再び回廊へ', cards: [] },
-      { id: 'a-end', kind: 'ending', name: '結末', cards: [] },
-    ],
-    endings: [{ id: 'a-e1', name: '灯りを守った結末' }],
-    libraryStatus: 'published',
-    updatedAt: ago(24 * 20),
-  },
+  // 遊べるシナリオ（リポジトリ直下の scenarios/*.json。docs/plans/2026-10-03-シナリオのJSON管理.md）
+  ...scenarioFiles,
   {
     id: 'sc-draft-well',
     title: '涸れ井戸の底（下書き）',
@@ -823,34 +448,9 @@ export const scenarios: Scenario[] = [
     libraryStatus: 'draft',
     updatedAt: ago(5),
   },
-  // 村スタート冒険者キャンペーンのシナリオ（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。
-  // 村パート（C3）→街道→冒険者試験（自動戦闘、C2）→結末（C4）
-  villageScenario({
-    id: 'sc-village-start',
-    prefix: 'vs',
-    title: '村はずれの一歩',
-    summary: '朝もやの中、村はずれの道が街へと続いている。',
-    enemy: examiner,
-  }),
-  // ---- 村パートのテスト専用シナリオ。試験官は sc-exam-always-win と同じく必ず倒せる数値 ----
-  villageScenario({
-    id: 'sc-village-always-win',
-    prefix: 'vw',
-    title: '（テスト用）必ず合格する村はずれ',
-    summary: 'テスト専用シナリオ。',
-    enemy: { ...examiner, hp: 1 },
-    // 成長の効果を持ち、シナリオに無いノードを指す選択肢（効果と遷移をまとめて失敗させる確認用）
-    squareCards: [
-      {
-        id: 'vw-lost',
-        kind: 'choice',
-        name: '（テスト用）迷い道',
-        tags: [],
-        nextNodeId: 'vw-nowhere',
-        soloEffect: { raiseAbility: 'mind' },
-      },
-    ],
-  }),
+  // ---- 村パートのテスト専用シナリオ。村はずれの一歩（scenarios/sc-village-start.json）を複製し、
+  // 試験官を sc-exam-always-win と同じく必ず倒せる数値にする（docs/plans/2026-10-03-シナリオのJSON管理.md D4）
+  villageAlwaysWin(),
   // ---- 自動戦闘のテスト専用シナリオ。乱数の出目によらず結果が決まる数値にしてある ----
   // 必ず勝つ：試験官の行動値9 < PLの10 なのでPLが先に動き、HP1は斬撃の最小ダメージ1で倒れる
   examScenario({
@@ -1215,7 +815,7 @@ export const sessions: Session[] = [
       total: 9,
       name: '畑を荒らす猪',
       path: '畑を荒らす猪',
-      nodeId: 'vw-quest-0',
+      nodeId: 'vs-quest-0',
     },
     participants: [
       {
@@ -1230,9 +830,9 @@ export const sessions: Session[] = [
     ],
     field: { gmOnly: [], plVisible: [] },
     hand: villageCards('sc-village-always-win', [
-      'vw-quest-0-body',
-      'vw-learn-c-slash',
-      'vw-to-shop',
+      'vs-quest-0-body',
+      'vs-learn-c-slash',
+      'vs-to-shop',
     ]),
     flavor: '農家のおばさんが困り顔で畑を指さしている。',
     proposals: [],

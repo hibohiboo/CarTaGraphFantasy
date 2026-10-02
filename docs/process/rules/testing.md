@@ -4,6 +4,7 @@ paths:
   - "packages/**/*.test.*"
   - "apps/web/src/test/**"
   - "apps/web/src/mocks/**"
+  - "scenarios/**"
   - "apps/web/vite.config.ts"
   - "apps/web/e2e/**"
   - "apps/web/playwright.config.ts"
@@ -43,7 +44,8 @@ paths:
 
 ## シードデータ（MSW）
 
-- モックデータの定義は `apps/web/src/mocks/fixtures.ts` の**1箇所**に集約する。テストやページの中で独自のマジック値を作らない
+- モックデータの定義は、遊べるシナリオの `scenarios/*.json` と、それ以外（テスト専用のシナリオを含む）の `apps/web/src/mocks/fixtures.ts` の**2箇所**に限る。テストやページの中で独自のマジック値を作らない。テストでシナリオの値を使うときは、書き写さずに `fixtures.ts` の `scenarios` から引く
+- テスト専用のシナリオを遊べるシナリオから作るときは、`structuredClone` で深く複製してから差し替える（`scenarios/*.json` から読んだオブジェクトを書き換えない）
 - 各テストの後に `resetDb()` で状態を戻す（`src/test/setup.ts`）。テストは実行順に依存しない
 - 変更を伴うテストは、既存のシードを書き換えるのではなく、テストの中で操作して結果を確認し、`resetDb()` に後始末を任せる
 - 未処理のリクエストはエラーにする（`onUnhandledRequest: 'error'`）。新しい API を呼ぶなら先に `handlers.ts` へ追加する
@@ -63,7 +65,7 @@ expect(toDictionaryForm('扉を壊してみたい')).toBe('扉を壊す');
 expect(toDictionaryForm('扉を破壊する')).toBe('扉を破壊する'); // 変換不要な入力もそのまま
 ```
 
-- MSW のハンドラをテスト内で常時成功に差し替えない（`fixtures.ts` の状態を通した結合を確かめるのがページ描画テストの仕事）
+- MSW のハンドラをテスト内で常時成功に差し替えない（シードの状態を通した結合を確かめるのがページ描画テストの仕事）
 - `.only` / `.skip` を残したままコミットしない（`biome.json`の`noFocusedTests`/`noSkippedTests`がコミット前フックで機械的に検知して止める。意図的に残す場合は抑制コメントを書く）
 - 新規テストは先に Red（失敗）を確認してから実装する。最初から通ったら、実装済みか assert が弱いかを判定する
 - 既存の実装で最初から通るテスト（ガード・回帰のテストなど）は、守っている条件を一時的に外して**落ちることを確かめてから**元に戻す。別の経路で同じ結果になり、条件を消しても通ってしまうテストは何も守っていない
