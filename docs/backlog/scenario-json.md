@@ -1,10 +1,12 @@
 ---
 title: シナリオを JSON でリポジトリ管理する
 milestone: M1
-status: 進行中
+status: 完了
 summary: 遊べるシナリオ（村はずれの一歩、灰色館の一夜など）を、コードの中ではなく JSON ファイル（`scenarios/`）で管理し、アプリは MSW 経由で取得する。GM 不在のシナリオも JSON から結末まで遊べる。
 plans:
   - 2026-10-03-シナリオのJSON管理.md
+cycles:
+  - { name: シナリオの JSON 管理, status: 完了, pr: 11 }
 updated: 2026-10-03
 ---
 
