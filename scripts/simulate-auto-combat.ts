@@ -1,15 +1,14 @@
 // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）の数値バランスを確かめるシミュレーション。
-// 村スタートのシナリオ sc-village-start（apps/web/src/mocks/fixtures.ts）で村パートを終えたときの HP・行動値（soloGrowth）、
+// 村スタートのシナリオ sc-village-start（scenarios/sc-village-start.json）で村パートを終えたときの HP・行動値（soloGrowth）、
 // お店で習える戦闘スキル、試験官を使い、
 // 代表的な戦い方ごとに何千回も戦わせて、勝率と決着ラウンドを docs/cartagraph/auto-combat-simulation.md に書き出す。
 //
 // 実行は任意のタイミングで `pnpm sim:auto-combat`（CI・git フックでは回さない）。
 //   pnpm sim:auto-combat -- --runs=10000 --seed=42   回数・乱数の種を変える
-// 乱数は種つきなので、fixture の数値が同じなら何度回しても同じ表になる（差分が出たら数値が変わったということ）。
+// 乱数は種つきなので、シナリオの数値が同じなら何度回しても同じ表になる（差分が出たら数値が変わったということ）。
 
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { scenarios } from '../apps/web/src/mocks/fixtures';
 import { resolveAutoCombat } from '../packages/domain/src/autoCombat';
 import {
   type CardDef,
@@ -17,9 +16,12 @@ import {
   type HpCondition,
   type PriorityEntry,
 } from '../packages/domain/src/index';
+import { parseScenarioFile } from '../packages/domain/src/scenarioFile';
 import { findDeckNode } from '../packages/domain/src/sceneTransition';
 
 const SCENARIO_ID = 'sc-village-start';
+// import.meta.glob（apps/web の読み込み）は tsx で動かないので、ファイルを直接読んで同じ検査をかける
+const SCENARIO_PATH = resolve(`scenarios/${SCENARIO_ID}.json`);
 const EXAM_NODE_ID = 'vs-exam';
 const SHOP_NODE_ID = 'vs-shop';
 const OUTPUT = resolve('docs/cartagraph/auto-combat-simulation.md');
@@ -116,10 +118,13 @@ const strategyLabel = (rows: PriorityEntry[]) =>
 
 function main() {
   const { runs, seed } = parseArgs();
-  const scenario = scenarios.find((s) => s.id === SCENARIO_ID);
+  const scenario = parseScenarioFile(
+    SCENARIO_PATH,
+    JSON.parse(readFileSync(SCENARIO_PATH, 'utf8')),
+  );
   const growth = scenario?.soloGrowth;
-  const combat = scenario && findDeckNode(scenario.deck, EXAM_NODE_ID)?.node.autoCombat;
-  const shop = scenario && findDeckNode(scenario.deck, SHOP_NODE_ID)?.node;
+  const combat = findDeckNode(scenario.deck, EXAM_NODE_ID)?.node.autoCombat;
+  const shop = findDeckNode(scenario.deck, SHOP_NODE_ID)?.node;
   if (!growth || !combat || !shop)
     throw new Error(
       `${SCENARIO_ID} に成長の値（soloGrowth）・試験（${EXAM_NODE_ID}）・お店（${SHOP_NODE_ID}）のどれかがありません`,

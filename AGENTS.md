@@ -23,7 +23,8 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 - `docs/backlog/` … 要望（PBI）を1要望1ファイルで置く。先頭の状態・判断待ちから、トップページのダッシュボードをビルド時に組み立てる（`docs/.vitepress/*.data.ts`）
 - `docs/public/preview/` … HTML/CSS のみのUI試作。未React化の画面だけを残し、React 化したら削除する（`docs/architecture/web-app.md`「未React化の画面」）
 - `apps/web/src/` … `app/`（ルート一覧・ルーター・シェル）、`pages/`（ロール別ページ）、`components/`、`lib/`（API・クエリ）、`mocks/`（MSW）、`content/`（ルールブック要約）、`styles/`
-- `packages/domain/src/` … ドメイン型
+- `packages/domain/src/` … ドメイン型（シナリオの型は `scenarioSchema.ts` の zod スキーマが正）
+- `scenarios/` … 遊べるシナリオの JSON（1シナリオ1ファイル、`<id>.json`）。MSW が起動時に読み込んで検査する。テスト専用のシナリオと下書きのデモデータは `apps/web/src/mocks/fixtures.ts`
 - `scripts/` … ビルド補助
 - `.claude/` … Claude Code 固有の設定（agents / skills / settings）。手順の本文は `docs/process/` が正
 
@@ -43,7 +44,7 @@ pnpm lint             # Biome（フォーマット・import整理・lintをま�
 pnpm lint:fix         # 同上、安全な修正を自動適用
 ```
 
-コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。
+コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`scenarios/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオを使うテストが走る。pre-push でも走る）。
 
 lint・型検査・テスト・docsビルドは、AI にトークンを使わせず git フックで機械的に止める。
 - `.githooks/pre-commit` … ステージ済みファイルだけ `biome check --staged --write` を実行し、安全な指摘（フォーマット崩れ等）は自動修正して再ステージする。`--unsafe`が要る指摘（意図的に自動適用しない方針）だけコミットを止める
@@ -58,7 +59,7 @@ lint・型検査・テスト・docsビルドは、AI にトークンを使わせ
 | 対象 | 必ず読むルール |
 |---|---|
 | `apps/**`, `packages/**` | `docs/process/rules/architecture.md` |
-| `apps/**/*.test.*`, `apps/web/src/test/**`, `apps/web/src/mocks/**`, テストの追加・変更 | `docs/process/rules/testing.md` |
+| `apps/**/*.test.*`, `apps/web/src/test/**`, `apps/web/src/mocks/**`, `scenarios/**`, テストの追加・変更 | `docs/process/rules/testing.md` |
 | push・マージ前、レビュー実行時 | `docs/process/rules/review.md` |
 | 機能追加・振る舞いの変更（プラン作成から） | `docs/process/index.md`（開発サイクル） |
 

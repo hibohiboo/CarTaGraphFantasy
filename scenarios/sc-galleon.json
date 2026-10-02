@@ -1,0 +1,70 @@
+{
+  "id": "sc-galleon",
+  "title": "鉄鎖のガレオン船",
+  "authorId": "u-me",
+  "authorName": "ユウ",
+  "summary": "鎖で繋がれた幽霊船を舞台にした冒険者向けシナリオ。甲板での戦闘を含む。",
+  "referenceTags": ["体・技・心を参照", "HPを参照", "戦闘スキルを参照"],
+  "prerequisiteTags": ["航海の心得", "戦闘スキル"],
+  "partySize": {
+    "min": 3,
+    "max": 5
+  },
+  "spaceModel": "2d",
+  "recommendedCp": 5,
+  "baseCp": 4,
+  "proposalHandling": "gm-required",
+  "deck": [
+    {
+      "id": "g-intro",
+      "kind": "intro",
+      "name": "港の酒場",
+      "cards": []
+    },
+    {
+      "id": "g-s1",
+      "kind": "scene",
+      "name": "1 鎖の桟橋",
+      "cards": []
+    },
+    {
+      "id": "g-s2",
+      "kind": "scene",
+      "name": "2 甲板の戦い",
+      "dense": true,
+      "cards": [
+        {
+          "id": "en-ghost",
+          "kind": "enemy",
+          "name": "鎖の亡霊",
+          "tags": ["弱点未判明"]
+        }
+      ]
+    },
+    {
+      "id": "g-s3",
+      "kind": "scene",
+      "name": "3 船長室",
+      "cards": []
+    },
+    {
+      "id": "g-end",
+      "kind": "ending",
+      "name": "結末",
+      "cards": []
+    }
+  ],
+  "endings": [
+    {
+      "id": "g-e1",
+      "name": "船を解き放った結末",
+      "grantsTag": "鎖を断った者"
+    },
+    {
+      "id": "g-e2",
+      "name": "船と共に沈んだ結末"
+    }
+  ],
+  "libraryStatus": "published",
+  "updatedAt": "2026-09-23T00:00:00.000Z"
+}

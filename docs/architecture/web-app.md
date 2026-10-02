@@ -23,12 +23,23 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
    ├─ pages/     ロール別のページ（pl / gm / creator / rulebook / admin）
    ├─ content/   ルールブックの本文（docs の要約。出典リンク付き）
    ├─ lib/       api.ts（fetch ラッパー）、queries.ts（Query フック）、format.ts
-   ├─ mocks/     fixtures.ts（モックデータ）、handlers.ts（MSW ハンドラ）、browser.ts / node.ts
+   ├─ mocks/     fixtures.ts（モックデータ）、scenarioFiles.ts（scenarios/*.json の読み込み）、handlers.ts（MSW ハンドラ）、browser.ts / node.ts
    └─ styles/    tokens.css（デザイントークン）、global.css
-packages/domain/          ドメイン型（CardDef / Character / Scenario / Session など）。docs の用語をそのまま型にしたもの
+packages/domain/          ドメイン型（CardDef / Character / Scenario / Session など）。docs の用語をそのまま型にしたもの。シナリオの型は scenarioSchema.ts の zod スキーマが正
+scenarios/                遊べるシナリオの JSON（下記「シナリオの JSON」）
 scripts/copy-web-to-pages.mjs   ビルド成果物を docs の dist 配下 app/ へコピー（GitHub Pages 用）
 scripts/copy-e2e-report-to-pages.mjs   PlaywrightのHTMLレポートを docs の dist 配下 e2e-report/ へコピー（GitHub Pages 用）
 ```
+
+## シナリオの JSON
+
+遊べるシナリオ（村はずれの一歩・灰色館の一夜など）は、リポジトリ直下の `scenarios/<id>.json` に1シナリオ1ファイルで置く。将来バックエンドができたら、同じ JSON を投入データとして使う。テスト専用のシナリオと下書きのデモデータは `src/mocks/fixtures.ts` に置く。
+
+- **読み込み** — `src/mocks/scenarioFiles.ts` が `import.meta.glob` で読み、`packages/domain` の `parseScenarioFile` で検査してから `fixtures.ts` の `scenarios` に入れる。GitHub Pages のビルドにも入る。開発サーバーの起動中に新しいファイルを足したときは、再起動すると拾う（既存のファイルの編集はそのまま反映される）
+- **検査** — 形（`scenarioSchema`。知らないキーは誤り、省略可能な項目に `null` は書けない）、ファイル名と `id` の一致、参照の整合（`findScenarioRefErrors`。`nextNodeId`・`endingId`・id の重複）。誤りがあれば、アプリ（MSW）の起動とテストがファイル名つきで止まる
+- **注記** — JSON にはコメントが書けないので、なぜそのデータかの注記は `"$comment"` に書く（シナリオ・ノード・カード・自動戦闘の敵）。画面には出さない
+- **整形** — Biome が正（コミット前フックが整形する）
+- **直したら** — `pnpm web:test` を通す（ライトルート。[開発プロセス](../process/index.md)）
 
 ## ページ一覧（ロール別）
 
@@ -68,11 +79,11 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 
 ## 自動戦闘の数値シミュレーション
 
-[自動戦闘（仮ルール）](../cartagraph/auto-combat.md)の数値バランスを確かめるスクリプト（`scripts/simulate-auto-combat.ts`）。村スタートのシナリオ `sc-village-start`（`apps/web/src/mocks/fixtures.ts`）で村パートを終えたときの HP・行動値（`soloGrowth`）、お店で習える戦闘スキル、試験官の数値のまま、代表的な戦い方ごとに5,000回ずつ戦わせ、勝率と決着ラウンドの表を [シミュレーション結果](../cartagraph/auto-combat-simulation.md) に書き出す。
+[自動戦闘（仮ルール）](../cartagraph/auto-combat.md)の数値バランスを確かめるスクリプト（`scripts/simulate-auto-combat.ts`）。村スタートのシナリオ `sc-village-start`（`scenarios/sc-village-start.json`）で村パートを終えたときの HP・行動値（`soloGrowth`）、お店で習える戦闘スキル、試験官の数値のまま、代表的な戦い方ごとに5,000回ずつ戦わせ、勝率と決着ラウンドの表を [シミュレーション結果](../cartagraph/auto-combat-simulation.md) に書き出す。
 
 - **実行** — `pnpm sim:auto-combat`。回数・乱数の種は `pnpm sim:auto-combat -- --runs=10000 --seed=42` のように変えられる
 - **いつ回すか** — CI・git フックでは回さない。次のようなときに手で回し、書き出された `docs/cartagraph/auto-combat-simulation.md` も一緒にコミットする
-  - 村パートで得る HP・行動値、お店のスキル、試験官・戦闘スキルカードの数値（HP・行動値・コスト・ダイス）を fixtures で変えたとき
+  - 村パートで得る HP・行動値、お店のスキル、試験官・戦闘スキルカードの数値（HP・行動値・コスト・ダイス）を `scenarios/sc-village-start.json` で変えたとき
   - 自動戦闘のエンジン（`packages/domain/src/autoCombat.ts`）の判定を変えたとき
   - 比べる戦い方を増やしたいとき（スクリプト内の `STRATEGIES` に足す）
 - **結果の読み方** — 乱数は種つきなので、数値が同じなら何度回しても同じ表になる。回し直して表に差分が出たら、数値かエンジンが変わったということ

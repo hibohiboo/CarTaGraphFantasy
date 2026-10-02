@@ -12,3 +12,4 @@ updated: 2026-09-28
 
 - システム製作者の専用の画面は、進化のループ（M4）で作る
 - どこまでを JSON にするか（カードプール、自動戦闘の数値など）は、この要望に着手するときに詰める
+- 申し送り（2026-10-03、[シナリオを JSON でリポジトリ管理する](scenario-json.md)）：`scenarios/sc-village-start.json` は、お店で習う戦闘スキルのカードと試験官の数値を中身ごと持っていて、`apps/web/src/mocks/fixtures.ts` と重複している（[既知の問題](../architecture/known-issues.md)）。カードプールを作るときに、シナリオからは id で参照する形へ統合する

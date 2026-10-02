@@ -1,0 +1,147 @@
+{
+  "$comment": "「扉を開ける」「扉を調べる」「戻る」（ch-open・ch-inspect・ch-back）を選んだときの卓上の変化は、まだ apps/web/src/mocks/handlers.ts の playScript にある（docs/architecture/known-issues.md）",
+  "id": "sc-gray-mansion",
+  "title": "灰色館の一夜",
+  "authorId": "u-kotone",
+  "authorName": "琴音",
+  "summary": "嵐の夜、灰色の館に迷い込んだ一行。地下回廊の奥の扉の向こうに、館の秘密が眠っている。",
+  "referenceTags": ["体・技・心を参照", "HPを参照"],
+  "prerequisiteTags": [],
+  "partySize": {
+    "min": 2,
+    "max": 4
+  },
+  "spaceModel": null,
+  "recommendedCp": 3,
+  "baseCp": 3,
+  "proposalHandling": "gm-required",
+  "deck": [
+    {
+      "id": "d-intro",
+      "kind": "intro",
+      "name": "灰色館へ到着",
+      "cards": [
+        {
+          "id": "loc-gate",
+          "kind": "location",
+          "name": "館の正門",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "id": "d-s1",
+      "kind": "scene",
+      "name": "3-1 地下回廊",
+      "cards": [
+        {
+          "id": "loc-corridor",
+          "kind": "location",
+          "name": "地下回廊",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "id": "d-s2",
+      "kind": "scene",
+      "name": "3-2 奥の扉",
+      "cards": [
+        {
+          "id": "loc-door",
+          "kind": "location",
+          "name": "奥の扉",
+          "tags": []
+        },
+        {
+          "id": "ch-open",
+          "kind": "choice",
+          "name": "開ける",
+          "tags": [],
+          "check": {
+            "ability": "body",
+            "target": 8,
+            "onSuccess": "扉が軋みながら開く",
+            "onFailure": "扉は動かず、手を痛める（HP-2）"
+          }
+        },
+        {
+          "id": "ch-inspect",
+          "kind": "choice",
+          "name": "調べる",
+          "tags": [],
+          "check": {
+            "ability": "mind",
+            "target": 7,
+            "onSuccess": "扉の隙間に紙が挟まっていることに気づく",
+            "onFailure": "何も分からないまま時間が過ぎる"
+          }
+        },
+        {
+          "id": "ch-back",
+          "kind": "choice",
+          "name": "戻る",
+          "tags": []
+        },
+        {
+          "id": "info-letter",
+          "kind": "info",
+          "name": "何かが書かれた紙",
+          "tags": [],
+          "faceDown": true
+        }
+      ]
+    },
+    {
+      "id": "d-s3",
+      "kind": "scene",
+      "name": "3-3 隠し書庫",
+      "cards": [
+        {
+          "id": "loc-library",
+          "kind": "location",
+          "name": "隠し書庫",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "id": "d-npc",
+      "kind": "npc",
+      "name": "館の老従者",
+      "cards": [
+        {
+          "id": "npc-butler",
+          "kind": "npc",
+          "name": "館の老従者",
+          "tags": ["正体は裏"],
+          "faceDown": true
+        }
+      ]
+    },
+    {
+      "id": "d-end",
+      "kind": "ending",
+      "name": "結末",
+      "cards": []
+    }
+  ],
+  "endings": [
+    {
+      "id": "e1",
+      "name": "扉を壊して真相にたどり着いた結末",
+      "grantsTag": "館の秘密を知る"
+    },
+    {
+      "id": "e2",
+      "name": "扉を開けず引き返した結末",
+      "grantsTag": "館に未練を残す"
+    },
+    {
+      "id": "e3",
+      "name": "老従者と和解した結末"
+    }
+  ],
+  "libraryStatus": "published",
+  "updatedAt": "2026-09-30T00:00:00.000Z"
+}

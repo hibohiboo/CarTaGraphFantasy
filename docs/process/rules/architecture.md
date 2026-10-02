@@ -17,9 +17,10 @@ apps/web/src/
   pages/<ロール>/  ページ。1ページ1ファイル
   components/ 複数ページで共有するUI
   lib/        api.ts（fetchラッパー）、queries.ts（TanStack Query のフック）、整形・変換
-  mocks/      fixtures.ts（モックデータ＝唯一のシード）、handlers.ts（MSW ハンドラ）
+  mocks/      fixtures.ts（モックデータのシード）、scenarioFiles.ts（scenarios/*.json の読み込み）、handlers.ts（MSW ハンドラ）
   content/    ルールブック本文（docs の要約。出典リンク付き）
   styles/     tokens.css（デザイントークン）、global.css
+scenarios/    遊べるシナリオの JSON（シードの一部。packages/domain の scenarioSchema で検査する）
 ```
 
 迷ったらこの順で問う。
@@ -28,7 +29,7 @@ apps/web/src/
 2. 1つのページでしか使わない → `apps/web/src/pages/<ロール>/` の中で完結させる
 3. 複数ページで共有するUI → `components/`。ただし2ページ目が現れるまで共通化しない
 4. API へのアクセス → `lib/api.ts` と `lib/queries.ts` を経由する。ページから `fetch` を直接呼ばない
-5. モックデータの追加 → `mocks/fixtures.ts` に集約する。ページやテストの中で独自のデータを作らない
+5. モックデータの追加 → 遊べるシナリオはリポジトリ直下の `scenarios/<id>.json`、それ以外（テスト専用のシナリオを含む）は `mocks/fixtures.ts` に置く。ページやテストの中で独自のデータを作らない
 
 ## 1ファイル1責務
 

@@ -11,7 +11,14 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routeObjects } from '../app/router';
 import { api } from '../lib/api';
-import { scenarios, soloGrowth } from '../mocks/fixtures';
+import { scenarios } from '../mocks/fixtures';
+
+/** 村パートで得る HP・行動値（村はずれの一歩の JSON の値） */
+const soloGrowth = (() => {
+  const g = scenarios.find((x) => x.id === 'sc-village-start')?.soloGrowth;
+  if (!g) throw new Error('sc-village-start に soloGrowth がありません');
+  return g;
+})();
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -120,7 +127,7 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     // 結末タグを即時に付け、描写とログに出す（solo-village.md「結末タグ」、仮ルール）
     const ended = await api.get<Session>(`/sessions/${s.id}`);
     expect(ended.flavor).toBe(
-      `${descriptionOf('sc-village-always-win', 'vw-accept')} 結末タグ『冒険者になった』を得た。`,
+      `${descriptionOf('sc-village-always-win', 'vs-accept')} 結末タグ『冒険者になった』を得た。`,
     );
     expect(ended.feed.slice(0, 4).map((f) => f.text)).toEqual([
       '新人は結末タグ『冒険者になった』を得た',
@@ -166,6 +173,44 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     expect(exam.autoCombat).toMatchObject({ status: 'awaiting-priority' });
     expect(exam.currentScene.name).toBe('冒険者試験');
   });
+
+  // M1 の完成の条件5（GM 不在のシナリオを JSON から結末まで遊べる）を直接確かめる。
+  // 乱数は固定せず、scenarios/sc-village-start.json の試験官のまま自動戦闘を通す。
+  // 斬撃だけの勝率は6〜7割（docs/cartagraph/auto-combat-simulation.md）なので、負けたら設定からやり直す
+  it('本物のシナリオ（sc-village-start）で、依頼1件→お店で斬撃→試験に勝つ→結末まで、クリックだけで進める', async () => {
+    const MAX_ATTEMPTS = 20;
+    const { user, s } = await atSquare('sc-village-start');
+    await play(user, /依頼「畑を荒らす猪」/);
+    await play(user, /柵で畑を囲む/);
+    await play(user, /お店へ行く/);
+    await playWhenEnabled(user, /斬撃を習う/);
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /斬撃を習う/ })).not.toBeInTheDocument(),
+    );
+    await play(user, /お店を出る/);
+    await playWhenEnabled(user, /街の冒険者ギルドへ向かう/);
+    await play(user, /街の門をくぐる/);
+
+    const panel = await screen.findByRole('region', { name: '戦い方を決める' });
+    await user.click(within(panel).getByRole('button', { name: '「斬撃」をリストに入れる' }));
+    let won = false;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS && !won; attempt++) {
+      await user.click(within(panel).getByRole('button', { name: '戦闘を始める' }));
+      const headline = await screen.findByText(new RegExp(`^${attempt}回目：\\d+ラウンドで`));
+      won = /試験官に勝利した$/.test(headline.textContent ?? '');
+      expectNoWaitingForGm();
+    }
+    expect(won).toBe(true);
+
+    await user.click(await card(/合格の証を受け取る/));
+    expect(
+      await screen.findByRole('heading', { name: '結末「冒険者として旅立つ」' }),
+    ).toBeInTheDocument();
+    const ended = await api.get<Session>(`/sessions/${s.id}`);
+    expect(ended.status).toBe('ended');
+    expect((await characterOf(s)).endingTags).toEqual(['冒険者になった']);
+    // 負けが続いたときのやり直し（最大20回）の分だけ、既定の5秒より長く待つ
+  }, 30_000);
 });
 
 describe('村パート：旅人から始まる', () => {
@@ -184,10 +229,10 @@ describe('村パート：旅人から始まる', () => {
 
   it('攻撃のスキルが無いままギルドへ向かうと、API は使える条件の理由で 422 を返し、何も変えない', async () => {
     const s = await start('sc-village-always-win');
-    await api.post(`/sessions/${s.id}/play`, { cardId: 'vw-to-square' });
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'vs-to-square' });
     const before = await api.get<Session>(`/sessions/${s.id}`);
     await expect(
-      api.post(`/sessions/${s.id}/play`, { cardId: 'vw-to-guild' }),
+      api.post(`/sessions/${s.id}/play`, { cardId: 'vs-to-guild' }),
     ).rejects.toMatchObject({ status: 422, message: '『攻撃』のカードが必要' });
     expect(await api.get<Session>(`/sessions/${s.id}`)).toEqual(before);
   });
@@ -260,7 +305,7 @@ describe('村パート：依頼', () => {
 
     const again = await start('sc-village-always-win');
     const square = await api.post<Session>(`/sessions/${again.id}/play`, {
-      cardId: 'vw-to-square',
+      cardId: 'vs-to-square',
     });
     expect(square.hand.map((c) => c.name)).toContain('依頼「畑を荒らす猪」');
   });
@@ -281,13 +326,13 @@ describe('村パート：依頼', () => {
     await play(user, /柵で畑を囲む/);
     await card(/お店へ行く/);
     await expect(
-      api.post(`/sessions/${s.id}/play`, { cardId: 'vw-quest-0-body' }),
+      api.post(`/sessions/${s.id}/play`, { cardId: 'vs-quest-0-body' }),
     ).rejects.toMatchObject({ status: 404 });
   });
 
   it('成長の効果と遷移は一緒に失敗する（遷移先が無ければ 422 で、何も変わらない）', async () => {
     const s = await start('sc-village-always-win');
-    await api.post(`/sessions/${s.id}/play`, { cardId: 'vw-to-square' });
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'vs-to-square' });
     const before = await api.get<Session>(`/sessions/${s.id}`);
     const pcBefore = await characterOf(s);
     await expect(api.post(`/sessions/${s.id}/play`, { cardId: 'vw-lost' })).rejects.toMatchObject({
@@ -342,11 +387,11 @@ describe('村パート：お店', () => {
 
   it('引換カードが無いまま API で習おうとすると 422 で、何も変えない', async () => {
     const s = await start('sc-village-always-win');
-    await api.post(`/sessions/${s.id}/play`, { cardId: 'vw-to-square' });
-    await api.post(`/sessions/${s.id}/play`, { cardId: 'vw-to-shop' });
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'vs-to-square' });
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'vs-to-shop' });
     const before = await api.get<Session>(`/sessions/${s.id}`);
     await expect(
-      api.post(`/sessions/${s.id}/play`, { cardId: 'vw-learn-c-slash' }),
+      api.post(`/sessions/${s.id}/play`, { cardId: 'vs-learn-c-slash' }),
     ).rejects.toMatchObject({ status: 422, message: '『引換』のカードが必要' });
     expect(await api.get<Session>(`/sessions/${s.id}`)).toEqual(before);
     expect((await characterOf(s)).deck).toEqual([]);
@@ -389,7 +434,7 @@ describe('村パート：お店', () => {
     await card(/渾身の一撃を習う/);
     expect(screen.queryByRole('button', { name: /斬撃を習う/ })).not.toBeInTheDocument();
     await expect(
-      api.post(`/sessions/${s.id}/play`, { cardId: 'vw-learn-c-slash' }),
+      api.post(`/sessions/${s.id}/play`, { cardId: 'vs-learn-c-slash' }),
     ).rejects.toMatchObject({ status: 404 });
   });
 
@@ -403,7 +448,7 @@ describe('村パート：お店', () => {
     const guild = await card(/街の冒険者ギルドへ向かう/);
     await waitFor(() => expect(guild).toBeDisabled());
     await expect(
-      api.post(`/sessions/${s.id}/play`, { cardId: 'vw-to-guild' }),
+      api.post(`/sessions/${s.id}/play`, { cardId: 'vs-to-guild' }),
     ).rejects.toMatchObject({ status: 422, message: '『攻撃』のカードが必要' });
   });
 
@@ -431,7 +476,7 @@ describe('村パート：人間GMのセッションでは働かない（GM不在
   it('成長の効果を持つカードを選んでも、キャラクターも GM専用ゾーンも変わらない', async () => {
     const before = await api.get<Character>('/characters/pc-mio');
     const after = await api.post<Session>('/sessions/ss-village-human-gm/play', {
-      cardId: 'vw-quest-0-body',
+      cardId: 'vs-quest-0-body',
     });
     expect(await api.get<Character>('/characters/pc-mio')).toEqual(before);
     expect(after.field.gmOnly).toEqual([]);
@@ -443,7 +488,7 @@ describe('村パート：人間GMのセッションでは働かない（GM不在
   it('使える条件を満たさないカードも 422 にならず、成長の効果も働かない', async () => {
     const before = await api.get<Character>('/characters/pc-mio');
     const after = await api.post<Session>('/sessions/ss-village-human-gm/play', {
-      cardId: 'vw-learn-c-slash',
+      cardId: 'vs-learn-c-slash',
     });
     expect(after.flavor).toMatch(/GMの描写を待っている/);
     expect(await api.get<Character>('/characters/pc-mio')).toEqual(before);
@@ -451,7 +496,7 @@ describe('村パート：人間GMのセッションでは働かない（GM不在
 
   it('説明文を持つ遷移カードを選んでも、描写は説明文にならずシーン名だけ', async () => {
     const after = await api.post<Session>('/sessions/ss-village-human-gm/play', {
-      cardId: 'vw-to-shop',
+      cardId: 'vs-to-shop',
     });
     expect(after.flavor).toBe('村のお店へ進んだ。');
   });
@@ -471,7 +516,7 @@ describe('シーンに入ったときの描写（GM不在のソロ。solo-villag
     await play(user, /依頼「畑を荒らす猪」/);
     await card(/柵で畑を囲む/);
     const after = await api.get<Session>(`/sessions/${s.id}`);
-    expect(after.flavor).toBe(descriptionOf('sc-village-always-win', 'vw-to-quest-0'));
+    expect(after.flavor).toBe(descriptionOf('sc-village-always-win', 'vs-to-quest-0'));
   });
 
   it('説明文の無い遷移カード（依頼の中の「広場へ戻る」）では、従来どおりシーン名だけの描写', async () => {
@@ -484,13 +529,13 @@ describe('シーンに入ったときの描写（GM不在のソロ。solo-villag
 
   it('自動戦闘のシーンへ説明文のあるカードで進むと、説明文のあとに相手の登場の文が続く', async () => {
     const s = await start('sc-village-always-win');
-    for (const id of ['vw-to-square', 'vw-to-quest-0', 'vw-quest-0-body', 'vw-to-shop'])
+    for (const id of ['vs-to-square', 'vs-to-quest-0', 'vs-quest-0-body', 'vs-to-shop'])
       await api.post(`/sessions/${s.id}/play`, { cardId: id });
-    for (const id of ['vw-learn-c-slash', 'vw-shop-leave', 'vw-to-guild'])
+    for (const id of ['vs-learn-c-slash', 'vs-shop-leave', 'vs-to-guild'])
       await api.post(`/sessions/${s.id}/play`, { cardId: id });
-    const exam = await api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'vw-to-exam' });
+    const exam = await api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'vs-to-exam' });
     expect(exam.flavor).toBe(
-      `${descriptionOf('sc-village-always-win', 'vw-to-exam')} 試験官が待ち構えている。戦い方（カードの優先順位）を決めよう。`,
+      `${descriptionOf('sc-village-always-win', 'vs-to-exam')} 試験官が待ち構えている。戦い方（カードの優先順位）を決めよう。`,
     );
   });
 
@@ -504,17 +549,17 @@ describe('シーンに入ったときの描写（GM不在のソロ。solo-villag
 describe('街道', () => {
   it('手札は「辺りを眺める」と「街の門をくぐる」だけで、眺めるとその場に留まる', async () => {
     const s = await start('sc-village-always-win');
-    for (const id of ['vw-to-square', 'vw-to-quest-0', 'vw-quest-0-body', 'vw-to-shop'])
+    for (const id of ['vs-to-square', 'vs-to-quest-0', 'vs-quest-0-body', 'vs-to-shop'])
       await api.post(`/sessions/${s.id}/play`, { cardId: id });
-    await api.post(`/sessions/${s.id}/play`, { cardId: 'vw-learn-c-slash' });
-    await api.post(`/sessions/${s.id}/play`, { cardId: 'vw-shop-leave' });
-    const road = await api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'vw-to-guild' });
-    expect(road.flavor).toBe(descriptionOf('sc-village-always-win', 'vw-to-guild'));
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'vs-learn-c-slash' });
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'vs-shop-leave' });
+    const road = await api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'vs-to-guild' });
+    expect(road.flavor).toBe(descriptionOf('sc-village-always-win', 'vs-to-guild'));
     expect(road.hand.map((c) => c.name)).toEqual(['辺りを眺める', '街の門をくぐる']);
 
-    const looked = await api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'vw-road-look' });
+    const looked = await api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'vs-road-look' });
     expect(looked.currentScene.name).toBe('街道');
-    expect(looked.flavor).toBe(descriptionOf('sc-village-always-win', 'vw-road-look'));
+    expect(looked.flavor).toBe(descriptionOf('sc-village-always-win', 'vs-road-look'));
     expect(looked.hand.map((c) => c.name)).toEqual(['街の門をくぐる']);
   });
 });

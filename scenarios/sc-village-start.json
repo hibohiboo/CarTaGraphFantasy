@@ -1,0 +1,651 @@
+{
+  "$comment": "村スタート冒険者キャンペーン（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）。村パート（導入→村の広場⇄依頼3件・お店）→街道→冒険者試験（自動戦闘）→結末。キャラクターは旅人で始まり、依頼で能力値とHP、お店で戦闘スキルと行動値を得て、結末で結末タグを得る（docs/cartagraph/solo-village.md、仮ルール）。spaceModel が null なのは、自動戦闘が空間モデルを使わないため（docs/cartagraph/scenario-flow.md）。proposalHandling の auto-resolve は GMレスのソロ用（docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い（決着）」）",
+  "id": "sc-village-start",
+  "title": "村はずれの一歩",
+  "authorId": "system",
+  "authorName": "システム",
+  "summary": "朝もやの中、村はずれの道が街へと続いている。",
+  "referenceTags": ["体・技・心を参照", "HPを参照", "戦闘スキルを参照"],
+  "prerequisiteTags": [],
+  "partySize": {
+    "min": 1,
+    "max": 1
+  },
+  "spaceModel": null,
+  "recommendedCp": 0,
+  "baseCp": 0,
+  "proposalHandling": "auto-resolve",
+  "deck": [
+    {
+      "id": "vs-intro",
+      "kind": "intro",
+      "name": "村はずれ",
+      "cards": [
+        {
+          "$comment": "GM不在のセッションでは、この説明文がそのまま描写になる（docs/cartagraph/play-and-field.md「GMレスセッションでの選択肢の描写（決着）」）",
+          "id": "vs-look-around",
+          "kind": "choice",
+          "name": "辺りを見回す",
+          "description": "朝もやの向こうに、畑仕事に出る村人たちと、街へ続く一本道が見える。道の先に冒険者ギルドがあるはずだ。",
+          "tags": []
+        },
+        {
+          "id": "vs-to-square",
+          "kind": "choice",
+          "name": "村の広場へ向かう",
+          "description": "村の広場では、井戸端で村人たちが話し込んでいる。困りごとを抱えた顔がいくつか見える。",
+          "tags": [],
+          "nextNodeId": "vs-square"
+        }
+      ]
+    },
+    {
+      "id": "vs-square",
+      "kind": "scene",
+      "name": "村の広場",
+      "cards": [
+        {
+          "id": "vs-to-quest-0",
+          "kind": "choice",
+          "name": "依頼「畑を荒らす猪」",
+          "description": "畑の脇で、農家のおばさんが荒らされた畝を前にため息をついている。「夜ごと猪が出て、芋を掘り返していくんだよ」",
+          "tags": [],
+          "nextNodeId": "vs-quest-0",
+          "dealWhen": {
+            "lacksTags": ["達成:猪"]
+          }
+        },
+        {
+          "id": "vs-to-quest-1",
+          "kind": "choice",
+          "name": "依頼「壊れた水車」",
+          "description": "川べりの粉ひき小屋で、水車が軋んだまま止まっている。親方が腕を組んで唸っている。「軸がずれちまって、粉がひけねえ」",
+          "tags": [],
+          "nextNodeId": "vs-quest-1",
+          "dealWhen": {
+            "lacksTags": ["達成:水車"]
+          }
+        },
+        {
+          "id": "vs-to-quest-2",
+          "kind": "choice",
+          "name": "依頼「迷子の子ヤギ」",
+          "description": "村長の家の前で、村長の孫が泣きじゃくっている。可愛がっていた子ヤギが、柵を抜けて丘の方へ行ったきり戻らないという。",
+          "tags": [],
+          "nextNodeId": "vs-quest-2",
+          "dealWhen": {
+            "lacksTags": ["達成:子ヤギ"]
+          }
+        },
+        {
+          "id": "vs-to-shop",
+          "kind": "choice",
+          "name": "お店へ行く",
+          "description": "雑貨と古い武具が並ぶ村のお店。店主が「依頼の礼の品を持ってくれば、技を一つ教えてやろう」と笑う。",
+          "tags": [],
+          "nextNodeId": "vs-shop"
+        },
+        {
+          "$comment": "街道から村へは戻れず、その先の試験は攻撃の手段が無いと勝てないため、村を出る前に止める（playWhen）。依頼で HP、お店で行動値を得るので、攻撃のスキルがあれば戦える（docs/cartagraph/solo-village.md「配る条件・使える条件」）",
+          "id": "vs-to-guild",
+          "kind": "choice",
+          "name": "街の冒険者ギルドへ向かう",
+          "description": "村人たちに見送られ、村はずれの一本道を歩き出した。振り返ると、村の屋根が朝日に光っている。",
+          "tags": [],
+          "nextNodeId": "vs-road",
+          "playWhen": {
+            "hasTags": ["攻撃"]
+          }
+        }
+      ]
+    },
+    {
+      "$comment": "街道：村から街へ出る区切り。村へ戻る選択肢は置かない（docs/plans/2026-09-27-街道と結末タグ.md）",
+      "id": "vs-road",
+      "kind": "scene",
+      "name": "街道",
+      "cards": [
+        {
+          "id": "vs-road-look",
+          "kind": "choice",
+          "name": "辺りを眺める",
+          "description": "街道の両側に麦畑が広がり、遠くに街の城壁がかすんで見える。荷馬車がゆっくりと追い越していった。",
+          "tags": []
+        },
+        {
+          "id": "vs-to-exam",
+          "kind": "choice",
+          "name": "街の門をくぐる",
+          "description": "街の門をくぐり、冒険者ギルドの扉を叩いた。受付に名を告げると、裏手の試験場へ通された。",
+          "tags": [],
+          "nextNodeId": "vs-exam"
+        }
+      ]
+    },
+    {
+      "$comment": "依頼のノード。解決方法3枚は体・技・心の順で、選ぶと能力値＋1・引換カード・達成カードを得て広場へ戻る。引換カード（「〇〇からの報酬」）は character-growth.md の報酬カードとは別物",
+      "id": "vs-quest-0",
+      "kind": "scene",
+      "name": "畑を荒らす猪（農家のおばさんの依頼）",
+      "cards": [
+        {
+          "id": "vs-quest-0-body",
+          "kind": "choice",
+          "name": "柵で畑を囲む",
+          "description": "杭を打ち、柵で畑をぐるりと囲んだ。これで猪も入ってこられない。",
+          "tags": [],
+          "nextNodeId": "vs-square",
+          "soloEffect": {
+            "raiseAbility": "body",
+            "gainCards": [
+              {
+                "id": "c-voucher-0",
+                "kind": "item",
+                "name": "農家のおばさんからの報酬",
+                "description": "お店で戦闘スキル1つと交換できる",
+                "tags": ["引換"]
+              }
+            ],
+            "achievement": {
+              "id": "vs-ach-0",
+              "kind": "info",
+              "name": "猪の件を片づけた",
+              "tags": ["達成", "達成:猪"]
+            }
+          }
+        },
+        {
+          "id": "vs-quest-0-skill",
+          "kind": "choice",
+          "name": "罠を仕掛ける",
+          "description": "獣道に括り罠を仕掛けた。翌朝、猪は罠を嫌って山へ帰っていった。",
+          "tags": [],
+          "nextNodeId": "vs-square",
+          "soloEffect": {
+            "raiseAbility": "skill",
+            "gainCards": [
+              {
+                "id": "c-voucher-0",
+                "kind": "item",
+                "name": "農家のおばさんからの報酬",
+                "description": "お店で戦闘スキル1つと交換できる",
+                "tags": ["引換"]
+              }
+            ],
+            "achievement": {
+              "id": "vs-ach-0",
+              "kind": "info",
+              "name": "猪の件を片づけた",
+              "tags": ["達成", "達成:猪"]
+            }
+          }
+        },
+        {
+          "id": "vs-quest-0-mind",
+          "kind": "choice",
+          "name": "山の番人に猪の通り道を聞く",
+          "description": "山の番人から猪の通り道を聞き出し、そこに鳴子を吊るした。猪は畑に近寄らなくなった。",
+          "tags": [],
+          "nextNodeId": "vs-square",
+          "soloEffect": {
+            "raiseAbility": "mind",
+            "gainCards": [
+              {
+                "id": "c-voucher-0",
+                "kind": "item",
+                "name": "農家のおばさんからの報酬",
+                "description": "お店で戦闘スキル1つと交換できる",
+                "tags": ["引換"]
+              }
+            ],
+            "achievement": {
+              "id": "vs-ach-0",
+              "kind": "info",
+              "name": "猪の件を片づけた",
+              "tags": ["達成", "達成:猪"]
+            }
+          }
+        },
+        {
+          "id": "vs-quest-0-back",
+          "kind": "choice",
+          "name": "広場へ戻る",
+          "tags": [],
+          "nextNodeId": "vs-square"
+        }
+      ]
+    },
+    {
+      "id": "vs-quest-1",
+      "kind": "scene",
+      "name": "壊れた水車（粉ひきの親方の依頼）",
+      "cards": [
+        {
+          "id": "vs-quest-1-body",
+          "kind": "choice",
+          "name": "水の中で軸を押し戻す",
+          "description": "冷たい川に入り、ずれた軸を力ずくで押し戻した。水車がまた回りはじめた。",
+          "tags": [],
+          "nextNodeId": "vs-square",
+          "soloEffect": {
+            "raiseAbility": "body",
+            "gainCards": [
+              {
+                "id": "c-voucher-1",
+                "kind": "item",
+                "name": "粉ひきの親方からの報酬",
+                "description": "お店で戦闘スキル1つと交換できる",
+                "tags": ["引換"]
+              }
+            ],
+            "achievement": {
+              "id": "vs-ach-1",
+              "kind": "info",
+              "name": "水車の件を片づけた",
+              "tags": ["達成", "達成:水車"]
+            }
+          }
+        },
+        {
+          "id": "vs-quest-1-skill",
+          "kind": "choice",
+          "name": "歯車を組み直す",
+          "description": "欠けた歯車を外し、予備の歯車に組み直した。水車は前より静かに回っている。",
+          "tags": [],
+          "nextNodeId": "vs-square",
+          "soloEffect": {
+            "raiseAbility": "skill",
+            "gainCards": [
+              {
+                "id": "c-voucher-1",
+                "kind": "item",
+                "name": "粉ひきの親方からの報酬",
+                "description": "お店で戦闘スキル1つと交換できる",
+                "tags": ["引換"]
+              }
+            ],
+            "achievement": {
+              "id": "vs-ach-1",
+              "kind": "info",
+              "name": "水車の件を片づけた",
+              "tags": ["達成", "達成:水車"]
+            }
+          }
+        },
+        {
+          "id": "vs-quest-1-mind",
+          "kind": "choice",
+          "name": "親方の昔話から直し方を思い出させる",
+          "description": "若いころの話に耳を傾けるうち、親方は昔の直し方を思い出した。二人で水車を直した。",
+          "tags": [],
+          "nextNodeId": "vs-square",
+          "soloEffect": {
+            "raiseAbility": "mind",
+            "gainCards": [
+              {
+                "id": "c-voucher-1",
+                "kind": "item",
+                "name": "粉ひきの親方からの報酬",
+                "description": "お店で戦闘スキル1つと交換できる",
+                "tags": ["引換"]
+              }
+            ],
+            "achievement": {
+              "id": "vs-ach-1",
+              "kind": "info",
+              "name": "水車の件を片づけた",
+              "tags": ["達成", "達成:水車"]
+            }
+          }
+        },
+        {
+          "id": "vs-quest-1-back",
+          "kind": "choice",
+          "name": "広場へ戻る",
+          "tags": [],
+          "nextNodeId": "vs-square"
+        }
+      ]
+    },
+    {
+      "id": "vs-quest-2",
+      "kind": "scene",
+      "name": "迷子の子ヤギ（村長の依頼）",
+      "cards": [
+        {
+          "id": "vs-quest-2-body",
+          "kind": "choice",
+          "name": "崖の下まで降りて抱えて戻る",
+          "description": "崖の下で震えていた子ヤギを抱え、岩場をよじ登って戻った。",
+          "tags": [],
+          "nextNodeId": "vs-square",
+          "soloEffect": {
+            "raiseAbility": "body",
+            "gainCards": [
+              {
+                "id": "c-voucher-2",
+                "kind": "item",
+                "name": "村長からの報酬",
+                "description": "お店で戦闘スキル1つと交換できる",
+                "tags": ["引換"]
+              }
+            ],
+            "achievement": {
+              "id": "vs-ach-2",
+              "kind": "info",
+              "name": "子ヤギの件を片づけた",
+              "tags": ["達成", "達成:子ヤギ"]
+            }
+          }
+        },
+        {
+          "id": "vs-quest-2-skill",
+          "kind": "choice",
+          "name": "足跡をたどる",
+          "description": "ぬかるみに残った小さな足跡をたどり、茂みの奥で子ヤギを見つけた。",
+          "tags": [],
+          "nextNodeId": "vs-square",
+          "soloEffect": {
+            "raiseAbility": "skill",
+            "gainCards": [
+              {
+                "id": "c-voucher-2",
+                "kind": "item",
+                "name": "村長からの報酬",
+                "description": "お店で戦闘スキル1つと交換できる",
+                "tags": ["引換"]
+              }
+            ],
+            "achievement": {
+              "id": "vs-ach-2",
+              "kind": "info",
+              "name": "子ヤギの件を片づけた",
+              "tags": ["達成", "達成:子ヤギ"]
+            }
+          }
+        },
+        {
+          "id": "vs-quest-2-mind",
+          "kind": "choice",
+          "name": "泣いている孫を落ち着かせ、ヤギの好物を聞き出す",
+          "description": "村長の孫をなだめて好物を聞き出し、クローバーの束で子ヤギを呼び戻した。",
+          "tags": [],
+          "nextNodeId": "vs-square",
+          "soloEffect": {
+            "raiseAbility": "mind",
+            "gainCards": [
+              {
+                "id": "c-voucher-2",
+                "kind": "item",
+                "name": "村長からの報酬",
+                "description": "お店で戦闘スキル1つと交換できる",
+                "tags": ["引換"]
+              }
+            ],
+            "achievement": {
+              "id": "vs-ach-2",
+              "kind": "info",
+              "name": "子ヤギの件を片づけた",
+              "tags": ["達成", "達成:子ヤギ"]
+            }
+          }
+        },
+        {
+          "id": "vs-quest-2-back",
+          "kind": "choice",
+          "name": "広場へ戻る",
+          "tags": [],
+          "nextNodeId": "vs-square"
+        }
+      ]
+    },
+    {
+      "$comment": "お店。習うカードは引換カード1枚と交換（playWhen・soloEffect.consumeTag）。習ったスキルは並べない（dealWhen.lacksCards）",
+      "id": "vs-shop",
+      "kind": "scene",
+      "name": "村のお店",
+      "cards": [
+        {
+          "id": "vs-learn-c-slash",
+          "kind": "choice",
+          "name": "斬撃を習う",
+          "description": "店主の手ほどきで「斬撃」を身につけた。",
+          "tags": [],
+          "dealWhen": {
+            "lacksCards": ["c-slash"]
+          },
+          "playWhen": {
+            "hasTags": ["引換"]
+          },
+          "soloEffect": {
+            "consumeTag": "引換",
+            "gainCards": [
+              {
+                "id": "c-slash",
+                "kind": "skill",
+                "name": "斬撃",
+                "description": "射程1。ダイスでダメージを決める基本攻撃",
+                "tags": ["戦闘スキル", "攻撃"],
+                "cpCost": 2,
+                "actionCost": 3,
+                "range": 1,
+                "combatEffect": {
+                  "type": "damage",
+                  "dice": {
+                    "count": 1,
+                    "sides": 4,
+                    "bonus": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "vs-learn-c-heavy-blow",
+          "kind": "choice",
+          "name": "渾身の一撃を習う",
+          "description": "店主の手ほどきで「渾身の一撃」を身につけた。",
+          "tags": [],
+          "dealWhen": {
+            "lacksCards": ["c-heavy-blow"]
+          },
+          "playWhen": {
+            "hasTags": ["引換"]
+          },
+          "soloEffect": {
+            "consumeTag": "引換",
+            "gainCards": [
+              {
+                "id": "c-heavy-blow",
+                "kind": "skill",
+                "name": "渾身の一撃",
+                "description": "射程1。コストが高いぶん大きく削る",
+                "tags": ["戦闘スキル", "攻撃"],
+                "cpCost": 3,
+                "actionCost": 6,
+                "range": 1,
+                "combatEffect": {
+                  "type": "damage",
+                  "dice": {
+                    "count": 2,
+                    "sides": 4,
+                    "bonus": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "vs-learn-c-quick-thrust",
+          "kind": "choice",
+          "name": "素早い突きを習う",
+          "description": "店主の手ほどきで「素早い突き」を身につけた。",
+          "tags": [],
+          "dealWhen": {
+            "lacksCards": ["c-quick-thrust"]
+          },
+          "playWhen": {
+            "hasTags": ["引換"]
+          },
+          "soloEffect": {
+            "consumeTag": "引換",
+            "gainCards": [
+              {
+                "id": "c-quick-thrust",
+                "kind": "skill",
+                "name": "素早い突き",
+                "description": "射程1。軽いぶん手数を稼げる",
+                "tags": ["戦闘スキル", "攻撃"],
+                "cpCost": 1,
+                "actionCost": 2,
+                "range": 1,
+                "combatEffect": {
+                  "type": "damage",
+                  "dice": {
+                    "count": 1,
+                    "sides": 2,
+                    "bonus": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "vs-learn-c-first-aid",
+          "kind": "choice",
+          "name": "応急手当を習う",
+          "description": "店主の手ほどきで「応急手当」を身につけた。",
+          "tags": [],
+          "dealWhen": {
+            "lacksCards": ["c-first-aid"]
+          },
+          "playWhen": {
+            "hasTags": ["引換"]
+          },
+          "soloEffect": {
+            "consumeTag": "引換",
+            "gainCards": [
+              {
+                "id": "c-first-aid",
+                "kind": "skill",
+                "name": "応急手当",
+                "description": "判定なしでHPを回復する",
+                "tags": ["戦闘スキル", "回復"],
+                "cpCost": 2,
+                "actionCost": 4,
+                "range": 1,
+                "combatEffect": {
+                  "type": "heal",
+                  "dice": {
+                    "count": 2,
+                    "sides": 4,
+                    "bonus": 2
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "vs-shop-leave",
+          "kind": "choice",
+          "name": "お店を出る",
+          "description": "店主に礼を言って、村の広場へ戻った。",
+          "tags": [],
+          "nextNodeId": "vs-square"
+        }
+      ]
+    },
+    {
+      "id": "vs-exam",
+      "kind": "scene",
+      "name": "冒険者試験",
+      "cards": [
+        {
+          "id": "vs-accept",
+          "kind": "choice",
+          "name": "合格の証を受け取る",
+          "description": "ギルドマスターが、真新しい冒険者の証を手渡してくれた。「今日からお前も冒険者だ。村の皆にも胸を張れ」",
+          "tags": [],
+          "nextNodeId": "vs-end"
+        }
+      ],
+      "autoCombat": {
+        "enemy": {
+          "$comment": "試験官。優先順位は条件を付けず、すべて「いつでも」。数値は docs/plans/2026-09-23-自動戦闘エンジン.md 3-6 のシミュレーションで選んだプレイテスト前の目安（仮ルール）。いまの勝率・決着ラウンドは docs/cartagraph/auto-combat-simulation.md（pnpm sim:auto-combat で作り直す）",
+          "card": {
+            "id": "en-examiner",
+            "kind": "enemy",
+            "name": "試験官",
+            "description": "冒険者ギルドの試験官。木剣を構えている",
+            "tags": []
+          },
+          "hp": 26,
+          "baseActionValue": 9,
+          "priority": [
+            {
+              "card": {
+                "id": "ea-heavy",
+                "kind": "skill",
+                "name": "重い打ち込み",
+                "tags": ["戦闘スキル", "攻撃"],
+                "actionCost": 6,
+                "combatEffect": {
+                  "type": "damage",
+                  "dice": {
+                    "count": 1,
+                    "sides": 6,
+                    "bonus": 0
+                  }
+                }
+              },
+              "when": "always"
+            },
+            {
+              "card": {
+                "id": "ea-feint",
+                "kind": "skill",
+                "name": "牽制",
+                "tags": ["戦闘スキル", "攻撃"],
+                "actionCost": 3,
+                "combatEffect": {
+                  "type": "damage",
+                  "dice": {
+                    "count": 1,
+                    "sides": 3,
+                    "bonus": 0
+                  }
+                }
+              },
+              "when": "always"
+            }
+          ]
+        },
+        "maxRounds": 20
+      }
+    },
+    {
+      "id": "vs-end",
+      "kind": "ending",
+      "name": "冒険者として旅立つ",
+      "cards": [],
+      "endingId": "vs-e-adventurer"
+    }
+  ],
+  "endings": [
+    {
+      "id": "vs-e-adventurer",
+      "name": "冒険者として旅立つ",
+      "grantsTag": "冒険者になった"
+    }
+  ],
+  "libraryStatus": "draft",
+  "updatedAt": "2026-10-03T00:00:00.000Z",
+  "soloGrowth": {
+    "hp": 20,
+    "baseActionValue": 10
+  }
+}
