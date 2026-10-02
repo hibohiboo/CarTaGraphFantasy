@@ -1,24 +1,34 @@
 // CarTaGraphFantasy のドメイン型。
 // 仕様の正は docs/ 配下（SSOT）。ここは docs/cartagraph/ の用語をそのまま型に落としたもので、
 // 用語の意味を変える場合は docs 側を先に更新する。
+// シナリオとそれが含む型は scenarioSchema.ts の zod スキーマが正で、ここでは z.infer で導く
+// （docs/plans/2026-10-03-シナリオのJSON管理.md D2）。各フィールドの説明もスキーマ側にある。
+
+import type { z } from 'zod';
+import type {
+  autoCombatEnemySchema,
+  cardConditionSchema,
+  cardDefSchema,
+  cardKindSchema,
+  checkSpecSchema,
+  combatEffectSchema,
+  deckNodeKindSchema,
+  deckNodeSchema,
+  diceExprSchema,
+  endingDefSchema,
+  hpConditionSchema,
+  priorityEntrySchema,
+  proposalHandlingSchema,
+  scenarioSchema,
+  soloEffectSchema,
+  spaceModelSchema,
+} from './scenarioSchema';
 
 /** 利用者ロール（docs/cartagraph/graph.md「グラフの利用者とロール別の見え方」） */
 export type UserRole = 'pl' | 'gm' | 'creator' | 'admin';
 
 /** カード種別（docs/cartagraph/card-and-deck.md, card-face-back.md の一覧に対応） */
-export type CardKind =
-  | 'character'
-  | 'skill'
-  | 'trait'
-  | 'item'
-  | 'equipment'
-  | 'choice' // 選択肢カード＝イベントカード
-  | 'npc'
-  | 'info'
-  | 'enemy'
-  | 'scene'
-  | 'location'
-  | 'relation';
+export type CardKind = z.infer<typeof cardKindSchema>;
 
 export const CARD_KIND_LABEL: Record<CardKind, string> = {
   character: 'キャラクター',
@@ -43,88 +53,31 @@ export interface Abilities {
 }
 
 /** 選択肢カードに紐づく判定（能力値＋2d6 vs 目標値） */
-export interface CheckSpec {
-  ability: keyof Abilities;
-  target: number;
-  onSuccess: string;
-  onFailure: string;
-}
+export type CheckSpec = z.infer<typeof checkSpecSchema>;
 
 /** カード1枚。生成元（作者／GM／進化）に関わらず同じ構造を持つ */
-export interface CardDef {
-  id: string;
-  kind: CardKind;
-  name: string;
-  description?: string;
-  tags: string[];
-  /** キャラメイク時のCPコスト（キャラクター構成カードのみ） */
-  cpCost?: number;
-  /** 戦闘カードのコスト（行動値を消費する量） */
-  actionCost?: number;
-  /** 射程（グループ単位） */
-  range?: number;
-  /** 判定を伴う選択肢カードのみ */
-  check?: CheckSpec;
-  /** 裏向き（存在は見えるが内容が伏せられている） */
-  faceDown?: boolean;
-  /** 場のゾーン。GM専用ゾーンのカードはPLには存在ごと見えない */
-  zone?: 'gm' | 'pl';
-  /** 画像URL。無ければアイコンにフォールバック */
-  portraitUrl?: string;
-  /** 自動戦闘での効果（docs/cartagraph/auto-combat.md、仮ルール）。無ければ優先順位リストに入れられない */
-  combatEffect?: CombatEffect;
-  /** 効果「次のシーンへ進む」の遷移先 DeckNode.id（docs/cartagraph/play-and-field.md 基本操作8） */
-  nextNodeId?: string;
-  /** 配る条件。満たさなければ手札に配らない（docs/cartagraph/solo-village.md、GM不在のソロの仮ルール） */
-  dealWhen?: CardCondition;
-  /** 使える条件。満たさなければ手札に出すが選べない（同上、仮ルール） */
-  playWhen?: CardCondition;
-  /** 選んだときの成長の効果（同上、仮ルール） */
-  soloEffect?: SoloEffect;
-}
+export type CardDef = z.infer<typeof cardDefSchema>;
 
 /**
  * 配る条件・使える条件（docs/cartagraph/solo-village.md、仮ルール）。
  * 判定の対象はキャラクターデッキと GM専用ゾーンの達成カード。すべての項目を満たせば真
  */
-export interface CardCondition {
-  /** これらのタグのカードをすべて持っている */
-  hasTags?: string[];
-  /** これらのタグのカードを1枚も持っていない */
-  lacksTags?: string[];
-  /** これらのIDのカードを持っていない（お店で習ったスキルを並べないため） */
-  lacksCards?: string[];
-}
+export type CardCondition = z.infer<typeof cardConditionSchema>;
 
 /** GM不在のソロで、選択肢カードを選んだときの成長の効果（docs/cartagraph/solo-village.md、仮ルール） */
-export interface SoloEffect {
-  raiseAbility?: keyof Abilities;
-  /** キャラクターデッキへ加える（引換カード・習ったスキル）。ID はそのまま保ち、オブジェクトだけ複製する */
-  gainCards?: CardDef[];
-  /** このタグのカードをキャラクターデッキから1枚手放す（引換カード） */
-  consumeTag?: string;
-  /** GM専用ゾーンに置く達成カード */
-  achievement?: CardDef;
-}
+export type SoloEffect = z.infer<typeof soloEffectSchema>;
 
 /** ダイス式（例：2d6+1 は { count: 2, sides: 6, bonus: 1 }） */
-export interface DiceExpr {
-  count: number;
-  sides: number;
-  bonus: number;
-}
+export type DiceExpr = z.infer<typeof diceExprSchema>;
 
 /** 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）でカードが持つ効果。攻撃と回復のみ */
-export interface CombatEffect {
-  type: 'damage' | 'heal';
-  dice: DiceExpr;
-}
+export type CombatEffect = z.infer<typeof combatEffectSchema>;
 
 /**
  * 優先順位リストの1行に付ける「使う条件」（自分のHPの段階。docs/cartagraph/auto-combat.md、仮ルール）。
  * half＝HPが最大の半分以下、quarter＝1/4以下
  */
-export type HpCondition = 'always' | 'half' | 'quarter';
+export type HpCondition = z.infer<typeof hpConditionSchema>;
 
 export const HP_CONDITION_LABEL: Record<HpCondition, string> = {
   always: 'いつでも',
@@ -133,19 +86,10 @@ export const HP_CONDITION_LABEL: Record<HpCondition, string> = {
 };
 
 /** 優先順位リストの1行 */
-export interface PriorityEntry {
-  card: CardDef;
-  when: HpCondition;
-}
+export type PriorityEntry = z.infer<typeof priorityEntrySchema>;
 
 /** 自動戦闘の相手（1体・固定の優先順位リスト。仮ルール） */
-export interface AutoCombatEnemy {
-  /** kind: 'enemy'。シーンに入るときにコピーして場に出す */
-  card: CardDef;
-  hp: number;
-  baseActionValue: number;
-  priority: PriorityEntry[];
-}
+export type AutoCombatEnemy = z.infer<typeof autoCombatEnemySchema>;
 
 /** 自動戦闘の1手。使えるカードが無くラウンドの行動を終えた記録は effect: 'pass' */
 export interface CombatLogEntry {
@@ -229,7 +173,7 @@ export function deriveArchetype(c: Pick<Character, 'abilities' | 'deck'>): Chara
 }
 
 /** シナリオデッキの入れ子構造（導入→シーン→結末） */
-export type DeckNodeKind = 'intro' | 'scene' | 'ending' | 'npc' | 'info' | 'enemy' | 'location';
+export type DeckNodeKind = z.infer<typeof deckNodeKindSchema>;
 
 export const DECK_NODE_LABEL: Record<DeckNodeKind, string> = {
   intro: '導入',
@@ -241,47 +185,19 @@ export const DECK_NODE_LABEL: Record<DeckNodeKind, string> = {
   location: 'ロケーション',
 };
 
-export interface DeckNode {
-  id: string;
-  kind: DeckNodeKind;
-  name: string;
-  /** 濃密モードを要求するシーンか */
-  dense?: boolean;
-  cards: CardDef[];
-  children?: DeckNode[];
-  /**
-   * シーンの目的（仮ルール）。docs/open-questions.md「シーンカードの『目的』『終了条件』
-   * という属性」が未決のため、正式仕様ではない。意味を持つのは kind === 'scene' のときだけ
-   * （型では強制しない）。
-   */
-  objective?: string;
-  /** シーンの終了条件（同上、仮ルール） */
-  endCondition?: string;
-  /**
-   * このシーンで自動戦闘を行う（docs/cartagraph/auto-combat.md、仮ルール）。dense とは独立で、
-   * 自動戦闘中もセッションは軽量モードのまま
-   */
-  autoCombat?: { enemy: AutoCombatEnemy; maxRounds: number };
-  /** 結末のノードが指す結末（Scenario.endings の id）。意味を持つのは kind === 'ending' のときだけ */
-  endingId?: string;
-}
+export type DeckNode = z.infer<typeof deckNodeSchema>;
 
 /** 結末タグの定義（成功／失敗に限らず任意の数） */
-export interface EndingDef {
-  id: string;
-  name: string;
-  /** 後続シナリオの前提タグとして配るタグ。無ければ単発扱い */
-  grantsTag?: string;
-}
+export type EndingDef = z.infer<typeof endingDefSchema>;
 
-export type SpaceModel = '1d' | '2d';
+export type SpaceModel = z.infer<typeof spaceModelSchema>;
 
 /**
  * 「新たな選択肢を提案」カードの提案を誰がどう裁定するか（docs/cartagraph/play-and-field.md
  * 「GMレスセッションでの提案の扱い（決着）」）。'auto-resolve' は人間GM不在のセッションでのみ使う、
  * 「機械的な自動判定より人間の裁量を優先する」という一貫方針からの意図的な逸脱。
  */
-export type ProposalHandling = 'gm-required' | 'disabled' | 'auto-resolve';
+export type ProposalHandling = z.infer<typeof proposalHandlingSchema>;
 
 export const PROPOSAL_HANDLING_LABEL: Record<ProposalHandling, string> = {
   'gm-required': 'GM必須',
@@ -289,38 +205,7 @@ export const PROPOSAL_HANDLING_LABEL: Record<ProposalHandling, string> = {
   'auto-resolve': '自動解決',
 };
 
-export interface Scenario {
-  id: string;
-  title: string;
-  authorId: string;
-  authorName: string;
-  summary: string;
-  /** 参照するデータ種別のタグ（体・技・心／HP／戦闘スキル） */
-  referenceTags: string[];
-  /** 前提スキル・前作の結末タグなど（ソフトガイド） */
-  prerequisiteTags: string[];
-  partySize: { min: number; max: number };
-  /** 戦闘がなければ null */
-  spaceModel: SpaceModel | null;
-  recommendedCp: number;
-  baseCp: number;
-  proposalHandling: ProposalHandling;
-  /**
-   * ソロ開始時にキャラクターへ無償で配る初期装備（docs/cartagraph/auto-combat.md「初期装備」、
-   * 仮ルール）。村パートを持たないシナリオ用（いまはテスト専用のシナリオだけが使う）
-   */
-  soloStarter?: { hp: number; baseActionValue: number; cards: CardDef[] };
-  /**
-   * GM不在のソロの成長で与える HP（探索者になったとき）と基本行動値（冒険者になったとき）
-   * （docs/cartagraph/solo-village.md「HP・＜行動値＞」、仮ルール）
-   */
-  soloGrowth?: { hp: number; baseActionValue: number };
-  deck: DeckNode[];
-  endings: EndingDef[];
-  /** 共有ライブラリへの公開状態 */
-  libraryStatus: 'draft' | 'published';
-  updatedAt: string;
-}
+export type Scenario = z.infer<typeof scenarioSchema>;
 
 /** GMが出した募集 */
 export interface Recruitment {
