@@ -41,7 +41,7 @@ export function HomePage() {
                   <span className="u-dim u-small">まだキャラクターがいません。</span>
                   <Link to="/pl/tutorial">旅立ちの酒場へ行く</Link>
                   {/* 入口のチュートリアルが2つ並んでいる。どちらを入口にするかは人間の判断待ち
-                      （docs/architecture/known-issues.md「入口のチュートリアルが2つ並んでいる」） */}
+                      （docs/backlog/entrance-tutorial.md） */}
                   <Link to="/pl/village-start">村はずれの一歩から始める</Link>
                 </span>
               )}
