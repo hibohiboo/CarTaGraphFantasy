@@ -124,7 +124,7 @@ export function GmScenarioDetailPage() {
                       note: note || undefined,
                       excludedNodeIds: [...excluded],
                     },
-                    { onSuccess: () => navigate('/pl/sessions') },
+                    { onSuccess: () => navigate('/gm/sessions') },
                   )
                 }
               >
@@ -139,7 +139,7 @@ export function GmScenarioDetailPage() {
         <div className="u-stack">
           <Panel
             title="シナリオデッキの取捨選択"
-            sub="今回使うシーン・カードを選ぶ／外す。外したシーンはこのセッションのスナップショットに含まれない。"
+            sub="今回使うシーン・カードを選ぶ／外す。外したシーンはセッションに含めない（導入と結末は外せない）。"
           >
             <DeckTree
               nodes={sc.deck}

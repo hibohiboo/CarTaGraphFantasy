@@ -559,9 +559,12 @@ export const recruitments: Recruitment[] = [
     recommendedCp: 3,
     referenceTags: ['体・技・心'],
     prerequisiteTags: [],
-    applicants: [{ characterId: 'pc-mio', characterName: '澪', playerName: 'カヤ' }],
+    applicants: [
+      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
+    ],
     capacity: 2,
     status: 'open',
+    excludedNodeIds: [],
   },
   {
     id: 'rc-2',
@@ -575,11 +578,12 @@ export const recruitments: Recruitment[] = [
     referenceTags: ['戦闘スキル'],
     prerequisiteTags: ['航海の心得', '戦闘スキル'],
     applicants: [
-      { characterId: 'pc-akira', characterName: '彰', playerName: '柊' },
-      { characterId: 'pc-mio', characterName: '澪', playerName: 'カヤ' },
+      { characterId: 'pc-akira', characterName: '彰', userId: 'u-hiiragi', playerName: '柊' },
+      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
     ],
     capacity: 4,
     status: 'open',
+    excludedNodeIds: [],
   },
   {
     id: 'rc-3',
@@ -595,6 +599,47 @@ export const recruitments: Recruitment[] = [
     applicants: [],
     capacity: 3,
     status: 'open',
+    excludedNodeIds: [],
+  },
+  // 定員まで埋まった募集（PL の一覧で「募集枠が埋まっています」になる）
+  {
+    id: 'rc-full',
+    scenarioId: 'sc-village-start',
+    scenarioTitle: '村はずれの一歩',
+    gmId: 'u-hiiragi',
+    gmName: '柊',
+    partySize: { min: 1, max: 1 },
+    spaceModel: null,
+    recommendedCp: 2,
+    referenceTags: [],
+    prerequisiteTags: [],
+    applicants: [
+      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
+    ],
+    capacity: 1,
+    status: 'open',
+    excludedNodeIds: [],
+  },
+  // 自分（u-me）が GM の募集。自分の PC と、カヤの PC が応募している（募集からセッションを始めるテスト用）
+  {
+    id: 'rc-mine',
+    scenarioId: 'sc-gray-mansion',
+    scenarioTitle: '灰色館の一夜',
+    gmId: 'u-me',
+    gmName: 'ユウ',
+    partySize: { min: 2, max: 4 },
+    spaceModel: null,
+    recommendedCp: 3,
+    referenceTags: ['体・技・心'],
+    prerequisiteTags: [],
+    applicants: [
+      { characterId: 'pc-jin', characterName: '迅', userId: 'u-me', playerName: 'ユウ' },
+      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
+    ],
+    capacity: 4,
+    status: 'open',
+    excludedNodeIds: [],
+    note: '自分の卓。灰色館をじっくり遊ぶ',
   },
 ];
 

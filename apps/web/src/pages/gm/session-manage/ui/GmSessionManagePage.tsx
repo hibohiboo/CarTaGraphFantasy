@@ -104,7 +104,11 @@ export function GmSessionManagePage() {
         >
           <div className={s.list}>
             {x.participants.map((p) => (
-              <div key={p.userId} className={s.listItem} data-plain="true">
+              <div
+                key={`${p.userId}-${p.role}-${p.characterId ?? ''}`}
+                className={s.listItem}
+                data-plain="true"
+              >
                 <div className={s.itemLeft}>
                   <Avatar name={p.characterName ?? p.name} avatarRole={p.role} />
                   <span>

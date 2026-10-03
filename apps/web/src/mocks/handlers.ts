@@ -11,6 +11,7 @@ import {
 import type { CardDef } from '@cartagraph/domain/card/model';
 import type { Character } from '@cartagraph/domain/character/model';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
+import { excludesFixedNode, sessionDeck } from '@cartagraph/domain/session/deck';
 import {
   type Proposal,
   type Recruitment,
@@ -18,6 +19,7 @@ import {
   SYSTEM_GM_ID,
   SYSTEM_GM_NAME,
 } from '@cartagraph/domain/session/model';
+import { buildParticipants, checkStart, defaultPartyName } from '@cartagraph/domain/session/start';
 import {
   dealChoices,
   findDeckNode,
@@ -67,6 +69,18 @@ export function resetDb(): void {
 let seq = 1000;
 const nextId = (prefix: string) => `${prefix}-${++seq}`;
 const nowIso = () => new Date().toISOString();
+
+/** JSON の本文を読む。空・壊れた本文は null（MSW の未処理の例外にしない） */
+async function readJson(request: Request): Promise<unknown> {
+  try {
+    return await request.json();
+  } catch {
+    return null;
+  }
+}
+
+const isStringArray = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((x) => typeof x === 'string');
 
 const notFound = (what: string) =>
   HttpResponse.json({ message: `${what} が見つかりません` }, { status: 404 });
@@ -152,19 +166,30 @@ function buildSoloCharacter(name: string, starter?: Scenario['soloStarter']): Ch
   };
 }
 
-function buildSoloSession(scenario: Scenario, character: Character): Session | null {
+/**
+ * セッションの初期状態を組み立てる（ソロ開始と、募集からの開始で共通）。導入シーンの選択肢カードを
+ * ドライバーの手札に配り、卓上の描写はシナリオの概要から始める。scenario は、GMが外したシーンを
+ * 除いたデッキ（sessionDeck）に差し替えたものを渡す
+ */
+function buildSession(
+  scenario: Scenario,
+  v: Pick<Session, 'gmId' | 'gmName' | 'partyName' | 'participants'> &
+    Pick<Session, 'recruitmentId' | 'excludedNodeIds'> & { driver: Character; startedText: string },
+): Session | null {
   const intro = scenario.deck.find((d) => d.kind === 'intro');
   if (!intro) return null;
-  const hand = dealChoices(intro, heldCards(character, { gmOnly: [], plVisible: [] }), {
-    gmId: SYSTEM_GM_ID,
+  const hand = dealChoices(intro, heldCards(v.driver, { gmOnly: [], plVisible: [] }), {
+    gmId: v.gmId,
   });
   return {
     id: nextId('ss'),
     scenarioId: scenario.id,
     scenarioTitle: scenario.title,
-    gmId: SYSTEM_GM_ID,
-    gmName: SYSTEM_GM_NAME,
-    partyName: character.name,
+    ...(v.recruitmentId && { recruitmentId: v.recruitmentId }),
+    ...(v.excludedNodeIds && { excludedNodeIds: v.excludedNodeIds }),
+    gmId: v.gmId,
+    gmName: v.gmName,
+    partyName: v.partyName,
     status: 'playing',
     mode: 'light',
     proposalHandling: scenario.proposalHandling,
@@ -175,6 +200,22 @@ function buildSoloSession(scenario: Scenario, character: Character): Session | n
       path: intro.name,
       nodeId: intro.id,
     },
+    participants: v.participants,
+    field: { gmOnly: [], plVisible: [] },
+    hand,
+    flavor: scenario.summary,
+    proposals: [],
+    feed: [{ id: nextId('f'), at: nowIso(), text: v.startedText }],
+    lastActivityAt: nowIso(),
+    suspendAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
+  };
+}
+
+function buildSoloSession(scenario: Scenario, character: Character): Session | null {
+  return buildSession(scenario, {
+    gmId: SYSTEM_GM_ID,
+    gmName: SYSTEM_GM_NAME,
+    partyName: character.name,
     participants: [
       {
         userId: fx.me.id,
@@ -185,14 +226,19 @@ function buildSoloSession(scenario: Scenario, character: Character): Session | n
         lastSeenAt: nowIso(),
       },
     ],
-    field: { gmOnly: [], plVisible: [] },
-    hand,
-    flavor: scenario.summary,
-    proposals: [],
-    feed: [{ id: nextId('f'), at: nowIso(), text: `${character.name}が${scenario.title}を始めた` }],
-    lastActivityAt: nowIso(),
-    suspendAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
-  };
+    driver: character,
+    startedText: `${character.name}が${scenario.title}を始めた`,
+  });
+}
+
+/**
+ * セッションで使うシナリオ。GMが外したシーンを除いたデッキに差し替える（docs/cartagraph/scenario-flow.md
+ * 「GMのカスタマイズ」）。セッションはシーンを移るたびにシナリオを引くので、引く箇所はすべてここを通す
+ */
+function scenarioOf(s: Session): Scenario | undefined {
+  const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
+  if (!scenario || !s.excludedNodeIds?.length) return scenario;
+  return { ...scenario, deck: sessionDeck(scenario.deck, s.excludedNodeIds) };
 }
 
 const RETRY_TRAIT_NAME = '再挑戦の記憶';
@@ -251,19 +297,83 @@ export const handlers = [
   http.get('/api/me', () => HttpResponse.json(fx.me)),
 
   // ---------- 募集（PL: セッション選択） ----------
-  http.get('/api/recruitments', () => HttpResponse.json(db.recruitments)),
+  // 開始済みの募集は一覧に出さない（docs/cartagraph/scenario-flow.md「募集とセッション」）
+  http.get('/api/recruitments', () =>
+    HttpResponse.json(db.recruitments.filter((r) => r.status === 'open')),
+  ),
 
   http.post('/api/recruitments/:id/apply', async ({ params, request }) => {
     const rc = db.recruitments.find((r) => r.id === params.id);
     if (!rc) return notFound('募集');
+    if (rc.status !== 'open') return unprocessable('この募集はもう始まっています');
     const body = (await request.json()) as { characterId: string };
     const ch = db.characters.find((c) => c.id === body.characterId);
     if (!ch) return notFound('キャラクター');
     if (rc.applicants.some((a) => a.characterId === ch.id)) {
       return HttpResponse.json({ message: 'このPCは応募済みです' }, { status: 409 });
     }
-    rc.applicants.push({ characterId: ch.id, characterName: ch.name, playerName: fx.me.name });
+    rc.applicants.push({
+      characterId: ch.id,
+      characterName: ch.name,
+      userId: fx.me.id,
+      playerName: fx.me.name,
+    });
     return HttpResponse.json(rc);
+  }),
+
+  // 募集からセッションを始める（docs/cartagraph/scenario-flow.md「全体フロー」5）。
+  // 検査と参加者の行は packages/domain の checkStart・buildParticipants。エラーのときは何も変えない
+  http.post('/api/recruitments/:id/start', async ({ params, request }) => {
+    const rc = db.recruitments.find((r) => r.id === params.id);
+    if (!rc) return notFound('募集');
+    if (rc.gmId !== fx.me.id)
+      return HttpResponse.json({ message: '自分が出した募集だけを始められます' }, { status: 403 });
+    const body = (await readJson(request)) as {
+      characterIds?: unknown;
+      driverCharacterId?: unknown;
+      partyName?: unknown;
+    } | null;
+    // 形の崩れた選択は黙って丸めず断る（不正な要素を捨てて開始してしまわないように）
+    if (body?.characterIds !== undefined && !isStringArray(body.characterIds))
+      return unprocessable('参加させるPCの指定の形が正しくありません');
+    const selection = {
+      characterIds: body?.characterIds ?? [],
+      driverCharacterId:
+        typeof body?.driverCharacterId === 'string' ? body.driverCharacterId : undefined,
+    };
+    const check = checkStart(rc, selection);
+    if (!check.ok) return unprocessable(check.error);
+    const base = db.scenarios.find((x) => x.id === rc.scenarioId);
+    if (!base) return notFound('シナリオ');
+    const selected = selection.characterIds.flatMap(
+      (id) => rc.applicants.find((a) => a.characterId === id) ?? [],
+    );
+    const driverApplicant = selected.find((a) => a.characterId === selection.driverCharacterId);
+    const driver = db.characters.find((c) => c.id === selection.driverCharacterId);
+    if (!driverApplicant || !driver) return notFound('キャラクター');
+    const partyName = typeof body?.partyName === 'string' ? body.partyName.trim() : '';
+    const session = buildSession(
+      { ...base, deck: sessionDeck(base.deck, rc.excludedNodeIds) },
+      {
+        gmId: rc.gmId,
+        gmName: rc.gmName,
+        partyName: partyName || defaultPartyName(driverApplicant.characterName),
+        participants: buildParticipants({
+          gm: { userId: rc.gmId, name: rc.gmName },
+          selected,
+          driverCharacterId: driverApplicant.characterId,
+          at: nowIso(),
+        }),
+        driver,
+        recruitmentId: rc.id,
+        excludedNodeIds: [...rc.excludedNodeIds],
+        startedText: `${rc.gmName}が募集からセッションを始めた`,
+      },
+    );
+    if (!session) return unprocessable('このシナリオは導入シーンを持っていません');
+    rc.status = 'started';
+    db.sessions.push(session);
+    return HttpResponse.json(session, { status: 201 });
   }),
 
   // ---------- キャラクター ----------
@@ -377,7 +487,7 @@ export const handlers = [
     if (!card) return notFound('手札のカード');
     const driver = s.participants.find((p) => p.role === 'driver');
     const character = db.characters.find((c) => c.id === driver?.characterId);
-    const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
+    const scenario = scenarioOf(s);
     const soloGm = s.gmId === SYSTEM_GM_ID;
     // GM不在のソロの村の成長（docs/cartagraph/solo-village.md、仮ルール）。人間GMのセッションでは働かせない。
     // 使える条件の検査→効果の計算→（効果を適用した後の状態で）遷移の計算、と全部通ってから書き込む
@@ -595,7 +705,7 @@ export const handlers = [
     const ac = s.autoCombat;
     if (!ac) return unprocessable('いまのシーンでは自動戦闘を行いません');
     if (ac.status === 'won') return unprocessable('この戦闘には既に勝利しています');
-    const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
+    const scenario = scenarioOf(s);
     const node = scenario && findDeckNode(scenario.deck, ac.nodeId)?.node;
     if (!node?.autoCombat) return notFound('自動戦闘のシーン');
     const driver = s.participants.find((p) => p.role === 'driver');
@@ -774,11 +884,21 @@ export const handlers = [
   http.post('/api/scenarios/:id/recruitments', async ({ params, request }) => {
     const s = db.scenarios.find((x) => x.id === params.id);
     if (!s) return notFound('シナリオ');
-    const body = (await request.json()) as {
+    const body = ((await readJson(request)) ?? {}) as {
       capacity: number;
       note?: string;
-      excludedNodeIds?: string[];
+      excludedNodeIds?: unknown;
     };
+    if (!Number.isInteger(body.capacity) || body.capacity < 1)
+      return unprocessable('募集人数は1以上の整数で指定してください');
+    const excludedNodeIds = body.excludedNodeIds ?? [];
+    if (!isStringArray(excludedNodeIds))
+      return unprocessable('外すシーンの指定の形が正しくありません');
+    if (excludedNodeIds.some((id) => !findDeckNode(s.deck, id)))
+      return unprocessable('シナリオに無いシーンは外せません');
+    // 導入と結末は、子孫として巻き込む場合も含めて外せない（docs/cartagraph/scenario-flow.md「GMのカスタマイズ」）
+    if (excludesFixedNode(s.deck, excludedNodeIds))
+      return unprocessable('導入と結末のシーンは外せません（外すシーンの中にある場合も含む）');
     const rc: Recruitment = {
       id: nextId('rc'),
       scenarioId: s.id,
@@ -793,6 +913,7 @@ export const handlers = [
       applicants: [],
       capacity: body.capacity,
       status: 'open',
+      excludedNodeIds,
       note: body.note,
     };
     db.recruitments.unshift(rc);

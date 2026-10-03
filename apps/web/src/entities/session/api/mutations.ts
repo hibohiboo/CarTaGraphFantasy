@@ -20,6 +20,29 @@ export function useStartSoloSession() {
   });
 }
 
+/** 募集からセッションを始める（docs/cartagraph/scenario-flow.md「全体フロー」5）。始めた募集は一覧から消える */
+export function useStartSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: {
+      recruitmentId: string;
+      characterIds: string[];
+      driverCharacterId: string;
+      partyName: string;
+    }) =>
+      api.post<Session>(`/recruitments/${v.recruitmentId}/start`, {
+        characterIds: v.characterIds,
+        driverCharacterId: v.driverCharacterId,
+        partyName: v.partyName,
+      }),
+    onSuccess: (s) => {
+      qc.setQueryData(keys.session(s.id), s);
+      void qc.invalidateQueries({ queryKey: keys.recruitments });
+      void qc.invalidateQueries({ queryKey: keys.sessions });
+    },
+  });
+}
+
 export function useApply() {
   const qc = useQueryClient();
   return useMutation({

@@ -6,7 +6,11 @@ import type { AutoCombatState, CombatRecord } from '../autoCombat/model';
 import type { CardDef } from '../card/model';
 import type { ProposalHandling, SpaceModel } from '../scenario/model';
 
-/** GMが出した募集 */
+/**
+ * GMが出した募集。セッションとは別のもの（docs/cartagraph/scenario-flow.md「募集とセッション」）。
+ * 通常の募集は、セッションを始めると開始済み（started）になる。どのセッションが始まったかは
+ * Session.recruitmentId だけが持つ（同じつながりを両側に持たない）
+ */
 export interface Recruitment {
   id: string;
   scenarioId: string;
@@ -18,10 +22,12 @@ export interface Recruitment {
   recommendedCp: number;
   referenceTags: string[];
   prerequisiteTags: string[];
-  /** 応募（ドライバー候補とPC） */
-  applicants: { characterId: string; characterName: string; playerName: string }[];
+  /** 応募（ドライバー候補とPC）。userId は応募した人（借りたPCなら、PCの所有者とは別の人） */
+  applicants: { characterId: string; characterName: string; userId: string; playerName: string }[];
   capacity: number;
-  status: 'open' | 'closed';
+  status: 'open' | 'started';
+  /** GMが外したシーン（シナリオデッキのノードの id）。開始したセッションへ引き継ぐ */
+  excludedNodeIds: string[];
   note?: string;
 }
 
@@ -75,7 +81,7 @@ export interface FeedItem {
 }
 
 export interface SessionStatus {
-  status: 'recruiting' | 'playing' | 'suspended' | 'ended';
+  status: 'playing' | 'suspended' | 'ended';
 }
 
 /**
@@ -91,6 +97,10 @@ export interface Session {
   id: string;
   scenarioId: string;
   scenarioTitle: string;
+  /** 始めた募集（ソロ開始のセッションには無い） */
+  recruitmentId?: string;
+  /** 募集でGMが外したシーン。シナリオを引くたびに sessionDeck で除く（ソロ開始のセッションには無い） */
+  excludedNodeIds?: string[];
   gmId: string;
   gmName: string;
   partyName: string;
