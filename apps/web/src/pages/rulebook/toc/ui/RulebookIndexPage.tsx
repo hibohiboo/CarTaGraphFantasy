@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router';
-import { GameCard } from '../../components/GameCard';
-import { PageHeader } from '../../components/ui';
-import { DOCS_BASE, rulebook } from '../../content/rulebook';
-import { useMe } from '../../lib/queries';
-import s from '../pages.module.css';
+import { GameCard } from '@/entities/card/ui/GameCard';
+import { useMe } from '@/entities/user/api/queries';
+import { DOCS_BASE, rulebook } from '@/shared/content/rulebook';
+import s from '@/shared/ui/page.module.css';
+import { PageHeader } from '@/shared/ui/ui';
 
 /** ルールブック目次。ルールもカードのモチーフで読む（cartagraph/index.md「Webサイト」） */
 export function RulebookIndexPage() {

@@ -1,9 +1,9 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
 import { useState } from 'react';
-import s from '../pages/pages.module.css';
-import { GameCard } from './GameCard';
+import { GameCard } from '@/entities/card/ui/GameCard';
+import s from '@/shared/ui/page.module.css';
+import { Button, ErrorNote, Panel } from '@/shared/ui/ui';
 import { HandDock, ProposeForm } from './play';
-import { Button, ErrorNote, Panel } from './ui';
 
 /**
  * 名乗りは自由入力なので、実際のプレイ画面と同じ「新たな選択肢を提案」の操作感

@@ -1,7 +1,10 @@
 import type { DeckNode, EndingDef, Scenario } from '@cartagraph/domain/scenario/model';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { DeckTree } from '../../components/DeckTree';
+import { useUpdateScenario } from '@/entities/scenario/api/mutations';
+import { useScenario } from '@/entities/scenario/api/queries';
+import { DeckTree } from '@/entities/scenario/ui/DeckTree';
+import s from '@/shared/ui/page.module.css';
 import {
   Button,
   ErrorNote,
@@ -11,9 +14,7 @@ import {
   Panel,
   RoleBadge,
   StatusPill,
-} from '../../components/ui';
-import { useScenario, useUpdateScenario } from '../../lib/queries';
-import s from '../pages.module.css';
+} from '@/shared/ui/ui';
 
 const REFERENCE_TAGS = ['体・技・心を参照', 'HPを参照', '戦闘スキルを参照'];
 

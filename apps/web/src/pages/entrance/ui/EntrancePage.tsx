@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import s from './pages.module.css';
+import s from '@/shared/ui/page.module.css';
 
 /** 扉の線画（GameCardのフォールバックアイコンと同じ、細い金線の意匠に合わせている） */
 const DOOR = (

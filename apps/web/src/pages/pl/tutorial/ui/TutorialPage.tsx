@@ -4,13 +4,14 @@ import type { Character } from '@cartagraph/domain/character/model';
 import { ARCHETYPE_LABEL } from '@cartagraph/domain/character/model';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { CardGrid, GameCard } from '../../components/GameCard';
-import { NameProposal } from '../../components/NameProposal';
-import { PlayMat, type PlayMatZone } from '../../components/PlayMat';
-import { HandDock, Table } from '../../components/play';
-import { Button, ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
-import { useCardPool, useCreateCharacter, useUpdateCharacter } from '../../lib/queries';
-import s from '../pages.module.css';
+import { CardGrid, GameCard } from '@/entities/card/ui/GameCard';
+import { useCreateCharacter, useUpdateCharacter } from '@/entities/character/api/mutations';
+import { useCardPool } from '@/entities/user/api/queries';
+import s from '@/shared/ui/page.module.css';
+import { Button, ErrorNote, Loading, PageHeader, Panel } from '@/shared/ui/ui';
+import { NameProposal } from '@/widgets/play-screen/ui/NameProposal';
+import { HandDock, Table } from '@/widgets/play-screen/ui/play';
+import { PlayMat, type PlayMatZone } from './PlayMat';
 
 type Step = 'name' | 'training' | 'ability' | 'gear' | 'resolve' | 'done';
 

@@ -31,7 +31,7 @@ import {
   unplayableReason,
 } from '@cartagraph/domain/soloVillage/rules';
 import { HttpResponse, http } from 'msw';
-import { toDictionaryForm } from '../lib/japanese';
+import { toDictionaryForm } from '@/shared/lib/japanese';
 import * as fx from './fixtures';
 
 // GMレスのソロセッションには SYSTEM_GM_ID のダミーGMを割り当てる（packages/domain）。

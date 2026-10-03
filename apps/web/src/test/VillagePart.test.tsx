@@ -11,8 +11,8 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { routeObjects } from '../app/router';
-import { api } from '../lib/api';
+import { routeObjects } from '@/app/router';
+import { api } from '@/shared/api/api';
 import { scenarios } from '../mocks/fixtures';
 
 /** 村パートで得る HP・行動値（村はずれの一歩の JSON の値） */

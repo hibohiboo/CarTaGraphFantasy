@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
-import { Chip, ChipGroup, ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
-import { useScenarios } from '../../lib/queries';
-import s from '../pages.module.css';
+import { useScenarios } from '@/entities/scenario/api/queries';
+import s from '@/shared/ui/page.module.css';
+import { Chip, ChipGroup, ErrorNote, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 
 /** GMのシナリオ管理：共有ライブラリから選ぶ（GM＝シナリオを選んで運営する人） */
 export function GmScenarioListPage() {

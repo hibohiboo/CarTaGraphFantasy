@@ -1,7 +1,8 @@
 import { CARD_KIND_LABEL, type CardKind } from '@cartagraph/domain/card/model';
 import type { ReactNode } from 'react';
-import { DeckTree } from '../../components/DeckTree';
-import { CardGrid, GameCard } from '../../components/GameCard';
+import { CardGrid, GameCard } from '@/entities/card/ui/GameCard';
+import { DeckTree } from '@/entities/scenario/ui/DeckTree';
+import s from '@/shared/ui/page.module.css';
 import {
   Avatar,
   Button,
@@ -18,8 +19,7 @@ import {
   StatTile,
   StatusPill,
   ZonePill,
-} from '../../components/ui';
-import s from '../pages.module.css';
+} from '@/shared/ui/ui';
 
 const tokens = [
   ['--felt', '卓上フェルト地（背景）'],

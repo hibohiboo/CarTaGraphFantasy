@@ -3,11 +3,12 @@ import { CARD_KIND_LABEL } from '@cartagraph/domain/card/model';
 import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { GameCard } from '../../components/GameCard';
-import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '../../components/ui';
-import { loadCardImage, removeCardImage, saveCardImage } from '../../lib/cardImageStorage';
-import { useScenario, useUpdateScenario } from '../../lib/queries';
-import s from '../pages.module.css';
+import { GameCard } from '@/entities/card/ui/GameCard';
+import { useUpdateScenario } from '@/entities/scenario/api/mutations';
+import { useScenario } from '@/entities/scenario/api/queries';
+import s from '@/shared/ui/page.module.css';
+import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/ui/ui';
+import { loadCardImage, removeCardImage, saveCardImage } from '../api/cardImageStorage';
 
 /** 追加できるカード種別（ロケーションは専用の枠で扱うため含めない） */
 const ADDABLE_KINDS: CardKind[] = ['npc', 'info', 'choice', 'enemy'];

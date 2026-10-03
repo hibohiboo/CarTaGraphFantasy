@@ -8,8 +8,9 @@ import { validatePriority } from '@cartagraph/domain/autoCombat/resolve';
 import type { CardDef } from '@cartagraph/domain/card/model';
 import type { Session } from '@cartagraph/domain/session/model';
 import { useState } from 'react';
-import { Button, ErrorNote, Loading } from '../../components/ui';
-import { useCharacter, useRunAutoCombat } from '../../lib/queries';
+import { useCharacter } from '@/entities/character/api/queries';
+import { useRunAutoCombat } from '@/entities/session/api/mutations';
+import { Button, ErrorNote, Loading } from '@/shared/ui/ui';
 import s from './AutoCombatPanel.module.css';
 
 // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）の操作と経過の表示。PlayPage でだけ使う。

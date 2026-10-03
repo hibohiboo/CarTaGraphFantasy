@@ -3,10 +3,20 @@ import { SYSTEM_GM_ID } from '@cartagraph/domain/session/model';
 import { heldCards, isSoloRuleCard, unplayableReason } from '@cartagraph/domain/soloVillage/rules';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { GameCard } from '../../components/GameCard';
-import { HandDock, Hud, PlayScreen, ProposeForm, StatusLine, Table } from '../../components/play';
-import { Button, ErrorNote, Loading, StatusPill } from '../../components/ui';
-import { useCharacter, usePlayCard, usePropose, useScenario, useSession } from '../../lib/queries';
+import { GameCard } from '@/entities/card/ui/GameCard';
+import { useCharacter } from '@/entities/character/api/queries';
+import { useScenario } from '@/entities/scenario/api/queries';
+import { usePlayCard, usePropose } from '@/entities/session/api/mutations';
+import { useSession } from '@/entities/session/api/queries';
+import { Button, ErrorNote, Loading, StatusPill } from '@/shared/ui/ui';
+import {
+  HandDock,
+  Hud,
+  PlayScreen,
+  ProposeForm,
+  StatusLine,
+  Table,
+} from '@/widgets/play-screen/ui/play';
 import { AutoCombatLog, AutoCombatPanel } from './AutoCombatPanel';
 
 const PROPOSE_CARD: CardDef = {

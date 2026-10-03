@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router';
+import { GROUP_LABEL, navRoutes, type RouteGroup } from '@/shared/routes/routes';
 import s from './AppShell.module.css';
-import { GROUP_LABEL, navRoutes, type RouteGroup } from './routes';
 
 const DOCS_URL = 'https://hibohiboo.github.io/CarTaGraphFantasy/';
 

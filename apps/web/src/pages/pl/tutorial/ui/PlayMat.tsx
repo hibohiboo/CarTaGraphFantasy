@@ -1,6 +1,6 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
 import { useState } from 'react';
-import { GameCard } from './GameCard';
+import { GameCard } from '@/entities/card/ui/GameCard';
 import s from './PlayMat.module.css';
 
 export interface PlayMatZone {

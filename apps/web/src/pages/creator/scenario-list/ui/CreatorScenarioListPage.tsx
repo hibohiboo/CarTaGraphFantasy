@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { useCreateScenario } from '@/entities/scenario/api/mutations';
+import { useScenarios } from '@/entities/scenario/api/queries';
+import { relativeTime } from '@/shared/lib/format';
+import s from '@/shared/ui/page.module.css';
 import {
   Button,
   ErrorNote,
@@ -8,10 +12,7 @@ import {
   Panel,
   RoleBadge,
   StatusPill,
-} from '../../components/ui';
-import { relativeTime } from '../../lib/format';
-import { useCreateScenario, useScenarios } from '../../lib/queries';
-import s from '../pages.module.css';
+} from '@/shared/ui/ui';
 
 /** シナリオ作成者のシナリオ管理：自分が作ったシナリオの一覧と新規作成 */
 export function CreatorScenarioListPage() {

@@ -8,9 +8,9 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { routeObjects } from '../app/router';
-import { routes } from '../app/routes';
-import { ApiError, api } from '../lib/api';
+import { routeObjects } from '@/app/router';
+import { ApiError, api } from '@/shared/api/api';
+import { routes } from '@/shared/routes/routes';
 import { server } from '../mocks/node';
 
 /** 「＋名を名乗る」の提案カードから名乗る（旅立ちの酒場・村スタート共通の操作） */

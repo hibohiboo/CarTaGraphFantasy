@@ -5,7 +5,7 @@
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import { scenarioSchema } from '@cartagraph/domain/scenario/model';
 import { describe, expect, it } from 'vitest';
-import { api } from '../lib/api';
+import { api } from '@/shared/api/api';
 import { examiner, cards as fixtureCards, scenarios, sessions } from '../mocks/fixtures';
 import { playScript } from '../mocks/handlers';
 import { scenarioFiles } from '../mocks/scenarioFiles';

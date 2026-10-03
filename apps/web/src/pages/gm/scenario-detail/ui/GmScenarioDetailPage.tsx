@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { DeckTree } from '../../components/DeckTree';
+import { useScenario } from '@/entities/scenario/api/queries';
+import { DeckTree } from '@/entities/scenario/ui/DeckTree';
+import { useCreateRecruitment } from '@/entities/session/api/mutations';
+import s from '@/shared/ui/page.module.css';
 import {
   Button,
   Chip,
@@ -11,9 +14,7 @@ import {
   PageHeader,
   Panel,
   RoleBadge,
-} from '../../components/ui';
-import { useCreateRecruitment, useScenario } from '../../lib/queries';
-import s from '../pages.module.css';
+} from '@/shared/ui/ui';
 
 /**
  * GMのカスタマイズ＝シナリオデッキの中から今回使うカード・シーンを選ぶ／外す（scenario-flow.md）。

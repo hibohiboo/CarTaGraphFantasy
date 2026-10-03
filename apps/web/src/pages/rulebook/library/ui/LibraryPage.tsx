@@ -1,11 +1,11 @@
 import { CARD_KIND_LABEL, type CardKind } from '@cartagraph/domain/card/model';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { CardGrid, GameCard } from '../../components/GameCard';
-import { Button, ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
-import { relativeTime } from '../../lib/format';
-import { useLibrary } from '../../lib/queries';
-import s from '../pages.module.css';
+import { CardGrid, GameCard } from '@/entities/card/ui/GameCard';
+import { useLibrary } from '@/entities/library/api/queries';
+import { relativeTime } from '@/shared/lib/format';
+import s from '@/shared/ui/page.module.css';
+import { Button, ErrorNote, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 
 /**
  * 共有設定＝正史グラフから格上げされた共有ライブラリ（graph.md「正史グラフの共有ライブラリ化」）。

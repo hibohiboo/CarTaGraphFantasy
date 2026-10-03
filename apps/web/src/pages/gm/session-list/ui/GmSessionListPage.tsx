@@ -1,4 +1,8 @@
 import { Link } from 'react-router';
+import { useSessions } from '@/entities/session/api/queries';
+import { useMe } from '@/entities/user/api/queries';
+import { relativeTime } from '@/shared/lib/format';
+import s from '@/shared/ui/page.module.css';
 import {
   EmptyNote,
   ErrorNote,
@@ -7,10 +11,7 @@ import {
   Panel,
   RoleBadge,
   StatusPill,
-} from '../../components/ui';
-import { relativeTime } from '../../lib/format';
-import { useMe, useSessions } from '../../lib/queries';
-import s from '../pages.module.css';
+} from '@/shared/ui/ui';
 
 const STATUS_LABEL = {
   recruiting: '募集中',

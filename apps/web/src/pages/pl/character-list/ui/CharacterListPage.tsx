@@ -1,10 +1,11 @@
 import { deriveArchetype } from '@cartagraph/domain/character/archetype';
 import { ARCHETYPE_LABEL, type Character } from '@cartagraph/domain/character/model';
 import { useNavigate } from 'react-router';
-import { CardGrid, GameCard } from '../../components/GameCard';
-import { Button, ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
-import { useCharacters, useMe } from '../../lib/queries';
-import s from '../pages.module.css';
+import { CardGrid, GameCard } from '@/entities/card/ui/GameCard';
+import { useCharacters } from '@/entities/character/api/queries';
+import { useMe } from '@/entities/user/api/queries';
+import s from '@/shared/ui/page.module.css';
+import { Button, ErrorNote, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 
 export function CharacterListPage() {
   const characters = useCharacters();

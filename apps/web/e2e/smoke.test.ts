@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { routes } from '../src/app/routes';
+import { routes } from '../src/shared/routes/routes';
 
 /** ErrorNote（role="alert"）を見本として意図的に表示しているページ */
 const INTENTIONAL_ALERT_PATHS = new Set(['/admin/components']);

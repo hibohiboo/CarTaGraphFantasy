@@ -6,7 +6,17 @@ import {
 } from '@cartagraph/domain/session/model';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { GameCard } from '../../components/GameCard';
+import { GameCard } from '@/entities/card/ui/GameCard';
+import {
+  useApproveProposal,
+  useEndSession,
+  useRejectProposal,
+  useSetMode,
+} from '@/entities/session/api/mutations';
+import { useSession } from '@/entities/session/api/queries';
+import { hhmm, relativeTime, untilLabel } from '@/shared/lib/format';
+import { toDictionaryForm } from '@/shared/lib/japanese';
+import s from '@/shared/ui/page.module.css';
 import {
   Avatar,
   Button,
@@ -20,17 +30,7 @@ import {
   StatGrid,
   StatTile,
   StatusPill,
-} from '../../components/ui';
-import { hhmm, relativeTime, untilLabel } from '../../lib/format';
-import { toDictionaryForm } from '../../lib/japanese';
-import {
-  useApproveProposal,
-  useEndSession,
-  useRejectProposal,
-  useSession,
-  useSetMode,
-} from '../../lib/queries';
-import s from '../pages.module.css';
+} from '@/shared/ui/ui';
 
 /** GMのセッション管理（session-gm-manage.html）＋提案の承認（session-gm-review.html）を1ページに統合 */
 export function GmSessionManagePage() {

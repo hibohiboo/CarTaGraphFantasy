@@ -2,9 +2,12 @@ import { deriveArchetype } from '@cartagraph/domain/character/archetype';
 import { ARCHETYPE_LABEL, type Character } from '@cartagraph/domain/character/model';
 import type { Recruitment } from '@cartagraph/domain/session/model';
 import { useState } from 'react';
-import { Button, Chip, ChipGroup, ErrorNote, Loading, PageHeader } from '../../components/ui';
-import { useApply, useCharacters, useMe, useRecruitments } from '../../lib/queries';
-import s from '../pages.module.css';
+import { useCharacters } from '@/entities/character/api/queries';
+import { useApply } from '@/entities/session/api/mutations';
+import { useRecruitments } from '@/entities/session/api/queries';
+import { useMe } from '@/entities/user/api/queries';
+import s from '@/shared/ui/page.module.css';
+import { Button, Chip, ChipGroup, ErrorNote, Loading, PageHeader } from '@/shared/ui/ui';
 
 /** PCが持つタグ（結末タグ＋デッキのタグ）と募集の前提タグを突き合わせる。ソフトガイドなのでブロックはしない */
 function fitOf(rc: Recruitment, chars: Character[]) {

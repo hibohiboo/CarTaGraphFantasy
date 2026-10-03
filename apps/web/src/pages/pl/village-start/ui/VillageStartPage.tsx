@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router';
-import { NameProposal } from '../../components/NameProposal';
-import { Table } from '../../components/play';
-import { ErrorNote, Loading, PageHeader, Panel } from '../../components/ui';
-import { useScenario, useStartSoloSession } from '../../lib/queries';
-import s from '../pages.module.css';
+import { useScenario } from '@/entities/scenario/api/queries';
+import { useStartSoloSession } from '@/entities/session/api/mutations';
+import s from '@/shared/ui/page.module.css';
+import { ErrorNote, Loading, PageHeader, Panel } from '@/shared/ui/ui';
+import { NameProposal } from '@/widgets/play-screen/ui/NameProposal';
+import { Table } from '@/widgets/play-screen/ui/play';
 
 // 村スタート冒険者キャンペーンのシナリオ（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md）
 const SCENARIO_ID = 'sc-village-start';

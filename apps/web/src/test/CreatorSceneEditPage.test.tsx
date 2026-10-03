@@ -5,8 +5,8 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import { routeObjects } from '../app/router';
-import { loadCardImage } from '../lib/cardImageStorage';
+import { routeObjects } from '@/app/router';
+import { loadCardImage } from '@/pages/creator/scene-edit/api/cardImageStorage';
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -166,7 +166,7 @@ describe('CreatorSceneEditPage', () => {
   });
 
   it('portraitUrlが無いカードで、事前にlocalStorageへ値がある場合は画面表示に反映される', async () => {
-    const { saveCardImage } = await import('../lib/cardImageStorage');
+    const { saveCardImage } = await import('@/pages/creator/scene-edit/api/cardImageStorage');
     saveCardImage('loc-door', 'data:image/png;base64,PREEXISTING');
 
     renderAt(SCENE_URL);

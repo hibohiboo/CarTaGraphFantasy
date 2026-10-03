@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
-import { GROUP_LABEL, type RouteGroup, routes } from '../../app/routes';
-import { PageHeader, Panel } from '../../components/ui';
-import s from '../pages.module.css';
+import { GROUP_LABEL, type RouteGroup, routes } from '@/shared/routes/routes';
+import s from '@/shared/ui/page.module.css';
+import { PageHeader, Panel } from '@/shared/ui/ui';
 
 const order: RouteGroup[] = ['common', 'pl', 'gm', 'creator', 'rulebook', 'admin'];
 

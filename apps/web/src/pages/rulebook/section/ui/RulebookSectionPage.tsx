@@ -1,8 +1,8 @@
 import { Link } from 'react-router';
-import { PageHeader, StatusPill } from '../../components/ui';
-import { DOCS_BASE, type RuleSection, rulebook } from '../../content/rulebook';
-import { useMe } from '../../lib/queries';
-import s from '../pages.module.css';
+import { useMe } from '@/entities/user/api/queries';
+import { DOCS_BASE, type RuleSection, rulebook } from '@/shared/content/rulebook';
+import s from '@/shared/ui/page.module.css';
+import { PageHeader, StatusPill } from '@/shared/ui/ui';
 
 export function RulebookSectionPage({ sectionId }: { sectionId: RuleSection['id'] }) {
   const sec = rulebook.find((r) => r.id === sectionId)!;

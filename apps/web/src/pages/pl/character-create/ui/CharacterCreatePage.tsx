@@ -1,10 +1,11 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { CardGrid, GameCard } from '../../components/GameCard';
-import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '../../components/ui';
-import { useCardPool, useCreateCharacter } from '../../lib/queries';
-import s from '../pages.module.css';
+import { CardGrid, GameCard } from '@/entities/card/ui/GameCard';
+import { useCreateCharacter } from '@/entities/character/api/mutations';
+import { useCardPool } from '@/entities/user/api/queries';
+import s from '@/shared/ui/page.module.css';
+import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 
 /**
  * キャラクター作成。CP予算はハードな制約（character-growth.md）。

@@ -1,45 +1,47 @@
 import { lazy, type ReactNode, Suspense } from 'react';
 import { createHashRouter, type RouteObject } from 'react-router';
-import { Loading } from '../components/ui';
-import { EntrancePage } from '../pages/EntrancePage';
-import { GmScenarioDetailPage } from '../pages/gm/GmScenarioDetailPage';
-import { GmScenarioListPage } from '../pages/gm/GmScenarioListPage';
-import { GmSessionListPage } from '../pages/gm/GmSessionListPage';
-import { GmSessionManagePage } from '../pages/gm/GmSessionManagePage';
-import { HomePage } from '../pages/HomePage';
-import { NotFoundPage } from '../pages/NotFoundPage';
-import { CharacterCreatePage } from '../pages/pl/CharacterCreatePage';
-import { CharacterListPage } from '../pages/pl/CharacterListPage';
-import { CharacterSheetPage } from '../pages/pl/CharacterSheetPage';
-import { PlayPage } from '../pages/pl/PlayPage';
-import { SessionBrowsePage } from '../pages/pl/SessionBrowsePage';
-import { TutorialPage } from '../pages/pl/TutorialPage';
-import { VillageStartPage } from '../pages/pl/VillageStartPage';
-import { LibraryPage } from '../pages/rulebook/LibraryPage';
-import { RulebookIndexPage } from '../pages/rulebook/RulebookIndexPage';
-import { RulebookSectionPage } from '../pages/rulebook/RulebookSectionPage';
+import { EntrancePage } from '@/pages/entrance/ui/EntrancePage';
+import { GmScenarioDetailPage } from '@/pages/gm/scenario-detail/ui/GmScenarioDetailPage';
+import { GmScenarioListPage } from '@/pages/gm/scenario-list/ui/GmScenarioListPage';
+import { GmSessionListPage } from '@/pages/gm/session-list/ui/GmSessionListPage';
+import { GmSessionManagePage } from '@/pages/gm/session-manage/ui/GmSessionManagePage';
+import { HomePage } from '@/pages/home/ui/HomePage';
+import { NotFoundPage } from '@/pages/not-found/ui/NotFoundPage';
+import { CharacterCreatePage } from '@/pages/pl/character-create/ui/CharacterCreatePage';
+import { CharacterListPage } from '@/pages/pl/character-list/ui/CharacterListPage';
+import { CharacterSheetPage } from '@/pages/pl/character-sheet/ui/CharacterSheetPage';
+import { PlayPage } from '@/pages/pl/play/ui/PlayPage';
+import { SessionBrowsePage } from '@/pages/pl/session-browse/ui/SessionBrowsePage';
+import { TutorialPage } from '@/pages/pl/tutorial/ui/TutorialPage';
+import { VillageStartPage } from '@/pages/pl/village-start/ui/VillageStartPage';
+import { LibraryPage } from '@/pages/rulebook/library/ui/LibraryPage';
+import { RulebookSectionPage } from '@/pages/rulebook/section/ui/RulebookSectionPage';
+import { RulebookIndexPage } from '@/pages/rulebook/toc/ui/RulebookIndexPage';
+import { Loading } from '@/shared/ui/ui';
 import { AppShell } from './AppShell';
 
 // 通常のプレイヤー・GM導線では訪れないロール別ページ（管理者・シナリオ作成者）は
 // 初期バンドルから外し、遅延importする（docs/plans/2026-09-22-react-best-practices適用.md 3.1）
 const SitemapPage = lazy(() =>
-  import('../pages/admin/SitemapPage').then((m) => ({ default: m.SitemapPage })),
+  import('@/pages/admin/sitemap/ui/SitemapPage').then((m) => ({ default: m.SitemapPage })),
 );
 const ComponentCatalogPage = lazy(() =>
-  import('../pages/admin/ComponentCatalogPage').then((m) => ({ default: m.ComponentCatalogPage })),
+  import('@/pages/admin/component-catalog/ui/ComponentCatalogPage').then((m) => ({
+    default: m.ComponentCatalogPage,
+  })),
 );
 const CreatorScenarioListPage = lazy(() =>
-  import('../pages/creator/CreatorScenarioListPage').then((m) => ({
+  import('@/pages/creator/scenario-list/ui/CreatorScenarioListPage').then((m) => ({
     default: m.CreatorScenarioListPage,
   })),
 );
 const CreatorScenarioEditPage = lazy(() =>
-  import('../pages/creator/CreatorScenarioEditPage').then((m) => ({
+  import('@/pages/creator/scenario-edit/ui/CreatorScenarioEditPage').then((m) => ({
     default: m.CreatorScenarioEditPage,
   })),
 );
 const CreatorSceneEditPage = lazy(() =>
-  import('../pages/creator/CreatorSceneEditPage').then((m) => ({
+  import('@/pages/creator/scene-edit/ui/CreatorSceneEditPage').then((m) => ({
     default: m.CreatorSceneEditPage,
   })),
 );

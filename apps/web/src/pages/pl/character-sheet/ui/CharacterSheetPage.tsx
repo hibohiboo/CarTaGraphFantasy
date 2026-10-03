@@ -1,7 +1,10 @@
 import { deriveArchetype } from '@cartagraph/domain/character/archetype';
 import { ARCHETYPE_LABEL } from '@cartagraph/domain/character/model';
 import { Link, useParams } from 'react-router';
-import { CardGrid, GameCard } from '../../components/GameCard';
+import { CardGrid, GameCard } from '@/entities/card/ui/GameCard';
+import { useCharacter } from '@/entities/character/api/queries';
+import { useMe } from '@/entities/user/api/queries';
+import s from '@/shared/ui/page.module.css';
 import {
   Chip,
   ChipGroup,
@@ -11,9 +14,7 @@ import {
   Panel,
   Pips,
   RoleBadge,
-} from '../../components/ui';
-import { useCharacter, useMe } from '../../lib/queries';
-import s from '../pages.module.css';
+} from '@/shared/ui/ui';
 
 export function CharacterSheetPage() {
   const { characterId = '' } = useParams();

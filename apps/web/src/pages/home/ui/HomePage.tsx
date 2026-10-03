@@ -1,10 +1,12 @@
 import { deriveArchetype } from '@cartagraph/domain/character/archetype';
 import { ARCHETYPE_LABEL } from '@cartagraph/domain/character/model';
 import { Link } from 'react-router';
-import { routes } from '../app/routes';
-import { Loading, RoleBadge } from '../components/ui';
-import { useCharacters, useMe, useSessions } from '../lib/queries';
-import s from './pages.module.css';
+import { useCharacters } from '@/entities/character/api/queries';
+import { useSessions } from '@/entities/session/api/queries';
+import { useMe } from '@/entities/user/api/queries';
+import { routes } from '@/shared/routes/routes';
+import s from '@/shared/ui/page.module.css';
+import { Loading, RoleBadge } from '@/shared/ui/ui';
 
 // トップページはプレイヤーの入り口だけをメインで見せる（「全部見える」トップにしない）。
 // GM・シナリオ作成者向けの入り口はヘッダー下のフッターへ、システム管理者向けはさらに

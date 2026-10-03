@@ -1,10 +1,10 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
 import type { Session } from '@cartagraph/domain/session/model';
 import type { ReactNode } from 'react';
-import { CARD_KIND_ICONS } from './cardKindIcons';
-import { GameCard } from './GameCard';
+import { CARD_KIND_ICONS } from '@/entities/card/ui/cardKindIcons';
+import { GameCard } from '@/entities/card/ui/GameCard';
+import { Avatar, RoleBadge } from '@/shared/ui/ui';
 import s from './play.module.css';
-import { Avatar, RoleBadge } from './ui';
 
 /** 1画面完結レイアウトの外枠（HUD＋卓＋手札） */
 export function PlayScreen({ children }: { children: ReactNode }) {
