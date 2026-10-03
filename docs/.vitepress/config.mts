@@ -130,6 +130,9 @@ export default defineConfig({
               { text: '成長とキャラメイク（CP制）', link: '/notes/character-growth' },
               { text: 'PC間の比較体験と称号タグ', link: '/notes/comparison-and-titles' },
               { text: '段階的な開示とアンロック', link: '/notes/unlock' },
+              { text: '探索者向けの判定ルール', link: '/notes/exploration-check' },
+              { text: '戦闘ルール', link: '/notes/combat' },
+              { text: '数値バランスの相場観', link: '/notes/balance' },
             ],
           },
           {

@@ -152,7 +152,7 @@ export const rulebook: RuleSection[] = [
           '行動値がマイナスになったらそのラウンドは行動不可。マイナス分は次ラウンドの基本行動値から差し引かれる。',
           'カードは自分の番が来てから場を見て選ぶ（逐次選択）。「今すぐ強い一撃か、素早い行動で手数を稼ぐか」が駆け引きになる。',
         ],
-        source: 'cartagraph/combat#カウント制時間軸決着',
+        source: 'cartagraph/combat#カウント制時間軸',
       },
       {
         heading: '戦闘：空間モデルと射程',
@@ -162,7 +162,7 @@ export const rulebook: RuleSection[] = [
           'どちらを使うかはシナリオ単位で選ぶ。移動は専用の移動カードで行う。',
           '射程は「自分のグループから何グループ分離れた相手を狙えるか」。射程1でも同じグループ内なら誰でも対象にできる。',
         ],
-        source: 'cartagraph/combat#空間モデル決着',
+        source: 'cartagraph/combat#空間モデル',
       },
       {
         heading: '戦闘：判定と終了',
@@ -173,7 +173,7 @@ export const rulebook: RuleSection[] = [
           '終了条件は全滅のほか、逃走・降伏などカード効果による離脱、GMの任意の終了宣言。1回の戦闘は3〜5ラウンドで決着する目安。',
           'HPが0になったら「戦闘不能」の状態タグが付く。カードは場に残り、回復で解除できる。',
         ],
-        source: 'cartagraph/combat#判定決着',
+        source: 'cartagraph/combat#判定',
       },
       {
         heading: '裏表とゾーン（情報の見え方）',

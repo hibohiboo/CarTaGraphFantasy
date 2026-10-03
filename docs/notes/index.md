@@ -21,3 +21,6 @@
 - [キャラクターの成長とキャラメイク（CP制）](character-growth.md)
 - [PC間の比較体験と称号タグ](comparison-and-titles.md)
 - [段階的な開示・習熟によるアンロック](unlock.md)
+- [探索者向けの判定ルール](exploration-check.md)
+- [戦闘ルール](combat.md)
+- [数値バランスの相場観](balance.md)
