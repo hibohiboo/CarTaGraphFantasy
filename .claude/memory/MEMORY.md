@@ -5,3 +5,4 @@
 - [開発プロセスの置き場所と2ルート運用](dev-process-structure.md) — docs/processがSSOT、AGENTS.mdが入口、.claudeは呼び出し口。基盤整備計画はdocs/plans/2026-09-16-dev-process-foundation.md（順序・方針はユーザー決定済み、C1〜C2完了）
 - [lintは作業中に都度かけない](feedback-lint-cadence.md) — pre-commitフックに任せる。型検査・テストは節目で実行を継続
 - [村スタート冒険者キャンペーンの進み具合](village-campaign-progress.md) — 2026-09-27完了（C1〜C5）。残りは別PBI（酒場の扱い・結末タグのカード化）
+- [古い記述は気づいたらその場で直す](fix-stale-docs-immediately.md) — 理由が無ければ報告だけで止めず直す。理由があれば止めて伝える
