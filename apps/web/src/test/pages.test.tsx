@@ -3,7 +3,7 @@
 import type { Character } from '@cartagraph/domain/character/model';
 import type { Session } from '@cartagraph/domain/session/model';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -211,7 +211,7 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     expect(within(rc).getByRole('button', { name: 'セッションを始める' })).toBeDisabled();
   });
 
-  it('別の画面で先に始められていたら、断られて古い募集のカードが消える', async () => {
+  it('別の画面で先に始められていたら、断られた理由がカードに出る', async () => {
     const user = userEvent.setup();
     renderAt('/gm/sessions');
     const rc = await myRecruitment();
@@ -224,7 +224,7 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     await user.click(within(rc).getByLabelText('迅（ユウ）を参加させる'));
     await user.click(within(rc).getByLabelText('迅をドライバーにする'));
     await user.click(within(rc).getByRole('button', { name: 'セッションを始める' }));
-    await waitFor(() => expect(screen.queryByText(MY_NOTE)).not.toBeInTheDocument());
+    expect(await within(rc).findByText('この募集はもう始まっています')).toBeInTheDocument();
     // 進行管理画面へは移らない
     expect(screen.getByRole('heading', { name: '自分の募集' })).toBeInTheDocument();
   });

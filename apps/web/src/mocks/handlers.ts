@@ -889,6 +889,8 @@ export const handlers = [
       note?: string;
       excludedNodeIds?: unknown;
     };
+    if (!Number.isInteger(body.capacity) || body.capacity < 1)
+      return unprocessable('募集人数は1以上の整数で指定してください');
     const excludedNodeIds = body.excludedNodeIds ?? [];
     if (!isStringArray(excludedNodeIds))
       return unprocessable('外すシーンの指定の形が正しくありません');
@@ -896,7 +898,7 @@ export const handlers = [
       return unprocessable('シナリオに無いシーンは外せません');
     // 導入と結末は、子孫として巻き込む場合も含めて外せない（docs/cartagraph/scenario-flow.md「GMのカスタマイズ」）
     if (excludesFixedNode(s.deck, excludedNodeIds))
-      return unprocessable('導入と結末のシーンは外せません');
+      return unprocessable('導入と結末のシーンは外せません（外すシーンの中にある場合も含む）');
     const rc: Recruitment = {
       id: nextId('rc'),
       scenarioId: s.id,

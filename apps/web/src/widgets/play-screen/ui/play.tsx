@@ -38,7 +38,11 @@ export function Hud({
       </RoleBadge>
       <div className={s.hudParty}>
         {others.map((p) => (
-          <Avatar key={p.userId} name={p.characterName ?? p.name} avatarRole={p.role} />
+          <Avatar
+            key={`${p.userId}-${p.role}-${p.characterId ?? ''}`}
+            name={p.characterName ?? p.name}
+            avatarRole={p.role}
+          />
         ))}
         {links}
       </div>

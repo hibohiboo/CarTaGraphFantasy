@@ -78,6 +78,16 @@ describe('外したシーン（docs/cartagraph/scenario-flow.md「GMのカスタ
     expect(handIds(s)).not.toContain('vs-to-square');
   });
 
+  it('募集人数は1以上の整数。0・空の本文では出せず、1なら出せる', async () => {
+    const path = '/scenarios/sc-village-start/recruitments';
+    for (const body of [{ capacity: 0 }, { capacity: 1.5 }, { capacity: '3' }, undefined]) {
+      await expect(api.post(path, body)).rejects.toMatchObject({ status: 422 });
+    }
+    await expect(api.post<Recruitment>(path, { capacity: 1 })).resolves.toMatchObject({
+      capacity: 1,
+    });
+  });
+
   it('シナリオに無いシーンや、形の崩れた指定では募集を出せない', async () => {
     for (const excludedNodeIds of [['nowhere'], 'vs-shop', [123]]) {
       await expect(

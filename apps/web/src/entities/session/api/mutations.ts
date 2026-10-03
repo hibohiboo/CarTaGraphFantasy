@@ -40,8 +40,6 @@ export function useStartSession() {
       void qc.invalidateQueries({ queryKey: keys.recruitments });
       void qc.invalidateQueries({ queryKey: keys.sessions });
     },
-    // 別の画面で先に始められた等で断られたら、一覧を取り直して古いカードを消す
-    onError: () => qc.invalidateQueries({ queryKey: keys.recruitments }),
   });
 }
 
