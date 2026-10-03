@@ -1,6 +1,6 @@
 // 配る条件・使える条件の判定（docs/cartagraph/solo-village.md「配る条件・使える条件」、GM不在のソロの仮ルール）。
 // セッションの遷移（session/transition.ts）と村のルール（soloVillage/rules.ts）の両方が使うので、
-// 循環を避けてカードの側に置く（docs/process/rules/architecture.md「構造」）。
+// 循環を避けてカードの側に置く（docs/process/rules/architecture.md「packages/domain の中の置き場所」）。
 
 import type { CardCondition, CardDef } from './model';
 

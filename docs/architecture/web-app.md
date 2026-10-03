@@ -25,18 +25,9 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
    ├─ lib/       api.ts（fetch ラッパー）、queries.ts（Query フック）、format.ts
    ├─ mocks/     fixtures.ts（モックデータ）、scenarioFiles.ts（scenarios/*.json の読み込み）、handlers.ts（MSW ハンドラ）、browser.ts / node.ts
    └─ styles/    tokens.css（デザイントークン）、global.css
-packages/domain/src/      ドメイン型とゲームロジック。docs の用語をそのまま型にしたもの。置き方と依存の向きは docs/process/rules/architecture.md
-   ├─ check/     model.ts（能力値・判定）
-   ├─ card/      model.ts（CardDef と、カードが持つ属性）、condition.ts（配る条件・使える条件の判定）
-   ├─ character/ model.ts（Character）、archetype.ts（典型ロールの導出）
-   ├─ autoCombat/ model.ts（敵・優先順位・戦闘の記録）、resolve.ts（自動戦闘の解決）
-   ├─ scenario/  model.ts（Scenario・DeckNode・結末）、refs.ts（参照の整合）、file.ts（scenarios/*.json の1ファイルの検査）
-   ├─ session/   model.ts（Session・参加者・提案・募集）、transition.ts（次のシーンへ進む）
-   ├─ soloVillage/ rules.ts（GM不在のソロの村の成長）
-   ├─ user/      model.ts（ロール・ログインユーザー）
-   ├─ library/   model.ts（共有ライブラリ）
-   └─ layers.test.ts  ディレクトリ間の依存の向きの検査
-   シナリオの型は check/・card/・autoCombat/・scenario/ の model.ts の zod スキーマが正
+packages/domain/src/      ドメイン型とゲームロジック。docs の用語をそのまま型にしたもの
+                          ドメインごとのディレクトリ（一覧・置き方・依存の向きは docs/process/rules/architecture.md）。
+                          型は各ディレクトリの model.ts（シナリオの型は zod スキーマが正）、ロジックは役割の名前のファイル
 scenarios/                遊べるシナリオの JSON（下記「シナリオの JSON」）
 scripts/copy-web-to-pages.mjs   ビルド成果物を docs の dist 配下 app/ へコピー（GitHub Pages 用）
 scripts/copy-e2e-report-to-pages.mjs   PlaywrightのHTMLレポートを docs の dist 配下 e2e-report/ へコピー（GitHub Pages 用）

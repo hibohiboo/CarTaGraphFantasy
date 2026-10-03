@@ -75,7 +75,6 @@ export const spaceModelSchema = z.enum(['1d', '2d']);
 
 export type SpaceModel = z.infer<typeof spaceModelSchema>;
 
-/** 「新たな選択肢を提案」カードの提案を誰がどう裁定するか（説明は下の ProposalHandling） */
 export const proposalHandlingSchema = z.enum(['gm-required', 'disabled', 'auto-resolve']);
 
 /**

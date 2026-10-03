@@ -1,6 +1,6 @@
 // カード（docs/cartagraph/card-and-deck.md, card-face-back.md）。
 // カードが持つ属性の型（自動戦闘の効果・配る条件・成長の効果）も、出典のページに関わらずここに置く
-// （cardDefSchema と soloEffectSchema が互いを参照するため。docs/process/rules/architecture.md「構造」）。
+// （cardDefSchema と soloEffectSchema が互いを参照するため。docs/process/rules/architecture.md「packages/domain の中の置き場所」）。
 //
 // シナリオとそれが含む型（scenarios/*.json に書くもの）は zod スキーマが正で、型は z.infer で導く
 // （docs/plans/2026-10-03-シナリオのJSON管理.md D2）。check/・autoCombat/・scenario/ の model.ts も同じ方針。

@@ -1,6 +1,6 @@
 // セッション（docs/cartagraph/party-and-session.md, play-and-field.md）と、その前段の募集
 // （docs/cartagraph/scenario-flow.md の募集→応募→確定。GM がシナリオからセッションを立てる手続きなのでここに置く。
-// docs/process/rules/architecture.md「構造」）。
+// docs/process/rules/architecture.md「packages/domain の中の置き場所」）。
 
 import type { AutoCombatState, CombatRecord } from '../autoCombat/model';
 import type { CardDef } from '../card/model';

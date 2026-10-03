@@ -33,7 +33,7 @@ scenarios/    遊べるシナリオの JSON（シードの一部。packages/doma
 
 ## packages/domain の中の置き場所
 
-`packages/domain/src/` は、仕様ページ（`docs/cartagraph/`）に合わせたドメインごとのディレクトリに分ける。今あるディレクトリの一覧は[Webアプリの構成](../../architecture/web-app.md)が正。
+`packages/domain/src/` は、仕様ページ（`docs/cartagraph/`）に合わせたドメインごとのディレクトリに分ける。ディレクトリの一覧は下の「依存の向き」の表が正（[Webアプリの構成](../../architecture/web-app.md)はここを指す）。
 
 - **型は `model.ts`、ロジックは役割の名前のファイル** — 各ディレクトリの型は `model.ts` に置き、zod スキーマ・型（`z.infer`）・ラベルを隣り合わせにする。ロジックは `resolve.ts`・`refs.ts`・`transition.ts` のように役割で名づける。テストは対象と同じディレクトリに、対象のファイル名で置く
 - **直下にファイルを置かない。`index.ts` を作らない** — 利用側は `@cartagraph/domain/<ディレクトリ>/<ファイル>` を直接 import する（`package.json` の `exports` はワイルドカード）。domain の中は相対パスで import し、自分のパッケージ名では import しない
@@ -41,18 +41,18 @@ scenarios/    遊べるシナリオの JSON（シードの一部。packages/doma
 
 ### 依存の向き
 
-各ディレクトリが import してよい先（同じディレクトリの中は自由）。`packages/domain/src/layers.test.ts` がソースを読んで機械的に確かめるので、表を変えるときはテストの表も一緒に直す。
+各ディレクトリが import してよい先（同じディレクトリの中は自由）。`packages/domain/src/layers.test.ts` がソースを読んで機械的に確かめる。テストの中の表（`ALLOWED`）はこの表の写しで、一致しないとテストが落ちるので、表を変えるときは一緒に直す。
 
 | ディレクトリ | 仕様ページ | import してよい先 |
 |---|---|---|
 | `check/` | exploration-check.md（能力値・判定） | なし |
-| `user/` | graph.md（ロール） | なし |
-| `card/` | card-and-deck.md | `check/` |
+| `user/` | graph.md（ロール）・unlock.md・character-growth.md（解放済みカードプール） | なし |
+| `card/` | card-and-deck.md・card-face-back.md | `check/` |
 | `library/` | graph.md（共有ライブラリ） | `card/`・`check/` |
-| `character/` | character-growth.md | `card/`・`check/` |
+| `character/` | character-growth.md・role-and-scenario.md（典型ロール）・comparison-and-titles.md（称号） | `card/`・`check/` |
 | `autoCombat/` | auto-combat.md | `character/`・`card/`・`check/` |
 | `scenario/` | scenario-flow.md | `autoCombat/`・`character/`・`card/`・`check/` |
-| `session/` | party-and-session.md・play-and-field.md | `scenario/`・`autoCombat/`・`character/`・`card/`・`check/` |
+| `session/` | party-and-session.md・play-and-field.md・scenario-flow.md（募集） | `scenario/`・`autoCombat/`・`character/`・`card/`・`check/` |
 | `soloVillage/` | solo-village.md | `session/`・`scenario/`・`autoCombat/`・`character/`・`card/`・`check/` |
 
 ### 仕様ページに合わせる、の例外
