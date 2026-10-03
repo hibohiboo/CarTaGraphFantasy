@@ -1,6 +1,7 @@
 // 全ルートを MSW（node）＋メモリルーターで描画し、見出しが出ることと主要な操作が通ることを確認する。
 
-import type { Character, Session } from '@cartagraph/domain';
+import type { Character } from '@cartagraph/domain/character/model';
+import type { Session } from '@cartagraph/domain/session/model';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

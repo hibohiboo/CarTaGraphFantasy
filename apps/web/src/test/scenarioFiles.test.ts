@@ -2,8 +2,8 @@
 // 遊べるシナリオの正は scenarios/*.json。fixtures に残る重複（プランの「重複の記録」1〜3）は、
 // 統合するまでずれをここで検知する。
 
-import type { Scenario } from '@cartagraph/domain';
-import { scenarioSchema } from '@cartagraph/domain/scenarioSchema';
+import type { Scenario } from '@cartagraph/domain/scenario/model';
+import { scenarioSchema } from '@cartagraph/domain/scenario/model';
 import { describe, expect, it } from 'vitest';
 import { api } from '../lib/api';
 import { examiner, cards as fixtureCards, scenarios, sessions } from '../mocks/fixtures';

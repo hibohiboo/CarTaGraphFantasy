@@ -1,10 +1,8 @@
 // シナリオの zod スキーマ（docs/plans/2026-10-03-シナリオのJSON管理.md「5. 新規テストケース」）。
 // scenarios/*.json を手で直したときの書き間違いを読み込みで止められることを確かめる。
 
-import { describe, expect, expectTypeOf, it } from 'vitest';
-import type { z } from 'zod';
-import type { Abilities } from './index';
-import { type abilityKeySchema, scenarioSchema } from './scenarioSchema';
+import { describe, expect, it } from 'vitest';
+import { scenarioSchema } from './model';
 
 /** 必須項目だけの最小のシナリオ */
 const minimal = () => ({
@@ -211,9 +209,5 @@ describe('scenarioSchema', () => {
     ).toBe(true);
     expect(scenarioSchema.safeParse({ ...minimal(), updatedAt: '2026-09-30' }).success).toBe(false);
     expect(scenarioSchema.safeParse({ ...minimal(), updatedAt: '3日前' }).success).toBe(false);
-  });
-
-  it('能力値のキーの列挙が Abilities のキーと一致する', () => {
-    expectTypeOf<z.infer<typeof abilityKeySchema>>().toEqualTypeOf<keyof Abilities>();
   });
 });

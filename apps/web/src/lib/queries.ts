@@ -1,15 +1,12 @@
 // TanStack Query のフック集。ページからは API のパスを直接触らず、ここを経由する。
 
-import type {
-  CardDef,
-  Character,
-  CurrentUser,
-  HpCondition,
-  LibraryEntry,
-  Recruitment,
-  Scenario,
-  Session,
-} from '@cartagraph/domain';
+import type { HpCondition } from '@cartagraph/domain/autoCombat/model';
+import type { CardDef } from '@cartagraph/domain/card/model';
+import type { Character } from '@cartagraph/domain/character/model';
+import type { LibraryEntry } from '@cartagraph/domain/library/model';
+import type { Scenario } from '@cartagraph/domain/scenario/model';
+import type { Recruitment, Session } from '@cartagraph/domain/session/model';
+import type { CurrentUser } from '@cartagraph/domain/user/model';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 

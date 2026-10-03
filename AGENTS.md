@@ -22,10 +22,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 - `docs/plans/` … プランドキュメント（作業単位の設計書。VitePress のビルド対象外）
 - `docs/backlog/` … 要望（PBI）を1要望1ファイルで置く。先頭の状態・判断待ちから、トップページのダッシュボードをビルド時に組み立てる（`docs/.vitepress/*.data.ts`）
 - `docs/public/preview/` … HTML/CSS のみのUI試作。未React化の画面だけを残し、React 化したら削除する（`docs/architecture/web-app.md`「未React化の画面」）
-- `apps/web/src/` … `app/`（ルート一覧・ルーター・シェル）、`pages/`（ロール別ページ）、`components/`、`lib/`（API・クエリ）、`mocks/`（MSW）、`content/`（ルールブック要約）、`styles/`
-- `packages/domain/src/` … ドメイン型（シナリオの型は `scenarioSchema.ts` の zod スキーマが正）
-- `scenarios/` … 遊べるシナリオの JSON（1シナリオ1ファイル、`<id>.json`）。MSW が起動時に読み込んで検査する。テスト専用のシナリオと下書きのデモデータは `apps/web/src/mocks/fixtures.ts`
-- `scripts/` … ビルド補助
+- `apps/`・`packages/`・`scenarios/`・`scripts/` … コード。ディレクトリ構成と依存の向きは `docs/process/rules/architecture.md`「構造」「依存の向き」が正（ここには書き写さない）
 - `.claude/` … Claude Code 固有の設定（agents / skills / settings）。手順の本文は `docs/process/` が正
 
 ## コマンド

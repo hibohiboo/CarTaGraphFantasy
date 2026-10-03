@@ -1,8 +1,9 @@
 // シナリオの中の参照の整合（docs/plans/2026-10-03-シナリオのJSON管理.md D5）。
 
 import { describe, expect, it } from 'vitest';
-import type { CardDef, DeckNode, Scenario } from './index';
-import { findScenarioRefErrors } from './scenarioRefs';
+import type { CardDef } from '../card/model';
+import type { DeckNode, Scenario } from './model';
+import { findScenarioRefErrors } from './refs';
 
 const card = (id: string, o: Partial<CardDef> = {}): CardDef => ({
   id,

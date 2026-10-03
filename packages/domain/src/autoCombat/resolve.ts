@@ -2,15 +2,9 @@
 // 戦闘ルール（docs/cartagraph/combat.md）のカウント制を、事前の優先順位リストで自動実行する。
 // 乱数は引数で受け取り、副作用を持たない（docs/process/rules/architecture.md の Functional Core）。
 
-import type {
-  AutoCombatOutcome,
-  CardDef,
-  Character,
-  CombatLogEntry,
-  DiceExpr,
-  HpCondition,
-  PriorityEntry,
-} from './index';
+import type { CardDef, DiceExpr } from '../card/model';
+import type { Character } from '../character/model';
+import type { AutoCombatOutcome, CombatLogEntry, HpCondition, PriorityEntry } from './model';
 
 /** [0, 1) の乱数を返す関数 */
 export type Rng = () => number;

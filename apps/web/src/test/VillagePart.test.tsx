@@ -3,7 +3,9 @@
 // （キャラクターのキャッシュの無効化まで確かめるため、途中で API を直接呼んで状態を作らない）。
 // 試験まで通すときは、試験官が必ず倒れるテスト用シナリオ sc-village-always-win を使う。
 
-import { type Character, deriveArchetype, type Session } from '@cartagraph/domain';
+import { deriveArchetype } from '@cartagraph/domain/character/archetype';
+import type { Character } from '@cartagraph/domain/character/model';
+import type { Session } from '@cartagraph/domain/session/model';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';

@@ -1,4 +1,5 @@
-import type { ParticipantRole, ProposalStatus, UserRole } from '@cartagraph/domain';
+import type { ParticipantRole, ProposalStatus } from '@cartagraph/domain/session/model';
+import type { UserRole } from '@cartagraph/domain/user/model';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import s from './ui.module.css';
 

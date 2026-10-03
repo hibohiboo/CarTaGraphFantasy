@@ -1,16 +1,12 @@
 // モックデータ。試作フェーズ（docs/public/preview）のダミーデータを踏襲している。
 // 日時は「今」からの相対で作り、相対表示（3時間前など）が常に自然に見えるようにする。
-import type {
-  AutoCombatEnemy,
-  CardDef,
-  Character,
-  CurrentUser,
-  LibraryEntry,
-  PriorityEntry,
-  Recruitment,
-  Scenario,
-  Session,
-} from '@cartagraph/domain';
+import type { AutoCombatEnemy, PriorityEntry } from '@cartagraph/domain/autoCombat/model';
+import type { CardDef } from '@cartagraph/domain/card/model';
+import type { Character } from '@cartagraph/domain/character/model';
+import type { LibraryEntry } from '@cartagraph/domain/library/model';
+import type { Scenario } from '@cartagraph/domain/scenario/model';
+import type { Recruitment, Session } from '@cartagraph/domain/session/model';
+import type { CurrentUser } from '@cartagraph/domain/user/model';
 import { scenarioFiles } from './scenarioFiles';
 
 const now = Date.now();

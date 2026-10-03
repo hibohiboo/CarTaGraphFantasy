@@ -1,20 +1,17 @@
 // docs/plans/2026-09-27-村パート.md「5. 新規テストケース（ドメイン単体）」に対応する。
 import { describe, expect, it } from 'vitest';
-import {
-  type Abilities,
-  type CardDef,
-  type Character,
-  deriveArchetype,
-  type Session,
-} from './index';
+import type { CardDef } from '../card/model';
+import { deriveArchetype } from '../character/archetype';
+import type { Character } from '../character/model';
+import type { Abilities } from '../check/model';
+import type { Session } from '../session/model';
 import {
   applySoloEffect,
   grantEndingTag,
   heldCards,
   isSoloRuleCard,
-  meetsCondition,
   unplayableReason,
-} from './soloVillage';
+} from './rules';
 
 const card = (id: string, tags: string[], extra: Partial<CardDef> = {}): CardDef => ({
   id,
@@ -54,33 +51,6 @@ function apply(c: Character, effect: Parameters<typeof applySoloEffect>[1], g = 
   if (!r.ok) throw new Error(r.error);
   return r;
 }
-
-describe('meetsCondition', () => {
-  const held = [voucher(), slash];
-  it('条件が無ければ真', () => {
-    expect(meetsCondition(undefined, held)).toBe(true);
-    expect(meetsCondition({}, held)).toBe(true);
-  });
-  it('空配列の条件は真', () => {
-    expect(meetsCondition({ hasTags: [], lacksTags: [], lacksCards: [] }, [])).toBe(true);
-  });
-  it('hasTags：すべて持てば真、1つ欠ければ偽', () => {
-    expect(meetsCondition({ hasTags: ['引換', '攻撃'] }, held)).toBe(true);
-    expect(meetsCondition({ hasTags: ['引換', '回復'] }, held)).toBe(false);
-  });
-  it('lacksTags：1枚も無ければ真、1枚あれば偽', () => {
-    expect(meetsCondition({ lacksTags: ['達成:猪'] }, held)).toBe(true);
-    expect(meetsCondition({ lacksTags: ['達成:猪'] }, [...held, achievement])).toBe(false);
-  });
-  it('lacksCards：そのIDのカードが無ければ真、あれば偽', () => {
-    expect(meetsCondition({ lacksCards: ['c-heavy-blow'] }, held)).toBe(true);
-    expect(meetsCondition({ lacksCards: ['c-slash'] }, held)).toBe(false);
-  });
-  it('複数の項目は、すべて満たして真', () => {
-    expect(meetsCondition({ hasTags: ['引換'], lacksCards: ['c-heavy-blow'] }, held)).toBe(true);
-    expect(meetsCondition({ hasTags: ['引換'], lacksCards: ['c-slash'] }, held)).toBe(false);
-  });
-});
 
 describe('heldCards', () => {
   it('キャラクターデッキと、GM専用ゾーンの「達成」タグのカードだけを含む', () => {

@@ -2,7 +2,7 @@
 // パスは import.meta.glob が返すキーの形（apps/web/src/mocks/scenarioFiles.ts）で試す。
 
 import { describe, expect, it } from 'vitest';
-import { parseScenarioFile } from './scenarioFile';
+import { parseScenarioFile } from './file';
 
 const PATH = '../../../../scenarios/sc-x.json';
 

@@ -2,7 +2,9 @@
 // 勝敗を固定したい検証は、乱数の出目によらず結果が決まるテスト用シナリオ（mocks/fixtures.ts の
 // sc-exam-always-win / always-lose / always-timeout）で行う。
 
-import { type Character, deriveArchetype, type Session } from '@cartagraph/domain';
+import { deriveArchetype } from '@cartagraph/domain/character/archetype';
+import type { Character } from '@cartagraph/domain/character/model';
+import type { Session } from '@cartagraph/domain/session/model';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

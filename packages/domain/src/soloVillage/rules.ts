@@ -1,17 +1,14 @@
 // GM不在のソロでの村の成長（docs/cartagraph/solo-village.md、仮ルール）の計算。
-// 配る条件・使える条件の判定と、成長の効果の適用を純粋関数で行う（Functional Core）。
+// 使える条件（選べない理由）と成長の効果の適用を純粋関数で行う（Functional Core）。条件そのものの判定は card/condition.ts。
 // 適用するかどうか（人間GMのいないセッションか）の判断と書き込みは、呼び出し側（MSW ハンドラ等）が行う。
 
-import {
-  type Abilities,
-  type CardCondition,
-  type CardDef,
-  type Character,
-  hasCombatSkill,
-  type Scenario,
-  type Session,
-  type SoloEffect,
-} from './index';
+import { conditionFailure, hasTag } from '../card/condition';
+import type { CardDef, SoloEffect } from '../card/model';
+import { hasCombatSkill } from '../character/archetype';
+import type { Character } from '../character/model';
+import type { Abilities } from '../check/model';
+import type { Scenario } from '../scenario/model';
+import type { Session } from '../session/model';
 
 const ACHIEVEMENT_TAG = '達成';
 /** 能力値の上限（balance.md「1〜5程度」。仮ルール） */
@@ -21,12 +18,6 @@ const ABILITY_LABEL: Record<keyof Abilities, string> = { body: '体', skill: '�
 /** 条件の判定に使うカード：キャラクターデッキと、GM専用ゾーンのうちタグ「達成」を持つもの */
 export function heldCards(character: Pick<Character, 'deck'>, field: Session['field']): CardDef[] {
   return [...character.deck, ...field.gmOnly.filter((c) => c.tags.includes(ACHIEVEMENT_TAG))];
-}
-
-const hasTag = (held: CardDef[], tag: string) => held.some((c) => c.tags.includes(tag));
-
-export function meetsCondition(cond: CardCondition | undefined, held: CardDef[]): boolean {
-  return conditionFailure(cond, held) === null;
 }
 
 /**
@@ -39,17 +30,6 @@ export function unplayableReason(card: CardDef, held: CardDef[]): string | null 
   const deckCards = held.filter((c) => !c.tags.includes(ACHIEVEMENT_TAG));
   if (consume && !hasTag(deckCards, consume)) return `『${consume}』のカードが必要`;
   return conditionFailure(card.playWhen, held);
-}
-
-function conditionFailure(cond: CardCondition | undefined, held: CardDef[]): string | null {
-  if (!cond) return null;
-  const missing = cond.hasTags?.find((t) => !hasTag(held, t));
-  if (missing) return `『${missing}』のカードが必要`;
-  const forbidden = cond.lacksTags?.find((t) => hasTag(held, t));
-  if (forbidden) return `『${forbidden}』のカードを持っていると選べない`;
-  const owned = held.find((c) => cond.lacksCards?.includes(c.id));
-  if (owned) return `『${owned.name}』をすでに持っている`;
-  return null;
 }
 
 /**

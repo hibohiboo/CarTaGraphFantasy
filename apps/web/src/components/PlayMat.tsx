@@ -1,4 +1,4 @@
-import type { CardDef } from '@cartagraph/domain';
+import type { CardDef } from '@cartagraph/domain/card/model';
 import { useState } from 'react';
 import { GameCard } from './GameCard';
 import s from './PlayMat.module.css';

@@ -1,9 +1,6 @@
-import {
-  ARCHETYPE_LABEL,
-  type Character,
-  deriveArchetype,
-  type Recruitment,
-} from '@cartagraph/domain';
+import { deriveArchetype } from '@cartagraph/domain/character/archetype';
+import { ARCHETYPE_LABEL, type Character } from '@cartagraph/domain/character/model';
+import type { Recruitment } from '@cartagraph/domain/session/model';
 import { useState } from 'react';
 import { Button, Chip, ChipGroup, ErrorNote, Loading, PageHeader } from '../../components/ui';
 import { useApply, useCharacters, useMe, useRecruitments } from '../../lib/queries';

@@ -2,8 +2,8 @@
 // 検査（形・ファイル名と id・参照の整合）は packages/domain の parseScenarioFile。誤りがあれば読み込みで止まる。
 // 開発サーバーの起動中に scenarios/ へファイルを足したときは、再起動すると拾う。
 
-import type { Scenario } from '@cartagraph/domain';
-import { parseScenarioFile } from '@cartagraph/domain/scenarioFile';
+import { parseScenarioFile } from '@cartagraph/domain/scenario/file';
+import type { Scenario } from '@cartagraph/domain/scenario/model';
 
 const files = import.meta.glob('../../../../scenarios/*.json', { eager: true, import: 'default' });
 

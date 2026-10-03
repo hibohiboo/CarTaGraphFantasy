@@ -1,4 +1,4 @@
-import { DECK_NODE_LABEL, type DeckNode } from '@cartagraph/domain';
+import { DECK_NODE_LABEL, type DeckNode } from '@cartagraph/domain/scenario/model';
 import type { ReactNode } from 'react';
 import s from './DeckTree.module.css';
 

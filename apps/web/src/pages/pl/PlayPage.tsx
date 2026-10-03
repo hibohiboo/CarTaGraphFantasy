@@ -1,5 +1,6 @@
-import { type CardDef, SYSTEM_GM_ID } from '@cartagraph/domain';
-import { heldCards, isSoloRuleCard, unplayableReason } from '@cartagraph/domain/soloVillage';
+import type { CardDef } from '@cartagraph/domain/card/model';
+import { SYSTEM_GM_ID } from '@cartagraph/domain/session/model';
+import { heldCards, isSoloRuleCard, unplayableReason } from '@cartagraph/domain/soloVillage/rules';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '../../components/GameCard';
