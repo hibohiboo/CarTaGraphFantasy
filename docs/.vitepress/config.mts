@@ -117,6 +117,13 @@ export default defineConfig({
           // アプリは VitePress 管理外の静的ファイルなので SPA 遷移を避ける
           { text: 'アプリを開く（モックAPI）', link: '/app/', target: '_self' },
           {
+            // ゲームの仕様の各ページに1対1で対応する。決めた理由・経緯・将来の拡張候補を置く
+            text: 'デザイナーノート',
+            link: '/notes/',
+            collapsed: true,
+            items: [{ text: '段階的な開示とアンロック', link: '/notes/unlock' }],
+          },
+          {
             text: '議論ログ（アーカイブ）',
             collapsed: true,
             items: [
