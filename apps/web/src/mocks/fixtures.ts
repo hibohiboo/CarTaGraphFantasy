@@ -601,6 +601,27 @@ export const recruitments: Recruitment[] = [
     status: 'open',
     excludedNodeIds: [],
   },
+  // 自分（u-me）が GM の募集。自分の PC と、カヤの PC が応募している（募集からセッションを始めるテスト用）
+  {
+    id: 'rc-mine',
+    scenarioId: 'sc-gray-mansion',
+    scenarioTitle: '灰色館の一夜',
+    gmId: 'u-me',
+    gmName: 'ユウ',
+    partySize: { min: 2, max: 4 },
+    spaceModel: null,
+    recommendedCp: 3,
+    referenceTags: ['体・技・心'],
+    prerequisiteTags: [],
+    applicants: [
+      { characterId: 'pc-jin', characterName: '迅', userId: 'u-me', playerName: 'ユウ' },
+      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
+    ],
+    capacity: 4,
+    status: 'open',
+    excludedNodeIds: [],
+    note: '自分の卓。灰色館をじっくり遊ぶ',
+  },
 ];
 
 // ---------- セッション ----------
