@@ -8,7 +8,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 ## 位置づけ
 
 - **バックエンドはまだ作らない。** `/api/*` はすべて [MSW](https://mswjs.io/)（Mock Service Worker）が横取りして応答する。状態はブラウザのメモリ上にあり、リロードで初期化される。本番ビルド（GitHub Pages）でもMSWを起動している。
-- 本物のAPIができたら、`apps/web/src/lib/api.ts` の接続先を差し替え、`src/mocks/` を開発時のみ有効にする想定。
+- 本物のAPIができたら、`apps/web/src/shared/api/api.ts` の接続先を差し替え、`src/mocks/` を開発時のみ有効にする想定。
 - TanStack Queryの `QueryClient`（`src/main.tsx`）は `retry: false, staleTime: 5_000` のみを設定している。実レイテンシ・更新頻度を測定できる材料がまだ無いため、データ種別ごとのキャッシュチューニングは実バックエンド接続後に実測してから見直す。
 - [フェーズ分け](index.md#開発フェーズの段階分け決着)（まず閲覧サイト→後にセッション管理）の方針は変えていない。セッション管理系の画面も含めて先に画面を作っているのは、モックで体験を検証するためであり、バックエンド実装の着手順は改めて判断する。
 
@@ -29,11 +29,11 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 - **整形** — Biome が正（コミット前フックが整形する）
 - **直したら** — `pnpm web:test` を通す（ライトルート。[開発プロセス](../process/index.md)）
 
-## ページ一覧（ロール別）
+## ページ一覧（グループ別）
 
-ページの一覧は、アプリ内のサイトマップ（`/admin/sitemap`）が `src/app/routes.ts` から生成している。ここでは概要だけ示す。
+ページの一覧は、アプリ内のサイトマップ（`/admin/sitemap`）が `src/shared/routes/routes.ts` から生成している。ここでは概要だけ示す。
 
-| ロール | ページ |
+| グループ | ページ |
 |---|---|
 | PL | セッション選択（募集一覧・応募）、プレイページ（手札のプレイ・提案）、キャラクター一覧／作成／シート |
 | GM | シナリオ管理（共有ライブラリから選ぶ→カードの取捨選択→募集）、セッション管理（参加者・ゾーン・進行・提案の裁定・モード切り替え・終了） |
@@ -43,7 +43,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 
 ## 仕様との関係（SSOT）
 
-- 仕様の正は引き続き `docs/` 配下。アプリ内のルールブック（`src/content/rulebook.ts`）は docs の**要約**で、各節に出典リンクを持つ。docs 側と食い違ったら docs を正としてアプリ側を直す。
+- 仕様の正は引き続き `docs/` 配下。アプリ内のルールブック（`src/shared/content/rulebook.ts`）は docs の**要約**で、各節に出典リンクを持つ。docs 側と食い違ったら docs を正としてアプリ側を直す。
 - `packages/domain` の型は docs の用語（カード種別・ロール・ゾーン・提案の状態など）に対応する。用語の意味を変える場合は docs を先に更新する。
 - キャラクター作成の体・技・心の初期配分は[未決](../open-questions.md#次に詰める候補)のため、アプリでは「合計9を1〜5で配分」という**仮ルール**で動かしている（画面にもその旨を表示）。
 
@@ -95,4 +95,4 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 
 シーン構築画面（カード編集）は`/creator/scenarios/:scenarioId/scenes/:sceneId`（`CreatorSceneEditPage.tsx`）としてReact化済み（`docs/plans/2026-09-16-scene-builder.md`、開発サイクルC4）。シーンの「目的」「終了条件」は未決の仮ルールとして実装しており、[未解決論点トラッカー](../open-questions.md)の該当項目は決着していない。
 
-React 化する際は、この試作の見た目・情報設計を踏襲しつつ、既存の React コンポーネント（`components/GameCard.tsx`・`components/ui.tsx` 等）を再利用する。試作HTML自体のクラス構造をそのまま持ち込むのではない（[試作フェーズの引き継ぎ](prototype-handover.md)参照）。
+React 化する際は、この試作の見た目・情報設計を踏襲しつつ、既存の React コンポーネント（`entities/card/ui/GameCard.tsx`・`shared/ui/ui.tsx` 等）を再利用する。試作HTML自体のクラス構造をそのまま持ち込むのではない（[試作フェーズの引き継ぎ](prototype-handover.md)参照）。

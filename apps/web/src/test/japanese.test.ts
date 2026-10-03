@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toDictionaryForm } from '../lib/japanese';
+import { toDictionaryForm } from '@/shared/lib/japanese';
 
 describe('toDictionaryForm', () => {
   it.each([

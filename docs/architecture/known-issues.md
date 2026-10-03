@@ -132,9 +132,15 @@
 
 ### 正規表現をループや関数の中で毎回作っている（useTopLevelRegex）
 
-- **起きること** — react-best-practices の `js-hoist-regexp`（Biome の `performance/useTopLevelRegex`）に反する箇所が、本体に9件（`app/AppShell.tsx` 3、`lib/japanese.ts` 2、`packages/domain/src/scenario/file.ts` 2、`CreatorScenarioEditPage.tsx` 1、`RulebookSectionPage.tsx` 1）、テストに11件ある。呼ばれるたびに正規表現を作り直す
+- **起きること** — react-best-practices の `js-hoist-regexp`（Biome の `performance/useTopLevelRegex`）に反する箇所が、本体に9件（`app/AppShell.tsx` 3、`shared/lib/japanese.ts` 2、`packages/domain/src/scenario/file.ts` 2、`CreatorScenarioEditPage.tsx` 1、`RulebookSectionPage.tsx` 1）、テストに11件ある。呼ばれるたびに正規表現を作り直す
 - **見つけた経緯** — 2026-10-03、react-best-practices のスキルを取り込み、Biome で止められるルールを調べたとき
 - **直すときの目安** — 正規表現をモジュールの最上位の定数にしてから、`biome.json` で `useTopLevelRegex` を有効にする（テストは overrides で外すかを決める）
+
+### 共通の UI 部品が1ファイル（shared/ui/ui.tsx）に集まっている
+
+- **起きること** — `apps/web/src/shared/ui/ui.tsx`（195行）に、Button・Panel・Chip など15の部品が1ファイルで入っている。FSD は shared/ui を部品ごとに分けることを勧めている。中には `RoleBadge`（利用者のロール）・`StatusPill`（提案の状態）のように、domain の型を使うエンティティ寄りの部品もある
+- **見つけた経緯** — 2026-10-03、FSD 移行（`docs/plans/2026-10-03-webのFSD移行.md` D6）で、振る舞いを変えないため1ファイルのまま移した
+- **直すときの目安** — 部品ごとのファイル（`shared/ui/Button.tsx` など。セグメントの中にフォルダは作らない。architecture.md「依存の向き」）に分け、エンティティ寄りの部品は `entities/<エンティティ>/ui/` へ移す。CSS Modules も分ける
 
 ## ドキュメント・用語
 
@@ -156,12 +162,6 @@
 - **起きること** — GM不在のセッションに割り当てるダミーGMは、コード（`packages/domain`）のコメントが根拠をプランに置いている。プランは正式仕様（SSOT）ではない
 - **見つけた経緯** — C2 の仕様整合レビュー
 - **直すときの目安** — `party-and-session.md` か `play-and-field.md` に、GM不在のセッションの GM の扱いとして書く
-
-### 共通部品 `NameProposal` が、ページ側の CSS を読んでいる
-
-- **起きること** — `components/NameProposal.tsx` が、入力シートの見た目のために `pages/pages.module.css` のクラスを読んでいる。ほかの部品は自前の CSS を持っており、依存の向きが逆になっている
-- **見つけた経緯** — PR #6 の導入体験の修正のレビュー
-- **直すときの目安** — シート用のクラス（`sheetOverlay`・`sheetBackdrop`・`proposeSheet`）を共有の置き場所に移す。旅立ちの酒場のほかのシートも同じクラスを使っているので、あわせて直す
 
 ### シミュレーションのスクリプトが型検査の対象外
 

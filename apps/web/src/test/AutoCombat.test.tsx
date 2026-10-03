@@ -10,8 +10,8 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { routeObjects } from '../app/router';
-import { api } from '../lib/api';
+import { routeObjects } from '@/app/router';
+import { api } from '@/shared/api/api';
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });

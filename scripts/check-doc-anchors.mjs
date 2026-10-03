@@ -1,14 +1,14 @@
 // docs の見出しへのリンク（`xxx.md#見出し` と `#見出し`）が、ビルド結果の見出しIDに実在するかを確かめる。
 // `vitepress build` はページへのリンク切れは見るが、見出しのアンカーまでは見ないため、その穴を埋める。
 // 対象：docs/ の Markdown（ビルド対象外の docs/plans/ を除く）と、アプリのルールブック要約の出典
-// （apps/web/src/content/rulebook.ts の source）。`pnpm docs:build` の最後に実行する。
+// （apps/web/src/shared/content/rulebook.ts の source）。`pnpm docs:build` の最後に実行する。
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const docs = join(root, 'docs');
 const dist = join(docs, '.vitepress', 'dist');
-const rulebook = join(root, 'apps', 'web', 'src', 'content', 'rulebook.ts');
+const rulebook = join(root, 'apps', 'web', 'src', 'shared', 'content', 'rulebook.ts');
 
 /** docs/ 配下の Markdown（.vitepress・public・plans は除く） */
 function markdownFiles(dir) {

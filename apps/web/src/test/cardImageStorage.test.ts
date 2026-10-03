@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { loadCardImage, removeCardImage, saveCardImage } from '../lib/cardImageStorage';
+import {
+  loadCardImage,
+  removeCardImage,
+  saveCardImage,
+} from '@/pages/creator/scene-edit/api/cardImageStorage';
 
 afterEach(() => {
   window.localStorage.clear();
