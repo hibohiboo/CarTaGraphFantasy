@@ -42,6 +42,16 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。
 
+### 2026-10-03 募集からのセッション開始（PR #14）の振り返りから3件を採用
+
+- **内容**
+  1. docs だけのコミットで、pre-commit が Biome の「No files were processed」のエラー表示を出さないようにした（対象外だけのときは1行の案内だけ）
+  2. テストファイル（`*.test.ts(x)`・`apps/web/src/test/**`・`apps/web/e2e/**`）では `style/noNonNullAssertion` を止めた。テストでは見つけた要素の祖先（`closest` など）に `!` を付けて辿るのが定石で、見つからなければテストが落ちる。これで lint の警告は 22件から8件になった
+  3. Claude Code のフック `guard-bash.mjs` で、インタプリタに単独の `-`（標準入力からスクリプトを読む）を渡すのを止めた（`python -c`・`--` は止めない）
+- **理由** — 1・2 は毎回のノイズで、本物の指摘が埋もれる。3 は PR #14 の作業中に `python -` を誤って入れ、入力待ちでコマンドが止まったまま2回時間を失った。heredoc は止めていたが、この形はすり抜けた
+- **反映先** — `.githooks/pre-commit`、`biome.json`（`overrides`）、`.claude/hooks/guard-bash.mjs`
+- **きっかけ** — 作業中の失敗（1・3）、作業中のノイズ（2） ／ **止め方** — 機械（git フック・lint・Claude Code のフック）
+
 ### 2026-10-03 肥大化したページの分割先を、FSD のスライスで決めた（候補を閉じた）
 
 - **内容** — apps/web を Feature-Sliced Design に並べ替え（`docs/plans/2026-10-03-webのFSD移行.md`、PR #13）、ページの中の大きな一区画は、そのページのスライスの `ui/` に別ファイルとして切り出す、と決めた（例：プレイ画面の `AutoCombatPanel`、チュートリアルの `PlayMat`）。複数のページで使うなら widgets・entities へ。`CreatorSceneEditPage.tsx` の分割そのものは、肥大化したときに行う

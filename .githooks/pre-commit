@@ -22,15 +22,16 @@ staged_files=$(git diff --name-only --cached --diff-filter=ACMR)
 echo "[pre-commit] biome check --staged --write（安全な自動修正）"
 output=$(pnpm exec biome check --staged --write 2>&1)
 status=$?
-printf '%s\n' "$output"
 
 if [ $status -ne 0 ] && printf '%s' "$output" | grep -q 'No files were processed in the specified paths'; then
   # Biome は Markdown など対応外の拡張子しかステージされていないとき
   # 「処理対象が0件」を失敗として扱う。docs のみのコミットまで止めては
   # 困るので、これだけは無害として通す（本物のlint違反はここを通らない）。
+  # Biome のエラー表示は出さない（毎回のノイズになり、本物の指摘が埋もれるため）。
   echo "[pre-commit] Biome対象外のファイルのみのため lint をスキップします"
   exit 0
 fi
+printf '%s\n' "$output"
 
 # --write が書き換えた内容をコミットへ反映する（書き換わっていなければ no-op）。
 if [ -n "$staged_files" ]; then
