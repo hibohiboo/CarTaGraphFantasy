@@ -1,12 +1,12 @@
 import {
   type AutoCombatState,
-  type CardDef,
   type CombatLogEntry,
   HP_CONDITION_LABEL,
   type HpCondition,
-  type Session,
-} from '@cartagraph/domain';
-import { validatePriority } from '@cartagraph/domain/autoCombat';
+} from '@cartagraph/domain/autoCombat/model';
+import { validatePriority } from '@cartagraph/domain/autoCombat/resolve';
+import type { CardDef } from '@cartagraph/domain/card/model';
+import type { Session } from '@cartagraph/domain/session/model';
 import { useState } from 'react';
 import { Button, ErrorNote, Loading } from '../../components/ui';
 import { useCharacter, useRunAutoCombat } from '../../lib/queries';

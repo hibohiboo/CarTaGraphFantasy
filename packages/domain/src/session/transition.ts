@@ -1,15 +1,11 @@
 // 基本操作8「次のシーンへ進む」（docs/cartagraph/play-and-field.md）の遷移計算。
 // セッションを書き換えず、遷移後の状態だけを返す（Functional Core）。適用は呼び出し側（MSW ハンドラ等）が行う。
 
-import {
-  type AutoCombatEnemy,
-  type CardDef,
-  type DeckNode,
-  type Scenario,
-  type Session,
-  SYSTEM_GM_ID,
-} from './index';
-import { meetsCondition } from './soloVillage';
+import type { AutoCombatEnemy } from '../autoCombat/model';
+import { meetsCondition } from '../card/condition';
+import type { CardDef } from '../card/model';
+import type { DeckNode, Scenario } from '../scenario/model';
+import { type Session, SYSTEM_GM_ID } from './model';
 
 /** シナリオデッキを入れ子まで探す。path は最上位の祖先から見つかったノードまで */
 export function findDeckNode(

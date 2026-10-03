@@ -1,5 +1,6 @@
-import type { CardDef, CardKind, DeckNode, Scenario } from '@cartagraph/domain';
-import { CARD_KIND_LABEL } from '@cartagraph/domain';
+import type { CardDef, CardKind } from '@cartagraph/domain/card/model';
+import { CARD_KIND_LABEL } from '@cartagraph/domain/card/model';
+import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '../../components/GameCard';

@@ -1,4 +1,4 @@
-import { CARD_KIND_LABEL, type CardDef } from '@cartagraph/domain';
+import { CARD_KIND_LABEL, type CardDef } from '@cartagraph/domain/card/model';
 import type { CSSProperties, ReactNode } from 'react';
 import { CARD_KIND_ICONS } from './cardKindIcons';
 import s from './GameCard.module.css';

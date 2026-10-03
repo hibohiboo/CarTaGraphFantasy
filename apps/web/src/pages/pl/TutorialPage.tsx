@@ -1,5 +1,7 @@
-import type { CardDef, Character } from '@cartagraph/domain';
-import { ARCHETYPE_LABEL, deriveArchetype } from '@cartagraph/domain';
+import type { CardDef } from '@cartagraph/domain/card/model';
+import { deriveArchetype } from '@cartagraph/domain/character/archetype';
+import type { Character } from '@cartagraph/domain/character/model';
+import { ARCHETYPE_LABEL } from '@cartagraph/domain/character/model';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { CardGrid, GameCard } from '../../components/GameCard';

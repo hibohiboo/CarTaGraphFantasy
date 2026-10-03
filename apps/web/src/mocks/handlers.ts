@@ -1,36 +1,35 @@
 // MSW ハンドラ。バックエンドができるまでの代替。
 // 状態はメモリ上に持ち、リロードで初期化される（永続化はしない）。
 
-import {
-  type CardDef,
-  type Character,
-  type HpCondition,
-  type PriorityEntry,
-  type Proposal,
-  type Recruitment,
-  type Scenario,
-  type Session,
-  SYSTEM_GM_ID,
-  SYSTEM_GM_NAME,
-} from '@cartagraph/domain';
+import type { HpCondition, PriorityEntry } from '@cartagraph/domain/autoCombat/model';
 import {
   type AutoCombatResult,
   canFight,
   resolveAutoCombat,
   validatePriority,
-} from '@cartagraph/domain/autoCombat';
+} from '@cartagraph/domain/autoCombat/resolve';
+import type { CardDef } from '@cartagraph/domain/card/model';
+import type { Character } from '@cartagraph/domain/character/model';
+import type { Scenario } from '@cartagraph/domain/scenario/model';
+import {
+  type Proposal,
+  type Recruitment,
+  type Session,
+  SYSTEM_GM_ID,
+  SYSTEM_GM_NAME,
+} from '@cartagraph/domain/session/model';
 import {
   dealChoices,
   findDeckNode,
   planTransition,
   type TransitionPlan,
-} from '@cartagraph/domain/sceneTransition';
+} from '@cartagraph/domain/session/transition';
 import {
   applySoloEffect,
   grantEndingTag,
   heldCards,
   unplayableReason,
-} from '@cartagraph/domain/soloVillage';
+} from '@cartagraph/domain/soloVillage/rules';
 import { HttpResponse, http } from 'msw';
 import { toDictionaryForm } from '../lib/japanese';
 import * as fx from './fixtures';

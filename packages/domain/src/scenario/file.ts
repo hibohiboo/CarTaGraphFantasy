@@ -3,9 +3,9 @@
 // 誤りがあればファイルのパスを含めて例外を投げる。apps/web（MSW）とシミュレーションのスクリプトが使う。
 
 import { z } from 'zod';
-import type { Scenario } from './index';
-import { findScenarioRefErrors } from './scenarioRefs';
-import { scenarioSchema } from './scenarioSchema';
+import type { Scenario } from './model';
+import { scenarioSchema } from './model';
+import { findScenarioRefErrors } from './refs';
 
 export function parseScenarioFile(path: string, raw: unknown): Scenario {
   const parsed = scenarioSchema.safeParse(raw);

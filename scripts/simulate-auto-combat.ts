@@ -9,15 +9,15 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { resolveAutoCombat } from '../packages/domain/src/autoCombat';
 import {
-  type CardDef,
   HP_CONDITION_LABEL,
   type HpCondition,
   type PriorityEntry,
-} from '../packages/domain/src/index';
-import { parseScenarioFile } from '../packages/domain/src/scenarioFile';
-import { findDeckNode } from '../packages/domain/src/sceneTransition';
+} from '../packages/domain/src/autoCombat/model';
+import { resolveAutoCombat } from '../packages/domain/src/autoCombat/resolve';
+import type { CardDef } from '../packages/domain/src/card/model';
+import { parseScenarioFile } from '../packages/domain/src/scenario/file';
+import { findDeckNode } from '../packages/domain/src/session/transition';
 
 const SCENARIO_ID = 'sc-village-start';
 // import.meta.glob（apps/web の読み込み）は tsx で動かないので、ファイルを直接読んで同じ検査をかける

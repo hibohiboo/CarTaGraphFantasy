@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { type AutoCombatEnemy, type CardDef, type DeckNode, SYSTEM_GM_ID } from './index';
-import { dealChoices, findDeckNode, planTransition } from './sceneTransition';
+import type { AutoCombatEnemy } from '../autoCombat/model';
+import type { CardDef } from '../card/model';
+import type { DeckNode } from '../scenario/model';
+import { SYSTEM_GM_ID } from './model';
+import { dealChoices, findDeckNode, planTransition } from './transition';
 
 const choice = (id: string, nextNodeId?: string): CardDef => ({
   id,

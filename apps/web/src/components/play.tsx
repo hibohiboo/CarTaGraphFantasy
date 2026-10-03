@@ -1,4 +1,5 @@
-import type { CardDef, Session } from '@cartagraph/domain';
+import type { CardDef } from '@cartagraph/domain/card/model';
+import type { Session } from '@cartagraph/domain/session/model';
 import type { ReactNode } from 'react';
 import { CARD_KIND_ICONS } from './cardKindIcons';
 import { GameCard } from './GameCard';

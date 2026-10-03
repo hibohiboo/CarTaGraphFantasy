@@ -1,4 +1,4 @@
-import type { DeckNode, EndingDef, Scenario } from '@cartagraph/domain';
+import type { DeckNode, EndingDef, Scenario } from '@cartagraph/domain/scenario/model';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { DeckTree } from '../../components/DeckTree';

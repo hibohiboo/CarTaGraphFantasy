@@ -5,7 +5,7 @@
 // 自動戦闘の敵や優先順位のカードは、キャラクターのカードと同じ id を使うので対象にしない
 // （遷移もノード直下の選択肢カードで起きる）。
 
-import type { DeckNode, Scenario } from './index';
+import type { DeckNode, Scenario } from './model';
 
 /** 参照の誤りを人が読める文で返す。空配列なら整合 */
 export function findScenarioRefErrors(scenario: Scenario): string[] {

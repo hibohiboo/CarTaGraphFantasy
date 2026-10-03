@@ -1,4 +1,4 @@
-import type { CardDef } from '@cartagraph/domain';
+import type { CardDef } from '@cartagraph/domain/card/model';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { CardGrid, GameCard } from '../../components/GameCard';

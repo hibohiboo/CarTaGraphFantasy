@@ -1,4 +1,4 @@
-import type { CardDef } from '@cartagraph/domain';
+import type { CardDef } from '@cartagraph/domain/card/model';
 import { useState } from 'react';
 import s from '../pages/pages.module.css';
 import { GameCard } from './GameCard';

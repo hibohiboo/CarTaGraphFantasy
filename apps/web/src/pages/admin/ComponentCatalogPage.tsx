@@ -1,4 +1,4 @@
-import { CARD_KIND_LABEL, type CardKind } from '@cartagraph/domain';
+import { CARD_KIND_LABEL, type CardKind } from '@cartagraph/domain/card/model';
 import type { ReactNode } from 'react';
 import { DeckTree } from '../../components/DeckTree';
 import { CardGrid, GameCard } from '../../components/GameCard';

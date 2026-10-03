@@ -1,4 +1,4 @@
-import type { CardKind } from '@cartagraph/domain';
+import type { CardKind } from '@cartagraph/domain/card/model';
 import type { ReactElement } from 'react';
 
 /**

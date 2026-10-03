@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { CardDef, CombatEffect } from '../card/model';
+import type { HpCondition, PriorityEntry } from './model';
 import {
   type Combatant,
   canFight,
@@ -7,8 +9,7 @@ import {
   resolveAutoCombat,
   rollDice,
   validatePriority,
-} from './autoCombat';
-import type { CardDef, CombatEffect, HpCondition, PriorityEntry } from './index';
+} from './resolve';
 
 /** 与えた列を順に返し、尽きたら最後の値を返し続ける乱数 */
 const seq =

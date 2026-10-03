@@ -1,4 +1,5 @@
-import { ARCHETYPE_LABEL, deriveArchetype } from '@cartagraph/domain';
+import { deriveArchetype } from '@cartagraph/domain/character/archetype';
+import { ARCHETYPE_LABEL } from '@cartagraph/domain/character/model';
 import { Link } from 'react-router';
 import { routes } from '../app/routes';
 import { Loading, RoleBadge } from '../components/ui';

@@ -1,4 +1,4 @@
-import { CARD_KIND_LABEL, type CardKind } from '@cartagraph/domain';
+import { CARD_KIND_LABEL, type CardKind } from '@cartagraph/domain/card/model';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { CardGrid, GameCard } from '../../components/GameCard';

@@ -3,7 +3,7 @@ import {
   PROPOSAL_STATUS_LABEL,
   type Proposal,
   type Session,
-} from '@cartagraph/domain';
+} from '@cartagraph/domain/session/model';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '../../components/GameCard';
