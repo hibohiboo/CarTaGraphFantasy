@@ -33,7 +33,7 @@ pnpm --filter @cartagraph/web exec vitest run <テストファイル> -t "<テ�
 
 ## 4. Refactor（Green を保って整理）
 
-すべて Green の状態でのみ行い、変更のたびに `pnpm web:test` を実行する。純粋なロジックがページの中で育ってきたら `lib/` や `packages/domain` へ切り出す（`docs/process/rules/architecture.md` の Functional Core）。
+すべて Green の状態でのみ行い、変更のたびに `pnpm web:test` を実行する。純粋なロジックがページの中で育ってきたら、そのスライスの `lib/`（複数で使うなら `shared/lib/`）や `packages/domain` へ切り出す（`docs/process/rules/architecture.md` の Functional Core）。
 
 ## 5. リストが空になるまで繰り返す
 
