@@ -121,7 +121,13 @@ export default defineConfig({
             text: 'デザイナーノート',
             link: '/notes/',
             collapsed: true,
-            items: [{ text: '段階的な開示とアンロック', link: '/notes/unlock' }],
+            items: [
+              { text: 'カード・デッキの考え方', link: '/notes/card-and-deck' },
+              { text: 'カードの裏表', link: '/notes/card-face-back' },
+              { text: '場・手札・プレイ', link: '/notes/play-and-field' },
+              { text: 'グラフの役割', link: '/notes/graph' },
+              { text: '段階的な開示とアンロック', link: '/notes/unlock' },
+            ],
           },
           {
             text: '議論ログ（アーカイブ）',

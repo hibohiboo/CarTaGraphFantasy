@@ -13,4 +13,8 @@
 
 ## ノートの一覧
 
+- [カード・デッキの考え方](card-and-deck.md)
+- [カードの裏表](card-face-back.md)
+- [場・手札・プレイ](play-and-field.md)
+- [グラフの役割](graph.md)
 - [段階的な開示・習熟によるアンロック](unlock.md)

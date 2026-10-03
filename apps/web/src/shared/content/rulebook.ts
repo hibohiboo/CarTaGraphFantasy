@@ -50,7 +50,7 @@ export const rulebook: RuleSection[] = [
           '提示された選択肢に無い行動をしたいとき、この正式なカードをプレイして提案します。GMが採用すれば新しい選択肢カードが生成されて手札に加わり、却下されれば理由とともに記録が残ります（PLからも見えます）。',
           '裁定を待つ間も、元の選択肢を先に選んで進めて構いません。その場合、後から採用されても「今回は使われなかった」として記録されます。',
         ],
-        source: 'cartagraph/play-and-field#提案の裁定待ちの間の状態遷移決着',
+        source: 'cartagraph/play-and-field#提案の裁定待ちの間の状態遷移',
       },
       {
         heading: 'ドライバーとナビゲーター',
@@ -182,7 +182,7 @@ export const rulebook: RuleSection[] = [
           'PL可視ゾーンのカードはさらに表／裏を持てる。裏＝存在は見えるが中身が分からない伏せ札。',
           '裏表は「公開されているか否か」の2値だけ。友好度・生存などの多段階の変化は状態タグで表す。',
         ],
-        source: 'cartagraph/card-face-back#場のゾーン構造決着',
+        source: 'cartagraph/card-face-back#場のゾーン構造',
       },
     ],
   },
