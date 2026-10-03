@@ -112,7 +112,8 @@ export const routes: RouteMeta[] = [
     path: '/gm/sessions/:sessionId',
     title: 'セッションの進行管理',
     group: 'gm',
-    description: '参加者・場のゾーン・進行フィード・提案の裁定・モード切り替え・終了',
+    description:
+      '描写と選択肢を配る（取り下げ・移り先の指定）・参加者・場のゾーン・進行フィード・提案の裁定・モード切り替え・終了・プレイ画面との行き来',
     example: '/gm/sessions/ss-galleon',
   },
 

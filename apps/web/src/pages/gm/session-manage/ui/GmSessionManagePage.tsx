@@ -14,6 +14,7 @@ import {
   useSetMode,
 } from '@/entities/session/api/mutations';
 import { useSession } from '@/entities/session/api/queries';
+import { useMe } from '@/entities/user/api/queries';
 import { hhmm, relativeTime, untilLabel } from '@/shared/lib/format';
 import { toDictionaryForm } from '@/shared/lib/japanese';
 import s from '@/shared/ui/page.module.css';
@@ -31,17 +32,23 @@ import {
   StatTile,
   StatusPill,
 } from '@/shared/ui/ui';
+import { NarrationPanel } from './NarrationPanel';
 
 /** GMのセッション管理（session-gm-manage.html）＋提案の承認（session-gm-review.html）を1ページに統合 */
 export function GmSessionManagePage() {
   const { sessionId = '' } = useParams();
   const session = useSession(sessionId);
+  const me = useMe();
   const setMode = useSetMode();
   const end = useEndSession();
 
   if (session.isPending) return <Loading />;
   if (session.error) return <ErrorNote error={session.error} />;
   const x = session.data;
+  // GM が自分のセッションでだけ進行できる。自分がドライバーも務める（GM が PL を兼ねる）なら、プレイ画面へ行き来できる
+  const myGm = !!me.data && x.gmId === me.data.id;
+  const playingAsDriver =
+    myGm && x.participants.some((p) => p.role === 'driver' && p.userId === me.data?.id);
   const stale = (iso: string) => Date.now() - new Date(iso).getTime() > 2 * 24 * 3600_000;
   const counts = {
     pending: x.proposals.filter((p) => p.status === 'pending').length,
@@ -60,7 +67,14 @@ export function GmSessionManagePage() {
             <Link to="/gm/sessions">一覧へ戻る</Link>
           </>
         }
-        actions={<RoleBadge badgeRole="gm">{x.gmName}（GM）</RoleBadge>}
+        actions={
+          <>
+            {playingAsDriver && (
+              <Link to={`/pl/sessions/${x.id}/play`}>ドライバーとしてプレイ画面へ</Link>
+            )}
+            <RoleBadge badgeRole="gm">{x.gmName}（GM）</RoleBadge>
+          </>
+        }
       />
 
       <StatGrid>
@@ -82,6 +96,8 @@ export function GmSessionManagePage() {
       </StatGrid>
 
       <div className={s.stack} style={{ marginTop: 22 }}>
+        {myGm && x.status === 'playing' && <NarrationPanel key={x.id} session={x} />}
+
         <Panel
           title="提案の裁定"
           sub="「新たな選択肢を提案」で届いた提案。採用するとカードを1枚生成して手札に加える。却下も理由とともに記録し、PLからも見える。"

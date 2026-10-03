@@ -75,4 +75,5 @@ expect(toDictionaryForm('扉を破壊する')).toBe('扉を破壊する'); // �
 
 - 各テストが自分の QueryClient・ルーターを作り、共有状態を持たない（`renderAt` の型を踏襲する）
 - `waitForTimeout` で待たず、`findBy*` やロケータの自動待機を使う
+- 画面を移ったことは、URL（router の pathname・`toHaveURL`）ではなく、**移った先にしか無い要素**（その画面だけの見出し・リンクなど）が出るのを待って確かめる。SPA では URL が先に変わり、画面の描画はあとから追いつく。確かめたい文言が移る前の画面にもあるときは、先にその要素を待ってから文言を確かめる。待たないと、Testing Library の `findBy*` は移る前の画面の要素を掴み、画面が切り替わって外れたところで**ときどき落ちる**。Playwright の locator は毎回探し直すので外れて落ちることはないが、移る前の画面を見て**誤って通る**（2026-10-04、PR #14 の不安定なテスト。`docs/process/evolution.md`）
 - セレクタは role / label / testid を優先し、CSS Modules のクラス名に依存しない
