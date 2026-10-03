@@ -11,7 +11,7 @@ paths:
 ## 構造
 
 ```text
-packages/domain/src/     ドメイン型と、UIに依存しないゲームロジック（純粋関数）
+packages/domain/src/     ドメイン型と、UIに依存しないゲームロジック（純粋関数）。ドメインごとのディレクトリに分ける（下の「packages/domain の中の置き場所」）
 apps/web/src/
   app/        routes.ts（ルート一覧＝ナビ・サイトマップの唯一の情報源）、router.tsx、AppShell.tsx
   pages/<ロール>/  ページ。1ページ1ファイル
@@ -25,11 +25,42 @@ scenarios/    遊べるシナリオの JSON（シードの一部。packages/doma
 
 迷ったらこの順で問う。
 
-1. ゲームのルール・判定・変換で、React にも DOM にも依存しない → `packages/domain`
+1. ゲームのルール・判定・変換で、React にも DOM にも依存しない → `packages/domain`。その中では、用語の持ち主の仕様ページに対応するディレクトリへ（下の「packages/domain の中の置き場所」）
 2. 1つのページでしか使わない → `apps/web/src/pages/<ロール>/` の中で完結させる
 3. 複数ページで共有するUI → `components/`。ただし2ページ目が現れるまで共通化しない
 4. API へのアクセス → `lib/api.ts` と `lib/queries.ts` を経由する。ページから `fetch` を直接呼ばない
 5. モックデータの追加 → 遊べるシナリオはリポジトリ直下の `scenarios/<id>.json`、それ以外（テスト専用のシナリオを含む）は `mocks/fixtures.ts` に置く。ページやテストの中で独自のデータを作らない
+
+## packages/domain の中の置き場所
+
+`packages/domain/src/` は、仕様ページ（`docs/cartagraph/`）に合わせたドメインごとのディレクトリに分ける。今あるディレクトリの一覧は[Webアプリの構成](../../architecture/web-app.md)が正。
+
+- **型は `model.ts`、ロジックは役割の名前のファイル** — 各ディレクトリの型は `model.ts` に置き、zod スキーマ・型（`z.infer`）・ラベルを隣り合わせにする。ロジックは `resolve.ts`・`refs.ts`・`transition.ts` のように役割で名づける。テストは対象と同じディレクトリに、対象のファイル名で置く
+- **直下にファイルを置かない。`index.ts` を作らない** — 利用側は `@cartagraph/domain/<ディレクトリ>/<ファイル>` を直接 import する（`package.json` の `exports` はワイルドカード）。domain の中は相対パスで import し、自分のパッケージ名では import しない
+- **新しいディレクトリを足すときは、下の依存の表にも足す**
+
+### 依存の向き
+
+各ディレクトリが import してよい先（同じディレクトリの中は自由）。`packages/domain/src/layers.test.ts` がソースを読んで機械的に確かめるので、表を変えるときはテストの表も一緒に直す。
+
+| ディレクトリ | 仕様ページ | import してよい先 |
+|---|---|---|
+| `check/` | exploration-check.md（能力値・判定） | なし |
+| `user/` | graph.md（ロール） | なし |
+| `card/` | card-and-deck.md | `check/` |
+| `library/` | graph.md（共有ライブラリ） | `card/`・`check/` |
+| `character/` | character-growth.md | `card/`・`check/` |
+| `autoCombat/` | auto-combat.md | `character/`・`card/`・`check/` |
+| `scenario/` | scenario-flow.md | `autoCombat/`・`character/`・`card/`・`check/` |
+| `session/` | party-and-session.md・play-and-field.md | `scenario/`・`autoCombat/`・`character/`・`card/`・`check/` |
+| `soloVillage/` | solo-village.md | `session/`・`scenario/`・`autoCombat/`・`character/`・`card/`・`check/` |
+
+### 仕様ページに合わせる、の例外
+
+1. **カードが持つ属性の型は `card/`** — 自動戦闘の効果（`CombatEffect`・`DiceExpr`）、配る条件（`CardCondition`）、成長の効果（`SoloEffect`）は、出典が auto-combat.md・solo-village.md でも `card/model.ts` に置く（`CardDef` とスキーマが互いを参照するため）。それを使うロジックは各ドメインに置く
+2. **カードの条件の判定も `card/`** — 配る条件・使える条件の判定（`card/condition.ts`）は、セッションの遷移と村のルールの両方が使うので、循環を避けてカードの側に置く
+3. **判定（`CheckSpec`）は `check/`** — カードの属性だが、持ち主は exploration-check.md なので、例外1より優先して `check/` に置く
+4. **募集は `session/`** — 募集→応募→確定は scenario-flow.md が書いているが、GM がシナリオからセッションを立てる手続きで、シナリオの定義そのものではないので `session/` に置く
 
 ## 1ファイル1責務
 

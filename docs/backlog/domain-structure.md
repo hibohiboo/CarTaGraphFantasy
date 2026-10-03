@@ -13,16 +13,17 @@ PR #11（[シナリオを JSON でリポジトリ管理する](scenario-json.md)
 
 ## 決めた指針
 
-1. **分け方は仕様ページに合わせる。** 型・zod スキーマ・ロジック・テストを、同じディレクトリに置く。目安は次のとおり
-   - `card/`：カード（card-and-deck.md）
-   - `character/`：キャラクター（character-growth.md）
-   - `scenario/`：シナリオ・デッキ・結末・募集（scenario-flow.md）
-   - `session/`：セッション・参加者・提案・遷移（party-and-session.md・play-and-field.md）
-   - `autoCombat/`：自動戦闘（auto-combat.md）
-   - `soloVillage/`：GM不在のソロ（solo-village.md）
-2. **依存の向きを固定する。** `card/` を土台にし、ほかは `card/` に依存してよいが、逆は禁止する。循環を避けるため、カードが持つ属性の型は、ルールの出典が自動戦闘や村でも `card/` に置く（`CombatEffect`・`DiceExpr`・`CardCondition`・`SoloEffect`）。それを使うロジック（`resolveAutoCombat` など）は、各ドメインに置く
-3. **zod スキーマもドメインごとに分ける。** 今の `scenarioSchema.ts` は `card/`・`autoCombat/`・`scenario/` のスキーマに分解する。シナリオの型の正が zod スキーマであることは変えない
-4. **入口のファイルは作らない。** `index.ts` を廃止し、利用側は `@cartagraph/domain/scenario/schema` のように実ファイルを直接 import する（barrel 禁止のルールどおり）。`package.json` の `exports` はワイルドカード（`"./*": "./src/*.ts"`）にする
+置き方・依存の向き・例外は [アーキテクチャルール](../process/rules/architecture.md)「packages/domain の中の置き場所」が正。経緯はプラン `docs/plans/2026-10-03-domainのディレクトリ分割.md`。
+
+- 仕様ページに合わせたドメインごとのディレクトリに、型（zod スキーマを含む）・ロジック・テストを同居させる
+- `index.ts` を廃止し、実ファイルを直接 import する（`exports` はワイルドカード）
+- ディレクトリ間の依存の向きを表で決め、`layers.test.ts` で機械的に守る
+
+最初の指針（2026-10-03）から、プランを作るときに次の3点を変えた（人間が確認）。
+
+- ファイル名：`scenario/schema` のような名前ではなく、型は `model.ts`、ロジックは役割の名前
+- 土台：`card/` の下に、能力値と判定の `check/`（exploration-check.md）を足した
+- 募集：`scenario/` ではなく `session/` に置く（GM がセッションを立てる手続きのため）
 
 ## 採らなかった案
 
@@ -31,7 +32,3 @@ PR #11（[シナリオを JSON でリポジトリ管理する](scenario-json.md)
 - **パッケージに分割する** — 今の規模では過剰
 - **`index.ts` を入口として残す** — 利用側（約30か所）は無変更で済むが、barrel 禁止のルールの例外になる
 
-## 着手するときにすること
-
-- 指針を [アーキテクチャルール](../process/rules/architecture.md)「構造」に書き、[Webアプリの構成](../architecture/web-app.md)のディレクトリの図を直す
-- 移行は、型の移動と import の書き換えだけにする（中身は変えない）
