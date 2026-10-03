@@ -23,7 +23,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 - `docs/backlog/` … 要望（PBI）を1要望1ファイルで置く。先頭の状態・判断待ちから、トップページのダッシュボードをビルド時に組み立てる（`docs/.vitepress/*.data.ts`）
 - `docs/public/preview/` … HTML/CSS のみのUI試作。未React化の画面だけを残し、React 化したら削除する（`docs/architecture/web-app.md`「未React化の画面」）
 - `apps/web/src/` … `app/`（ルート一覧・ルーター・シェル）、`pages/`（ロール別ページ）、`components/`、`lib/`（API・クエリ）、`mocks/`（MSW）、`content/`（ルールブック要約）、`styles/`
-- `packages/domain/src/` … ドメイン型とゲームロジック。仕様ページに合わせたドメインごとのディレクトリ（`card/`・`scenario/`・`session/` など）に分ける。置き方と依存の向きは `docs/process/rules/architecture.md`、今の一覧は `docs/architecture/web-app.md`
+- `packages/domain/src/` … ドメイン型とゲームロジック。仕様ページに合わせたドメインごとのディレクトリ（`card/`・`scenario/`・`session/` など）に分ける。ディレクトリの一覧・置き方・依存の向きは `docs/process/rules/architecture.md`「packages/domain の中の置き場所」
 - `scenarios/` … 遊べるシナリオの JSON（1シナリオ1ファイル、`<id>.json`）。MSW が起動時に読み込んで検査する。テスト専用のシナリオと下書きのデモデータは `apps/web/src/mocks/fixtures.ts`
 - `scripts/` … ビルド補助
 - `.claude/` … Claude Code 固有の設定（agents / skills / settings）。手順の本文は `docs/process/` が正

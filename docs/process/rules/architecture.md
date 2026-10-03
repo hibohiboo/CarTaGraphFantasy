@@ -6,7 +6,7 @@ paths:
 
 # アーキテクチャルール（どこに何を置くか）
 
-対象：`apps/**`、`packages/**`。技術選定の経緯は[技術スタック](../../architecture/index.md)、現在の構成は[Webアプリの構成](../../architecture/web-app.md)が正で、ここでは「新しいコードをどこに置き、何を守るか」だけを定める。
+対象：`apps/**`、`packages/**`。技術選定の経緯は[技術スタック](../../architecture/index.md)、現在の構成は[Webアプリの構成](../../architecture/web-app.md)が正で、ここでは「新しいコードをどこに置き、何を守るか」だけを定める（例外として、`packages/domain` のディレクトリの一覧は、依存の向きと一緒にここの表が正）。
 
 ## 構造
 
