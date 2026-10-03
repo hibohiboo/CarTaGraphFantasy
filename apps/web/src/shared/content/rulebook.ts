@@ -69,7 +69,7 @@ export const rulebook: RuleSection[] = [
           '通常のカード選択による自動進行を軽量モード、しっかり戦闘したい・NPCと細やかにやり取りしたい場面を濃密モードと呼びます。戦闘イベントなど特定のカードは自動的に濃密モードを要求します。',
           'セッションは、シナリオを使い切ったとき・GMが終了を宣言したとき・一定期間誰も反応しなかったとき（中断）に終わります。',
         ],
-        source: 'cartagraph/party-and-session#非同期セッションの進行決着',
+        source: 'cartagraph/party-and-session#非同期セッションの進行',
       },
       {
         heading: 'ロール：旅人・探索者・冒険者',

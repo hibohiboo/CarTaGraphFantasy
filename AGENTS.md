@@ -17,6 +17,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 ## ディレクトリ構成
 
 - `docs/concept/`, `docs/cartagraph/`, `docs/architecture/`, `docs/glossary.md`, `docs/open-questions.md` … 正式仕様（SSOT）
+- `docs/notes/` … デザイナーノート。ゲームの仕様のページと1対1で、決めた理由・経緯・将来の拡張候補を置く。正式仕様ではない。仕様のページには「いまのルール」だけを書き、理由や経緯はこちらへ書く（決まりは `docs/notes/index.md`）
 - `docs/interviews/` … 議論ログの一次資料。正式仕様ではない
 - `docs/process/` … 開発プロセス（開発サイクル・ルール・依頼文雛形・体制の進化ログ）。**正式仕様の一部**
 - `docs/plans/` … プランドキュメント（作業単位の設計書。VitePress のビルド対象外）

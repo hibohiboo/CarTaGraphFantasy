@@ -133,6 +133,10 @@ export default defineConfig({
               { text: '探索者向けの判定ルール', link: '/notes/exploration-check' },
               { text: '戦闘ルール', link: '/notes/combat' },
               { text: '数値バランスの相場観', link: '/notes/balance' },
+              { text: 'シナリオの構造と開始までの流れ', link: '/notes/scenario-flow' },
+              { text: 'パーティー編成と非同期セッション', link: '/notes/party-and-session' },
+              { text: 'GM不在のソロの進行（仮）', link: '/notes/solo-village' },
+              { text: '自動戦闘（仮）', link: '/notes/auto-combat' },
             ],
           },
           {
