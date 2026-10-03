@@ -140,7 +140,7 @@
 
 - **起きること** — `apps/web/src/shared/ui/ui.tsx`（195行）に、Button・Panel・Chip など15の部品が1ファイルで入っている。FSD は shared/ui を部品ごとに分けることを勧めている。中には `RoleBadge`（利用者のロール）・`StatusPill`（提案の状態）のように、domain の型を使うエンティティ寄りの部品もある
 - **見つけた経緯** — 2026-10-03、FSD 移行（`docs/plans/2026-10-03-webのFSD移行.md` D6）で、振る舞いを変えないため1ファイルのまま移した
-- **直すときの目安** — 部品ごとのファイル（`shared/ui/button/Button.tsx` など）に分け、エンティティ寄りの部品は `entities/<エンティティ>/ui/` へ移す。CSS Modules も分ける
+- **直すときの目安** — 部品ごとのファイル（`shared/ui/Button.tsx` など。セグメントの中にフォルダは作らない。architecture.md「依存の向き」）に分け、エンティティ寄りの部品は `entities/<エンティティ>/ui/` へ移す。CSS Modules も分ける
 
 ## ドキュメント・用語
 

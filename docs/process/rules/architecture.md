@@ -14,9 +14,10 @@ paths:
 apps/web/                 Vite + React + react-router + TanStack Query + MSW
   public/mockServiceWorker.js  MSW が生成した Service Worker（コミットする）
   src/          Feature-Sliced Design（FSD）の層。上から app → pages → widgets → features → entities → shared
-    app/        router.tsx（ページを並べる）、AppShell.tsx、styles/（tokens.css・global.css）
+    app/        router.tsx（ページを並べる）、AppShell.tsx、styles/（tokens.css・global.css）。app は層の直下にファイルを置いてよい。
+                app の中のサブフォルダに TS を置くなら、app の中も @/app/… で import する
     pages/<グループ>/<ページ>/   1ページ1スライス（グループはルートのグループ＝pl / gm / creator / rulebook / admin。
-                ロールの無いページは pages/<ページ>/）。ui/ にページと、そのページだけで使う部品
+                グループの無いページは pages/<ページ>/）。ui/ にページと、そのページだけで使う部品
     widgets/    複数のページで使う、画面の大きなまとまり（play-screen：プレイ画面の HUD・卓・手札・名乗り）
     features/   利用者の操作と UI が対になったもの（いまは無い。必要になったら作る）
     entities/<エンティティ>/   card・character・scenario・session・library・user。
@@ -38,7 +39,7 @@ scripts/                  ビルド補助（GitHub Pages へのコピー、自�
 迷ったらこの順で問う。
 
 1. ゲームのルール・判定・変換で、React にも DOM にも依存しない → `packages/domain`。その中では、用語の持ち主の仕様ページに対応するディレクトリへ（下の「packages/domain の中の置き場所」）
-2. 1つのページでしか使わない → そのページのスライス（`pages/<ロール>/<ページ>/`）のセグメントに置く（部品は `ui/`、副作用は `api/`、変換は `lib/`）。一度しか使わないものは、使う側に置く
+2. 1つのページでしか使わない → そのページのスライス（`pages/<グループ>/<ページ>/`）のセグメントに置く（部品は `ui/`、副作用は `api/`、変換は `lib/`）。一度しか使わないものは、使う側に置く
 3. 複数のページで使う → 何かで分ける。エンティティ（カード・シナリオなど）の見た目・取得・変更は `entities/<エンティティ>/`、利用者の操作と UI が対になったものは `features/`、画面の大きなまとまりは `widgets/`、業務のロジックを持たず、どこからでも使う部品・関数・静的な内容（UI の部品、fetch のラッパー、ルート一覧、ルールブックの本文など）は `shared/`。ただし2ページ目が現れるまで共通化しない
 4. API へのアクセス → `entities/<エンティティ>/api/` の取得（queries.ts）・変更（mutations.ts）のフックを経由する。ページから `fetch` を直接呼ばない。クエリキーは `shared/api/queryKeys.ts`
 5. モックデータの追加 → 遊べるシナリオはリポジトリ直下の `scenarios/<id>.json`、それ以外（テスト専用のシナリオを含む）は `mocks/fixtures.ts` に置く。ページやテストの中で独自のデータを作らない
@@ -54,7 +55,7 @@ apps/web ──→ packages/domain ──→ zod
 - **パッケージの間** — `apps/web` は `packages/domain` を参照してよい。逆は禁止。`packages/domain` は React・DOM・MSW に依存しない（下の「境界」）
 - **packages/domain の中** — 下の層だけを import してよい（下の「packages/domain の中の置き場所」の図と表。Biome で機械的に止める）
 - **apps/web の中** — FSD の層の順に、下の層だけを import してよい。同じ層の別スライスは import しない（`app → pages → widgets → features → entities → shared`）
-  - スライスの外は `@/<層>/…` のエイリアス、スライスの中は相対パスで import する。エイリアスに `..` を入れない
+  - スライスの外は `@/<層>/…` のエイリアス、スライスの中は相対パスで import する。エイリアスに `..`・`.` を入れない。相対パスは `./` か `../` を素直に重ねた形だけで書く（`../ui/../x`・`././x` のような形は検査をすり抜けるので書かない）
   - 層・グループのフォルダ（`pages/<グループ>/`）・スライスの直下にファイルを置かない（app を除く）。必ずセグメント（例：`ui`・`api`・`lib`・`model`。shared には `content`・`routes` もある）に入れ、セグメントの中にさらにフォルダを作らない。直下に置くと `../` だけで別のスライスに届き、深くすると同じスライスの中の import が検査に止められるため。グループのフォルダには共有コードを置かない
   - 公開 API の index.ts は作らない。スライスの外からもファイルを直接 import する（下の「境界」の barrel 禁止に従う。FSD も index を必須としていない）
   - `main.tsx`・`vite-env.d.ts`・`mocks/`・`test/` は層の外。層の外は層を import してよい（`@/` で）。層は層の外を import しない
@@ -90,7 +91,7 @@ check ← card ← library        user（どこにも依存しない）
 | `user/` | graph.md（ロール）・unlock.md・character-growth.md（解放済みカードプール） |
 | `library/` | graph.md（共有ライブラリ） |
 
-**機械的な検査は Biome**（コミット前のフックと CI の lint）。各ディレクトリが import してよい先の正は `biome.json` の `overrides`（`style/noRestrictedImports` の許可リスト）で、表に無いディレクトリはほかのディレクトリを import できない。循環は `suspicious/noImportCycles`、barrel は `performance/noBarrelFile`・`noReExportAll` で止める。ディレクトリを足す・依存の向きを変えるときは、この節と `biome.json` を一緒に直す（`biome.json` はコメントを書けないので、理由はここに書く）。
+**機械的な検査は Biome**（コミット前のフックと CI の lint）。各ディレクトリが import してよい先の正は `biome.json` の `overrides`（`style/noRestrictedImports` の許可リスト）で、表に無いディレクトリはほかのディレクトリを import できない。循環は `suspicious/noImportCycles`、barrel は下の「境界」の barrel 禁止に従う。ディレクトリを足す・依存の向きを変えるときは、この節と `biome.json` を一緒に直す（`biome.json` はコメントを書けないので、理由はここに書く）。
 
 ### 仕様ページに合わせる、の例外
 
