@@ -7,6 +7,7 @@ import {
   buildDealtCard,
   checkNarration,
   isAtEnding,
+  isEmptyNarration,
   type NarrationInput,
   narrateHand,
   narrationTargets,
@@ -150,10 +151,16 @@ describe('checkNarration', () => {
   });
 
   it('移り先：デッキに無い ID・NPC のノード・自動戦闘のノード・いま居るノードはエラー', () => {
-    for (const nextNodeId of ['nowhere', 'npc', 'exam', 'intro'])
+    // エラーはノード名で出す。デッキに無いものは ID のまま
+    for (const [nextNodeId, name] of [
+      ['nowhere', 'nowhere'],
+      ['npc', '門番'],
+      ['exam', '試験'],
+      ['intro', '導入'],
+    ])
       expect(
         checkNarration(session(), deck, input({ choices: [{ name: '進む', nextNodeId }] })),
-      ).toEqual({ ok: false, error: `「${nextNodeId}」へは、選択肢で進めません` });
+      ).toEqual({ ok: false, error: `「${name}」へは、選択肢で進めません` });
   });
 
   it('中断・終了のセッションはエラー', () => {
@@ -176,6 +183,15 @@ describe('checkNarration', () => {
         input({ withdrawCardIds: ['nope'], choices: [{ name: '' }] }),
       ),
     ).toEqual({ ok: false, error: '取り下げる選択肢が手札にありません' });
+  });
+});
+
+describe('isEmptyNarration', () => {
+  it('描写が空白だけで、取り下げも配るも無ければ true。どれか1つでもあれば false', () => {
+    expect(isEmptyNarration(input({ flavor: ' \n' }))).toBe(true);
+    expect(isEmptyNarration(input({ flavor: '風' }))).toBe(false);
+    expect(isEmptyNarration(input({ withdrawCardIds: ['look'] }))).toBe(false);
+    expect(isEmptyNarration(input({ choices: [{ name: '' }] }))).toBe(false);
   });
 });
 

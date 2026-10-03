@@ -55,16 +55,20 @@ export function narrationTargets(
   return walk(deck, []);
 }
 
+/** 描写も取り下げも配るも無い（送っても何も変わらない）入力か。画面は、この間はエラーを出さずにボタンを押せなくする */
+export const isEmptyNarration = (input: NarrationInput) =>
+  !input.flavor.trim() && input.withdrawCardIds.length === 0 && input.choices.length === 0;
+
 /** 送れるかを判定する。エラーは上から順に最初の1つを返す */
 export function checkNarration(
   session: Pick<Session, 'status' | 'hand' | 'currentScene'>,
   deck: DeckNode[],
   input: NarrationInput,
 ): NarrationCheck {
-  const { flavor, withdrawCardIds, choices } = input;
+  const { withdrawCardIds, choices } = input;
   if (session.status !== 'playing')
     return { ok: false, error: '進行中のセッションでだけ、描写・選択肢を配れます' };
-  if (!flavor.trim() && withdrawCardIds.length === 0 && choices.length === 0)
+  if (isEmptyNarration(input))
     return { ok: false, error: '描写を書くか、選択肢を配るか取り下げてください' };
   if (new Set(withdrawCardIds).size !== withdrawCardIds.length)
     return { ok: false, error: '同じ選択肢を2回取り下げようとしています' };
@@ -75,7 +79,10 @@ export function checkNarration(
     return { ok: false, error: '配る選択肢の名前を入力してください' };
   const targets = new Set(narrationTargets(deck, session.currentScene.nodeId).map((t) => t.id));
   const badTarget = choices.find((c) => c.nextNodeId && !targets.has(c.nextNodeId));
-  if (badTarget) return { ok: false, error: `「${badTarget.nextNodeId}」へは、選択肢で進めません` };
+  if (badTarget?.nextNodeId) {
+    const name = findDeckNode(deck, badTarget.nextNodeId)?.node.name ?? badTarget.nextNodeId;
+    return { ok: false, error: `「${name}」へは、選択肢で進めません` };
+  }
   return { ok: true };
 }
 

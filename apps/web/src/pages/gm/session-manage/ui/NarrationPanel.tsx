@@ -4,6 +4,7 @@ import {
   checkNarration,
   type DealtChoice,
   isAtEnding,
+  isEmptyNarration,
   narrationTargets,
 } from '@cartagraph/domain/session/narrate';
 import { useRef, useState } from 'react';
@@ -31,19 +32,25 @@ export function NarrationPanel({ session }: { session: Session }) {
   const deck = scenario.data ? sessionDeck(scenario.data.deck, session.excludedNodeIds ?? []) : [];
   const targets = narrationTargets(deck, session.currentScene.nodeId);
   const handChoices = session.hand.filter((c) => c.kind === 'choice');
-  const input = {
-    flavor,
-    withdrawCardIds: withdraw,
-    choices: rows.map(({ key: _, ...c }) => c),
-  };
+  // 開いたあとでセッションが変わる（ドライバーがプレイして手札・シーンが変わる）ことがあるので、
+  // 手札に無くなった取り下げのチェックと、選べなくなった移り先は、無いものとして扱う（画面の表示とそろえる）
+  const withdrawCardIds = withdraw.filter((id) => handChoices.some((c) => c.id === id));
+  const choices = rows.map(({ key: _, nextNodeId, ...c }) => ({
+    ...c,
+    nextNodeId: targets.some((t) => t.id === nextNodeId) ? nextNodeId : '',
+  }));
+  const input = { flavor, withdrawCardIds, choices };
   const check = checkNarration(session, deck, input);
-  const untouched = !flavor.trim() && withdraw.length === 0 && rows.length === 0;
   const atEnding = isAtEnding(deck, session.currentScene.nodeId);
 
   const updateRow = (key: number, patch: Partial<DealtChoice>) =>
     setRows(rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   const toggleWithdraw = (id: string) =>
-    setWithdraw(withdraw.includes(id) ? withdraw.filter((x) => x !== id) : [...withdraw, id]);
+    setWithdraw(
+      withdrawCardIds.includes(id)
+        ? withdrawCardIds.filter((x) => x !== id)
+        : [...withdrawCardIds, id],
+    );
   const submit = () =>
     narrate.mutate(
       { sessionId: session.id, ...input },
@@ -59,7 +66,7 @@ export function NarrationPanel({ session }: { session: Session }) {
   return (
     <Panel
       title="描写と選択肢を配る"
-      sub="ドライバーの選んだ結果を描写し、次の選択肢を配る。移り先を指定した選択肢をドライバーがプレイすると、そのシーンへ進む。"
+      sub="ドライバーの選んだ結果を描写し、次の選択肢を配る。移り先を指定した選択肢をドライバーがプレイすると、そのノード（シーン・結末）へ進む。"
     >
       {scenario.error && <ErrorNote error={scenario.error} />}
       {atEnding && (
@@ -67,7 +74,12 @@ export function NarrationPanel({ session }: { session: Session }) {
           結末「{session.currentScene.name}」に着いた。結末の描写を書いて、セッションを終了できる。
         </p>
       )}
-      <div className={s.form}>
+      {/* 送信中は入力も止める（送ったあとに打ち足した分が、成功時に空へ戻されて消えないように） */}
+      <fieldset
+        className={s.form}
+        disabled={narrate.isPending}
+        style={{ border: 0, padding: 0, margin: 0 }}
+      >
         <div>
           <div className={s.metaLabel}>いまの描写</div>
           <p>{session.flavor}</p>
@@ -92,7 +104,7 @@ export function NarrationPanel({ session }: { session: Session }) {
                   <label>
                     <input
                       type="checkbox"
-                      checked={withdraw.includes(c.id)}
+                      checked={withdrawCardIds.includes(c.id)}
                       onChange={() => toggleWithdraw(c.id)}
                       aria-label={`「${c.name}」を取り下げる`}
                     />{' '}
@@ -131,7 +143,7 @@ export function NarrationPanel({ session }: { session: Session }) {
             </Field>
             <Field label={`選択肢${i + 1}の移り先`}>
               <select
-                value={r.nextNodeId ?? ''}
+                value={choices[i].nextNodeId}
                 onChange={(e) => updateRow(r.key, { nextNodeId: e.target.value })}
               >
                 <option value="">このシーンに留まる（移り先なし）</option>
@@ -165,9 +177,9 @@ export function NarrationPanel({ session }: { session: Session }) {
             送る
           </Button>
         </div>
-        {!check.ok && !untouched && <p className="u-small">{check.error}</p>}
+        {!check.ok && !isEmptyNarration(input) && <p className="u-small">{check.error}</p>}
         {narrate.error && <ErrorNote error={narrate.error} />}
-      </div>
+      </fieldset>
     </Panel>
   );
 }

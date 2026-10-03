@@ -470,6 +470,30 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     expect(screen.queryByRole('heading', { name: /^結末「/ })).not.toBeInTheDocument();
   });
 
+  it('フォームを開いたあとで手札・シーンが変わったら、古くなった取り下げのチェックと移り先は外れ、送れる', async () => {
+    const user = userEvent.setup();
+    const s = await startVillageWithoutShop();
+    renderAt(`/gm/sessions/${s.id}`);
+    const p = await panel();
+    await user.click(within(p).getByLabelText('「辺りを見回す」を取り下げる'));
+    await user.click(within(p).getByRole('button', { name: '選択肢を足す' }));
+    await user.type(within(p).getByLabelText('選択肢1の名前'), '広場を見渡す');
+    await user.selectOptions(within(p).getByLabelText('選択肢1の移り先'), '村の広場');
+    // 別の画面でドライバーが広場へ進み（手札の選択肢が配り直される）、GM の画面のセッションが新しくなる
+    await api.post(`/sessions/${s.id}/play`, { cardId: 'vs-to-square' });
+    await user.click(screen.getByRole('button', { name: '次のシーンを濃密モードにする' }));
+    await screen.findByRole('button', { name: '軽量モードに戻す' });
+    expect(within(p).queryByLabelText('「辺りを見回す」を取り下げる')).not.toBeInTheDocument();
+    expect(within(p).getByLabelText('選択肢1の移り先')).toHaveValue('');
+    const send = within(p).getByRole('button', { name: '送る' });
+    expect(send).toBeEnabled();
+    await user.click(send);
+    expect(await within(p).findByLabelText('「広場を見渡す」を取り下げる')).toBeInTheDocument();
+    const after = await api.get<Session>(`/sessions/${s.id}`);
+    expect(after.hand.find((c) => c.name === '広場を見渡す')?.nextNodeId).toBeUndefined();
+    expect(after.hand.some((c) => c.id === 'vs-look-around')).toBe(false);
+  });
+
   it('送る前に別の画面で終了されていたら、断られた理由が出る', async () => {
     const user = userEvent.setup();
     const s = await startMansion();

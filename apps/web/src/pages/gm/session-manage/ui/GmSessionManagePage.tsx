@@ -96,7 +96,7 @@ export function GmSessionManagePage() {
       </StatGrid>
 
       <div className={s.stack} style={{ marginTop: 22 }}>
-        {myGm && x.status === 'playing' && <NarrationPanel session={x} />}
+        {myGm && x.status === 'playing' && <NarrationPanel key={x.id} session={x} />}
 
         <Panel
           title="提案の裁定"
