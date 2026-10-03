@@ -19,6 +19,14 @@ import {
   SYSTEM_GM_ID,
   SYSTEM_GM_NAME,
 } from '@cartagraph/domain/session/model';
+import {
+  buildDealtCard,
+  checkNarration,
+  type DealtChoice,
+  type NarrationInput,
+  narrateHand,
+  narrationTargets,
+} from '@cartagraph/domain/session/narrate';
 import { buildParticipants, checkStart, defaultPartyName } from '@cartagraph/domain/session/start';
 import {
   dealChoices,
@@ -81,6 +89,28 @@ async function readJson(request: Request): Promise<unknown> {
 
 const isStringArray = (v: unknown): v is string[] =>
   Array.isArray(v) && v.every((x) => typeof x === 'string');
+
+const isOptionalString = (v: unknown) => v === undefined || typeof v === 'string';
+
+/**
+ * 描写 API の本文を読む。省いた項目は空として扱い、形の崩れたものは null を返す
+ * （開始 API と同じく、黙って丸めず断る）
+ */
+function parseNarration(body: unknown): NarrationInput | null {
+  if (typeof body !== 'object' || body === null) return null;
+  const { flavor, withdrawCardIds = [], choices = [] } = body as Record<string, unknown>;
+  if (!isOptionalString(flavor) || !isStringArray(withdrawCardIds) || !Array.isArray(choices))
+    return null;
+  const isChoice = (c: unknown): c is DealtChoice => {
+    if (typeof c !== 'object' || c === null) return false;
+    const { name, description, nextNodeId } = c as Record<string, unknown>;
+    return (
+      typeof name === 'string' && isOptionalString(description) && isOptionalString(nextNodeId)
+    );
+  };
+  if (!choices.every(isChoice)) return null;
+  return { flavor: typeof flavor === 'string' ? flavor : '', withdrawCardIds, choices };
+}
 
 const notFound = (what: string) =>
   HttpResponse.json({ message: `${what} が見つかりません` }, { status: 404 });
@@ -667,6 +697,52 @@ export const handlers = [
     p.status = 'rejected';
     p.resolution = reason?.trim() || '（理由未記入）';
     s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `${s.gmName}が提案「${p.text}」を却下` });
+    s.lastActivityAt = nowIso();
+    return HttpResponse.json(s);
+  }),
+
+  // 人間GMの進行：描写を書く・選択肢を配る・取り下げる（docs/cartagraph/play-and-field.md「選択肢カードとGMの生成」）。
+  // 検査と手札の組み立ては packages/domain の narrate.ts。エラーのときは何も変えない
+  http.post('/api/sessions/:id/narrate', async ({ params, request }) => {
+    const s = findSession(String(params.id));
+    if (!s) return notFound('セッション');
+    if (s.gmId !== fx.me.id)
+      return HttpResponse.json(
+        { message: '自分が GM のセッションだけを進行できます' },
+        { status: 403 },
+      );
+    const input = parseNarration(await readJson(request));
+    if (!input) return unprocessable('描写・選択肢の指定の形が正しくありません');
+    const scenario = scenarioOf(s);
+    if (!scenario) return notFound('シナリオ');
+    const check = checkNarration(s, scenario.deck, input);
+    if (!check.ok) return unprocessable(check.error);
+    // ここから書き込む
+    const labels = new Map(
+      narrationTargets(scenario.deck, s.currentScene.nodeId).map((t) => [t.id, t.label]),
+    );
+    const dealt = input.choices.map((c) => buildDealtCard(c, nextId('ch')));
+    const withdrawn = s.hand.filter((c) => input.withdrawCardIds.includes(c.id));
+    const flavor = input.flavor.trim();
+    if (flavor) s.flavor = flavor;
+    s.hand = narrateHand(s.hand, input.withdrawCardIds, dealt);
+    // feed は新しい順。上から「描写→取り下げ→配る」と読めるよう、配る（後ろから）→取り下げ→描写の順に積む
+    for (const card of [...dealt].reverse()) {
+      const to = card.nextNodeId ? `（→${labels.get(card.nextNodeId)}）` : '';
+      s.feed.unshift({
+        id: nextId('f'),
+        at: nowIso(),
+        text: `${s.gmName}が選択肢「${card.name}」を配った${to}`,
+        cardName: card.name,
+      });
+    }
+    for (const card of [...withdrawn].reverse())
+      s.feed.unshift({
+        id: nextId('f'),
+        at: nowIso(),
+        text: `${s.gmName}が選択肢「${card.name}」を取り下げた`,
+      });
+    if (flavor) s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `${s.gmName}が描写した` });
     s.lastActivityAt = nowIso();
     return HttpResponse.json(s);
   }),
