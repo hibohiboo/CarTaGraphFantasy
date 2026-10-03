@@ -406,7 +406,9 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
 
     // ドライバー：描写と配られたカードが見え、提案を送る
     await user.click(screen.getByRole('link', { name: 'ドライバーとしてプレイ画面へ' }));
-    expect(await screen.findByText('湿った石段が、地下へ続いている。')).toBeInTheDocument();
+    // 描写は GM の画面にも出るので、プレイ画面にしか無いリンクが出るのを待ってから確かめる
+    await screen.findByRole('link', { name: 'GMの画面へ' });
+    expect(screen.getByText('湿った石段が、地下へ続いている。')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^選択肢\s*地下へ降りる/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /新たな選択肢を提案/ }));
     await user.type(screen.getByLabelText('提案する行動'), '灯りを掲げてみたい');
