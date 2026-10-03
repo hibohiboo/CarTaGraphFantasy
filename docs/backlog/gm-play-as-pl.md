@@ -1,13 +1,13 @@
 ---
 title: GM が PL を兼ねて結末まで遊ぶ
 milestone: M1
-status: 進行中
+status: 完了
 summary: GM が自分のキャラクターでドライバーも務め、GM の画面とプレイの画面を行き来して、描写・選択肢を配る・提案の裁定・シーンを進める、をしながら結末まで遊べる。
 plans:
   - 2026-10-03-GMがPLを兼ねて遊ぶ.md
 cycles:
-  - { name: GMがPLを兼ねて遊ぶ, status: 進行中 }
-updated: 2026-10-03
+  - { name: GMがPLを兼ねて遊ぶ, status: 完了, pr: 15 }
+updated: 2026-10-04
 ---
 
 # GM が PL を兼ねて結末まで遊ぶ
