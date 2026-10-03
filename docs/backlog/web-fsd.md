@@ -1,10 +1,9 @@
 ---
 title: apps/web のディレクトリ構成を Feature-Sliced Design に従わせる
-status: 未着手
+status: 進行中
 summary: 開発者向け。apps/web/src のディレクトリ構成に決まった型が無いので、練られたパターンである Feature-Sliced Design（FSD）に従わせ、層の依存の向きを機械的に守る。振る舞いは変えない。
-decisions:
-  - 公開 API（スライスの入口の index.ts）を apps/web だけ許すか、いまの barrel 禁止のまま直接 import にするか
-  - 層の依存の向きを、FSD 公式の Steiger で検査するか、packages/domain と同じく Biome の noRestrictedImports で書くか
+plans:
+  - 2026-10-03-webのFSD移行.md
 updated: 2026-10-03
 ---
 
@@ -27,10 +26,10 @@ PR #12（[packages/domain をドメインごとのディレクトリに分ける
 | 入口 | スライスごとの公開 API が基本。index.ts は必須ではない。`export *` は強く非推奨。shared/ui はコンポーネントごとの入口を推奨 | barrel は Vite の tree-shaking を損なうので非推奨。直接 import する |
 | 強制 | 公式の linter（Steiger） | ESLint の `import/no-restricted-paths` |
 
-## 決めること（着手時の grilling）
+## 決めること（着手時の grilling。2026-10-03 に決めた。番号はプランの決定事項）
 
-1. **公開 API と barrel 禁止のルール** — (a) index を作らず、スライス内のファイルを直接 import する（いまのルールのまま）／(b) apps/web だけ、スライスの入口に名前付きの再エクスポートを許す（`export *` は禁止）。いまのルール：アーキテクチャルール「境界」の barrel 禁止、`packages/domain` では Biome の `noBarrelFile`・`noReExportAll`
-2. **entities 層と packages/domain** — 型の正は packages/domain のまま。web の entities には UI・API（カードの見た目 `GameCard`、キャラクターのクエリなど）だけを置き、型を重ねて定義しない
-3. **FSD の層に当てはまらないもの** — `mocks/`（MSW）、`content/`（ルールブックの要約）、`test/` の置き場所
-4. **pages の分け方** — いまはロールごと（`pages/gm/` など）。FSD のスライスは1ページ1つ。ルート一覧の唯一の情報源 `app/routes.ts` との対応
-5. **強制の手段** — Steiger を足すか、Biome の `noRestrictedImports` で書くか（Biome では「同じ層の別のスライスは禁止」を汎用に書きにくい）
+1. **公開 API と barrel 禁止のルール** — (a) index を作らず、スライス内のファイルを直接 import する（いまのルールのまま）／(b) apps/web だけ、スライスの入口に名前付きの再エクスポートを許す（`export *` は禁止）。いまのルール：アーキテクチャルール「境界」の barrel 禁止、`packages/domain` では Biome の `noBarrelFile`・`noReExportAll` → (a)。D1
+2. **entities 層と packages/domain** — 型の正は packages/domain のまま。web の entities には UI・API（カードの見た目 `GameCard`、キャラクターのクエリなど）だけを置き、型を重ねて定義しない → 型の正は domain のまま。エンティティの分け方は domain に合わせ、依存の規則は FSD に従う（エンティティどうしは import しない）
+3. **FSD の層に当てはまらないもの** — `mocks/`（MSW）、`content/`（ルールブックの要約）、`test/` の置き場所 → mocks・test・main.tsx は層の外。D4。content は shared/content
+4. **pages の分け方** — いまはロールごと（`pages/gm/` など）。FSD のスライスは1ページ1つ。ルート一覧の唯一の情報源 `app/routes.ts` との対応 → ロールのフォルダで束ねて1ページ1スライス（D3）。routes.ts は shared/routes へ（D8）
+5. **強制の手段** — Steiger を足すか、Biome の `noRestrictedImports` で書くか（Biome では「同じ層の別のスライスは禁止」を汎用に書きにくい） → Biome。D2

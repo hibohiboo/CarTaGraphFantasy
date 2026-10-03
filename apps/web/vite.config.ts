@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { configDefaults, defineConfig } from 'vitest/config';
 
@@ -8,6 +9,8 @@ const base = process.env.WEB_BASE ?? '/';
 export default defineConfig({
   base,
   plugins: [react()],
+  // FSD の層をまたぐ import は @/<層>/... で書く（docs/process/rules/architecture.md「依存の向き」）。tsconfig の paths と揃える
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: { port: 5173, host: '0.0.0.0' },
   build: {
     rollupOptions: {
