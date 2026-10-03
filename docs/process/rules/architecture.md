@@ -6,7 +6,7 @@ paths:
 
 # アーキテクチャルール（どこに何を置くか）
 
-対象：`apps/**`、`packages/**`。**コードのディレクトリ構成と依存の向きは、ここが正**（README・AGENTS.md・[Webアプリの構成](../../architecture/web-app.md)はここを指す）。技術選定の経緯は[技術スタック](../../architecture/index.md)、Webアプリの動き（MSW・ルーティング・画面・シナリオの JSON の読み込み）は[Webアプリの構成](../../architecture/web-app.md)にある。
+対象：`apps/**`、`packages/**`。**コードのディレクトリ構成と依存の向きは、ここが正**（README・AGENTS.md・[Webアプリの仕組み](../../architecture/web-app.md)はここを指す）。技術選定の経緯は[技術スタック](../../architecture/index.md)、Webアプリの動き（MSW・ルーティング・画面・シナリオの JSON の読み込み）は[Webアプリの仕組み](../../architecture/web-app.md)にある。
 
 ## 構造
 
@@ -32,7 +32,7 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
   e2e/          Playwright のテスト
 packages/domain/src/      ドメイン型と、UIに依存しないゲームロジック（純粋関数）。
                           仕様ページに合わせたドメインごとのディレクトリ（下の「packages/domain の中の置き場所」）
-scenarios/                遊べるシナリオの JSON（シードの一部。読み込みと検査は Webアプリの構成「シナリオの JSON」）
+scenarios/                遊べるシナリオの JSON（シードの一部。読み込みと検査は Webアプリの仕組み「シナリオの JSON」）
 scripts/                  ビルド補助（GitHub Pages へのコピー、自動戦闘のシミュレーション）
 ```
 

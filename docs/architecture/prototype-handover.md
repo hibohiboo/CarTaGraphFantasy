@@ -33,7 +33,7 @@ GitHub Pages上で公開していた（`https://hibohiboo.github.io/CarTaGraphFa
 React 化が済んだ次の10画面の試作HTMLは削除した（`docs/plans/2026-09-27-試作HTMLの整理.md`）。上の表は引き継ぎの記録として残している。
 
 - 削除：`cartagraph-zukan.html`・`session-play.html`・`session-gm-review.html`・`session-gm-manage.html`・`scenario-manage.html`・`session-browse.html`・`character-create.html`・`scene-builder.html`・`character-sheet.html`・`play-mat.html`
-- 残している（未React化）：`session-chat.html`・`scene-play.html`・`combat-play.html`・`combat-play-1d.html`・`session-field.html`。React 化したら同じく削除する（[Webアプリの構成](web-app.md#未react化の画面)）
+- 残している（未React化）：`session-chat.html`・`scene-play.html`・`combat-play.html`・`combat-play-1d.html`・`session-field.html`。React 化したら同じく削除する（[Webアプリの仕組み](web-app.md#未react化の画面)）
 - 削除した試作を見たいときは git 履歴から取り出す（例：`git show 89845da:docs/public/preview/session-play.html`）
 
 ## デザインシステム
