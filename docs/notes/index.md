@@ -11,6 +11,31 @@
 
 ファイル名は仕様のページと同じにする（`docs/cartagraph/unlock.md` のノートは `docs/notes/unlock.md`）。仕様のページの末尾から、対応するノートへ1行でリンクする。
 
+## 決着した論点
+
+[未解決論点トラッカー](../open-questions.md)で扱い、決着した論点。記号は当時のトラッカーのもので、古いプラン（`docs/plans/`）が「論点D」のように参照している。
+
+| 論点 | 仕様 | ノート |
+|---|---|---|
+| A. デッキとは何か | [カード・デッキの考え方](../cartagraph/card-and-deck.md) | [ノート](card-and-deck.md) |
+| B. カード化の境界 | [カード化の判断基準](../cartagraph/card-and-deck.md#カード化の判断基準) | [ノート](card-and-deck.md) |
+| C. グラフの役割 | [グラフの役割](../cartagraph/graph.md) | [ノート](graph.md) |
+| D. カードの裏表 | [カードの裏表](../cartagraph/card-face-back.md) | [ノート](card-face-back.md) |
+| E. 進化候補の評価 | [進化候補の評価](../concept/index.md#進化候補の評価) | （コンセプトのページに含む） |
+| F. カードをプレイした結果として何が変化するのか | [場・手札・プレイ](../cartagraph/play-and-field.md#カードをプレイした結果として何が変化するのか) | [ノート](play-and-field.md) |
+| G. 段階的な開示・習熟によるアンロック | [段階的な開示・習熟によるアンロック](../cartagraph/unlock.md) | [ノート](unlock.md) |
+| H. セッション参加モデル | [パーティー編成と非同期セッション参加](../cartagraph/party-and-session.md) | [ノート](party-and-session.md) |
+| I. PCのロールとシナリオタイプ | [PCのロールとシナリオタイプ](../cartagraph/role-and-scenario.md) | [ノート](role-and-scenario.md) |
+| J. 戦闘ルール | [戦闘ルール](../cartagraph/combat.md) | [ノート](combat.md) |
+| K. 探索者向けの判定ルール | [探索者向けの判定ルール](../cartagraph/exploration-check.md) | [ノート](exploration-check.md) |
+| L. シナリオの構造とセッション開始までの流れ | [シナリオの構造とセッション開始までの流れ](../cartagraph/scenario-flow.md) | [ノート](scenario-flow.md) |
+| M. 提案カードの運用中の状態遷移 | [提案の裁定待ちの間の状態遷移](../cartagraph/play-and-field.md#提案の裁定待ちの間の状態遷移)・[GMレスセッションでの提案の扱い](../cartagraph/play-and-field.md#gmレスセッションでの提案の扱い) | [ノート](play-and-field.md) |
+| N. カード効果の「対象（Target）」指定方法 | [カード効果の「対象（Target）」指定方法](../cartagraph/play-and-field.md#カード効果の対象target指定方法) | [ノート](play-and-field.md) |
+| O. 異なるPC・プレイヤー間での選択・結末比較体験 | [PC間の比較体験と称号タグ](../cartagraph/comparison-and-titles.md) | [ノート](comparison-and-titles.md) |
+| P. キャラクターの成長とキャラメイク（CP制） | [キャラクターの成長とキャラメイク（CP制）](../cartagraph/character-growth.md) | [ノート](character-growth.md) |
+| Q. 数値バランスの相場観 | [数値バランスの相場観](../cartagraph/balance.md) | [ノート](balance.md) |
+| R. 技術スタック | [技術スタック](../architecture/index.md) | （開発のページ。ゲームの仕様ではない） |
+
 ## ノートの一覧
 
 - [カード・デッキの考え方](card-and-deck.md)
