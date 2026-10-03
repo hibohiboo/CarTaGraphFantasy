@@ -367,6 +367,212 @@
           }
         }
       }
+    },
+    {
+      "includes": ["apps/web/src/**"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noBarrelFile": "error",
+            "noReExportAll": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/app/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/mocks", "@/mocks/**", "@/test", "@/test/**", "../**", "./../**"],
+                    "message": "app は層の外（mocks・test）を import しない。ほかの層は @/<層>/… で import する（docs/process/rules/architecture.md「依存の向き」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/pages/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app",
+                      "@/app/**",
+                      "@/pages",
+                      "@/pages/**",
+                      "@/mocks",
+                      "@/mocks/**",
+                      "@/test",
+                      "@/test/**",
+                      "../../**",
+                      "./../../**"
+                    ],
+                    "message": "pages が import してよいのは下の層（widgets・features・entities・shared）だけ。同じ層の別スライスは import しない。スライスの外は @/<層>/…、中は相対パス（docs/process/rules/architecture.md「依存の向き」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/widgets/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app",
+                      "@/app/**",
+                      "@/pages",
+                      "@/pages/**",
+                      "@/widgets",
+                      "@/widgets/**",
+                      "@/mocks",
+                      "@/mocks/**",
+                      "@/test",
+                      "@/test/**",
+                      "../../**",
+                      "./../../**"
+                    ],
+                    "message": "widgets が import してよいのは下の層（features・entities・shared）だけ。同じ層の別スライスは import しない。スライスの外は @/<層>/…、中は相対パス（docs/process/rules/architecture.md「依存の向き」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/features/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app",
+                      "@/app/**",
+                      "@/pages",
+                      "@/pages/**",
+                      "@/widgets",
+                      "@/widgets/**",
+                      "@/features",
+                      "@/features/**",
+                      "@/mocks",
+                      "@/mocks/**",
+                      "@/test",
+                      "@/test/**",
+                      "../../**",
+                      "./../../**"
+                    ],
+                    "message": "features が import してよいのは下の層（entities・shared）だけ。同じ層の別スライスは import しない。スライスの外は @/<層>/…、中は相対パス（docs/process/rules/architecture.md「依存の向き」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/entities/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app",
+                      "@/app/**",
+                      "@/pages",
+                      "@/pages/**",
+                      "@/widgets",
+                      "@/widgets/**",
+                      "@/features",
+                      "@/features/**",
+                      "@/entities",
+                      "@/entities/**",
+                      "@/mocks",
+                      "@/mocks/**",
+                      "@/test",
+                      "@/test/**",
+                      "../../**",
+                      "./../../**"
+                    ],
+                    "message": "entities が import してよいのは下の層（shared）だけ。同じ層の別スライスは import しない。スライスの外は @/<層>/…、中は相対パス（docs/process/rules/architecture.md「依存の向き」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/shared/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app",
+                      "@/app/**",
+                      "@/pages",
+                      "@/pages/**",
+                      "@/widgets",
+                      "@/widgets/**",
+                      "@/features",
+                      "@/features/**",
+                      "@/entities",
+                      "@/entities/**",
+                      "@/shared",
+                      "@/shared/**",
+                      "@/mocks",
+                      "@/mocks/**",
+                      "@/test",
+                      "@/test/**",
+                      "../../**",
+                      "./../../**"
+                    ],
+                    "message": "shared はほかの層を import しない。shared の中は相対パスで import する（docs/process/rules/architecture.md「依存の向き」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }
