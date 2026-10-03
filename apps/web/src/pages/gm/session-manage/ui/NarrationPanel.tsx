@@ -7,6 +7,7 @@ import {
   isEmptyNarration,
   narrationTargets,
 } from '@cartagraph/domain/session/narrate';
+import { findDeckNode } from '@cartagraph/domain/session/transition';
 import { useRef, useState } from 'react';
 import { useScenario } from '@/entities/scenario/api/queries';
 import { useNarrate } from '@/entities/session/api/mutations';
@@ -121,7 +122,7 @@ export function NarrationPanel({ session }: { session: Session }) {
                     {c.nextNodeId && (
                       <span className="u-small u-dim">
                         （→
-                        {targets.find((t) => t.id === c.nextNodeId)?.label ?? c.nextNodeId}）
+                        {findDeckNode(deck, c.nextNodeId)?.node.name ?? c.nextNodeId}）
                       </span>
                     )}
                   </label>
