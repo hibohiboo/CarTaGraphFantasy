@@ -41,6 +41,13 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。
 
+### 2026-10-03 react-best-practices のスキルを取り込み、止められるルールを Biome に入れた
+
+- **内容** — Vercel Labs の react-best-practices（MIT）を `.claude/skills/react-best-practices/` に取り込んだ（コミットを固定し、手で直さない）。使い方（対象外のルール、Biome で止めるもの・止めないもの）は `docs/process/rules/architecture.md`「React の書き方」に書き、レビュー観点4から指した。Biome に `correctness/noNestedComponentDefinitions`・`useHookAtTopLevel` を足した（既存の違反0件）。`noLeakedRender` は誤検知が多いので入れず、`useTopLevelRegex` は既存の違反を直してから入れる（既知の問題）
+- **理由** — 2026-09-22 は一度レビューに使っただけで、リポジトリに残らなかった。M1 の残りで画面を多く作るので常に参照できるようにし、FSD 移行の判断（公開 API と barrel）の材料にもする。スキルを読ませるだけでなく、止められるものは lint で止める（「改善は仕組みで」）
+- **反映先** — `.claude/skills/react-best-practices/`（`VENDOR.md` を含む）、`biome.json`、`docs/process/rules/architecture.md`・`review.md`、`CLAUDE.md`、`docs/architecture/known-issues.md`、`docs/backlog/react-best-practices.md`
+- **きっかけ** — 人間の要望 ／ **止め方** — 機械（lint）、手順・ルール（参照資料）
+
 ### 2026-10-03 domain のディレクトリ分割（PR #12）の振り返りから4件を採用
 
 `docs/plans/2026-10-03-domainのディレクトリ分割.md` の振り返りでAIが出した候補を、人間がすべて採用した。

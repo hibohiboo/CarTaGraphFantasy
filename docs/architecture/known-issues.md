@@ -130,6 +130,12 @@
 - **見つけた経緯** — 2026-10-03、シナリオの JSON 管理の実装レビュー（異常系・仕様整合）
 - **直すときの目安** — 手札に配るとき・キャラクターデッキへ加えるときに `$comment` を落とすか、注記を書ける場所をシナリオ・ノードに限る
 
+### 正規表現をループや関数の中で毎回作っている（useTopLevelRegex）
+
+- **起きること** — react-best-practices の `js-hoist-regexp`（Biome の `performance/useTopLevelRegex`）に反する箇所が、本体に9件（`app/AppShell.tsx` 3、`lib/japanese.ts` 2、`packages/domain/src/scenario/file.ts` 2、`CreatorScenarioEditPage.tsx` 1、`RulebookSectionPage.tsx` 1）、テストに11件ある。呼ばれるたびに正規表現を作り直す
+- **見つけた経緯** — 2026-10-03、react-best-practices のスキルを取り込み、Biome で止められるルールを調べたとき
+- **直すときの目安** — 正規表現をモジュールの最上位の定数にしてから、`biome.json` で `useTopLevelRegex` を有効にする（テストは overrides で外すかを決める）
+
 ## ドキュメント・用語
 
 ### 結末タグの持ち方が、仕様（カードの一種）と実装（文字列の配列）でずれている

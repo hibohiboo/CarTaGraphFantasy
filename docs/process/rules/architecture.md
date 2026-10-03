@@ -88,6 +88,20 @@ check ← card ← library        user（どこにも依存しない）
 3. **判定（`CheckSpec`）は `check/`** — カードの属性だが、持ち主は exploration-check.md なので、例外1より優先して `check/` に置く
 4. **募集は `session/`** — 募集→応募→確定は scenario-flow.md が書いているが、GM がシナリオからセッションを立てる手続きで、シナリオの定義そのものではないので `session/` に置く
 
+## React の書き方
+
+React のコードは、Vercel Labs の [react-best-practices](https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices)（性能の70ルール・8カテゴリ。MIT）に沿って書き、レビューする。リポジトリには `.claude/skills/react-best-practices/` に取り込んである（取り込んだコミットは同じ場所の `VENDOR.md`。Claude Code 以外のツールでも、このファイル群か配布元を読めばよい）。
+
+- **対象外のルール** — Next.js・サーバーを前提にしたもの（`server-` で始まるルール、RSC・Server Actions・`next/dynamic`・`after()`・ハイドレーション（`rendering-hydration-`）・`client-swr-dedup`）。このアプリは Vite の SPA で、データ取得は TanStack Query を使う（2026-09-22 の適用時と同じ扱い）
+- **Biome で機械的に止めているもの**（`biome.json`。コミット前のフックと CI の lint）
+  - `rerender-dependencies`・`advanced-effect-event-deps` → `correctness/useExhaustiveDependencies`（推奨ルールとして有効）
+  - `rerender-no-inline-components` → `correctness/noNestedComponentDefinitions`
+  - フックの呼び方 → `correctness/useHookAtTopLevel`
+  - `bundle-barrel-imports` → `packages/domain` では `performance/noBarrelFile`・`noReExportAll`。apps/web は [FSD 移行の要望](../../backlog/web-fsd.md)の判断待ち（公開 API の扱い）で決める
+- **Biome に対応があっても有効にしていないもの**
+  - `rendering-conditional-render` → `suspicious/noLeakedRender`：型を見ずに `&&` を一律に指摘するので、真偽値・文字列の条件まで誤検知する（2026-10-03 に既存コードで20件、ほぼ誤検知）。数値が漏れるかはレビューで見る
+  - `js-hoist-regexp` → `performance/useTopLevelRegex`：既存コードに違反がある（本体9件・テスト11件）。直してから有効にする（[既知の問題](../../architecture/known-issues.md)）
+
 ## 1ファイル1責務
 
 - ファイルの担当を一文で言えること。「セッション管理ページ」は合格、「GM周りのUIいろいろ」は失格

@@ -15,7 +15,8 @@
       "!docs/.vitepress/dist",
       "!docs/public/preview",
       "!apps/web/public/mockServiceWorker.js",
-      "!pnpm-lock.yaml"
+      "!pnpm-lock.yaml",
+      "!.claude/skills/react-best-practices"
     ]
   },
   "formatter": {
@@ -37,7 +38,9 @@
       "preset": "recommended",
       "correctness": {
         "noUnusedVariables": "error",
-        "noUnusedImports": "error"
+        "noUnusedImports": "error",
+        "noNestedComponentDefinitions": "error",
+        "useHookAtTopLevel": "error"
       },
       "suspicious": {
         "noConsole": "error",

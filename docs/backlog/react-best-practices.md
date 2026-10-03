@@ -9,4 +9,4 @@ updated: 2026-09-23
 
 # React のベストプラクティスの適用
 
-Vercel Labs の「react-best-practices」（70ルール・8カテゴリ）に照らしてアプリを見直した。人間レビューで、リリース前には不要な互換コードを削った経緯がある（[体制の進化ログ](../process/evolution.md)）。
+Vercel Labs の「react-best-practices」（70ルール・8カテゴリ）に照らしてアプリを見直した。2026-10-03、一度きりのレビューで終わらせず常に参照するため、スキルをリポジトリに取り込み、Biome で止められるルールを lint に入れた（[アーキテクチャルール](../process/rules/architecture.md)「React の書き方」）。人間レビューで、リリース前には不要な互換コードを削った経緯がある（[体制の進化ログ](../process/evolution.md)）。
