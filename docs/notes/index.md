@@ -17,4 +17,7 @@
 - [カードの裏表](card-face-back.md)
 - [場・手札・プレイ](play-and-field.md)
 - [グラフの役割](graph.md)
+- [PCのロールとシナリオタイプ](role-and-scenario.md)
+- [キャラクターの成長とキャラメイク（CP制）](character-growth.md)
+- [PC間の比較体験と称号タグ](comparison-and-titles.md)
 - [段階的な開示・習熟によるアンロック](unlock.md)
