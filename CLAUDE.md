@@ -11,5 +11,5 @@
 - プランドキュメントは `docs/plans/`（`settings.json` の `plansDirectory`）に置く。
 - 自動メモリ（`.claude/memory/`）は Claude 固有の記憶であり、他のエージェントからは見えない。プロジェクトとして残すべき知識（構成・運用上の注意・決定事項）は `docs/` に書き、メモリにはそこへのポインタと個人的な作業上の学びだけを残す。
 - Bash ツールで長い heredoc（`cat <<'EOF' ... EOF` 等）を使って大きなファイルを書くと、内容が途中で切れて壊れることがある。大きなファイルは Write ツールで書く（LF 改行で書かれることは確認済み）。
-- 同じ理由で、複数のファイルを書き換えるスクリプト（Python など）も heredoc で渡さず、Write でスクラッチパッドにファイルとして書いてから実行する。heredoc ではバックスラッシュの解釈が崩れ、途中まで書き換えて止まることがある。日本語を出力するスクリプトは `PYTHONIOENCODING=utf-8` を付けて実行する（Windows のコンソールは cp932 で、出力の途中で例外になる）。
+- 同じ理由で、複数のファイルを書き換えるスクリプト（Python など）も heredoc で渡さず、Write でスクラッチパッドにファイルとして書いてから実行する（インタプリタへの heredoc と、git フックの省略は `.claude/hooks/guard-bash.mjs` が止める）。heredoc ではバックスラッシュの解釈が崩れ、途中まで書き換えて止まることがある。日本語を出力するスクリプトは `PYTHONIOENCODING=utf-8` を付けて実行する（Windows のコンソールは cp932 で、出力の途中で例外になる）。
 - Bash ツールは Git Bash で動くので、`/` で始まる値（`WEB_BASE=/CarTaGraphFantasy/app/` など）を渡すと Windows のパスに書き換えられる。ビルドやサーバーを起動する前に `docs/architecture/web-app.md`「ローカル開発の注意」を読む。

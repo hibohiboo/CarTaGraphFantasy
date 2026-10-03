@@ -23,7 +23,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 - `docs/backlog/` … 要望（PBI）を1要望1ファイルで置く。先頭の状態・判断待ちから、トップページのダッシュボードをビルド時に組み立てる（`docs/.vitepress/*.data.ts`）
 - `docs/public/preview/` … HTML/CSS のみのUI試作。未React化の画面だけを残し、React 化したら削除する（`docs/architecture/web-app.md`「未React化の画面」）
 - `apps/`・`packages/`・`scenarios/`・`scripts/` … コード。ディレクトリ構成と依存の向きは `docs/process/rules/architecture.md`「構造」「依存の向き」が正（ここには書き写さない）
-- `.claude/` … Claude Code 固有の設定（agents / skills / settings）。手順の本文は `docs/process/` が正
+- `.claude/` … Claude Code 固有の設定（agents / skills / hooks / settings）。手順の本文は `docs/process/` が正
 
 ## コマンド
 

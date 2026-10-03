@@ -26,14 +26,31 @@
 - [x] 人間のコードレビューで出た「構造の読みやすさ」を、AI レビューの観点に足すか検討する — 2026-10-03、PR #11 で人間が「`packages/domain` の配下がフラットで読みづらい」と指摘した（要望 [packages/domain をドメインごとのディレクトリに分ける](../backlog/domain-structure.md)）。プランレビュー3観点・実装レビュー3観点のどれも、ディレクトリ構成やファイルの分け方を問わない。上の「開発フェーズを踏まえた設計の重さ」と同じく、観点に足すか、人間レビューに委ねるかの判断が要る **2026-10-03 採用。** 下記「採用済み」参照
 - [x] Windows の Git Bash で、`/` で始まる値の環境変数が Windows のパスに書き換えられることを、手順に書く — 2026-10-03、ブラウザでの確認で `WEB_BASE=/CarTaGraphFantasy/app/ pnpm build` を Git Bash から実行したところ、base が `/Program Files/Git/CarTaGraphFantasy/app/` に化けて preview が 404 になった。PowerShell で実行し直して確かめた（Git Bash なら `MSYS_NO_PATHCONV=1` を付ける）。置き場所の候補は `docs/architecture/web-app.md` か CLAUDE.md の Claude Code 固有の補足 **2026-10-03 採用。** 下記「採用済み」参照
 
-- [ ] 機械的な検査を自前で書く前に、既存のツール（Biome など）のルールで書けないか調べる — 2026-10-03、PR #12 で依存の向きの検査を自前のテスト（`layers.test.ts`、正規表現で import を拾う）で作り、すり抜けを塞ぐテストを積み増した。人間レビューで「Linter で検知できるのでは」と問われ、Biome 2.5 の `noRestrictedImports`・`noImportCycles`・`noBarrelFile` で置き換えられた。プランレビューもテスト網羅レビューも自前のテストの網羅を深めるだけで、手段そのものは問わなかった。プランの「詳細設計」で、機械的な検査を足すときは既存ツールのルールを先に調べ、採らなかった理由を書く、をルールにするか
-- [ ] ディレクトリ構成など「一覧」の重複を、レビューで見つけられなかった — 2026-10-03、PR #12 の人間レビューで、コードのディレクトリ構成が README・AGENTS.md・architecture.md・web-app.md の4か所に重なり、正がどこかも食い違っていると指摘された（architecture.md に一本化した）。AI レビューは「domain の一覧が表・web-app.md・テストに重なる」までは見つけたが、文書をまたいだ全体の重複には届かなかった。仕様整合のレビュー（spec-reviewer）の観点に「書き換えた文書と同じ情報を持つ文書（README・AGENTS.md を含む）を grep で洗う」を足すか
-- [ ] （Claude Code 固有）heredoc でスクリプトを渡して壊すことが、CLAUDE.md に注意があっても再発する — 2026-10-03、PR #12 の作業中に、Python を heredoc で渡してバックスラッシュが崩れ、2回失敗した（Write でファイルにしてやり直した）。PR #11 でも同じ種類の失敗があった。ルールを読ませるだけでは止まらないので、Claude Code のフック（PreToolUse で、Bash の `<<` と `python`・`node` の組み合わせを止める）で機械的に止めるか
-- [ ] （Claude Code 固有）`git commit --no-verify` を、許可なく使った — 2026-10-03、PR #12 の「移動だけ」のコミットで、型検査が落ちる中間状態だからと `--no-verify` を付けた。pre-commit は Biome だけなので不要だった。Claude Code の設定（`permissions.deny` に `Bash(git commit --no-verify*)` など）で止めるか
+- [x] 機械的な検査を自前で書く前に、既存のツール（Biome など）のルールで書けないか調べる — 2026-10-03、PR #12 で依存の向きの検査を自前のテスト（`layers.test.ts`、正規表現で import を拾う）で作り、すり抜けを塞ぐテストを積み増した。人間レビューで「Linter で検知できるのでは」と問われ、Biome 2.5 の `noRestrictedImports`・`noImportCycles`・`noBarrelFile` で置き換えられた。プランレビューもテスト網羅レビューも自前のテストの網羅を深めるだけで、手段そのものは問わなかった。プランの「詳細設計」で、機械的な検査を足すときは既存ツールのルールを先に調べ、採らなかった理由を書く、をルールにするか **2026-10-03 採用。** 下記「採用済み」参照
+- [x] ディレクトリ構成など「一覧」の重複を、レビューで見つけられなかった — 2026-10-03、PR #12 の人間レビューで、コードのディレクトリ構成が README・AGENTS.md・architecture.md・web-app.md の4か所に重なり、正がどこかも食い違っていると指摘された（architecture.md に一本化した）。AI レビューは「domain の一覧が表・web-app.md・テストに重なる」までは見つけたが、文書をまたいだ全体の重複には届かなかった。仕様整合のレビュー（spec-reviewer）の観点に「書き換えた文書と同じ情報を持つ文書（README・AGENTS.md を含む）を grep で洗う」を足すか **2026-10-03 採用。** 下記「採用済み」参照
+- [x] （Claude Code 固有）heredoc でスクリプトを渡して壊すことが、CLAUDE.md に注意があっても再発する — 2026-10-03、PR #12 の作業中に、Python を heredoc で渡してバックスラッシュが崩れ、2回失敗した（Write でファイルにしてやり直した）。PR #11 でも同じ種類の失敗があった。ルールを読ませるだけでは止まらないので、Claude Code のフック（PreToolUse で、Bash の `<<` と `python`・`node` の組み合わせを止める）で機械的に止めるか **2026-10-03 採用。** 下記「採用済み」参照
+- [x] （Claude Code 固有）`git commit --no-verify` を、許可なく使った — 2026-10-03、PR #12 の「移動だけ」のコミットで、型検査が落ちる中間状態だからと `--no-verify` を付けた。pre-commit は Biome だけなので不要だった。Claude Code の設定（`permissions.deny` に `Bash(git commit --no-verify*)` など）で止めるか **2026-10-03 採用。** 下記「採用済み」参照
 
 ## 採用済み
 
 新しいものを上に。書式：`### <日付> <タイトル>` の下に、内容・理由・反映先。
+
+### 2026-10-03 domain のディレクトリ分割（PR #12）の振り返りから4件を採用
+
+`docs/plans/2026-10-03-domainのディレクトリ分割.md` の振り返りでAIが出した候補を、人間がすべて採用した。
+
+1. **機械的な検査を足すときは、既存のツールで書けないかを先に調べる**
+   - 理由：依存の向きの検査を自前のテスト（`layers.test.ts`）で作り、すり抜けを塞ぐテストを積み増したが、人間レビューで Biome の既存ルールに置き換えた。プランレビューもテスト網羅レビューも、自前のテストの網羅を深めるだけで、手段を問わなかった
+   - 反映先：`docs/process/index.md`「プランドキュメントの8項目」の3、`docs/process/prompt-sample.md`「2」
+2. **仕様整合のレビューで、書き換えた情報と同じものを持つ文書を洗う**
+   - 理由：コードのディレクトリ構成が README・AGENTS.md・architecture.md・web-app.md の4か所に重なっていたのを、人間レビューで見つけた。AI レビューは差分の中の重複までしか見なかった
+   - 反映先：`docs/process/rules/review.md`「レビュー観点」の1、`.claude/agents/spec-reviewer.md`
+3. **（Claude Code 固有）インタプリタへの heredoc を、フックで止める**
+   - 理由：CLAUDE.md に注意があるのに、PR #11・#12 で続けて heredoc の Python が壊れた。ルールを読ませるだけでは止まらないので、機械で止める（基盤の原則5）
+   - 反映先：`.claude/hooks/guard-bash.mjs`（PreToolUse、Bash・PowerShell）、`.claude/settings.json`
+4. **（Claude Code 固有）git commit・push のフックの省略を、フックで止める**
+   - 理由：PR #12 の移動だけのコミットで、許可なくフックを省略した。設定の `permissions.deny` は前方一致で、オプションの位置が変わると漏れるので、3 と同じフックの中で、コマンドのどこにあっても止める
+   - 反映先：同上。コミットメッセージの文字列の中にオプション名が出てくるだけでも止める（安全側）
 
 ### 2026-10-03 シナリオの JSON 管理（PR #11）の振り返りから3件を採用
 
