@@ -6,7 +6,7 @@ paths:
 
 # アーキテクチャルール（どこに何を置くか）
 
-対象：`apps/**`、`packages/**`。技術選定の経緯は[技術スタック](../../architecture/index.md)、現在の構成は[Webアプリの構成](../../architecture/web-app.md)が正で、ここでは「新しいコードをどこに置き、何を守るか」だけを定める（例外として、`packages/domain` のディレクトリの一覧は、依存の向きと一緒にここの表が正）。
+対象：`apps/**`、`packages/**`。技術選定の経緯は[技術スタック](../../architecture/index.md)、現在の構成は[Webアプリの構成](../../architecture/web-app.md)が正で、ここでは「新しいコードをどこに置き、何を守るか」だけを定める（例外として、`packages/domain` のディレクトリの一覧はここの表が正）。
 
 ## 構造
 
@@ -41,19 +41,26 @@ scenarios/    遊べるシナリオの JSON（シードの一部。packages/doma
 
 ### 依存の向き
 
-各ディレクトリが import してよい先（同じディレクトリの中は自由）。`packages/domain/src/layers.test.ts` がソースを読んで機械的に確かめる。テストの中の表（`ALLOWED`）はこの表の写しで、一致しないとテストが落ちるので、表を変えるときは一緒に直す。
+下の層だけを import してよい（同じディレクトリの中は自由）。`user/`・`library/` はどこからも import されない末端。
 
-| ディレクトリ | 仕様ページ | import してよい先 |
-|---|---|---|
-| `check/` | exploration-check.md（能力値・判定） | なし |
-| `user/` | graph.md（ロール）・unlock.md・character-growth.md（解放済みカードプール） | なし |
-| `card/` | card-and-deck.md・card-face-back.md | `check/` |
-| `library/` | graph.md（共有ライブラリ） | `card/`・`check/` |
-| `character/` | character-growth.md・role-and-scenario.md（典型ロール）・comparison-and-titles.md（称号） | `card/`・`check/` |
-| `autoCombat/` | auto-combat.md | `character/`・`card/`・`check/` |
-| `scenario/` | scenario-flow.md | `autoCombat/`・`character/`・`card/`・`check/` |
-| `session/` | party-and-session.md・play-and-field.md・scenario-flow.md（募集） | `scenario/`・`autoCombat/`・`character/`・`card/`・`check/` |
-| `soloVillage/` | solo-village.md | `session/`・`scenario/`・`autoCombat/`・`character/`・`card/`・`check/` |
+```text
+check ← card ← character ← autoCombat ← scenario ← session ← soloVillage
+check ← card ← library        user（どこにも依存しない）
+```
+
+| ディレクトリ | 仕様ページ |
+|---|---|
+| `check/` | exploration-check.md（能力値・判定） |
+| `card/` | card-and-deck.md・card-face-back.md |
+| `character/` | character-growth.md・role-and-scenario.md（典型ロール）・comparison-and-titles.md（称号） |
+| `autoCombat/` | auto-combat.md |
+| `scenario/` | scenario-flow.md |
+| `session/` | party-and-session.md・play-and-field.md・scenario-flow.md（募集） |
+| `soloVillage/` | solo-village.md |
+| `user/` | graph.md（ロール）・unlock.md・character-growth.md（解放済みカードプール） |
+| `library/` | graph.md（共有ライブラリ） |
+
+**機械的な検査は Biome**（コミット前のフックと CI の lint）。各ディレクトリが import してよい先の正は `biome.json` の `overrides`（`style/noRestrictedImports` の許可リスト）で、表に無いディレクトリはほかのディレクトリを import できない。循環は `suspicious/noImportCycles`、barrel は `performance/noBarrelFile`・`noReExportAll` で止める。ディレクトリを足す・依存の向きを変えるときは、この節と `biome.json` を一緒に直す（`biome.json` はコメントを書けないので、理由はここに書く）。
 
 ### 仕様ページに合わせる、の例外
 

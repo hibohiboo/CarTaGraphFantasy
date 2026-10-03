@@ -19,7 +19,6 @@ paths:
 | 単体 | Vitest | `apps/web/src/test/`（対象のファイル名を反映。例：`lib/japanese.ts` → `test/japanese.test.ts`） | `pnpm web:test` | ロジックの境界値・異常系 |
 | ページ描画 | Vitest + Testing Library + MSW（node） | `apps/web/src/test/pages.test.tsx` | 同上 | 全ルートが描画できること、主要操作が通ること |
 | ドメイン | Vitest | `packages/domain/src/**/*.test.ts`（対象と同じディレクトリに、対象のファイル名を反映。例：`autoCombat/resolve.ts` → `autoCombat/resolve.test.ts`） | `pnpm domain:test`（型検査は `pnpm domain:typecheck`） | 純粋関数の判定・変換 |
-| 構造 | Vitest | `packages/domain/src/layers.test.ts` | 同上 | ディレクトリ間の依存の向きと置き場所（[アーキテクチャルール](architecture.md)「packages/domain の中の置き場所」） |
 | E2E | Playwright（Chromium） | `apps/web/e2e/smoke.test.ts` | `pnpm web:e2e` | 全ルートが実ブラウザで例外なく描画できること（2026-09-21導入。`docs/plans/2026-09-21-e2e導入.md`参照） |
 
 - `pages.test.tsx` は `app/routes.ts` を走査して全ルートを描画する。ルートを追加すると自動的に対象になるので、ページ固有の操作テストだけを個別に書く

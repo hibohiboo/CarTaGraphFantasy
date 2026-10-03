@@ -42,7 +42,8 @@
       "suspicious": {
         "noConsole": "error",
         "noSkippedTests": "error",
-        "noFocusedTests": "error"
+        "noFocusedTests": "error",
+        "noImportCycles": "error"
       }
     },
     "domains": {
@@ -75,6 +76,291 @@
         "rules": {
           "suspicious": {
             "noConsole": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/src/**"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noBarrelFile": "error",
+            "noReExportAll": "error"
+          },
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../**", "./../**", "@cartagraph/domain", "@cartagraph/domain/**"],
+                    "message": "表に無いディレクトリ はほかのディレクトリを import しない（docs/process/rules/architecture.md「packages/domain の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/src/check/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../**", "./../**", "@cartagraph/domain", "@cartagraph/domain/**"],
+                    "message": "check/ はほかのディレクトリを import しない（docs/process/rules/architecture.md「packages/domain の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/src/user/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../**", "./../**", "@cartagraph/domain", "@cartagraph/domain/**"],
+                    "message": "user/ はほかのディレクトリを import しない（docs/process/rules/architecture.md「packages/domain の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/src/card/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/domain",
+                      "@cartagraph/domain/**",
+                      "!../check/**",
+                      "!./../check/**"
+                    ],
+                    "message": "card/ が import してよい先は check/ だけ（docs/process/rules/architecture.md「packages/domain の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/src/library/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/domain",
+                      "@cartagraph/domain/**",
+                      "!../card/**",
+                      "!./../card/**",
+                      "!../check/**",
+                      "!./../check/**"
+                    ],
+                    "message": "library/ が import してよい先は card/・check/ だけ（docs/process/rules/architecture.md「packages/domain の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/src/character/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/domain",
+                      "@cartagraph/domain/**",
+                      "!../card/**",
+                      "!./../card/**",
+                      "!../check/**",
+                      "!./../check/**"
+                    ],
+                    "message": "character/ が import してよい先は card/・check/ だけ（docs/process/rules/architecture.md「packages/domain の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/src/autoCombat/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/domain",
+                      "@cartagraph/domain/**",
+                      "!../character/**",
+                      "!./../character/**",
+                      "!../card/**",
+                      "!./../card/**",
+                      "!../check/**",
+                      "!./../check/**"
+                    ],
+                    "message": "autoCombat/ が import してよい先は character/・card/・check/ だけ（docs/process/rules/architecture.md「packages/domain の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/src/scenario/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/domain",
+                      "@cartagraph/domain/**",
+                      "!../autoCombat/**",
+                      "!./../autoCombat/**",
+                      "!../character/**",
+                      "!./../character/**",
+                      "!../card/**",
+                      "!./../card/**",
+                      "!../check/**",
+                      "!./../check/**"
+                    ],
+                    "message": "scenario/ が import してよい先は autoCombat/・character/・card/・check/ だけ（docs/process/rules/architecture.md「packages/domain の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/src/session/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/domain",
+                      "@cartagraph/domain/**",
+                      "!../scenario/**",
+                      "!./../scenario/**",
+                      "!../autoCombat/**",
+                      "!./../autoCombat/**",
+                      "!../character/**",
+                      "!./../character/**",
+                      "!../card/**",
+                      "!./../card/**",
+                      "!../check/**",
+                      "!./../check/**"
+                    ],
+                    "message": "session/ が import してよい先は scenario/・autoCombat/・character/・card/・check/ だけ（docs/process/rules/architecture.md「packages/domain の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/src/soloVillage/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/domain",
+                      "@cartagraph/domain/**",
+                      "!../session/**",
+                      "!./../session/**",
+                      "!../scenario/**",
+                      "!./../scenario/**",
+                      "!../autoCombat/**",
+                      "!./../autoCombat/**",
+                      "!../character/**",
+                      "!./../character/**",
+                      "!../card/**",
+                      "!./../card/**",
+                      "!../check/**",
+                      "!./../check/**"
+                    ],
+                    "message": "soloVillage/ が import してよい先は session/・scenario/・autoCombat/・character/・card/・check/ だけ（docs/process/rules/architecture.md「packages/domain の中の置き場所」）"
+                  }
+                ]
+              }
+            }
           }
         }
       }
