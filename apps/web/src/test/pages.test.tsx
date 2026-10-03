@@ -485,6 +485,9 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     await screen.findByRole('button', { name: '軽量モードに戻す' });
     expect(within(p).queryByLabelText('「辺りを見回す」を取り下げる')).not.toBeInTheDocument();
     expect(within(p).getByLabelText('選択肢1の移り先')).toHaveValue('');
+    expect(
+      within(p).getByText('シーンが変わったため、選べなくなった移り先を外した。'),
+    ).toBeInTheDocument();
     const send = within(p).getByRole('button', { name: '送る' });
     expect(send).toBeEnabled();
     await user.click(send);

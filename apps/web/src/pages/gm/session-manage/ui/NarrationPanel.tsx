@@ -13,8 +13,11 @@ import { useNarrate } from '@/entities/session/api/mutations';
 import s from '@/shared/ui/page.module.css';
 import { Button, ErrorNote, Field, Panel } from '@/shared/ui/ui';
 
-/** 配る選択肢の入力の行。key は行を足したときに振る（途中の行を消しても入力がずれないように） */
-type ChoiceRow = DealtChoice & { key: number };
+/**
+ * 配る選択肢の入力の行。key は行を足したときに振る（途中の行を消しても入力がずれないように）。
+ * targetDropped は、シーンが変わって選べなくなった移り先を外したことを GM に知らせる印
+ */
+type ChoiceRow = DealtChoice & { key: number; targetDropped?: boolean };
 
 /**
  * 人間GMの進行：描写を書く・選択肢カードをその場で作って配る・取り下げる、を1回で送る
@@ -32,25 +35,31 @@ export function NarrationPanel({ session }: { session: Session }) {
   const deck = scenario.data ? sessionDeck(scenario.data.deck, session.excludedNodeIds ?? []) : [];
   const targets = narrationTargets(deck, session.currentScene.nodeId);
   const handChoices = session.hand.filter((c) => c.kind === 'choice');
-  // 開いたあとでセッションが変わる（ドライバーがプレイして手札・シーンが変わる）ことがあるので、
-  // 手札に無くなった取り下げのチェックと、選べなくなった移り先は、無いものとして扱う（画面の表示とそろえる）
-  const withdrawCardIds = withdraw.filter((id) => handChoices.some((c) => c.id === id));
-  const choices = rows.map(({ key: _, nextNodeId, ...c }) => ({
-    ...c,
-    nextNodeId: targets.some((t) => t.id === nextNodeId) ? nextNodeId : '',
-  }));
-  const input = { flavor, withdrawCardIds, choices };
+  // 開いたあとでセッションが変わる（ドライバーがプレイして手札・シーンが変わる）と、取り下げのチェックと移り先が古くなる。
+  // 手札かシーンが変わったら、手札に無くなったチェックと選べなくなった移り先を state から捨てる（あとで同じ ID の
+  // カードが配り直されても、チェックが戻らないように）。描画中に前回と比べて state を直す
+  const sessionKey = `${session.currentScene.nodeId}|${handChoices.map((c) => c.id).join(',')}`;
+  const [seenKey, setSeenKey] = useState(sessionKey);
+  if (seenKey !== sessionKey && scenario.data) {
+    setSeenKey(sessionKey);
+    setWithdraw(withdraw.filter((id) => handChoices.some((c) => c.id === id)));
+    setRows(
+      rows.map((r) =>
+        r.nextNodeId && !targets.some((t) => t.id === r.nextNodeId)
+          ? { ...r, nextNodeId: '', targetDropped: true }
+          : r,
+      ),
+    );
+  }
+  const choices = rows.map(({ key: _, targetDropped: __, ...c }) => c);
+  const input = { flavor, withdrawCardIds: withdraw, choices };
   const check = checkNarration(session, deck, input);
   const atEnding = isAtEnding(deck, session.currentScene.nodeId);
 
-  const updateRow = (key: number, patch: Partial<DealtChoice>) =>
+  const updateRow = (key: number, patch: Partial<Omit<ChoiceRow, 'key'>>) =>
     setRows(rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   const toggleWithdraw = (id: string) =>
-    setWithdraw(
-      withdrawCardIds.includes(id)
-        ? withdrawCardIds.filter((x) => x !== id)
-        : [...withdrawCardIds, id],
-    );
+    setWithdraw(withdraw.includes(id) ? withdraw.filter((x) => x !== id) : [...withdraw, id]);
   const submit = () =>
     narrate.mutate(
       { sessionId: session.id, ...input },
@@ -78,7 +87,7 @@ export function NarrationPanel({ session }: { session: Session }) {
       <fieldset
         className={s.form}
         disabled={narrate.isPending}
-        style={{ border: 0, padding: 0, margin: 0 }}
+        style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
       >
         <div>
           <div className={s.metaLabel}>いまの描写</div>
@@ -104,7 +113,7 @@ export function NarrationPanel({ session }: { session: Session }) {
                   <label>
                     <input
                       type="checkbox"
-                      checked={withdrawCardIds.includes(c.id)}
+                      checked={withdraw.includes(c.id)}
                       onChange={() => toggleWithdraw(c.id)}
                       aria-label={`「${c.name}」を取り下げる`}
                     />{' '}
@@ -143,8 +152,10 @@ export function NarrationPanel({ session }: { session: Session }) {
             </Field>
             <Field label={`選択肢${i + 1}の移り先`}>
               <select
-                value={choices[i].nextNodeId}
-                onChange={(e) => updateRow(r.key, { nextNodeId: e.target.value })}
+                value={r.nextNodeId ?? ''}
+                onChange={(e) =>
+                  updateRow(r.key, { nextNodeId: e.target.value, targetDropped: false })
+                }
               >
                 <option value="">このシーンに留まる（移り先なし）</option>
                 {targets.map((t) => (
@@ -154,6 +165,9 @@ export function NarrationPanel({ session }: { session: Session }) {
                 ))}
               </select>
             </Field>
+            {r.targetDropped && (
+              <p className="u-small">シーンが変わったため、選べなくなった移り先を外した。</p>
+            )}
             <div>
               <Button
                 size="sm"
