@@ -3,7 +3,7 @@
 import type { Character } from '@cartagraph/domain/character/model';
 import type { Session } from '@cartagraph/domain/session/model';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -155,9 +155,11 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     await user.click(within(rc).getByLabelText('迅をドライバーにする'));
     await user.type(within(rc).getByLabelText('パーティー名'), '夜更かし組');
     await user.click(within(rc).getByRole('button', { name: 'セッションを始める' }));
-    // GM のセッション一覧にも同じパーティー名が出るので、進行管理画面へ移ってから確かめる
-    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/gm\/sessions\/ss-/));
-    expect(await screen.findByText(/パーティー「夜更かし組」/)).toBeInTheDocument();
+    // GM のセッション一覧にも同じパーティー名が出る。画面の切り替えは router の pathname より遅れることが
+    // あるので、進行管理画面にしか無い見出しが出るのを待ってから確かめる
+    await screen.findByRole('heading', { name: '参加者' });
+    expect(screen.getByText(/パーティー「夜更かし組」/)).toBeInTheDocument();
+    expect(router.state.location.pathname).toMatch(/^\/gm\/sessions\/ss-/);
     const members = screen.getByRole('heading', { name: '参加者' }).closest('section')!;
     expect(within(members).getByText('迅（ユウ）').closest('div')).toHaveTextContent('ドライバー');
     expect(within(members).getByText('澪（カヤ）').closest('div')).toHaveTextContent(
@@ -254,8 +256,8 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     await user.click(within(fresh).getByLabelText('迅（ユウ）を参加させる'));
     await user.click(within(fresh).getByLabelText('迅をドライバーにする'));
     await user.click(within(fresh).getByRole('button', { name: 'セッションを始める' }));
-    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/gm\/sessions\/ss-/));
-    expect(await screen.findByText(/パーティー「迅の一行」/)).toBeInTheDocument();
+    await screen.findByRole('heading', { name: '参加者' });
+    expect(screen.getByText(/パーティー「迅の一行」/)).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`/ ${grayMansionScenes - 1}$`))).toBeInTheDocument();
   });
 });
