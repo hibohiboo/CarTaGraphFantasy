@@ -6,21 +6,28 @@ paths:
 
 # アーキテクチャルール（どこに何を置くか）
 
-対象：`apps/**`、`packages/**`。技術選定の経緯は[技術スタック](../../architecture/index.md)、現在の構成は[Webアプリの構成](../../architecture/web-app.md)が正で、ここでは「新しいコードをどこに置き、何を守るか」だけを定める（例外として、`packages/domain` のディレクトリの一覧はここの表が正）。
+対象：`apps/**`、`packages/**`。**コードのディレクトリ構成と依存の向きは、ここが正**（README・AGENTS.md・[Webアプリの構成](../../architecture/web-app.md)はここを指す）。技術選定の経緯は[技術スタック](../../architecture/index.md)、Webアプリの動き（MSW・ルーティング・画面・シナリオの JSON の読み込み）は[Webアプリの構成](../../architecture/web-app.md)にある。
 
 ## 構造
 
 ```text
-packages/domain/src/     ドメイン型と、UIに依存しないゲームロジック（純粋関数）。ドメインごとのディレクトリに分ける（下の「packages/domain の中の置き場所」）
-apps/web/src/
-  app/        routes.ts（ルート一覧＝ナビ・サイトマップの唯一の情報源）、router.tsx、AppShell.tsx
-  pages/<ロール>/  ページ。1ページ1ファイル
-  components/ 複数ページで共有するUI
-  lib/        api.ts（fetchラッパー）、queries.ts（TanStack Query のフック）、整形・変換
-  mocks/      fixtures.ts（モックデータのシード）、scenarioFiles.ts（scenarios/*.json の読み込み）、handlers.ts（MSW ハンドラ）
-  content/    ルールブック本文（docs の要約。出典リンク付き）
-  styles/     tokens.css（デザイントークン）、global.css
-scenarios/    遊べるシナリオの JSON（シードの一部。packages/domain の scenarioSchema で検査する）
+apps/web/                 Vite + React + react-router + TanStack Query + MSW
+  public/mockServiceWorker.js  MSW が生成した Service Worker（コミットする）
+  src/
+    app/        routes.ts（ルート一覧＝ナビ・サイトマップの唯一の情報源）、router.tsx、AppShell.tsx
+    pages/<ロール>/  ページ。1ページ1ファイル（pl / gm / creator / rulebook / admin）
+    components/ 複数ページで共有するUI（GameCard / HandDock / Hud / DeckTree など）
+    lib/        api.ts（fetchラッパー）、queries.ts（TanStack Query のフック）、整形・変換
+    mocks/      fixtures.ts（モックデータのシード）、scenarioFiles.ts（scenarios/*.json の読み込み）、
+                handlers.ts（MSW ハンドラ）、browser.ts / node.ts
+    content/    ルールブック本文（docs の要約。出典リンク付き）
+    styles/     tokens.css（デザイントークン）、global.css
+    test/       Vitest のテスト（docs/process/rules/testing.md）
+  e2e/          Playwright のテスト
+packages/domain/src/      ドメイン型と、UIに依存しないゲームロジック（純粋関数）。
+                          仕様ページに合わせたドメインごとのディレクトリ（下の「packages/domain の中の置き場所」）
+scenarios/                遊べるシナリオの JSON（シードの一部。読み込みと検査は Webアプリの構成「シナリオの JSON」）
+scripts/                  ビルド補助（GitHub Pages へのコピー、自動戦闘のシミュレーション）
 ```
 
 迷ったらこの順で問う。
@@ -31,15 +38,27 @@ scenarios/    遊べるシナリオの JSON（シードの一部。packages/doma
 4. API へのアクセス → `lib/api.ts` と `lib/queries.ts` を経由する。ページから `fetch` を直接呼ばない
 5. モックデータの追加 → 遊べるシナリオはリポジトリ直下の `scenarios/<id>.json`、それ以外（テスト専用のシナリオを含む）は `mocks/fixtures.ts` に置く。ページやテストの中で独自のデータを作らない
 
+## 依存の向き
+
+```text
+apps/web ──→ packages/domain ──→ zod
+   │
+   └──→ scenarios/*.json（mocks/scenarioFiles.ts が読み、packages/domain の検査を通す）
+```
+
+- **パッケージの間** — `apps/web` は `packages/domain` を参照してよい。逆は禁止。`packages/domain` は React・DOM・MSW に依存しない（下の「境界」）
+- **packages/domain の中** — 下の層だけを import してよい（下の「packages/domain の中の置き場所」の図と表。Biome で機械的に止める）
+- **apps/web の中** — いまはディレクトリ間の向きを決めていない（置き場所は下の「迷ったらこの順で問う」）
+
 ## packages/domain の中の置き場所
 
-`packages/domain/src/` は、仕様ページ（`docs/cartagraph/`）に合わせたドメインごとのディレクトリに分ける。ディレクトリの一覧は下の「依存の向き」の表が正（[Webアプリの構成](../../architecture/web-app.md)はここを指す）。
+`packages/domain/src/` は、仕様ページ（`docs/cartagraph/`）に合わせたドメインごとのディレクトリに分ける。ディレクトリの一覧は下の表が正。
 
 - **型は `model.ts`、ロジックは役割の名前のファイル** — 各ディレクトリの型は `model.ts` に置き、zod スキーマ・型（`z.infer`）・ラベルを隣り合わせにする。ロジックは `resolve.ts`・`refs.ts`・`transition.ts` のように役割で名づける。テストは対象と同じディレクトリに、対象のファイル名で置く
 - **直下にファイルを置かない。`index.ts` を作らない** — 利用側は `@cartagraph/domain/<ディレクトリ>/<ファイル>` を直接 import する（`package.json` の `exports` はワイルドカード）。domain の中は相対パスで import し、自分のパッケージ名では import しない
 - **新しいディレクトリを足すときは、下の依存の表にも足す**
 
-### 依存の向き
+### ディレクトリと依存の向き
 
 下の層だけを import してよい（同じディレクトリの中は自由）。`user/`・`library/` はどこからも import されない末端。
 

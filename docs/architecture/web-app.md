@@ -14,24 +14,10 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 
 ## ディレクトリ
 
-```text
-apps/web/                 Vite + React + react-router + TanStack Query + MSW
-├─ public/mockServiceWorker.js   MSW が生成した Service Worker（コミットする）
-└─ src/
-   ├─ app/       routes.ts（ルート一覧＝ナビとサイトマップの情報源）、router.tsx、AppShell.tsx
-   ├─ components/ 共通UI（GameCard / HandDock / Hud / DeckTree / Badge / Pill など）
-   ├─ pages/     ロール別のページ（pl / gm / creator / rulebook / admin）
-   ├─ content/   ルールブックの本文（docs の要約。出典リンク付き）
-   ├─ lib/       api.ts（fetch ラッパー）、queries.ts（Query フック）、format.ts
-   ├─ mocks/     fixtures.ts（モックデータ）、scenarioFiles.ts（scenarios/*.json の読み込み）、handlers.ts（MSW ハンドラ）、browser.ts / node.ts
-   └─ styles/    tokens.css（デザイントークン）、global.css
-packages/domain/src/      ドメイン型とゲームロジック。docs の用語をそのまま型にしたもの
-                          ドメインごとのディレクトリ（一覧・置き方・依存の向きは docs/process/rules/architecture.md）。
-                          型は各ディレクトリの model.ts（シナリオの型は zod スキーマが正）、ロジックは役割の名前のファイル
-scenarios/                遊べるシナリオの JSON（下記「シナリオの JSON」）
-scripts/copy-web-to-pages.mjs   ビルド成果物を docs の dist 配下 app/ へコピー（GitHub Pages 用）
-scripts/copy-e2e-report-to-pages.mjs   PlaywrightのHTMLレポートを docs の dist 配下 e2e-report/ へコピー（GitHub Pages 用）
-```
+コードのディレクトリ構成と依存の向きは、[アーキテクチャルール](../process/rules/architecture.md)の「構造」「依存の向き」が正。ここでは、そこに書いていない GitHub Pages 用のスクリプトだけを挙げる。
+
+- `scripts/copy-web-to-pages.mjs` … ビルド成果物を docs の dist 配下 `app/` へコピー
+- `scripts/copy-e2e-report-to-pages.mjs` … Playwright の HTML レポートを docs の dist 配下 `e2e-report/` へコピー
 
 ## シナリオの JSON
 
