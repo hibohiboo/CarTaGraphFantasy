@@ -1,9 +1,11 @@
 ---
 title: apps/web のディレクトリ構成を Feature-Sliced Design に従わせる
-status: 進行中
+status: 完了
 summary: 開発者向け。apps/web/src のディレクトリ構成に決まった型が無いので、練られたパターンである Feature-Sliced Design（FSD）に従わせ、層の依存の向きを機械的に守る。振る舞いは変えない。
 plans:
   - 2026-10-03-webのFSD移行.md
+cycles:
+  - { name: apps/web の FSD 移行, status: 完了, pr: 13 }
 updated: 2026-10-03
 ---
 
