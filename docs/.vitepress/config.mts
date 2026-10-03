@@ -20,17 +20,10 @@ export default defineConfig({
       { text: 'アプリ', link: '/app/', target: '_self' },
     ],
 
-    // 左メニューは読み手ごとに4つ（進み具合・ゲームの仕様・開発・資料）に分ける（2026-10-03）。
+    // 左メニューは読み手ごとに4つに分ける（2026-10-03）。まず実現したいこと（ゲームの仕様）、
+    // その進み具合、作り方（開発）、資料の順。
     // ページを足したら、ここにも足す（仕様のページがメニューから辿れなくならないように）
     sidebar: [
-      {
-        text: '進み具合',
-        items: [
-          { text: 'ダッシュボード', link: '/' },
-          { text: 'ロードマップ', link: '/roadmap' },
-          { text: '要望（バックログ）', link: '/backlog/' },
-        ],
-      },
       {
         text: 'ゲームの仕様（カルタグラフ）',
         items: [
@@ -81,6 +74,14 @@ export default defineConfig({
           },
           { text: '用語集', link: '/glossary' },
           { text: '未解決論点トラッカー', link: '/open-questions' },
+        ],
+      },
+      {
+        text: '進み具合',
+        items: [
+          { text: 'ダッシュボード', link: '/' },
+          { text: 'ロードマップ', link: '/roadmap' },
+          { text: '要望（バックログ）', link: '/backlog/' },
         ],
       },
       {
