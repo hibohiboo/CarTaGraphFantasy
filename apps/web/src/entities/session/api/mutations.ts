@@ -2,6 +2,7 @@
 
 import type { HpCondition } from '@cartagraph/domain/autoCombat/model';
 import type { Recruitment, Session } from '@cartagraph/domain/session/model';
+import type { NarrationInput } from '@cartagraph/domain/session/narrate';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/api/api';
 import { keys } from '@/shared/api/queryKeys';
@@ -99,6 +100,16 @@ export const useRejectProposal = () =>
   useSessionMutation((v: { sessionId: string; proposalId: string; reason: string }) =>
     api.post<Session>(`/sessions/${v.sessionId}/proposals/${v.proposalId}/reject`, {
       reason: v.reason,
+    }),
+  );
+
+/** 人間GMの進行：描写を書く・選択肢を配る・取り下げる（packages/domain の session/narrate.ts） */
+export const useNarrate = () =>
+  useSessionMutation((v: { sessionId: string } & NarrationInput) =>
+    api.post<Session>(`/sessions/${v.sessionId}/narrate`, {
+      flavor: v.flavor,
+      withdrawCardIds: v.withdrawCardIds,
+      choices: v.choices,
     }),
   );
 

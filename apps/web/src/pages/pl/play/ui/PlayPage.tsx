@@ -1,5 +1,6 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
 import { SYSTEM_GM_ID } from '@cartagraph/domain/session/model';
+import { isAtEnding } from '@cartagraph/domain/session/narrate';
 import { heldCards, isSoloRuleCard, unplayableReason } from '@cartagraph/domain/soloVillage/rules';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -8,6 +9,7 @@ import { useCharacter } from '@/entities/character/api/queries';
 import { useScenario } from '@/entities/scenario/api/queries';
 import { usePlayCard, usePropose } from '@/entities/session/api/mutations';
 import { useSession } from '@/entities/session/api/queries';
+import { useMe } from '@/entities/user/api/queries';
 import { Button, ErrorNote, Loading, StatusPill } from '@/shared/ui/ui';
 import {
   HandDock,
@@ -39,9 +41,12 @@ export function PlayPage() {
   const driverCharacterId =
     session.data?.participants.find((p) => p.role === 'driver')?.characterId ?? '';
   const character = useCharacter(soloGm ? driverCharacterId : '');
-  // 結末タグの即時反映（仮ルール）を示すため、GM不在のソロが終わったらシナリオの結末を読む
-  const endedSolo = soloGm && session.data?.status === 'ended';
-  const scenario = useScenario(endedSolo ? (session.data?.scenarioId ?? '') : '');
+  const me = useMe();
+  // 終わったセッションでは、結末に着いて終わったかの判定と、GM不在のソロの結末タグの即時反映（仮ルール）を示すため、
+  // シナリオを読む
+  const endedAny = session.data?.status === 'ended';
+  const endedSolo = soloGm && endedAny;
+  const scenario = useScenario(endedAny ? (session.data?.scenarioId ?? '') : '');
 
   if (session.isPending) return <Loading what="卓を準備中" />;
   if (session.error) return <ErrorNote error={session.error} />;
@@ -88,6 +93,7 @@ export function PlayPage() {
               キャラクターシート
             </Link>
             <Link to="/pl/sessions">セッション一覧</Link>
+            {me.data?.id === s.gmId && <Link to={`/gm/sessions/${s.id}`}>GMの画面へ</Link>}
           </>
         }
       />
@@ -106,7 +112,10 @@ export function PlayPage() {
         }
         mystery={s.field.plVisible.filter((c) => c.faceDown)}
       />
-      {ended && s.currentScene.nodeId && <h2 className="u-serif">結末「{s.currentScene.name}」</h2>}
+      {/* GM が結末以外のシーンで終了を宣言することもあるので、結末のノードにいるときだけ出す */}
+      {ended && scenario.data && isAtEnding(scenario.data.deck, s.currentScene.nodeId) && (
+        <h2 className="u-serif">結末「{s.currentScene.name}」</h2>
+      )}
       {s.autoCombat && (
         <AutoCombatLog
           state={s.autoCombat}

@@ -7,7 +7,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { routeObjects } from '@/app/router';
 import * as fx from '@/mocks/fixtures';
 import { ApiError, api } from '@/shared/api/api';
@@ -255,6 +255,232 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     await user.click(within(fresh).getByRole('button', { name: 'セッションを始める' }));
     expect(await screen.findByText(/パーティー「迅の一行」/)).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`/ ${grayMansionScenes - 1}$`))).toBeInTheDocument();
+  });
+});
+
+// docs/plans/2026-10-03-GMがPLを兼ねて遊ぶ.md「5. 新規テストケース（pages.test.tsx）」
+describe('GMのセッション管理：描写と選択肢を配る（GM が PL を兼ねる）', () => {
+  const PANEL = '描写と選択肢を配る';
+  const MY_NOTE_OF_RC_MINE = fx.recruitments.find((r) => r.id === 'rc-mine')?.note ?? '';
+  const panel = async () =>
+    (await screen.findByRole('heading', { name: PANEL })).closest('section') as HTMLElement;
+  /** 灰色館の一夜（rc-mine）を、自分の PC をドライバーにして API で始める（導入に選択肢は無い） */
+  const startMansion = () =>
+    api.post<Session>('/recruitments/rc-mine/start', {
+      characterIds: ['pc-jin'],
+      driverCharacterId: 'pc-jin',
+      partyName: '',
+    });
+  /** 村はずれの一歩で、お店を外した募集を出し、自分の PC で応募して API で始める */
+  const startVillageWithoutShop = async () => {
+    const rc = await api.post<{ id: string }>('/scenarios/sc-village-start/recruitments', {
+      capacity: 1,
+      excludedNodeIds: ['vs-shop'],
+    });
+    await api.post(`/recruitments/${rc.id}/apply`, { characterId: 'pc-jin' });
+    return api.post<Session>(`/recruitments/${rc.id}/start`, {
+      characterIds: ['pc-jin'],
+      driverCharacterId: 'pc-jin',
+      partyName: '',
+    });
+  };
+
+  it('自分が GM の進行中のセッションに枠が出て、他の GM のセッションには出ない', async () => {
+    renderAt('/gm/sessions/ss-galleon');
+    expect(await panel()).toBeInTheDocument();
+    cleanup();
+    renderAt('/gm/sessions/ss-mansion');
+    await screen.findByRole('heading', { name: '提案の裁定' });
+    expect(screen.queryByRole('heading', { name: PANEL })).not.toBeInTheDocument();
+  });
+
+  it('初期状態では送れず、描写を書くと送れる。名前の空の行を足すとエラーが出て、行を消すと消える', async () => {
+    const user = userEvent.setup();
+    renderAt('/gm/sessions/ss-galleon');
+    const p = await panel();
+    const send = within(p).getByRole('button', { name: '送る' });
+    expect(send).toBeDisabled();
+    expect(within(p).queryByText(/描写を書くか/)).not.toBeInTheDocument();
+    await user.type(within(p).getByLabelText('描写'), '甲板が揺れる。');
+    expect(send).toBeEnabled();
+    await user.click(within(p).getByRole('button', { name: '選択肢を足す' }));
+    expect(send).toBeDisabled();
+    expect(within(p).getByText('配る選択肢の名前を入力してください')).toBeInTheDocument();
+    await user.click(within(p).getByRole('button', { name: '選択肢1を消す' }));
+    expect(within(p).queryByText('配る選択肢の名前を入力してください')).not.toBeInTheDocument();
+    expect(send).toBeEnabled();
+  });
+
+  it('移り先には、外したシーン・自動戦闘のシーン・いま居るシーンが出ない', async () => {
+    const user = userEvent.setup();
+    const s = await startVillageWithoutShop();
+    renderAt(`/gm/sessions/${s.id}`);
+    const p = await panel();
+    await user.click(within(p).getByRole('button', { name: '選択肢を足す' }));
+    const select = within(p).getByLabelText('選択肢1の移り先');
+    const options = await within(select).findAllByRole('option');
+    const labels = options.map((o) => o.textContent);
+    expect(labels).toContain('村の広場');
+    expect(labels).toContain('冒険者として旅立つ');
+    expect(labels).not.toContain('村のお店');
+    expect(labels).not.toContain('冒険者試験');
+    expect(labels).not.toContain('村はずれ');
+  });
+
+  it('取り下げだけでも送れ、チェックした選択肢だけが手札から消える', async () => {
+    const user = userEvent.setup();
+    const s = await startVillageWithoutShop();
+    renderAt(`/gm/sessions/${s.id}`);
+    const p = await panel();
+    await user.click(within(p).getByLabelText('「辺りを見回す」を取り下げる'));
+    await user.click(within(p).getByRole('button', { name: '送る' }));
+    expect(await screen.findByText(/選択肢「辺りを見回す」を取り下げた/)).toBeInTheDocument();
+    expect(within(p).queryByLabelText('「辺りを見回す」を取り下げる')).not.toBeInTheDocument();
+    expect(within(p).getByLabelText('「村の広場へ向かう」を取り下げる')).not.toBeChecked();
+  });
+
+  it('移り先なしで配ると成功し、送ったあとは入力が空に戻る', async () => {
+    const user = userEvent.setup();
+    const s = await startMansion();
+    renderAt(`/gm/sessions/${s.id}`);
+    const p = await panel();
+    await user.type(within(p).getByLabelText('描写'), '静かな夜だ。');
+    await user.click(within(p).getByRole('button', { name: '選択肢を足す' }));
+    await user.type(within(p).getByLabelText('選択肢1の名前'), '耳を澄ます');
+    expect(within(p).getByLabelText('選択肢1の移り先')).toHaveValue('');
+    await user.click(within(p).getByRole('button', { name: '送る' }));
+    expect(await within(p).findByLabelText('「耳を澄ます」を取り下げる')).toBeInTheDocument();
+    expect(within(p).getByText('静かな夜だ。')).toBeInTheDocument();
+    expect(within(p).getByLabelText('描写')).toHaveValue('');
+    expect(within(p).queryByLabelText('選択肢1の名前')).not.toBeInTheDocument();
+  });
+
+  it('GM が PL を兼ねるときだけ、GM の画面とプレイ画面を行き来するリンクが出る', async () => {
+    const s = await startMansion();
+    renderAt(`/gm/sessions/${s.id}`);
+    expect(
+      await screen.findByRole('link', { name: 'ドライバーとしてプレイ画面へ' }),
+    ).toHaveAttribute('href', `/pl/sessions/${s.id}/play`);
+    cleanup();
+    renderAt(`/pl/sessions/${s.id}/play`);
+    expect(await screen.findByRole('link', { name: 'GMの画面へ' })).toHaveAttribute(
+      'href',
+      `/gm/sessions/${s.id}`,
+    );
+    cleanup();
+    // GM は自分だがドライバーは柊／ドライバーは自分だが GM は霧乃
+    for (const id of ['ss-galleon', 'ss-mansion']) {
+      renderAt(`/gm/sessions/${id}`);
+      await screen.findByRole('heading', { name: '提案の裁定' });
+      expect(
+        screen.queryByRole('link', { name: 'ドライバーとしてプレイ画面へ' }),
+      ).not.toBeInTheDocument();
+      cleanup();
+    }
+    renderAt('/pl/sessions/ss-mansion/play');
+    await screen.findByText('古びた扉の向こうから、かすかな音が聞こえる。');
+    expect(screen.queryByRole('link', { name: 'GMの画面へ' })).not.toBeInTheDocument();
+  });
+
+  it('通し：募集から始め、描写・配る・提案の裁定・シーンを進める、をしながら結末まで遊び、終了する', async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const router = renderAt('/gm/sessions');
+    const rc = (await screen.findByText(MY_NOTE_OF_RC_MINE)).closest('article')!;
+    await user.click(within(rc).getByLabelText('迅（ユウ）を参加させる'));
+    await user.click(within(rc).getByLabelText('迅をドライバーにする'));
+    await user.click(within(rc).getByRole('button', { name: 'セッションを始める' }));
+
+    // GM：描写を書き、地下回廊へ移る選択肢を配る
+    let p = await panel();
+    await user.type(within(p).getByLabelText('描写'), '湿った石段が、地下へ続いている。');
+    await user.click(within(p).getByRole('button', { name: '選択肢を足す' }));
+    await user.type(within(p).getByLabelText('選択肢1の名前'), '地下へ降りる');
+    await user.selectOptions(within(p).getByLabelText('選択肢1の移り先'), '3-1 地下回廊');
+    await user.click(within(p).getByRole('button', { name: '送る' }));
+    await within(p).findByLabelText('「地下へ降りる」を取り下げる');
+
+    // ドライバー：描写と配られたカードが見え、提案を送る
+    await user.click(screen.getByRole('link', { name: 'ドライバーとしてプレイ画面へ' }));
+    expect(await screen.findByText('湿った石段が、地下へ続いている。')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^選択肢\s*地下へ降りる/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /新たな選択肢を提案/ }));
+    await user.type(screen.getByLabelText('提案する行動'), '灯りを掲げてみたい');
+    await user.click(screen.getByRole('button', { name: '提案を送る' }));
+    await screen.findByText('GM裁定待ち');
+
+    // GM：提案を採用する
+    await user.click(screen.getByRole('link', { name: 'GMの画面へ' }));
+    const ticket = (await screen.findByText('灯りを掲げてみたい')).closest('article')!;
+    await user.click(within(ticket).getByRole('button', { name: '採用してカード化' }));
+    await within(ticket).findByText('採用済み');
+
+    // ドライバー：採用したカードが手札にある。配られたカードをプレイして地下回廊へ
+    await user.click(screen.getByRole('link', { name: 'ドライバーとしてプレイ画面へ' }));
+    expect(
+      await screen.findByRole('button', { name: /^選択肢\s*灯りを掲げる/ }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^選択肢\s*地下へ降りる/ }));
+    await screen.findByText('3-1 地下回廊へ進んだ。');
+
+    // GM：シーンが進んでいる。結末へ移る選択肢を配る
+    await user.click(screen.getByRole('link', { name: 'GMの画面へ' }));
+    expect(await screen.findByText('3-1 / 6')).toBeInTheDocument();
+    expect(screen.getByText('「3-1 地下回廊」へ進んだ')).toBeInTheDocument();
+    p = await panel();
+    await user.click(within(p).getByRole('button', { name: '選択肢を足す' }));
+    await user.type(within(p).getByLabelText('選択肢1の名前'), '館を出る');
+    await user.selectOptions(within(p).getByLabelText('選択肢1の移り先'), '結末');
+    await user.click(within(p).getByRole('button', { name: '送る' }));
+    await within(p).findByLabelText('「館を出る」を取り下げる');
+
+    // ドライバー：結末へ
+    await user.click(screen.getByRole('link', { name: 'ドライバーとしてプレイ画面へ' }));
+    await user.click(await screen.findByRole('button', { name: /^選択肢\s*館を出る/ }));
+    await screen.findByText('結末へ進んだ。');
+
+    // GM：結末の案内が出る。結末の描写を書いて、終了する
+    await user.click(screen.getByRole('link', { name: 'GMの画面へ' }));
+    expect(
+      await screen.findByText('結末「結末」に着いた。結末の描写を書いて、セッションを終了できる。'),
+    ).toBeInTheDocument();
+    p = await panel();
+    await user.type(within(p).getByLabelText('描写'), '夜が明け、館は静まり返った。');
+    await user.click(within(p).getByRole('button', { name: '送る' }));
+    await within(p).findByText('夜が明け、館は静まり返った。');
+    await user.click(screen.getByRole('button', { name: 'セッションを終了する' }));
+    expect(await screen.findByText('終了')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: PANEL })).not.toBeInTheDocument();
+
+    // ドライバー：終わったセッションに、結末の描写と見出しが出る
+    const sessionId = router.state.location.pathname.split('/')[3];
+    await router.navigate(`/pl/sessions/${sessionId}/play`);
+    expect(await screen.findByText('このセッションは終了しています。')).toBeInTheDocument();
+    expect(screen.getByText('夜が明け、館は静まり返った。')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '結末「結末」' })).toBeInTheDocument();
+    confirm.mockRestore();
+  });
+
+  it('結末以外のシーンで終わったセッションには、プレイ画面に結末の見出しが出ない', async () => {
+    const s = await startMansion();
+    await api.post(`/sessions/${s.id}/end`);
+    renderAt(`/pl/sessions/${s.id}/play`);
+    expect(await screen.findByText('このセッションは終了しています。')).toBeInTheDocument();
+    await screen.findByRole('link', { name: 'GMの画面へ' });
+    expect(screen.queryByRole('heading', { name: /^結末「/ })).not.toBeInTheDocument();
+  });
+
+  it('送る前に別の画面で終了されていたら、断られた理由が出る', async () => {
+    const user = userEvent.setup();
+    const s = await startMansion();
+    renderAt(`/gm/sessions/${s.id}`);
+    const p = await panel();
+    await api.post(`/sessions/${s.id}/end`);
+    await user.type(within(p).getByLabelText('描写'), '風が吹く。');
+    await user.click(within(p).getByRole('button', { name: '送る' }));
+    expect(
+      await within(p).findByText('進行中のセッションでだけ、描写・選択肢を配れます'),
+    ).toBeInTheDocument();
   });
 });
 
