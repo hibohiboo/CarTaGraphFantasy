@@ -56,7 +56,7 @@ export function ComponentCatalogPage() {
         crumb="共通UI部品とデザイントークン。試作フェーズ（docs/architecture/prototype-handover.md）で決めた見た目を React に移植したもの。"
       />
       <div className={s.catalog}>
-        <Section title="デザイントークン" note="CSS変数。src/styles/tokens.css">
+        <Section title="デザイントークン" note="CSS変数。src/app/styles/tokens.css">
           {tokens.map(([name, desc]) => (
             <div key={name} className="u-row u-small" style={{ width: 240 }}>
               <span

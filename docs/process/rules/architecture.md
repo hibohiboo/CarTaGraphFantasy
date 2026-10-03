@@ -15,7 +15,7 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
   public/mockServiceWorker.js  MSW が生成した Service Worker（コミットする）
   src/          Feature-Sliced Design（FSD）の層。上から app → pages → widgets → features → entities → shared
     app/        router.tsx（ページを並べる）、AppShell.tsx、styles/（tokens.css・global.css）
-    pages/<ロール>/<ページ>/   1ページ1スライス（ロールは pl / gm / creator / rulebook / admin。
+    pages/<グループ>/<ページ>/   1ページ1スライス（グループはルートのグループ＝pl / gm / creator / rulebook / admin。
                 ロールの無いページは pages/<ページ>/）。ui/ にページと、そのページだけで使う部品
     widgets/    複数のページで使う、画面の大きなまとまり（play-screen：プレイ画面の HUD・卓・手札・名乗り）
     features/   利用者の操作と UI が対になったもの（いまは無い。必要になったら作る）
@@ -39,7 +39,7 @@ scripts/                  ビルド補助（GitHub Pages へのコピー、自�
 
 1. ゲームのルール・判定・変換で、React にも DOM にも依存しない → `packages/domain`。その中では、用語の持ち主の仕様ページに対応するディレクトリへ（下の「packages/domain の中の置き場所」）
 2. 1つのページでしか使わない → そのページのスライス（`pages/<ロール>/<ページ>/`）のセグメントに置く（部品は `ui/`、副作用は `api/`、変換は `lib/`）。一度しか使わないものは、使う側に置く
-3. 複数のページで使う → 何かで分ける。エンティティ（カード・シナリオなど）の見た目・取得・変更は `entities/<エンティティ>/`、利用者の操作と UI が対になったものは `features/`、画面の大きなまとまりは `widgets/`、業務の語を持たない部品・関数は `shared/`。ただし2ページ目が現れるまで共通化しない
+3. 複数のページで使う → 何かで分ける。エンティティ（カード・シナリオなど）の見た目・取得・変更は `entities/<エンティティ>/`、利用者の操作と UI が対になったものは `features/`、画面の大きなまとまりは `widgets/`、業務のロジックを持たず、どこからでも使う部品・関数・静的な内容（UI の部品、fetch のラッパー、ルート一覧、ルールブックの本文など）は `shared/`。ただし2ページ目が現れるまで共通化しない
 4. API へのアクセス → `entities/<エンティティ>/api/` の取得（queries.ts）・変更（mutations.ts）のフックを経由する。ページから `fetch` を直接呼ばない。クエリキーは `shared/api/queryKeys.ts`
 5. モックデータの追加 → 遊べるシナリオはリポジトリ直下の `scenarios/<id>.json`、それ以外（テスト専用のシナリオを含む）は `mocks/fixtures.ts` に置く。ページやテストの中で独自のデータを作らない
 
@@ -55,9 +55,9 @@ apps/web ──→ packages/domain ──→ zod
 - **packages/domain の中** — 下の層だけを import してよい（下の「packages/domain の中の置き場所」の図と表。Biome で機械的に止める）
 - **apps/web の中** — FSD の層の順に、下の層だけを import してよい。同じ層の別スライスは import しない（`app → pages → widgets → features → entities → shared`）
   - スライスの外は `@/<層>/…` のエイリアス、スライスの中は相対パスで import する。エイリアスに `..` を入れない
-  - スライスの直下にファイルを置かない。必ずセグメント（`ui`・`api`・`lib`・`model`）に入れる（直下に置くと、`../` だけで別のスライスに届き、検査をすり抜けるため）
-  - 公開 API の index.ts は作らない。スライスの外からもファイルを直接 import する（下の「境界」の barrel 禁止。FSD も index を必須としていない）
-  - `main.tsx`・`mocks/`・`test/` は層の外。層の外は層を import してよい（`@/` で）。層は層の外を import しない
+  - 層・グループのフォルダ（`pages/<グループ>/`）・スライスの直下にファイルを置かない（app を除く）。必ずセグメント（例：`ui`・`api`・`lib`・`model`。shared には `content`・`routes` もある）に入れ、セグメントの中にさらにフォルダを作らない。直下に置くと `../` だけで別のスライスに届き、深くすると同じスライスの中の import が検査に止められるため。グループのフォルダには共有コードを置かない
+  - 公開 API の index.ts は作らない。スライスの外からもファイルを直接 import する（下の「境界」の barrel 禁止に従う。FSD も index を必須としていない）
+  - `main.tsx`・`vite-env.d.ts`・`mocks/`・`test/` は層の外。層の外は層を import してよい（`@/` で）。層は層の外を import しない
   - packages/domain との違い：domain の中は決まった向きならディレクトリをまたげる（例：`scenario → card`）が、web の entities はエンティティどうしの import を禁止する（FSD）。複数のエンティティを組み合わせる UI は widgets か pages で組み合わせる。エンティティをまたぐキャッシュの無効化は、shared のクエリキーで行う
   - 機械的な検査は Biome（`biome.json` の `apps/web/src/<層>/**` ごとの `style/noRestrictedImports`）。禁止パターンの正は `biome.json`、理由はここ。層を足す・向きを変えるときは両方を直す。経緯は `docs/plans/2026-10-03-webのFSD移行.md`
 
@@ -108,7 +108,7 @@ React のコードは、Vercel Labs の [react-best-practices](https://github.co
   - `rerender-dependencies`・`advanced-effect-event-deps` → `correctness/useExhaustiveDependencies`（推奨ルールとして有効）
   - `rerender-no-inline-components` → `correctness/noNestedComponentDefinitions`
   - フックの呼び方 → `correctness/useHookAtTopLevel`
-  - `bundle-barrel-imports` → `performance/noBarrelFile`・`noReExportAll`（`packages/domain` と `apps/web` の両方。apps/web は FSD の公開 API の index も作らない）
+  - `bundle-barrel-imports` → 下の「境界」の barrel 禁止
 - **Biome に対応があっても有効にしていないもの**
   - `rendering-conditional-render` → `suspicious/noLeakedRender`：型を見ずに `&&` を一律に指摘するので、真偽値・文字列の条件まで誤検知する（2026-10-03 に既存コードで20件、ほぼ誤検知）。数値が漏れるかはレビューで見る
   - `js-hoist-regexp` → `performance/useTopLevelRegex`：既存コードに違反がある（本体9件・テスト11件）。直してから有効にする（[既知の問題](../../architecture/known-issues.md)）
