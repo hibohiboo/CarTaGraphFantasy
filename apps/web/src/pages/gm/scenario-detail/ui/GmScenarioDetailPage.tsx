@@ -124,7 +124,7 @@ export function GmScenarioDetailPage() {
                       note: note || undefined,
                       excludedNodeIds: [...excluded],
                     },
-                    { onSuccess: () => navigate('/pl/sessions') },
+                    { onSuccess: () => navigate('/gm/sessions') },
                   )
                 }
               >

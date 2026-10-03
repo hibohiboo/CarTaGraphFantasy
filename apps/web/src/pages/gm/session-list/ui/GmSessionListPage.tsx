@@ -1,6 +1,6 @@
 import type { Session } from '@cartagraph/domain/session/model';
 import { Link } from 'react-router';
-import { useSessions } from '@/entities/session/api/queries';
+import { useRecruitments, useSessions } from '@/entities/session/api/queries';
 import { useMe } from '@/entities/user/api/queries';
 import { relativeTime } from '@/shared/lib/format';
 import s from '@/shared/ui/page.module.css';
@@ -13,6 +13,7 @@ import {
   RoleBadge,
   StatusPill,
 } from '@/shared/ui/ui';
+import { StartFromRecruitment } from './StartFromRecruitment';
 
 const STATUS_LABEL: Record<Session['status'], string> = {
   playing: '進行中',
@@ -22,12 +23,16 @@ const STATUS_LABEL: Record<Session['status'], string> = {
 
 export function GmSessionListPage() {
   const sessions = useSessions();
+  const recruitments = useRecruitments();
   const me = useMe();
-  if (sessions.isPending || me.isPending) return <Loading />;
+  if (sessions.isPending || recruitments.isPending || me.isPending) return <Loading />;
   if (sessions.error) return <ErrorNote error={sessions.error} />;
+  if (recruitments.error) return <ErrorNote error={recruitments.error} />;
 
   const mine = sessions.data.filter((x) => x.gmId === me.data?.id);
   const others = sessions.data.filter((x) => x.gmId !== me.data?.id);
+  // 受付中の募集だけが返る（開始済みはサーバーが除く）。自分が出したものに絞る
+  const myRecruitments = recruitments.data.filter((r) => r.gmId === me.data?.id);
 
   return (
     <>
@@ -37,6 +42,17 @@ export function GmSessionListPage() {
         actions={<Link to="/gm/scenarios">新しく募集を出す →</Link>}
       />
       <div className={s.stack}>
+        <Panel
+          title="自分の募集"
+          sub="応募の中から参加させるPCとドライバーを選んで、セッションを始める。始めた募集は一覧から消える。"
+        >
+          {myRecruitments.length === 0 && <EmptyNote>受付中の募集はありません。</EmptyNote>}
+          <div className={s.cardsRow}>
+            {myRecruitments.map((rc) => (
+              <StartFromRecruitment key={rc.id} rc={rc} />
+            ))}
+          </div>
+        </Panel>
         <Panel title="GMとして進行中">
           {mine.length === 0 && <EmptyNote>GMを務めるセッションはまだありません。</EmptyNote>}
           <div className={s.list}>

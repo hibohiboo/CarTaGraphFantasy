@@ -54,9 +54,8 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
   const apply = useApply();
   const fit = fitOf(rc, chars);
   const [characterId, setCharacterId] = useState(chars[0]?.id ?? '');
-  const applied = rc.applicants.some((a) =>
-    chars.some((c) => c.id === a.characterId && c.ownerId === myId),
-  );
+  // 応募した人で判定する（借りたPCで応募しても応募済みと出す）
+  const applied = rc.applicants.some((a) => a.userId === myId);
   const closed = rc.applicants.length >= rc.capacity;
 
   return (

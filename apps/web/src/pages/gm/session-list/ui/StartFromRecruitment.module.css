@@ -1,0 +1,24 @@
+.applicants {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.applicant {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  justify-content: space-between;
+}
+
+.applicant label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.applicant label[data-disabled] {
+  opacity: 0.5;
+}
