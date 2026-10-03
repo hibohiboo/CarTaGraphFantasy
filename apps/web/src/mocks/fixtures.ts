@@ -601,6 +601,25 @@ export const recruitments: Recruitment[] = [
     status: 'open',
     excludedNodeIds: [],
   },
+  // 定員まで埋まった募集（PL の一覧で「募集枠が埋まっています」になる）
+  {
+    id: 'rc-full',
+    scenarioId: 'sc-village-start',
+    scenarioTitle: '村はずれの一歩',
+    gmId: 'u-hiiragi',
+    gmName: '柊',
+    partySize: { min: 1, max: 1 },
+    spaceModel: null,
+    recommendedCp: 2,
+    referenceTags: [],
+    prerequisiteTags: [],
+    applicants: [
+      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
+    ],
+    capacity: 1,
+    status: 'open',
+    excludedNodeIds: [],
+  },
   // 自分（u-me）が GM の募集。自分の PC と、カヤの PC が応募している（募集からセッションを始めるテスト用）
   {
     id: 'rc-mine',

@@ -3,12 +3,13 @@
 import type { Character } from '@cartagraph/domain/character/model';
 import type { Session } from '@cartagraph/domain/session/model';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routeObjects } from '@/app/router';
+import * as fx from '@/mocks/fixtures';
 import { ApiError, api } from '@/shared/api/api';
 import { routes } from '@/shared/routes/routes';
 import { server } from '../mocks/node';
@@ -131,7 +132,8 @@ describe('GMのセッション管理', () => {
 
 // docs/plans/2026-10-03-募集からのセッション開始.md「5. 新規テストケース（pages.test.tsx）」
 describe('GMのセッション管理：自分の募集から始める', () => {
-  const MY_NOTE = '自分の卓。灰色館をじっくり遊ぶ';
+  const MY_NOTE = fx.recruitments.find((r) => r.id === 'rc-mine')?.note ?? '';
+  const grayMansionScenes = fx.scenarios.find((s) => s.id === 'sc-gray-mansion')?.deck.length ?? 0;
   /** 「自分の募集」の枠にある、シードの自分の募集 rc-mine */
   const myRecruitment = async () => (await screen.findByText(MY_NOTE)).closest('article')!;
 
@@ -155,6 +157,11 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     await user.click(within(rc).getByRole('button', { name: 'セッションを始める' }));
     expect(await screen.findByText(/パーティー「夜更かし組」/)).toBeInTheDocument();
     expect(router.state.location.pathname).toMatch(/^\/gm\/sessions\/ss-/);
+    const members = screen.getByRole('heading', { name: '参加者' }).closest('section')!;
+    expect(within(members).getByText('迅（ユウ）').closest('div')).toHaveTextContent('ドライバー');
+    expect(within(members).getByText('澪（カヤ）').closest('div')).toHaveTextContent(
+      'ナビゲーター',
+    );
     await router.navigate('/gm/sessions');
     const running = (await screen.findByRole('heading', { name: 'GMとして進行中' })).closest(
       'section',
@@ -188,6 +195,7 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     await user.click(within(rc).getByLabelText('迅（ユウ）を参加させる'));
     expect(within(rc).getByLabelText('澪をドライバーにする')).not.toBeChecked();
     expect(startButton).toBeDisabled();
+    expect(within(rc).getByText('ドライバーのPCを選んでください')).toBeInTheDocument();
   });
 
   it('応募が無い自分の募集は、始められないことが分かる', async () => {
@@ -203,7 +211,7 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     expect(within(rc).getByRole('button', { name: 'セッションを始める' })).toBeDisabled();
   });
 
-  it('始められなかったときは、理由が画面に出る', async () => {
+  it('別の画面で先に始められていたら、断られて古い募集のカードが消える', async () => {
     const user = userEvent.setup();
     renderAt('/gm/sessions');
     const rc = await myRecruitment();
@@ -216,7 +224,9 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     await user.click(within(rc).getByLabelText('迅（ユウ）を参加させる'));
     await user.click(within(rc).getByLabelText('迅をドライバーにする'));
     await user.click(within(rc).getByRole('button', { name: 'セッションを始める' }));
-    expect(await within(rc).findByText('この募集はもう始まっています')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText(MY_NOTE)).not.toBeInTheDocument());
+    // 進行管理画面へは移らない
+    expect(screen.getByRole('heading', { name: '自分の募集' })).toBeInTheDocument();
   });
 
   it('通し：シーンを外して募集を出し、自分の PC で応募して始めると、シーン数が減っている', async () => {
@@ -244,7 +254,7 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     await user.click(within(fresh).getByLabelText('迅をドライバーにする'));
     await user.click(within(fresh).getByRole('button', { name: 'セッションを始める' }));
     expect(await screen.findByText(/パーティー「迅の一行」/)).toBeInTheDocument();
-    expect(screen.getByText(/\/ 5$/)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`/ ${grayMansionScenes - 1}$`))).toBeInTheDocument();
   });
 });
 
@@ -280,6 +290,14 @@ describe('セッション選択', () => {
     const card = (await screen.findByText('灯りの回廊・後日談')).closest('article')!;
     await user.click(within(card).getByRole('button', { name: '応募する' }));
     expect(await within(card).findByText(/応募済み/)).toBeInTheDocument();
+  });
+
+  it('定員まで埋まった募集は、応募できない表示になる', async () => {
+    renderAt('/pl/sessions');
+    // シードの rc-full（村はずれの一歩・柊）は定員1に応募1
+    const full = (await screen.findByText('村はずれの一歩')).closest('article')!;
+    expect(within(full).getByText('募集枠が埋まっています。')).toBeInTheDocument();
+    expect(within(full).queryByRole('button', { name: '応募する' })).not.toBeInTheDocument();
   });
 
   it('始めた募集は出なくなる', async () => {

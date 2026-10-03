@@ -38,7 +38,7 @@ export function GmSessionListPage() {
     <>
       <PageHeader
         title="セッション管理"
-        crumb="自分がGMを務めるセッション。提案の裁定・モード切り替え・終了宣言はここから。"
+        crumb="自分の募集からセッションを始め、GMを務めるセッションを進める。提案の裁定・モード切り替え・終了宣言はここから。"
         actions={<Link to="/gm/scenarios">新しく募集を出す →</Link>}
       />
       <div className={s.stack}>

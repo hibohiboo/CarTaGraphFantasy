@@ -11,7 +11,7 @@ import {
 import type { CardDef } from '@cartagraph/domain/card/model';
 import type { Character } from '@cartagraph/domain/character/model';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
-import { sessionDeck } from '@cartagraph/domain/session/deck';
+import { excludesFixedNode, sessionDeck } from '@cartagraph/domain/session/deck';
 import {
   type Proposal,
   type Recruitment,
@@ -69,6 +69,18 @@ export function resetDb(): void {
 let seq = 1000;
 const nextId = (prefix: string) => `${prefix}-${++seq}`;
 const nowIso = () => new Date().toISOString();
+
+/** JSON の本文を読む。空・壊れた本文は null（MSW の未処理の例外にしない） */
+async function readJson(request: Request): Promise<unknown> {
+  try {
+    return await request.json();
+  } catch {
+    return null;
+  }
+}
+
+const isStringArray = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((x) => typeof x === 'string');
 
 const notFound = (what: string) =>
   HttpResponse.json({ message: `${what} が見つかりません` }, { status: 404 });
@@ -316,15 +328,16 @@ export const handlers = [
     if (!rc) return notFound('募集');
     if (rc.gmId !== fx.me.id)
       return HttpResponse.json({ message: '自分が出した募集だけを始められます' }, { status: 403 });
-    const body = (await request.json()) as {
+    const body = (await readJson(request)) as {
       characterIds?: unknown;
       driverCharacterId?: unknown;
       partyName?: unknown;
     } | null;
+    // 形の崩れた選択は黙って丸めず断る（不正な要素を捨てて開始してしまわないように）
+    if (body?.characterIds !== undefined && !isStringArray(body.characterIds))
+      return unprocessable('参加させるPCの指定の形が正しくありません');
     const selection = {
-      characterIds: Array.isArray(body?.characterIds)
-        ? body.characterIds.filter((x): x is string => typeof x === 'string')
-        : [],
+      characterIds: body?.characterIds ?? [],
       driverCharacterId:
         typeof body?.driverCharacterId === 'string' ? body.driverCharacterId : undefined,
     };
@@ -871,18 +884,19 @@ export const handlers = [
   http.post('/api/scenarios/:id/recruitments', async ({ params, request }) => {
     const s = db.scenarios.find((x) => x.id === params.id);
     if (!s) return notFound('シナリオ');
-    const body = (await request.json()) as {
+    const body = ((await readJson(request)) ?? {}) as {
       capacity: number;
       note?: string;
-      excludedNodeIds?: string[];
+      excludedNodeIds?: unknown;
     };
-    const excludedNodeIds = Array.isArray(body.excludedNodeIds) ? body.excludedNodeIds : [];
-    // 導入と結末は外せない（docs/cartagraph/scenario-flow.md「GMのカスタマイズ」）
-    const fixed = excludedNodeIds.some((id) => {
-      const kind = findDeckNode(s.deck, id)?.node.kind;
-      return kind === 'intro' || kind === 'ending';
-    });
-    if (fixed) return unprocessable('導入と結末のシーンは外せません');
+    const excludedNodeIds = body.excludedNodeIds ?? [];
+    if (!isStringArray(excludedNodeIds))
+      return unprocessable('外すシーンの指定の形が正しくありません');
+    if (excludedNodeIds.some((id) => !findDeckNode(s.deck, id)))
+      return unprocessable('シナリオに無いシーンは外せません');
+    // 導入と結末は、子孫として巻き込む場合も含めて外せない（docs/cartagraph/scenario-flow.md「GMのカスタマイズ」）
+    if (excludesFixedNode(s.deck, excludedNodeIds))
+      return unprocessable('導入と結末のシーンは外せません');
     const rc: Recruitment = {
       id: nextId('rc'),
       scenarioId: s.id,

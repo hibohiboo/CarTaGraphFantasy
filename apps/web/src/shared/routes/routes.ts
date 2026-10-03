@@ -105,7 +105,7 @@ export const routes: RouteMeta[] = [
     path: '/gm/sessions',
     title: 'セッション管理（GM）',
     group: 'gm',
-    description: '自分がGMを務めるセッションの一覧',
+    description: '自分の募集からセッションを始める・自分がGMを務めるセッションの一覧',
     nav: true,
   },
   {

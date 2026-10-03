@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CardDef } from '../card/model';
 import type { DeckNode } from '../scenario/model';
-import { sessionDeck } from './deck';
+import { excludesFixedNode, sessionDeck } from './deck';
 import { planTransition } from './transition';
 
 const choice = (id: string, nextNodeId?: string): CardDef => ({
@@ -81,6 +81,23 @@ describe('sessionDeck（GMが外したシーンを除いたデッキ。docs/cart
     const before = structuredClone(deck);
     sessionDeck(deck, ['alley', 'forest']);
     expect(deck).toEqual(before);
+  });
+
+  it('導入・結末を外す（子孫として巻き込む場合も含む）と excludesFixedNode が真。ほかのシーンだけなら偽', () => {
+    expect(excludesFixedNode(deck, ['intro'])).toBe(true);
+    expect(excludesFixedNode(deck, ['end'])).toBe(true);
+    const nestedEnding: DeckNode[] = [
+      { id: 'intro', kind: 'intro', name: '導入', cards: [] },
+      {
+        id: 'hall',
+        kind: 'scene',
+        name: '広間',
+        cards: [],
+        children: [{ id: 'fin', kind: 'ending', name: '結末', cards: [] }],
+      },
+    ];
+    expect(excludesFixedNode(nestedEnding, ['hall'])).toBe(true);
+    expect(excludesFixedNode(deck, ['town', 'forest', 'nowhere'])).toBe(false);
   });
 
   it('外したシーンへは planTransition で進めず、最上位のシーンを外すと総数がその分減る', () => {

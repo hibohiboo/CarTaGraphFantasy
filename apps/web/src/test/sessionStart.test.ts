@@ -78,6 +78,14 @@ describe('外したシーン（docs/cartagraph/scenario-flow.md「GMのカスタ
     expect(handIds(s)).not.toContain('vs-to-square');
   });
 
+  it('シナリオに無いシーンや、形の崩れた指定では募集を出せない', async () => {
+    for (const excludedNodeIds of [['nowhere'], 'vs-shop', [123]]) {
+      await expect(
+        api.post('/scenarios/sc-village-start/recruitments', { capacity: 1, excludedNodeIds }),
+      ).rejects.toMatchObject({ status: 422 });
+    }
+  });
+
   it('導入・結末のシーンを外した募集は出せない', async () => {
     for (const id of ['vs-intro', 'vs-end']) {
       await expect(
@@ -98,6 +106,15 @@ describe('始められないとき', () => {
     ).rejects.toMatchObject({ status: 422, message: '参加させるPCを選んでください' });
     expect((await api.get<Recruitment[]>('/recruitments')).map((r) => r.id)).toContain('rc-mine');
     expect((await api.get<Session[]>('/sessions')).length).toBe(before);
+  });
+
+  it('参加させるPCの指定の形が崩れていると 422 で、何も変わらない', async () => {
+    for (const characterIds of ['pc-jin', ['pc-jin', 1]]) {
+      await expect(
+        start('rc-mine', { characterIds, driverCharacterId: 'pc-jin', partyName: '' }),
+      ).rejects.toMatchObject({ status: 422, message: '参加させるPCの指定の形が正しくありません' });
+    }
+    expect((await api.get<Recruitment[]>('/recruitments')).map((r) => r.id)).toContain('rc-mine');
   });
 
   it('始めた募集には応募できず、もう一度は始められない', async () => {

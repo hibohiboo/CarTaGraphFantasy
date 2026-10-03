@@ -17,7 +17,7 @@ const mio: Applicant = {
 };
 const akira: Applicant = {
   characterId: 'pc-akira',
-  characterName: '晃',
+  characterName: '彰',
   userId: 'u-me',
   playerName: 'ユウ',
 };
@@ -55,6 +55,19 @@ describe('checkStart（募集からセッションを始められるか。docs/c
         driverCharacterId: 'pc-jin',
       }),
     ).toEqual({ ok: true, warning: '想定人数（2〜2人）を超えています' });
+  });
+
+  it('下限と上限が違うとき、ちょうど上限なら注意なし、1つ超えると注意が付く', () => {
+    const wide = rc({ partySize: { min: 1, max: 2 } });
+    expect(
+      checkStart(wide, { characterIds: ['pc-jin', 'pc-mio'], driverCharacterId: 'pc-jin' }),
+    ).toEqual({ ok: true });
+    expect(
+      checkStart(wide, {
+        characterIds: ['pc-jin', 'pc-mio', 'pc-akira'],
+        driverCharacterId: 'pc-jin',
+      }),
+    ).toEqual({ ok: true, warning: '想定人数（1〜2人）を超えています' });
   });
 
   it('開始済みの募集は始められない。PCが0件でもこのエラーが先に返る', () => {

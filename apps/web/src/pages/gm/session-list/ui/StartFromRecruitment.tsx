@@ -75,12 +75,11 @@ export function StartFromRecruitment({ rc }: { rc: Recruitment }) {
           <input
             value={partyName}
             onChange={(e) => setPartyName(e.target.value)}
-            placeholder={
-              driverName ? defaultPartyName(driverName) : '空欄ならドライバーの名前から付ける'
-            }
+            placeholder={driverName ? defaultPartyName(driverName) : '空欄ならドライバー名から'}
           />
         </Field>
         {check.ok && check.warning && <p className={s.recruitNote}>{check.warning}</p>}
+        {!check.ok && rc.applicants.length > 0 && <p className={s.recruitNote}>{check.error}</p>}
         <Button
           variant="ink"
           block

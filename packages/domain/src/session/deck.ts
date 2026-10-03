@@ -4,18 +4,29 @@
 
 import type { DeckNode } from '../scenario/model';
 
-export function sessionDeck(deck: DeckNode[], excludedNodeIds: readonly string[]): DeckNode[] {
-  if (excludedNodeIds.length === 0) return deck;
+/** 外すと除かれるノード（外したノードとその子孫）。デッキに無い ID は無視する */
+function removedNodes(deck: DeckNode[], excludedNodeIds: readonly string[]): DeckNode[] {
   const excluded = new Set(excludedNodeIds);
-  const removed = new Set<string>();
+  const removed: DeckNode[] = [];
   const collect = (nodes: DeckNode[], inside: boolean) => {
     for (const n of nodes) {
       const out = inside || excluded.has(n.id);
-      if (out) removed.add(n.id);
+      if (out) removed.push(n);
       collect(n.children ?? [], out);
     }
   };
   collect(deck, false);
+  return removed;
+}
+
+/** 導入か結末が（子孫として巻き込まれる場合も含めて）除かれるか。導入と結末は外せない */
+export function excludesFixedNode(deck: DeckNode[], excludedNodeIds: readonly string[]): boolean {
+  return removedNodes(deck, excludedNodeIds).some((n) => n.kind === 'intro' || n.kind === 'ending');
+}
+
+export function sessionDeck(deck: DeckNode[], excludedNodeIds: readonly string[]): DeckNode[] {
+  if (excludedNodeIds.length === 0) return deck;
+  const removed = new Set(removedNodes(deck, excludedNodeIds).map((n) => n.id));
   if (removed.size === 0) return deck;
 
   const prune = (nodes: DeckNode[]): DeckNode[] =>
