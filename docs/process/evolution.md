@@ -26,6 +26,11 @@
 - [x] 人間のコードレビューで出た「構造の読みやすさ」を、AI レビューの観点に足すか検討する — 2026-10-03、PR #11 で人間が「`packages/domain` の配下がフラットで読みづらい」と指摘した（要望 [packages/domain をドメインごとのディレクトリに分ける](../backlog/domain-structure.md)）。プランレビュー3観点・実装レビュー3観点のどれも、ディレクトリ構成やファイルの分け方を問わない。上の「開発フェーズを踏まえた設計の重さ」と同じく、観点に足すか、人間レビューに委ねるかの判断が要る **2026-10-03 採用。** 下記「採用済み」参照
 - [x] Windows の Git Bash で、`/` で始まる値の環境変数が Windows のパスに書き換えられることを、手順に書く — 2026-10-03、ブラウザでの確認で `WEB_BASE=/CarTaGraphFantasy/app/ pnpm build` を Git Bash から実行したところ、base が `/Program Files/Git/CarTaGraphFantasy/app/` に化けて preview が 404 になった。PowerShell で実行し直して確かめた（Git Bash なら `MSYS_NO_PATHCONV=1` を付ける）。置き場所の候補は `docs/architecture/web-app.md` か CLAUDE.md の Claude Code 固有の補足 **2026-10-03 採用。** 下記「採用済み」参照
 
+- [ ] 機械的な検査を自前で書く前に、既存のツール（Biome など）のルールで書けないか調べる — 2026-10-03、PR #12 で依存の向きの検査を自前のテスト（`layers.test.ts`、正規表現で import を拾う）で作り、すり抜けを塞ぐテストを積み増した。人間レビューで「Linter で検知できるのでは」と問われ、Biome 2.5 の `noRestrictedImports`・`noImportCycles`・`noBarrelFile` で置き換えられた。プランレビューもテスト網羅レビューも自前のテストの網羅を深めるだけで、手段そのものは問わなかった。プランの「詳細設計」で、機械的な検査を足すときは既存ツールのルールを先に調べ、採らなかった理由を書く、をルールにするか
+- [ ] ディレクトリ構成など「一覧」の重複を、レビューで見つけられなかった — 2026-10-03、PR #12 の人間レビューで、コードのディレクトリ構成が README・AGENTS.md・architecture.md・web-app.md の4か所に重なり、正がどこかも食い違っていると指摘された（architecture.md に一本化した）。AI レビューは「domain の一覧が表・web-app.md・テストに重なる」までは見つけたが、文書をまたいだ全体の重複には届かなかった。仕様整合のレビュー（spec-reviewer）の観点に「書き換えた文書と同じ情報を持つ文書（README・AGENTS.md を含む）を grep で洗う」を足すか
+- [ ] （Claude Code 固有）heredoc でスクリプトを渡して壊すことが、CLAUDE.md に注意があっても再発する — 2026-10-03、PR #12 の作業中に、Python を heredoc で渡してバックスラッシュが崩れ、2回失敗した（Write でファイルにしてやり直した）。PR #11 でも同じ種類の失敗があった。ルールを読ませるだけでは止まらないので、Claude Code のフック（PreToolUse で、Bash の `<<` と `python`・`node` の組み合わせを止める）で機械的に止めるか
+- [ ] （Claude Code 固有）`git commit --no-verify` を、許可なく使った — 2026-10-03、PR #12 の「移動だけ」のコミットで、型検査が落ちる中間状態だからと `--no-verify` を付けた。pre-commit は Biome だけなので不要だった。Claude Code の設定（`permissions.deny` に `Bash(git commit --no-verify*)` など）で止めるか
+
 ## 採用済み
 
 新しいものを上に。書式：`### <日付> <タイトル>` の下に、内容・理由・反映先。

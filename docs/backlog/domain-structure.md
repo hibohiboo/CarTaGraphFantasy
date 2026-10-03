@@ -1,8 +1,10 @@
 ---
 title: packages/domain をドメインごとのディレクトリに分ける
-status: 進行中
+status: 完了
 plans:
   - 2026-10-03-domainのディレクトリ分割.md
+cycles:
+  - { name: packages/domain のディレクトリ分割, status: 完了, pr: 12 }
 summary: 開発者向け。packages/domain の直下に並んだファイルと、型を全部持つ index.ts を、仕様ページに合わせたドメインごとのディレクトリ（card・scenario・session など）に分け、読みやすくする。振る舞いは変えない。
 updated: 2026-10-03
 ---
