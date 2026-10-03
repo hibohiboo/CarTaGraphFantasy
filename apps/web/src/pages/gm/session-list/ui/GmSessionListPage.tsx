@@ -1,3 +1,4 @@
+import type { Session } from '@cartagraph/domain/session/model';
 import { Link } from 'react-router';
 import { useSessions } from '@/entities/session/api/queries';
 import { useMe } from '@/entities/user/api/queries';
@@ -13,12 +14,11 @@ import {
   StatusPill,
 } from '@/shared/ui/ui';
 
-const STATUS_LABEL = {
-  recruiting: '募集中',
+const STATUS_LABEL: Record<Session['status'], string> = {
   playing: '進行中',
   suspended: '中断',
   ended: '終了',
-} as const;
+};
 
 export function GmSessionListPage() {
   const sessions = useSessions();

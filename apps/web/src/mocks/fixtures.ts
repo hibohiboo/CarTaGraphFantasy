@@ -559,9 +559,12 @@ export const recruitments: Recruitment[] = [
     recommendedCp: 3,
     referenceTags: ['体・技・心'],
     prerequisiteTags: [],
-    applicants: [{ characterId: 'pc-mio', characterName: '澪', playerName: 'カヤ' }],
+    applicants: [
+      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
+    ],
     capacity: 2,
     status: 'open',
+    excludedNodeIds: [],
   },
   {
     id: 'rc-2',
@@ -575,11 +578,12 @@ export const recruitments: Recruitment[] = [
     referenceTags: ['戦闘スキル'],
     prerequisiteTags: ['航海の心得', '戦闘スキル'],
     applicants: [
-      { characterId: 'pc-akira', characterName: '彰', playerName: '柊' },
-      { characterId: 'pc-mio', characterName: '澪', playerName: 'カヤ' },
+      { characterId: 'pc-akira', characterName: '彰', userId: 'u-hiiragi', playerName: '柊' },
+      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
     ],
     capacity: 4,
     status: 'open',
+    excludedNodeIds: [],
   },
   {
     id: 'rc-3',
@@ -595,6 +599,7 @@ export const recruitments: Recruitment[] = [
     applicants: [],
     capacity: 3,
     status: 'open',
+    excludedNodeIds: [],
   },
 ];
 

@@ -262,7 +262,12 @@ export const handlers = [
     if (rc.applicants.some((a) => a.characterId === ch.id)) {
       return HttpResponse.json({ message: 'このPCは応募済みです' }, { status: 409 });
     }
-    rc.applicants.push({ characterId: ch.id, characterName: ch.name, playerName: fx.me.name });
+    rc.applicants.push({
+      characterId: ch.id,
+      characterName: ch.name,
+      userId: fx.me.id,
+      playerName: fx.me.name,
+    });
     return HttpResponse.json(rc);
   }),
 
@@ -793,6 +798,7 @@ export const handlers = [
       applicants: [],
       capacity: body.capacity,
       status: 'open',
+      excludedNodeIds: body.excludedNodeIds ?? [],
       note: body.note,
     };
     db.recruitments.unshift(rc);

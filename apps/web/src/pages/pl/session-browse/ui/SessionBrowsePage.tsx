@@ -57,7 +57,7 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
   const applied = rc.applicants.some((a) =>
     chars.some((c) => c.id === a.characterId && c.ownerId === myId),
   );
-  const closed = rc.status === 'closed' || rc.applicants.length >= rc.capacity;
+  const closed = rc.applicants.length >= rc.capacity;
 
   return (
     <article className={s.recruit}>
