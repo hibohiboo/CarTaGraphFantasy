@@ -1,5 +1,4 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
-import { SYSTEM_GM_ID } from '@cartagraph/domain/session/model';
 import { isAtEnding } from '@cartagraph/domain/session/narrate';
 import { heldCards, isSoloRuleCard, unplayableReason } from '@cartagraph/domain/soloVillage/rules';
 import { useState } from 'react';
@@ -7,7 +6,7 @@ import { Link, useParams } from 'react-router';
 import { GameCard } from '@/entities/card/ui/GameCard';
 import { useCharacter } from '@/entities/character/api/queries';
 import { useScenario } from '@/entities/scenario/api/queries';
-import { usePlayCard, usePropose } from '@/entities/session/api/mutations';
+import { usePlayCard, usePropose, useResume } from '@/entities/session/api/mutations';
 import { useSession } from '@/entities/session/api/queries';
 import { useMe } from '@/entities/user/api/queries';
 import { Button, ErrorNote, Loading, StatusPill } from '@/shared/ui/ui';
@@ -34,18 +33,19 @@ export function PlayPage() {
   const session = useSession(sessionId);
   const play = usePlayCard();
   const propose = usePropose();
+  const resume = useResume();
   const [proposing, setProposing] = useState(false);
   const [text, setText] = useState('');
-  // GM不在のソロでは、使える条件（docs/cartagraph/solo-village.md、仮ルール）の判定にドライバーのキャラクターを使う
-  const soloGm = session.data?.gmId === SYSTEM_GM_ID;
+  // GM不在のセッションでは、使える条件（docs/cartagraph/solo-village.md、仮ルール）の判定にドライバーのキャラクターを使う
+  const gmless = session.data?.gmless === true;
   const driverCharacterId =
     session.data?.participants.find((p) => p.role === 'driver')?.characterId ?? '';
-  const character = useCharacter(soloGm ? driverCharacterId : '');
+  const character = useCharacter(gmless ? driverCharacterId : '');
   const me = useMe();
-  // 終わったセッションでは、結末に着いて終わったかの判定と、GM不在のソロの結末タグの即時反映（仮ルール）を示すため、
+  // 終わったセッションでは、結末に着いて終わったかの判定と、GM不在のセッションの結末タグの即時反映（仮ルール）を示すため、
   // シナリオを読む
   const endedAny = session.data?.status === 'ended';
-  const endedSolo = soloGm && endedAny;
+  const endedGmless = gmless && endedAny;
   const scenario = useScenario(endedAny ? (session.data?.scenarioId ?? '') : '');
 
   if (session.isPending) return <Loading what="卓を準備中" />;
@@ -53,14 +53,17 @@ export function PlayPage() {
   const s = session.data;
   const pending = s.proposals.find((p) => p.status === 'pending');
   const ended = s.status === 'ended';
-  const busy = play.isPending || propose.isPending;
+  // 中断中（GM 不在の募集のセッションで、提案の裁定を待つ）は、再開するまでプレイも提案もできない
+  // （docs/cartagraph/party-and-session.md「中断」）
+  const suspended = s.status === 'suspended';
+  const busy = play.isPending || propose.isPending || resume.isPending;
   // 自動戦闘の設定中は、手札と提案の代わりに戦い方のパネルを出す（docs/cartagraph/auto-combat.md）
   const choosingTactics = !ended && s.autoCombat?.status === 'awaiting-priority';
   // キャラクターを読み込むまでは判定せず、サーバーの 422 に任せる
   const held = character.data && heldCards(character.data, s.field);
   const reasonFor = held ? (card: CardDef) => unplayableReason(card, held) : undefined;
   // 仮ルールに関わるカードが手札にあれば「仮」と出す（architecture.md「境界」）
-  const usesSoloRules = soloGm && s.hand.some(isSoloRuleCard);
+  const usesSoloRules = gmless && s.hand.some(isSoloRuleCard);
   const gotEndingTag = scenario.data?.endings.some(
     (e) => e.grantsTag && character.data?.endingTags.includes(e.grantsTag),
   );
@@ -104,11 +107,15 @@ export function PlayPage() {
         hint={
           ended
             ? 'このセッションは終了しています。'
-            : choosingTactics
-              ? '戦い方（カードの優先順位）を決めて、戦闘を始めよう。'
-              : busy
-                ? '…'
-                : '手札から1枚選んでプレイしよう。'
+            : suspended
+              ? pending
+                ? 'GM の裁定を待っています（中断中）'
+                : '裁定が済んだ。続きを遊ぼう。'
+              : choosingTactics
+                ? '戦い方（カードの優先順位）を決めて、戦闘を始めよう。'
+                : busy
+                  ? '…'
+                  : '手札から1枚選んでプレイしよう。'
         }
         mystery={s.field.plVisible.filter((c) => c.faceDown)}
       />
@@ -124,21 +131,25 @@ export function PlayPage() {
         />
       )}
       <StatusLine>
-        {endedSolo && gotEndingTag && (
-          <span className="u-dim u-small">結末タグの即時反映は仮ルール（GM不在のソロ）</span>
+        {endedGmless && gotEndingTag && (
+          <span className="u-dim u-small">結末タグの即時反映は仮ルール（GM不在）</span>
         )}
         {usesSoloRules && !ended && (
           <span className="u-dim u-small">
-            能力値の上がり方・お店・選べないカードの条件・シーンに入ったときの描写は仮ルール（GM不在のソロ）
+            能力値の上がり方・お店・選べないカードの条件・シーンに入ったときの描写は仮ルール（GM不在）
           </span>
         )}
         {play.error && <ErrorNote error={play.error} />}
         {propose.error && <ErrorNote error={propose.error} />}
-        {pending && (
+        {pending && !ended && (
           <>
             <span>「新たな選択肢を提案」で送信済み：{pending.text}</span>
             <StatusPill status="pending">GM裁定待ち</StatusPill>
-            <span className="u-dim u-small">裁定を待たず、他の選択肢を先に選ぶこともできる。</span>
+            {!suspended && (
+              <span className="u-dim u-small">
+                裁定を待たず、他の選択肢を先に選ぶこともできる。
+              </span>
+            )}
           </>
         )}
         {!pending && s.proposals[0]?.status === 'rejected' && (
@@ -156,8 +167,14 @@ export function PlayPage() {
             </StatusPill>
           </>
         )}
+        {suspended && !pending && (
+          <Button size="sm" onClick={() => resume.mutate({ sessionId })} disabled={busy}>
+            続きを遊ぶ
+          </Button>
+        )}
+        {resume.error && <ErrorNote error={resume.error} />}
       </StatusLine>
-      {proposing && !ended && !choosingTactics && (
+      {proposing && !ended && !suspended && !choosingTactics && (
         <ProposeForm>
           <input
             type="text"
@@ -182,11 +199,12 @@ export function PlayPage() {
       ) : (
         <HandDock
           hand={s.hand}
-          disabled={busy || ended}
+          disabled={busy || ended || suspended}
           unplayableReason={reasonFor}
           onPlay={(card) => play.mutate({ sessionId, cardId: card.id })}
           extra={
             !ended &&
+            !suspended &&
             s.proposalHandling !== 'disabled' && (
               <GameCard
                 card={PROPOSE_CARD}

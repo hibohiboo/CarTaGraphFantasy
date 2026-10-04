@@ -13,6 +13,17 @@ import type { ProposalHandling, SpaceModel } from '../scenario/model';
  */
 export interface Recruitment {
   id: string;
+  /**
+   * 通常の募集（応募を受けて GM が始める。募集1つからセッション1つ）か、GM 不在の募集（応募は無く、PL が自分の
+   * PC ですぐ始める。受付中のまま残り続け、募集1つからセッションが複数）か（docs/cartagraph/scenario-flow.md
+   * 「募集とセッション」）。GM 不在の募集は applicants が空で、capacity は 0
+   */
+  kind: 'normal' | 'gmless';
+  /**
+   * GM 不在の募集だけが持つ、提案の扱い（GM が後から裁定＝gm-required／提案不可＝disabled）。
+   * 始めたセッションへコピーする（docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
+   */
+  proposalHandling?: 'gm-required' | 'disabled';
   scenarioId: string;
   scenarioTitle: string;
   gmId: string;
@@ -85,10 +96,9 @@ export interface SessionStatus {
 }
 
 /**
- * 人間GMのいないソロセッションに割り当てるダミーGM（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md
- * 決定事項5）。提案の自動解決の可否は gmId ではなく Session.proposalHandling で判定する。
- * gmId がこれなら「人間GMのいないセッション」として、結末ノードへの遷移で終了する
- * （docs/cartagraph/play-and-field.md「次のシーンへ進む」）
+ * ソロ開始のセッションの GM 欄に入れるダミー（裁定する GM がいない印。docs/cartagraph/party-and-session.md
+ * 「GM不在のセッションのGM」）。振る舞い（GM 不在の仮ルール・結末での終了など）は gmId ではなく
+ * Session.gmless で判定する
  */
 export const SYSTEM_GM_ID = 'system-gm';
 export const SYSTEM_GM_NAME = '（自動進行）';
@@ -103,10 +113,24 @@ export interface Session {
   excludedNodeIds?: string[];
   gmId: string;
   gmName: string;
+  /**
+   * システムが進行するセッション（GM不在のセッション。ソロ開始と GM 不在の募集から始めたもの）か。
+   * GM 不在の仮ルール・配る条件・自動戦闘・結末での自動終了・結末タグの即時反映はこれで判定する
+   * （docs/cartagraph/solo-village.md「適用範囲」）
+   */
+  gmless: boolean;
   partyName: string;
   status: SessionStatus['status'];
+  /**
+   * 中断の理由（status が suspended のときだけ。docs/cartagraph/party-and-session.md「中断」）。
+   * いま書き込むのは proposal（GM 不在の募集のセッションで提案の裁定を待つ）だけ
+   */
+  suspendedFor?: 'inactivity' | 'proposal';
   mode: SessionMode;
-  /** セッション開始時にScenarioからコピーする（セッションスナップショットの一部） */
+  /**
+   * セッション開始時にコピーする（セッションスナップショットの一部）。ソロ開始はシナリオの値、GM 不在の募集は募集の値、
+   * 通常の募集はシナリオの値（自動解決は GM必須に読み替える。docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
+   */
   proposalHandling: ProposalHandling;
   /** 進行中のシーン（例: "3-2 奥の扉"） */
   /** nodeId は「次のシーンへ進む」で移ったノード（それ以前から続くセッションでは無い） */

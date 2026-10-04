@@ -1,20 +1,19 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { useScenario } from '@/entities/scenario/api/queries';
 import { DeckTree } from '@/entities/scenario/ui/DeckTree';
-import { useCreateRecruitment } from '@/entities/session/api/mutations';
 import s from '@/shared/ui/page.module.css';
 import {
   Button,
   Chip,
   ChipGroup,
   ErrorNote,
-  Field,
   Loading,
   PageHeader,
   Panel,
   RoleBadge,
 } from '@/shared/ui/ui';
+import { RecruitForm } from './RecruitForm';
 
 /**
  * GMのカスタマイズ＝シナリオデッキの中から今回使うカード・シーンを選ぶ／外す（scenario-flow.md）。
@@ -23,11 +22,7 @@ import {
 export function GmScenarioDetailPage() {
   const { scenarioId = '' } = useParams();
   const scenario = useScenario(scenarioId);
-  const recruit = useCreateRecruitment();
-  const navigate = useNavigate();
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
-  const [capacity, setCapacity] = useState(3);
-  const [note, setNote] = useState('');
 
   if (scenario.isPending) return <Loading />;
   if (scenario.error) return <ErrorNote error={scenario.error} />;
@@ -95,46 +90,7 @@ export function GmScenarioDetailPage() {
               </div>
             </div>
           </Panel>
-          <Panel title="募集を出す" sub="想定人数・前提タグ・空間モデルは自動で明示される。">
-            <div className={s.form}>
-              <Field label="募集人数（ドライバー候補＋PC）">
-                <input
-                  type="number"
-                  min={1}
-                  max={sc.partySize.max}
-                  value={capacity}
-                  onChange={(e) => setCapacity(Number(e.target.value))}
-                />
-              </Field>
-              <Field label="募集メモ（任意）">
-                <textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="例：初心者歓迎。前提を満たさなくても相談を"
-                />
-              </Field>
-              <Button
-                block
-                disabled={recruit.isPending}
-                onClick={() =>
-                  recruit.mutate(
-                    {
-                      scenarioId: sc.id,
-                      capacity,
-                      note: note || undefined,
-                      excludedNodeIds: [...excluded],
-                    },
-                    { onSuccess: () => navigate('/gm/sessions') },
-                  )
-                }
-              >
-                {recruit.isPending
-                  ? '募集を作成中…'
-                  : `この構成で募集を出す（${excluded.size}件を外す）`}
-              </Button>
-              {recruit.error && <ErrorNote error={recruit.error} />}
-            </div>
-          </Panel>
+          <RecruitForm scenario={sc} excluded={excluded} />
         </aside>
         <div className="u-stack">
           <Panel
@@ -165,6 +121,7 @@ export function GmScenarioDetailPage() {
                     {e.grantsTag
                       ? `→ 前提タグ「${e.grantsTag}」`
                       : '→ 前提タグなし（単発として扱う）'}
+                    {e.noReplay && '（再挑戦不可：この結末に至った PC はもう一度遊べない）'}
                   </span>
                 </div>
               ))}

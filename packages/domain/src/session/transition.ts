@@ -5,7 +5,7 @@ import type { AutoCombatEnemy } from '../autoCombat/model';
 import { meetsCondition } from '../card/condition';
 import type { CardDef } from '../card/model';
 import type { DeckNode, Scenario } from '../scenario/model';
-import { type Session, SYSTEM_GM_ID } from './model';
+import type { Session } from './model';
 
 /** シナリオデッキを入れ子まで探す。path は最上位の祖先から見つかったノードまで */
 export function findDeckNode(
@@ -27,16 +27,16 @@ export function findDeckNode(
 }
 
 /**
- * ノードに入ったときに手札へ配る選択肢カード。人間GMのいないセッションでは、配る条件
+ * ノードに入ったときに手札へ配る選択肢カード。GM不在のセッションでは、配る条件
  * （docs/cartagraph/solo-village.md、仮ルール）を満たすものだけにする。held は判定に使うカード（heldCards）
  */
 export function dealChoices(
   node: Pick<DeckNode, 'cards'>,
   held: CardDef[],
-  session: Pick<Session, 'gmId'>,
+  session: Pick<Session, 'gmless'>,
 ): CardDef[] {
   const choices = node.cards.filter((c) => c.kind === 'choice');
-  if (session.gmId !== SYSTEM_GM_ID) return choices;
+  if (!session.gmless) return choices;
   return choices.filter((c) => meetsCondition(c.dealWhen, held));
 }
 
@@ -49,7 +49,7 @@ export type TransitionPlan =
       choices: CardDef[];
       /** 移り先が自動戦闘のノードなら、その相手と上限 */
       autoCombat?: { enemy: AutoCombatEnemy; maxRounds: number };
-      /** 人間GMのいないセッションで結末ノードへ移ったら true */
+      /** GM不在のセッションで結末ノードへ移ったら true */
       ended: boolean;
       /** ended のとき、結末のノードが指す結末の結末タグ（docs/cartagraph/solo-village.md「結末タグ」、仮ルール） */
       endingTag?: string;
@@ -57,7 +57,7 @@ export type TransitionPlan =
 
 export function planTransition(
   scenario: Pick<Scenario, 'deck' | 'endings'>,
-  session: Pick<Session, 'gmId'>,
+  session: Pick<Session, 'gmless'>,
   nextNodeId: string,
   /** 配る条件の判定に使うカード（heldCards）。遷移に伴う効果を適用した後の状態で渡す */
   held: CardDef[],
@@ -65,14 +65,14 @@ export function planTransition(
   const found = findDeckNode(scenario.deck, nextNodeId);
   if (!found) return { ok: false, error: `移り先のシーン（${nextNodeId}）がシナリオにありません` };
   const { node, topIndex, path } = found;
-  // 自動戦闘はGM不在のソロプレイ限定（docs/cartagraph/auto-combat.md）。人間GMのセッションでは入らない
-  if (node.autoCombat && session.gmId !== SYSTEM_GM_ID)
+  // 自動戦闘はGM不在のセッション限定（docs/cartagraph/auto-combat.md）。GM不在でないセッションでは入らない
+  if (node.autoCombat && !session.gmless)
     return {
       ok: false,
-      error: `「${node.name}」は自動戦闘のシーンのため、人間GMのセッションでは進めません`,
+      error: `「${node.name}」は自動戦闘のシーンのため、GM不在でないセッションでは進めません`,
     };
-  // 結末で自動終了するのは人間GMのいないセッションだけ（play-and-field.md「次のシーンへ進む」）
-  const ended = node.kind === 'ending' && session.gmId === SYSTEM_GM_ID;
+  // 結末で自動終了するのはGM不在のセッションだけ（play-and-field.md「次のシーンへ進む」）
+  const ended = node.kind === 'ending' && session.gmless;
   const endingTag = ended
     ? scenario.endings.find((e) => e.id === node.endingId)?.grantsTag
     : undefined;

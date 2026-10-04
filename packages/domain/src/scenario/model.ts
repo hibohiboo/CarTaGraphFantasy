@@ -61,12 +61,28 @@ export const deckNodeSchema = z.strictObject({
 export type DeckNode = z.infer<typeof deckNodeSchema>;
 
 /** 結末タグの定義（成功／失敗に限らず任意の数） */
-export const endingDefSchema = z.strictObject({
-  id: idSchema,
-  name: z.string(),
-  /** 後続シナリオの前提タグとして配るタグ。無ければ単発扱い */
-  grantsTag: z.string().optional(),
-});
+export const endingDefSchema = z
+  .strictObject({
+    id: idSchema,
+    name: z.string(),
+    /** 後続シナリオの前提タグとして配るタグ。無ければ単発扱い */
+    grantsTag: z.string().optional(),
+    /**
+     * 再挑戦不可（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）。この結末の結末タグを
+     * 持つ PC は、同じシナリオをもう一度遊べない。結末タグのカード化のときに、カードの属性へ移す
+     */
+    noReplay: z.boolean().optional(),
+  })
+  // 再挑戦不可は結末タグで判定するので、結末タグを配らない結末には付けられない（1つの結末の中の制約なので、
+  // 参照の整合 refs.ts ではなくスキーマで止める）
+  .superRefine((e, ctx) => {
+    if (e.noReplay && !e.grantsTag)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['noReplay'],
+        message: '再挑戦不可の結末には、結末タグ（grantsTag）が要ります',
+      });
+  });
 
 /** 結末タグの定義（成功／失敗に限らず任意の数） */
 export type EndingDef = z.infer<typeof endingDefSchema>;

@@ -4,9 +4,11 @@ import {
   type Proposal,
   type Session,
 } from '@cartagraph/domain/session/model';
+import { sessionNarrationTargets } from '@cartagraph/domain/session/narrate';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '@/entities/card/ui/GameCard';
+import { useScenario } from '@/entities/scenario/api/queries';
 import {
   useApproveProposal,
   useEndSession,
@@ -90,13 +92,20 @@ export function GmSessionManagePage() {
             label="無反応で「中断」になるまで"
             tone="pending"
           />
+        ) : x.status === 'suspended' ? (
+          <StatTile
+            value={x.suspendedFor === 'proposal' ? '中断（提案の裁定待ち）' : '中断'}
+            label="セッションの状態"
+            tone="pending"
+          />
         ) : (
           <StatTile value="終了" label="セッションの状態" tone="neutral" />
         )}
       </StatGrid>
 
       <div className={s.stack} style={{ marginTop: 22 }}>
-        {myGm && x.status === 'playing' && <NarrationPanel key={x.id} session={x} />}
+        {/* GM 不在のセッションは、システムが進行する（GM は提案の裁定と終了だけ。party-and-session.md） */}
+        {myGm && x.status === 'playing' && !x.gmless && <NarrationPanel key={x.id} session={x} />}
 
         <Panel
           title="提案の裁定"
@@ -192,26 +201,32 @@ export function GmSessionManagePage() {
         </Panel>
 
         <Panel title="セッションの操作">
-          <div className="u-row">
-            <Button
-              disabled={setMode.isPending || x.status !== 'playing'}
-              onClick={() =>
-                setMode.mutate({ sessionId, mode: x.mode === 'dense' ? 'light' : 'dense' })
-              }
-            >
-              {x.mode === 'dense' ? '軽量モードに戻す' : '次のシーンを濃密モードにする'}
-            </Button>
-            <span className="u-small u-dim">
-              戦闘イベントなど特定のカードは自動で濃密モードを要求する
-            </span>
-          </div>
+          {/* GM 不在のセッションの GM は、提案の裁定と終了だけを行う（party-and-session.md） */}
+          {!x.gmless && (
+            <div className="u-row">
+              <Button
+                disabled={setMode.isPending || x.status !== 'playing'}
+                onClick={() =>
+                  setMode.mutate({ sessionId, mode: x.mode === 'dense' ? 'light' : 'dense' })
+                }
+              >
+                {x.mode === 'dense' ? '軽量モードに戻す' : '次のシーンを濃密モードにする'}
+              </Button>
+              <span className="u-small u-dim">
+                戦闘イベントなど特定のカードは自動で濃密モードを要求する
+              </span>
+            </div>
+          )}
           <div className="u-row u-mt">
             <Button
               variant="danger"
-              disabled={end.isPending || x.status !== 'playing'}
+              // 中断中も終えられる（行き詰まった GM 不在のセッションを GM が終える出口）
+              disabled={end.isPending || x.status === 'ended'}
               onClick={() =>
                 window.confirm(
-                  'セッションを終了しますか？結末タグの配布はPCの所有者が反映を選びます。',
+                  x.gmless
+                    ? 'セッションを終了しますか？GM 不在のセッションの結果は、遊んでいる間に PC へ反映されています。'
+                    : 'セッションを終了しますか？結末タグの配布はPCの所有者が反映を選びます。',
                 ) && end.mutate({ sessionId })
               }
             >
@@ -236,6 +251,11 @@ function ProposalTicket({ p, session }: { p: Proposal; session: Session }) {
   const approve = useApproveProposal();
   const reject = useRejectProposal();
   const [cardName, setCardName] = useState(toDictionaryForm(p.text));
+  const [nextNodeId, setNextNodeId] = useState('');
+  // 採用で作るカードにも移り先を付けられる（docs/cartagraph/play-and-field.md「次のシーンへ進む」）。
+  // 候補は描写の枠・サーバーと同じ sessionNarrationTargets
+  const scenario = useScenario(session.scenarioId);
+  const targets = scenario.data ? sessionNarrationTargets(scenario.data, session) : [];
   const [reason, setReason] = useState('');
   const [rejecting, setRejecting] = useState(false);
   const busy = approve.isPending || reject.isPending;
@@ -263,7 +283,8 @@ function ProposalTicket({ p, session }: { p: Proposal; session: Session }) {
         <StatusPill status={p.status}>{PROPOSAL_STATUS_LABEL[p.status]}</StatusPill>
       </div>
 
-      {p.status === 'pending' && session.status === 'playing' && (
+      {/* 中断中（GM 不在の募集のセッションで裁定を待つ）も裁定できる。終わったセッションでは裁定しない */}
+      {p.status === 'pending' && session.status !== 'ended' && (
         <>
           {!rejecting ? (
             <div className={s.ticketAction}>
@@ -276,11 +297,31 @@ function ProposalTicket({ p, session }: { p: Proposal; session: Session }) {
                 value={cardName}
                 onChange={(e) => setCardName(e.target.value)}
               />
+              <label className="u-small u-dim" htmlFor={`next-${p.id}`}>
+                移り先
+              </label>
+              <select
+                id={`next-${p.id}`}
+                value={targets.some((t) => t.id === nextNodeId) ? nextNodeId : ''}
+                onChange={(e) => setNextNodeId(e.target.value)}
+              >
+                <option value="">このシーンに留まる（移り先なし）</option>
+                {targets.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
               <Button
                 variant="approve"
                 disabled={busy || !cardName.trim()}
                 onClick={() =>
-                  approve.mutate({ sessionId: session.id, proposalId: p.id, cardName })
+                  approve.mutate({
+                    sessionId: session.id,
+                    proposalId: p.id,
+                    cardName,
+                    nextNodeId: targets.some((t) => t.id === nextNodeId) ? nextNodeId : undefined,
+                  })
                 }
               >
                 採用してカード化
@@ -322,7 +363,9 @@ function ProposalTicket({ p, session }: { p: Proposal; session: Session }) {
             className={s.ticketResolution}
             style={{ borderTop: 'none', paddingTop: 6, marginTop: 6 }}
           >
-            ドライバーは裁定を待たず他の選択肢を先に選ぶこともできる。その場合この提案は「今回は使われなかった」として記録される。
+            {session.status === 'suspended'
+              ? 'セッションは裁定を待って中断している。裁定すると、ドライバーが再開できる。'
+              : 'ドライバーは裁定を待たず他の選択肢を先に選ぶこともできる。その場合この提案は「今回は使われなかった」として記録される。'}
           </p>
         </>
       )}

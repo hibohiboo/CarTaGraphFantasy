@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { Recruitment } from './model';
-import { buildParticipants, checkStart, defaultPartyName } from './start';
+import type { ProposalStatus, Recruitment, Session } from './model';
+import {
+  buildParticipants,
+  checkPlayFromRecruitment,
+  checkResume,
+  checkStart,
+  defaultPartyName,
+} from './start';
 
 type Applicant = Recruitment['applicants'][number];
 const jin: Applicant = {
@@ -163,5 +169,108 @@ describe('buildParticipants（docs/cartagraph/party-and-session.md「ドライ�
       at,
     });
     expect(rows[1]).toMatchObject({ userId: 'u-me', role: 'driver', characterId: 'pc-akira' });
+  });
+});
+
+describe('checkPlayFromRecruitment（GM 不在の募集から始められるか。docs/cartagraph/scenario-flow.md「募集とセッション」）', () => {
+  const gmless = { kind: 'gmless' as const };
+  const mine = { name: '迅', ownerId: 'u-me' };
+  const cleared = {
+    id: 'e-ok',
+    name: '冒険者として旅立つ',
+    grantsTag: '冒険者になった',
+    noReplay: true,
+  };
+
+  it('GM 不在の募集で、自分の PC で、再挑戦不可でなければ始められる', () => {
+    expect(checkPlayFromRecruitment(gmless, mine, { meId: 'u-me', blockedBy: null })).toEqual({
+      ok: true,
+    });
+  });
+
+  it('通常の募集・借りた PC・再挑戦不可は、それぞれ断る', () => {
+    expect(
+      checkPlayFromRecruitment({ kind: 'normal' }, mine, { meId: 'u-me', blockedBy: null }),
+    ).toEqual({ ok: false, error: 'この募集は GM 不在の募集ではありません' });
+    expect(
+      checkPlayFromRecruitment(
+        gmless,
+        { name: '彰', ownerId: 'u-hiiragi' },
+        { meId: 'u-me', blockedBy: null },
+      ),
+    ).toEqual({ ok: false, error: 'GM 不在の募集では、自分が所有者の PC だけで遊べます' });
+    expect(checkPlayFromRecruitment(gmless, mine, { meId: 'u-me', blockedBy: cleared })).toEqual({
+      ok: false,
+      error: '迅はこのシナリオの結末「冒険者として旅立つ」に至っているため、もう一度は遊べません',
+    });
+  });
+
+  it('判定の順：通常の募集かつ借りた PC なら「GM 不在の募集でない」、借りた PC かつ再挑戦不可なら「自分の PC だけ」', () => {
+    const borrowed = { name: '彰', ownerId: 'u-hiiragi' };
+    expect(
+      checkPlayFromRecruitment({ kind: 'normal' }, borrowed, { meId: 'u-me', blockedBy: null }),
+    ).toMatchObject({ error: 'この募集は GM 不在の募集ではありません' });
+    expect(
+      checkPlayFromRecruitment(gmless, borrowed, { meId: 'u-me', blockedBy: cleared }),
+    ).toMatchObject({ error: 'GM 不在の募集では、自分が所有者の PC だけで遊べます' });
+  });
+});
+
+describe('checkResume（中断したセッションを再開できるか。docs/cartagraph/party-and-session.md「中断」）', () => {
+  const driver = { userId: 'u-me', role: 'driver' as const };
+  const gm = { userId: 'u-kirino', role: 'gm' as const };
+  const session = (
+    over: {
+      status?: Session['status'];
+      suspendedFor?: Session['suspendedFor'];
+      proposals?: { status: ProposalStatus }[];
+    } = {},
+  ) => ({
+    status: 'suspended' as Session['status'],
+    suspendedFor: 'proposal' as Session['suspendedFor'],
+    participants: [gm, driver],
+    proposals: [{ status: 'approved' as ProposalStatus }],
+    ...over,
+  });
+
+  it('中断中で、裁定待ちの提案が無く、自分がドライバーなら再開できる', () => {
+    expect(checkResume(session(), 'u-me')).toEqual({ ok: true });
+  });
+
+  it('自分がドライバーでなければ 403。GM でも再開できない', () => {
+    expect(checkResume(session(), 'u-kirino')).toEqual({
+      ok: false,
+      status: 403,
+      error: 'ドライバーだけが再開できます',
+    });
+  });
+
+  it('進行中・終了なら 422', () => {
+    for (const status of ['playing', 'ended'] as const)
+      expect(checkResume(session({ status }), 'u-me')).toEqual({
+        ok: false,
+        status: 422,
+        error: '中断していないセッションは再開できません',
+      });
+  });
+
+  it('無反応による中断は、再開のしかたが未決なので 422（open-questions「無反応による中断の再開」）', () => {
+    expect(checkResume(session({ suspendedFor: 'inactivity' }), 'u-me')).toEqual({
+      ok: false,
+      status: 422,
+      error: 'この中断の再開のしかたは、まだ決まっていません',
+    });
+  });
+
+  it('裁定待ちの提案が残っていれば 422', () => {
+    expect(checkResume(session({ proposals: [{ status: 'pending' }] }), 'u-me')).toEqual({
+      ok: false,
+      status: 422,
+      error: 'GM の裁定を待っています',
+    });
+  });
+
+  it('判定の順：ドライバーでなく進行中なら 403', () => {
+    expect(checkResume(session({ status: 'playing' }), 'u-kirino')).toMatchObject({ status: 403 });
   });
 });

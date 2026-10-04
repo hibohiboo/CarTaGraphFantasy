@@ -11,6 +11,7 @@ import {
   type NarrationInput,
   narrateHand,
   narrationTargets,
+  sessionNarrationTargets,
 } from './narrate';
 
 const choice = (id: string, nextNodeId?: string): CardDef => ({
@@ -85,6 +86,36 @@ describe('narrationTargets', () => {
     const ids = narrationTargets(deck, undefined).map((t) => t.id);
     expect(ids).not.toContain('npc');
     expect(ids).not.toContain('exam');
+  });
+
+  it('autoCombat を指定すると自動戦闘のノードも出る（GM不在のセッション用）。NPC は出ない', () => {
+    const ids = narrationTargets(deck, undefined, { autoCombat: true }).map((t) => t.id);
+    expect(ids).toContain('exam');
+    expect(ids).not.toContain('npc');
+  });
+});
+
+describe('sessionNarrationTargets（セッションの移り先の候補）', () => {
+  const at = (over: { gmless: boolean; excludedNodeIds?: string[] }) => ({
+    currentScene: { index: 0, total: 5, name: '導入', path: '導入', nodeId: 'intro' },
+    ...over,
+  });
+
+  it('外したシーン（子孫ごと）といま居るノードを除く', () => {
+    const ids = sessionNarrationTargets(
+      { deck },
+      at({ gmless: false, excludedNodeIds: ['town'] }),
+    ).map((t) => t.id);
+    expect(ids).toEqual(['road', 'end']);
+  });
+
+  it('GM不在のセッションなら自動戦闘のノードも含め、そうでなければ含めない', () => {
+    expect(sessionNarrationTargets({ deck }, at({ gmless: true })).map((t) => t.id)).toContain(
+      'exam',
+    );
+    expect(sessionNarrationTargets({ deck }, at({ gmless: false })).map((t) => t.id)).not.toContain(
+      'exam',
+    );
   });
 });
 

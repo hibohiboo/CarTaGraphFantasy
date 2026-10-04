@@ -405,6 +405,8 @@ function villageAlwaysWin(): Scenario {
   if (!base) throw new Error('scenarios/sc-village-start.json がありません');
   const s = structuredClone(base);
   s.id = 'sc-village-always-win';
+  // 村はずれの一歩は公開済みだが、テスト専用のシナリオは公開済みの一覧（GM のシナリオ一覧）に出さない
+  s.libraryStatus = 'draft';
   s.title = '（テスト用）必ず合格する村はずれ';
   s.summary = 'テスト専用シナリオ。';
   const exam = s.deck.find((n) => n.id === 'vs-exam');
@@ -550,6 +552,7 @@ export const scenarios: Scenario[] = [
 export const recruitments: Recruitment[] = [
   {
     id: 'rc-1',
+    kind: 'normal',
     scenarioId: 'sc-gray-mansion',
     scenarioTitle: '灰色館の一夜',
     gmId: 'u-kirino',
@@ -568,6 +571,7 @@ export const recruitments: Recruitment[] = [
   },
   {
     id: 'rc-2',
+    kind: 'normal',
     scenarioId: 'sc-galleon',
     scenarioTitle: '鉄鎖のガレオン船',
     gmId: 'u-hiiragi',
@@ -587,6 +591,7 @@ export const recruitments: Recruitment[] = [
   },
   {
     id: 'rc-3',
+    kind: 'normal',
     scenarioId: 'sc-corridor-after',
     scenarioTitle: '灯りの回廊・後日談',
     gmId: 'u-kirino',
@@ -604,6 +609,7 @@ export const recruitments: Recruitment[] = [
   // 定員まで埋まった募集（PL の一覧で「募集枠が埋まっています」になる）
   {
     id: 'rc-full',
+    kind: 'normal',
     scenarioId: 'sc-village-start',
     scenarioTitle: '村はずれの一歩',
     gmId: 'u-hiiragi',
@@ -623,6 +629,7 @@ export const recruitments: Recruitment[] = [
   // 自分（u-me）が GM の募集。自分の PC と、カヤの PC が応募している（募集からセッションを始めるテスト用）
   {
     id: 'rc-mine',
+    kind: 'normal',
     scenarioId: 'sc-gray-mansion',
     scenarioTitle: '灰色館の一夜',
     gmId: 'u-me',
@@ -640,6 +647,27 @@ export const recruitments: Recruitment[] = [
     status: 'open',
     excludedNodeIds: [],
     note: '自分の卓。灰色館をじっくり遊ぶ',
+  },
+  // 自分（u-me）が出した GM 不在の募集（docs/cartagraph/scenario-flow.md「募集とセッション」）。
+  // 応募は無く、PL が自分の PC ですぐに始める。提案は GM が後から裁定する
+  {
+    id: 'rc-gmless',
+    kind: 'gmless',
+    proposalHandling: 'gm-required',
+    scenarioId: 'sc-village-start',
+    scenarioTitle: '村はずれの一歩',
+    gmId: 'u-me',
+    gmName: 'ユウ',
+    partySize: { min: 1, max: 1 },
+    spaceModel: null,
+    recommendedCp: 0,
+    referenceTags: ['体・技・心を参照', 'HPを参照', '戦闘スキルを参照'],
+    prerequisiteTags: [],
+    applicants: [],
+    capacity: 0,
+    status: 'open',
+    excludedNodeIds: [],
+    note: '誰でもどうぞ。旅人から冒険者へ',
   },
 ];
 
@@ -661,6 +689,7 @@ export const sessions: Session[] = [
     scenarioTitle: '灰色館の一夜',
     gmId: 'u-kirino',
     gmName: '霧乃',
+    gmless: false,
     partyName: '迷い星',
     status: 'playing',
     mode: 'light',
@@ -757,6 +786,7 @@ export const sessions: Session[] = [
     scenarioTitle: '鉄鎖のガレオン船',
     gmId: 'u-me',
     gmName: 'ユウ',
+    gmless: false,
     partyName: '潮騒',
     status: 'playing',
     mode: 'dense',
@@ -815,6 +845,7 @@ export const sessions: Session[] = [
     scenarioTitle: '灯りの回廊',
     gmId: 'u-kirino',
     gmName: '霧乃',
+    gmless: false,
     partyName: '迷い星',
     status: 'ended',
     mode: 'light',
@@ -840,13 +871,14 @@ export const sessions: Session[] = [
     suspendAt: ago(24 * 11),
   },
   {
-    // テスト専用：人間GMのセッションで、村の成長（GM不在のソロの仮ルール）が働かないことの確認用。
+    // テスト専用：GM不在でないセッションで、村の成長（GM不在のセッションの仮ルール）が働かないことの確認用。
     // 手札は依頼の解決カード（成長の効果）とお店で習うカード（使える条件＋成長の効果）
     id: 'ss-village-human-gm',
     scenarioId: 'sc-village-always-win',
     scenarioTitle: '（テスト用）必ず合格する村はずれ',
     gmId: 'u-kirino',
     gmName: '霧乃',
+    gmless: false,
     partyName: '村の子ら',
     status: 'playing',
     mode: 'light',

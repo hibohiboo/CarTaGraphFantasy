@@ -4,7 +4,8 @@
 // deck は呼び出し側が sessionDeck（外したシーンを除いたデッキ）を通して渡す。
 
 import type { CardDef } from '../card/model';
-import type { DeckNode, DeckNodeKind } from '../scenario/model';
+import type { DeckNode, DeckNodeKind, Scenario } from '../scenario/model';
+import { sessionDeck } from './deck';
 import type { Session } from './model';
 import { findDeckNode } from './transition';
 
@@ -36,23 +37,40 @@ const TARGET_KINDS: ReadonlySet<DeckNodeKind> = new Set(['intro', 'scene', 'endi
 
 /**
  * 選択肢カードの移り先にできるノード。デッキの順に並べる。
- * 自動戦闘のノード（人間GMのセッションでは進めない。planTransition と同じ理由）と、
- * いま居るノード（基本操作8は「別のノードへ移る」）は除く
+ * いま居るノード（基本操作8は「別のノードへ移る」）は除く。自動戦闘のノードは、GM不在でないセッションでは
+ * 進めないので除く（planTransition と同じ理由）。GM不在のセッションの移り先には opts.autoCombat で含める
  */
 export function narrationTargets(
   deck: DeckNode[],
   currentNodeId: string | undefined,
+  opts: { autoCombat?: boolean } = {},
 ): NarrationTarget[] {
   const walk = (nodes: DeckNode[], ancestors: string[]): NarrationTarget[] =>
     nodes.flatMap((n) => {
       const names = [...ancestors, n.name];
       const self =
-        TARGET_KINDS.has(n.kind) && !n.autoCombat && n.id !== currentNodeId
+        TARGET_KINDS.has(n.kind) && (opts.autoCombat || !n.autoCombat) && n.id !== currentNodeId
           ? [{ id: n.id, label: names.join(' › ') }]
           : [];
       return [...self, ...walk(n.children ?? [], names)];
     });
   return walk(deck, []);
+}
+
+/**
+ * そのセッションで、選択肢カード（GM が作るもの・提案の採用で作るもの）の移り先にできるノード。
+ * GM が外したシーンを除き（scenario-flow.md「GMのカスタマイズ」）、GM不在のセッションなら自動戦闘のノードも含める。
+ * 画面（描写の枠・提案の採用）とサーバーの両方がこれを使う
+ */
+export function sessionNarrationTargets(
+  scenario: Pick<Scenario, 'deck'>,
+  session: Pick<Session, 'excludedNodeIds' | 'currentScene' | 'gmless'>,
+): NarrationTarget[] {
+  return narrationTargets(
+    sessionDeck(scenario.deck, session.excludedNodeIds ?? []),
+    session.currentScene.nodeId,
+    { autoCombat: session.gmless },
+  );
 }
 
 /** 描写も取り下げも配るも無い（送っても何も変わらない）入力か。画面は、この間はエラーを出さずにボタンを押せなくする */
