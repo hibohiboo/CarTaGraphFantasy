@@ -203,13 +203,13 @@ function buildSoloCharacter(name: string, starter?: Scenario['soloStarter']): Ch
  */
 function buildSession(
   scenario: Scenario,
-  v: Pick<Session, 'gmId' | 'gmName' | 'partyName' | 'participants'> &
+  v: Pick<Session, 'gmId' | 'gmName' | 'gmless' | 'partyName' | 'participants'> &
     Pick<Session, 'recruitmentId' | 'excludedNodeIds'> & { driver: Character; startedText: string },
 ): Session | null {
   const intro = scenario.deck.find((d) => d.kind === 'intro');
   if (!intro) return null;
   const hand = dealChoices(intro, heldCards(v.driver, { gmOnly: [], plVisible: [] }), {
-    gmId: v.gmId,
+    gmless: v.gmless,
   });
   return {
     id: nextId('ss'),
@@ -219,6 +219,7 @@ function buildSession(
     ...(v.excludedNodeIds && { excludedNodeIds: v.excludedNodeIds }),
     gmId: v.gmId,
     gmName: v.gmName,
+    gmless: v.gmless,
     partyName: v.partyName,
     status: 'playing',
     mode: 'light',
@@ -245,6 +246,7 @@ function buildSoloSession(scenario: Scenario, character: Character): Session | n
   return buildSession(scenario, {
     gmId: SYSTEM_GM_ID,
     gmName: SYSTEM_GM_NAME,
+    gmless: true,
     partyName: character.name,
     participants: [
       {
@@ -387,6 +389,7 @@ export const handlers = [
       {
         gmId: rc.gmId,
         gmName: rc.gmName,
+        gmless: false,
         partyName: partyName || defaultPartyName(driverApplicant.characterName),
         participants: buildParticipants({
           gm: { userId: rc.gmId, name: rc.gmName },
@@ -518,7 +521,7 @@ export const handlers = [
     const driver = s.participants.find((p) => p.role === 'driver');
     const character = db.characters.find((c) => c.id === driver?.characterId);
     const scenario = scenarioOf(s);
-    const soloGm = s.gmId === SYSTEM_GM_ID;
+    const soloGm = s.gmless;
     // GM不在のソロの村の成長（docs/cartagraph/solo-village.md、仮ルール）。人間GMのセッションでは働かせない。
     // 使える条件の検査→効果の計算→（効果を適用した後の状態で）遷移の計算、と全部通ってから書き込む
     let grown: { character: Character; lines: string[]; achievement?: CardDef } | undefined;

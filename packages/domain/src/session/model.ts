@@ -85,10 +85,9 @@ export interface SessionStatus {
 }
 
 /**
- * 人間GMのいないソロセッションに割り当てるダミーGM（docs/plans/2026-09-23-村スタート冒険者キャンペーン.md
- * 決定事項5）。提案の自動解決の可否は gmId ではなく Session.proposalHandling で判定する。
- * gmId がこれなら「人間GMのいないセッション」として、結末ノードへの遷移で終了する
- * （docs/cartagraph/play-and-field.md「次のシーンへ進む」）
+ * ソロ開始のセッションの GM 欄に入れるダミー（裁定する GM がいない印。docs/cartagraph/party-and-session.md
+ * 「GM不在のセッションのGM」）。振る舞い（GM 不在の仮ルール・結末での終了など）は gmId ではなく
+ * Session.gmless で判定する
  */
 export const SYSTEM_GM_ID = 'system-gm';
 export const SYSTEM_GM_NAME = '（自動進行）';
@@ -103,6 +102,12 @@ export interface Session {
   excludedNodeIds?: string[];
   gmId: string;
   gmName: string;
+  /**
+   * システムが進行するセッション（GM不在のセッション。ソロ開始と GM 不在の募集から始めたもの）か。
+   * GM 不在の仮ルール・配る条件・自動戦闘・結末での自動終了・結末タグの即時反映はこれで判定する
+   * （docs/cartagraph/solo-village.md「適用範囲」）
+   */
+  gmless: boolean;
   partyName: string;
   status: SessionStatus['status'];
   mode: SessionMode;

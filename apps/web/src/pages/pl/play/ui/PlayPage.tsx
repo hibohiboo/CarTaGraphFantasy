@@ -1,5 +1,4 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
-import { SYSTEM_GM_ID } from '@cartagraph/domain/session/model';
 import { isAtEnding } from '@cartagraph/domain/session/narrate';
 import { heldCards, isSoloRuleCard, unplayableReason } from '@cartagraph/domain/soloVillage/rules';
 import { useState } from 'react';
@@ -37,7 +36,7 @@ export function PlayPage() {
   const [proposing, setProposing] = useState(false);
   const [text, setText] = useState('');
   // GM不在のソロでは、使える条件（docs/cartagraph/solo-village.md、仮ルール）の判定にドライバーのキャラクターを使う
-  const soloGm = session.data?.gmId === SYSTEM_GM_ID;
+  const soloGm = session.data?.gmless === true;
   const driverCharacterId =
     session.data?.participants.find((p) => p.role === 'driver')?.characterId ?? '';
   const character = useCharacter(soloGm ? driverCharacterId : '');

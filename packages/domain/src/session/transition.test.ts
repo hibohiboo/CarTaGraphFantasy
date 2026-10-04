@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { AutoCombatEnemy } from '../autoCombat/model';
 import type { CardDef } from '../card/model';
 import type { DeckNode } from '../scenario/model';
-import { SYSTEM_GM_ID } from './model';
 import { dealChoices, findDeckNode, planTransition } from './transition';
 
 const choice = (id: string, nextNodeId?: string): CardDef => ({
@@ -37,8 +36,9 @@ const deck: DeckNode[] = [
   },
   { id: 'end', kind: 'ending', name: '旅立ち', cards: [] },
 ];
-const soloGm = { gmId: SYSTEM_GM_ID };
-const humanGm = { gmId: 'u-gm' };
+// システムが進行するセッション（GM不在）と、そうでないセッション。GM の欄（gmId）では判定しない
+const soloGm = { gmless: true };
+const humanGm = { gmless: false };
 
 describe('findDeckNode', () => {
   it('入れ子の子ノードも見つけ、最上位の祖先の添字と経路を返す', () => {
@@ -80,24 +80,24 @@ describe('planTransition', () => {
     expect(plan.ok && plan.autoCombat).toEqual({ enemy, maxRounds: 20 });
   });
 
-  it('人間GMのいないセッションで結末ノードへ移ると終了する', () => {
+  it('GM不在のセッションで結末ノードへ移ると終了する', () => {
     const plan = planTransition({ deck, endings: [] }, soloGm, 'end', []);
     expect(plan.ok && plan.ended).toBe(true);
   });
 
-  it('人間GMのセッションでは自動戦闘のノードへ進めない（自動戦闘はGM不在のソロ限定）', () => {
+  it('GM不在でないセッションでは自動戦闘のノードへ進めない（自動戦闘はGM不在のセッション限定）', () => {
     expect(planTransition({ deck, endings: [] }, humanGm, 'exam', [])).toEqual({
       ok: false,
       error: expect.stringMatching(/自動戦闘/),
     });
   });
 
-  it('人間GMのセッションでは結末ノードへ移っても終了しない（GMが宣言する）', () => {
+  it('GM不在でないセッションでは結末ノードへ移っても終了しない（GMが宣言する）', () => {
     const plan = planTransition({ deck, endings: [] }, humanGm, 'end', []);
     expect(plan.ok && plan.ended).toBe(false);
   });
 
-  it('人間GMのいないセッションでも、結末以外のノードでは終了しない', () => {
+  it('GM不在のセッションでも、結末以外のノードでは終了しない', () => {
     const plan = planTransition({ deck, endings: [] }, soloGm, 'town', []);
     expect(plan.ok && plan.ended).toBe(false);
   });
@@ -127,13 +127,13 @@ describe('dealChoices（配る条件。docs/cartagraph/solo-village.md、仮ル�
   const slash: CardDef = { id: 'c-slash', kind: 'skill', name: '斬撃', tags: ['戦闘スキル'] };
   const names = (cards: CardDef[]) => cards.map((c) => c.name);
 
-  it('人間GMのいないセッションでは、配る条件を満たすカードだけを配る', () => {
+  it('GM不在のセッションでは、配る条件を満たすカードだけを配る', () => {
     expect(names(dealChoices(square, [voucher], soloGm))).toEqual(['猪へ', '斬撃を習う', 'お店へ']);
     expect(names(dealChoices(square, [done], soloGm))).toEqual(['斬撃を習う', 'お店へ']);
     expect(names(dealChoices(square, [slash], soloGm))).toEqual(['猪へ', 'お店へ']);
   });
 
-  it('人間GMのセッションでは、配る条件を満たさないカードも配る', () => {
+  it('GM不在でないセッションでは、配る条件を満たさないカードも配る', () => {
     expect(names(dealChoices(square, [done, slash], humanGm))).toEqual([
       '猪へ',
       '斬撃を習う',
@@ -180,7 +180,7 @@ describe('planTransition の結末タグ（docs/cartagraph/solo-village.md「結
     expect(plan.ok && plan.endingTag).toBeUndefined();
   });
 
-  it('人間GMのセッションでは、同じ結末のノードでも endingTag は返らない', () => {
+  it('GM不在でないセッションでは、同じ結末のノードでも endingTag は返らない', () => {
     const plan = planTransition(withEnding('e-ok'), humanGm, 'end', []);
     expect(plan.ok && plan.ended).toBe(false);
     expect(plan.ok && plan.endingTag).toBeUndefined();

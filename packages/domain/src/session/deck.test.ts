@@ -102,8 +102,8 @@ describe('sessionDeck（GMが外したシーンを除いたデッキ。docs/cart
 
   it('外したシーンへは planTransition で進めず、最上位のシーンを外すと総数がその分減る', () => {
     const scenario = { deck: sessionDeck(deck, ['forest']), endings: [] };
-    expect(planTransition(scenario, { gmId: 'u-gm' }, 'forest', []).ok).toBe(false);
-    const plan = planTransition(scenario, { gmId: 'u-gm' }, 'town', []);
+    expect(planTransition(scenario, { gmless: false }, 'forest', []).ok).toBe(false);
+    const plan = planTransition(scenario, { gmless: false }, 'town', []);
     expect(plan.ok && plan.currentScene.total).toBe(3);
   });
 });
