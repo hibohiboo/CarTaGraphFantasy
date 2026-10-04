@@ -42,6 +42,24 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。
 
+### 2026-10-04 GM が PL を兼ねて遊ぶ（PR #15）の振り返りから5件を採用
+
+- **内容**
+  1. main の最新の CI が失敗していれば知らせる `scripts/check-main-ci.mjs` を作った。Claude Code ではセッションの開始時（SessionStart フック）に自動で流れる。開発サイクルの「1. プラン作成」の始めにも書いた
+  2. プラン作成の突き合わせと、プランの仕様整合レビュー（依頼文「2」）で、プランが変える操作・用語を `docs/cartagraph/`・`docs/glossary.md` 全体で grep し、「背景」に無いページの記述とも突き合わせるようにした
+  3. 「守っている条件を外して落ちるか」を確かめる `scripts/mutate-check.mjs` を作った。外す書き換えを JSON で渡すと、置換が1件だけ当たるか確かめ、テストを流し、必ず元に戻す
+  4. Claude Code のフック `guard-bash.mjs` が、クォートした引数の中身（Markdown の「\n- 」など）をコマンドとして読んで誤検知していたのを直した（クォートの中身を除いてから判定する）。フックのテストを置いた
+  5. 開発サーバーを `strictPort` にし、5173 番が埋まっていたら別のポートで黙って起動せず失敗させるようにした
+  - 3・4・1 のテストは `pnpm tools:test`（`node --test`）で回し、CI と pre-push に入れた
+- **理由**
+  1. PR #14 の不安定なテストで main の CI が失敗していたのに、PR #15 の CI で落ちるまで誰も気づかなかった
+  2. `party-and-session.md` の「提案が出たときだけ GM が選択肢を追加する」との食い違いが、実装後の spec-reviewer で初めて見つかった。プランの「背景」に挙げたページだけを突き合わせていた
+  3. PR #15 で、置換のスクリプトをその場で作り、5条件を外して→テスト→戻す、を手で繰り返した。戻し忘れや置換の空振りの危険がある
+  4. node のスクリプトに箇条書きを引数で渡したら止められ、別の手段でやり直した
+  5. ブラウザでの確かめで、5174 番で起動したのに、5173 番の別のサーバーを開いていた
+- **反映先** — `scripts/check-main-ci.mjs`・`scripts/mutate-check.mjs`（とテスト）、`.claude/hooks/guard-bash.mjs`（とテスト）、`.claude/settings.json`（SessionStart）、`.claude/skills/dev-cycle/SKILL.md`、`docs/process/index.md`、`docs/process/prompt-sample.md`（「2」）、`docs/process/rules/testing.md`、`apps/web/vite.config.ts`、`docs/architecture/web-app.md`、`package.json`（`tools:test`）、`.github/workflows/ci.yml`、`.githooks/pre-push`、`AGENTS.md`
+- **きっかけ** — 作業中の失敗（1・3・4・5）、AI レビュー（2） ／ **止め方** — 機械（Claude Code のフック・スクリプト・CI・git フック・設定）、レビュー観点（2）
+
 ### 2026-10-04 画面を移ったことは、移った先にしか無い要素で確かめる
 
 - **内容** — テストルールの「テストの独立性」に、画面を移ったことは URL ではなく移った先にしか無い要素を待って確かめる、確かめたい文言が移る前の画面にもあるなら先にその要素を待つ、を足した

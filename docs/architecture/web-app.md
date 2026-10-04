@@ -80,6 +80,7 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 ## ローカル開発の注意（つまずきやすい点）
 
 - **Git Bash で `WEB_BASE` を渡すとき** — `WEB_BASE=/CarTaGraphFantasy/app/ pnpm web:build` のように環境変数でパスを渡すと、Windows の Git Bash（MSYS2）がパス文字列をWindows形式に変換してしまい壊れる。ローカルで確認する場合は `MSYS_NO_PATHCONV=1 WEB_BASE=/CarTaGraphFantasy/app/ pnpm web:build` のように付ける。GitHub Actions（Ubuntu）では不要（`.github/workflows/deploy.yml` 参照）。
+- **開発サーバーは 5173 番でだけ起動する** — `vite.config.ts` の `server.strictPort: true` で、5173 番が埋まっていると `pnpm web:dev` は失敗する（別のポートで黙って起動しない）。別の作業ツリー・ブランチの開発サーバーが動いていないか確かめ、止めてから起動する。止められないときは `pnpm web:dev --port 5174` のように明示し、確かめる URL もそのポートにそろえる
 - **vitest のバージョンを上げるときは pnpm workspace の peer 解決に注意** — pnpm workspace のルート（VitePress が使う vite 5 系）から peer 依存を解決してしまうと、`apps/web` の vitest が意図せず vite 5 系を掴んで動かなくなることがある。そのため `.npmrc` に `resolve-peers-from-workspace-root=false` を置き、`apps/web` の vitest は vite 7 系と整合する 4 系に固定している。`.npmrc` を消したり pnpm の設定を変えたりする際はこの依存関係を思い出すこと。
 
 ## 未React化の画面

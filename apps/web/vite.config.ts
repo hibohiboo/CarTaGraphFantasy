@@ -11,7 +11,9 @@ export default defineConfig({
   plugins: [react()],
   // FSD の層をまたぐ import は @/<層>/... で書く（docs/process/rules/architecture.md「依存の向き」）。tsconfig の paths と揃える
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  server: { port: 5173, host: '0.0.0.0' },
+  // 5173 番が埋まっていたら、別のポートで黙って起動せず失敗させる。別の作業ツリーやブランチで動いている
+  // 開発サーバーを、気づかずに確かめてしまわないため（docs/process/evolution.md 2026-10-04）
+  server: { port: 5173, strictPort: true, host: '0.0.0.0' },
   build: {
     rollupOptions: {
       output: {

@@ -33,6 +33,7 @@ pnpm web:dev          # http://localhost:5173（MSW 有効）
 pnpm web:test         # Vitest（MSW の node サーバーで全ページを描画）
 pnpm web:typecheck    # tsc
 pnpm domain:test      # Vitest（packages/domain の純粋関数）
+pnpm tools:test       # node --test（scripts/ と .claude/hooks/ の補助スクリプト）
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
 pnpm sim:auto-combat  # 自動戦闘のシミュレーションを回し docs/cartagraph/auto-combat-simulation.md を作り直す（任意。CIでは回さない）
 pnpm docs:dev         # 仕様書サイトをローカルで確認
@@ -42,11 +43,11 @@ pnpm lint             # Biome（フォーマット・import整理・lintをま�
 pnpm lint:fix         # 同上、安全な修正を自動適用
 ```
 
-コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`scenarios/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオを使うテストが走る。pre-push でも走る）。
+コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`scripts/`・`.claude/hooks/` を触ったら `pnpm tools:test` も通す。`scenarios/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオを使うテストが走る。pre-push でも走る）。
 
 lint・型検査・テスト・docsビルドは、AI にトークンを使わせず git フックで機械的に止める。
 - `.githooks/pre-commit` … ステージ済みファイルだけ `biome check --staged --write` を実行し、安全な指摘（フォーマット崩れ等）は自動修正して再ステージする。`--unsafe`が要る指摘（意図的に自動適用しない方針）だけコミットを止める
-- `.githooks/pre-push` … push前に `pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm web:test && pnpm docs:build`（CIと同じ）を実行する
+- `.githooks/pre-push` … push前に `pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm web:test && pnpm tools:test && pnpm docs:build`（CIと同じ）を実行する
 
 `pnpm install` すると `prepare` スクリプトが `git config --local core.hooksPath .githooks` を自動で設定するので、通常は何もしなくてよい。設定されていない場合は手動で同じコマンドを実行する。CI（`.github/workflows/ci.yml`）にも同じチェック（lint・型検査・テスト・docsビルド）があり、フック未設定や `--no-verify` の取りこぼしを検出する。
 

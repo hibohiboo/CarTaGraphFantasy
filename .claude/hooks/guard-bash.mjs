@@ -7,40 +7,48 @@
 //    → git フック（.githooks）を飛ばすのは、人間の許可が無い限りしない
 // 3. インタプリタに `-`（標準入力からスクリプトを読む）を渡す
 //    → 入力が来ないとコマンドが止まったままになる（2026-10-03、PR #14 の作業中に2回）。1. と同じく Write でファイルにする
+//
+// 判定の前に、クォートした引数の中身を取り除く。引数の文字列（Markdown の箇条書きの「\n- 」、コミットメッセージに
+// 書いた「--no-verify」など）を、コマンドとして読まないため（2026-10-04、PR #15 の振り返り）。
+// テストは同じディレクトリの guard-bash.test.mjs（pnpm tools:test）。
 
 import { readFileSync } from 'node:fs';
-
-const input = JSON.parse(readFileSync(0, 'utf8') || '{}');
-const command = String(input.tool_input?.command ?? '');
+import { fileURLToPath } from 'node:url';
 
 const INTERPRETER_HEREDOC = /\b(?:python3?|py|node|tsx|deno|bun)\b[^\n|;&]*<</;
 const NO_VERIFY = /\bgit\b[^\n|;&]*\b(?:commit|push)\b[^\n|;&]*--no-verify\b/;
 // `python -`・`node -` のように、引数に単独の `-` を渡す（`python -c` や `--` は止めない）。
-// インタプリタがコマンドの先頭（行頭か ; & | の後、環境変数の代入の後）にあるときだけ見る。
-// コミットメッセージなどの文字列に「python -」と書いただけでは止めない
+// インタプリタがコマンドの先頭（行頭か ; & | の後、環境変数の代入の後）にあるときだけ見る
 const INTERPRETER_STDIN =
   /(?:^|[;&|]\s*)(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*(?:python3?|py|node|tsx|deno|bun)(?:\s+[^\s|;&<>]+)*?\s+-(?=\s|$|[|;&<>])/m;
 
-let reason = '';
-if (INTERPRETER_HEREDOC.test(command)) {
-  reason =
-    'インタプリタに heredoc でスクリプトを渡さない（バックスラッシュが崩れる）。Write でスクラッチパッドにファイルとして書いてから実行する（CLAUDE.md「Claude Code 固有の補足」）。';
-} else if (INTERPRETER_STDIN.test(command)) {
-  reason =
-    'インタプリタに `-`（標準入力からスクリプトを読む）を渡さない（入力が来ないと止まったままになる）。Write でスクラッチパッドにファイルとして書いてから実行する（CLAUDE.md「Claude Code 固有の補足」）。';
-} else if (NO_VERIFY.test(command)) {
-  reason =
-    'git commit・git push に --no-verify を付けない（git フックを飛ばすのは人間の許可が要る）。フックが止めた理由を直すか、人間に確認する。';
+/** '…' と "…" の中身を空にする（"…" の中の \" は閉じとみなさない） */
+const stripQuoted = (command) => command.replace(/'[^']*'|"(?:[^"\\]|\\[\s\S])*"/g, '""');
+
+/** 止める理由（止めないなら空文字） */
+export function checkCommand(command) {
+  const bare = stripQuoted(command);
+  if (INTERPRETER_HEREDOC.test(bare))
+    return 'インタプリタに heredoc でスクリプトを渡さない（バックスラッシュが崩れる）。Write でスクラッチパッドにファイルとして書いてから実行する（CLAUDE.md「Claude Code 固有の補足」）。';
+  if (INTERPRETER_STDIN.test(bare))
+    return 'インタプリタに `-`（標準入力からスクリプトを読む）を渡さない（入力が来ないと止まったままになる）。Write でスクラッチパッドにファイルとして書いてから実行する（CLAUDE.md「Claude Code 固有の補足」）。';
+  if (NO_VERIFY.test(bare))
+    return 'git commit・git push に --no-verify を付けない（git フックを飛ばすのは人間の許可が要る）。フックが止めた理由を直すか、人間に確認する。';
+  return '';
 }
 
-if (reason) {
-  process.stdout.write(
-    JSON.stringify({
-      hookSpecificOutput: {
-        hookEventName: 'PreToolUse',
-        permissionDecision: 'deny',
-        permissionDecisionReason: reason,
-      },
-    }),
-  );
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const input = JSON.parse(readFileSync(0, 'utf8') || '{}');
+  const reason = checkCommand(String(input.tool_input?.command ?? ''));
+  if (reason) {
+    process.stdout.write(
+      JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: 'PreToolUse',
+          permissionDecision: 'deny',
+          permissionDecisionReason: reason,
+        },
+      }),
+    );
+  }
 }
