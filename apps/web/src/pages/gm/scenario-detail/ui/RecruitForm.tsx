@@ -90,7 +90,7 @@ export function RecruitForm({ scenario, excluded }: { scenario: Scenario; exclud
         {kind === 'gmless' && (
           <p className="u-small u-dim">
             PL が自分の PC を選んで、すぐに始める。始めるたびに、その PL だけのセッションができる。
-            進行はシステムが受け持ち、GM は提案の裁定だけを行う。
+            進行はシステムが受け持ち、GM は提案の裁定と終了だけを行う。
           </p>
         )}
         {deadEnds.length > 0 && (

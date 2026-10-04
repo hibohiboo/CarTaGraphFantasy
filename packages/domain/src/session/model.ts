@@ -127,7 +127,10 @@ export interface Session {
    */
   suspendedFor?: 'inactivity' | 'proposal';
   mode: SessionMode;
-  /** セッション開始時にScenarioからコピーする（セッションスナップショットの一部） */
+  /**
+   * セッション開始時にコピーする（セッションスナップショットの一部）。ソロ開始はシナリオの値、GM 不在の募集は募集の値、
+   * 通常の募集はシナリオの値（自動解決は GM必須に読み替える。docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
+   */
   proposalHandling: ProposalHandling;
   /** 進行中のシーン（例: "3-2 奥の扉"） */
   /** nodeId は「次のシーンへ進む」で移ったノード（それ以前から続くセッションでは無い） */

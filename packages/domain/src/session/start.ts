@@ -99,7 +99,7 @@ export function checkPlayFromRecruitment(
  * 提案の裁定待ちで中断したセッションは、GM が裁定してから再開する。エラーは上から順に最初の1つを返す
  */
 export function checkResume(
-  session: Pick<Session, 'status'> & {
+  session: Pick<Session, 'status' | 'suspendedFor'> & {
     participants: Pick<Session['participants'][number], 'userId' | 'role'>[];
     proposals: Pick<Session['proposals'][number], 'status'>[];
   },
@@ -109,6 +109,9 @@ export function checkResume(
     return { ok: false, status: 403, error: 'ドライバーだけが再開できます' };
   if (session.status !== 'suspended')
     return { ok: false, status: 422, error: '中断していないセッションは再開できません' };
+  // 無反応による中断を、いつ・誰が再開できるかは未決（docs/open-questions.md「無反応による中断の再開」）
+  if (session.suspendedFor !== 'proposal')
+    return { ok: false, status: 422, error: 'この中断の再開のしかたは、まだ決まっていません' };
   if (session.proposals.some((p) => p.status === 'pending'))
     return { ok: false, status: 422, error: 'GM の裁定を待っています' };
   return { ok: true };

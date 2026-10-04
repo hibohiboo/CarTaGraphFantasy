@@ -1,11 +1,10 @@
-import { sessionDeck } from '@cartagraph/domain/session/deck';
 import {
   PARTICIPANT_ROLE_LABEL,
   PROPOSAL_STATUS_LABEL,
   type Proposal,
   type Session,
 } from '@cartagraph/domain/session/model';
-import { narrationTargets } from '@cartagraph/domain/session/narrate';
+import { sessionNarrationTargets } from '@cartagraph/domain/session/narrate';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '@/entities/card/ui/GameCard';
@@ -202,19 +201,22 @@ export function GmSessionManagePage() {
         </Panel>
 
         <Panel title="セッションの操作">
-          <div className="u-row">
-            <Button
-              disabled={setMode.isPending || x.status !== 'playing'}
-              onClick={() =>
-                setMode.mutate({ sessionId, mode: x.mode === 'dense' ? 'light' : 'dense' })
-              }
-            >
-              {x.mode === 'dense' ? '軽量モードに戻す' : '次のシーンを濃密モードにする'}
-            </Button>
-            <span className="u-small u-dim">
-              戦闘イベントなど特定のカードは自動で濃密モードを要求する
-            </span>
-          </div>
+          {/* GM 不在のセッションの GM は、提案の裁定と終了だけを行う（party-and-session.md） */}
+          {!x.gmless && (
+            <div className="u-row">
+              <Button
+                disabled={setMode.isPending || x.status !== 'playing'}
+                onClick={() =>
+                  setMode.mutate({ sessionId, mode: x.mode === 'dense' ? 'light' : 'dense' })
+                }
+              >
+                {x.mode === 'dense' ? '軽量モードに戻す' : '次のシーンを濃密モードにする'}
+              </Button>
+              <span className="u-small u-dim">
+                戦闘イベントなど特定のカードは自動で濃密モードを要求する
+              </span>
+            </div>
+          )}
           <div className="u-row u-mt">
             <Button
               variant="danger"
@@ -222,7 +224,9 @@ export function GmSessionManagePage() {
               disabled={end.isPending || x.status === 'ended'}
               onClick={() =>
                 window.confirm(
-                  'セッションを終了しますか？結末タグの配布はPCの所有者が反映を選びます。',
+                  x.gmless
+                    ? 'セッションを終了しますか？GM 不在のセッションの結果は、遊んでいる間に PC へ反映されています。'
+                    : 'セッションを終了しますか？結末タグの配布はPCの所有者が反映を選びます。',
                 ) && end.mutate({ sessionId })
               }
             >
@@ -249,14 +253,9 @@ function ProposalTicket({ p, session }: { p: Proposal; session: Session }) {
   const [cardName, setCardName] = useState(toDictionaryForm(p.text));
   const [nextNodeId, setNextNodeId] = useState('');
   // 採用で作るカードにも移り先を付けられる（docs/cartagraph/play-and-field.md「次のシーンへ進む」）。
-  // 候補は描写の枠と同じ narrationTargets（外したシーンを除いたデッキ）
+  // 候補は描写の枠・サーバーと同じ sessionNarrationTargets
   const scenario = useScenario(session.scenarioId);
-  const targets = scenario.data
-    ? narrationTargets(
-        sessionDeck(scenario.data.deck, session.excludedNodeIds ?? []),
-        session.currentScene.nodeId,
-      )
-    : [];
+  const targets = scenario.data ? sessionNarrationTargets(scenario.data, session) : [];
   const [reason, setReason] = useState('');
   const [rejecting, setRejecting] = useState(false);
   const busy = approve.isPending || reject.isPending;

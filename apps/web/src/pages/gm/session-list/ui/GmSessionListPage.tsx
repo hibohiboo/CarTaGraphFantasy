@@ -13,6 +13,7 @@ import {
   RoleBadge,
   StatusPill,
 } from '@/shared/ui/ui';
+import { GmlessRecruitmentCard } from './GmlessRecruitmentCard';
 import { StartFromRecruitment } from './StartFromRecruitment';
 
 const STATUS_LABEL: Record<Session['status'], string> = {
@@ -50,16 +51,11 @@ export function GmSessionListPage() {
           <div className={s.cardsRow}>
             {myRecruitments.map((rc) =>
               rc.kind === 'gmless' ? (
-                <article key={rc.id} className={s.recruit}>
-                  <h3 className={s.recruitTitle}>{rc.scenarioTitle}</h3>
-                  {rc.note && <p className={s.recruitSub}>{rc.note}</p>}
-                  <StatusPill status="neutral">GM 不在</StatusPill>
-                  <hr className={s.recruitDivider} />
-                  <p className={s.recruitNote}>
-                    PL が自由に始める。始まったセッション{' '}
-                    {sessions.data.filter((x) => x.recruitmentId === rc.id).length} 件
-                  </p>
-                </article>
+                <GmlessRecruitmentCard
+                  key={rc.id}
+                  rc={rc}
+                  startedCount={sessions.data.filter((x) => x.recruitmentId === rc.id).length}
+                />
               ) : (
                 <StartFromRecruitment key={rc.id} rc={rc} />
               ),
@@ -86,7 +82,7 @@ export function GmSessionListPage() {
                   <StatusPill status={x.status === 'playing' ? 'good' : 'neutral'}>
                     {STATUS_LABEL[x.status]}
                   </StatusPill>
-                  {x.suspendedFor === 'proposal' && (
+                  {x.status === 'suspended' && x.suspendedFor === 'proposal' && (
                     <StatusPill status="pending">提案の裁定待ち</StatusPill>
                   )}
                   {x.suspendedFor !== 'proposal' &&

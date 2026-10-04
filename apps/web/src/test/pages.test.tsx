@@ -924,17 +924,17 @@ describe('GM 不在の募集', () => {
     expect(await screen.findByRole('button', { name: /村の広場へ向かう/ })).toBeInTheDocument();
   });
 
-  it('再挑戦不可：結末タグを得た迅は、GM 不在の募集・通常の募集で「クリア済み」で選べず、初期値にならない。灰色館では選べる', async () => {
+  it('再挑戦不可：結末タグを得た迅は、GM 不在の募集・通常の募集で「再挑戦不可」で選べず、初期値にならない。灰色館では選べる', async () => {
     await clearVillageWith('pc-jin');
     await api.post('/scenarios/sc-village-start/recruitments', { capacity: 2, note: '通常の村' });
     renderAt('/pl/sessions');
     await screen.findByRole('heading', { name: '参加できるセッション' });
     // テストで足した通常の村の募集も「村はずれの一歩・GM：ユウ」なので、シードの GM 不在の募集はメモで特定する
     const gmless = (await screen.findByText('誰でもどうぞ。旅人から冒険者へ')).closest('article')!;
-    await waitFor(() => expect(optionOf(gmless, /迅.*クリア済み/).disabled).toBe(true));
+    await waitFor(() => expect(optionOf(gmless, /迅.*再挑戦不可/).disabled).toBe(true));
     expect(within(gmless).getByLabelText('始める PC')).toHaveValue('pc-akari');
     const normal = (await screen.findByText('通常の村')).closest('article')!;
-    await waitFor(() => expect(optionOf(normal, /迅.*クリア済み/).disabled).toBe(true));
+    await waitFor(() => expect(optionOf(normal, /迅.*再挑戦不可/).disabled).toBe(true));
     const mansion = await recruitCard('灰色館の一夜', '霧乃');
     expect(optionOf(mansion, /^迅/).disabled).toBe(false);
   });
@@ -1024,6 +1024,9 @@ describe('GM 不在の募集', () => {
     renderAt(`/gm/sessions/${s.id}`);
     await screen.findByRole('link', { name: 'ドライバーとしてプレイ画面へ' });
     expect(screen.queryByRole('heading', { name: '描写と選択肢を配る' })).not.toBeInTheDocument();
+    // GM 不在のセッションの GM は、提案の裁定と終了だけ（モードは切り替えない）
+    expect(screen.queryByRole('button', { name: /濃密モード/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'セッションを終了する' })).toBeEnabled();
   });
 
   it('ホーム：中断中のセッションが出て、リンク先はプレイ画面', async () => {
@@ -1039,7 +1042,7 @@ describe('GM 不在の募集', () => {
     expect(screen.getByText(/（中断中）/)).toBeInTheDocument();
   });
 
-  it('通し：GM が GM 不在で募集 → PL が絞り込んで迅で始める → 提案して中断 → GM が採用 → 再開 → 結末 → 迅はクリア済み', async () => {
+  it('通し：GM が GM 不在で募集 → PL が絞り込んで迅で始める → 提案して中断 → GM が採用 → 再開 → 結末 → 迅は再挑戦不可', async () => {
     const user = userEvent.setup();
     const router = renderAt('/gm/scenarios/sc-village-always-win');
     const p = await recruitPanel();
@@ -1095,6 +1098,6 @@ describe('GM 不在の募集', () => {
 
     await router.navigate('/pl/sessions');
     const again = await recruitCard('（テスト用）必ず合格する村はずれ', 'ユウ');
-    await waitFor(() => expect(optionOf(again, /迅.*クリア済み/).disabled).toBe(true));
+    await waitFor(() => expect(optionOf(again, /迅.*再挑戦不可/).disabled).toBe(true));
   });
 });

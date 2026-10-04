@@ -1,6 +1,6 @@
-// GM不在のソロでの村の成長（docs/cartagraph/solo-village.md、仮ルール）の計算。
+// GM不在のセッションでの村の成長（docs/cartagraph/solo-village.md、仮ルール）の計算。
 // 使える条件（選べない理由）と成長の効果の適用を純粋関数で行う（Functional Core）。条件そのものの判定は card/condition.ts。
-// 適用するかどうか（人間GMのいないセッションか）の判断と書き込みは、呼び出し側（MSW ハンドラ等）が行う。
+// 適用するかどうか（GM不在のセッション＝Session.gmless か）の判断と書き込みは、呼び出し側（MSW ハンドラ等）が行う。
 
 import { conditionFailure, hasTag } from '../card/condition';
 import type { CardDef, SoloEffect } from '../card/model';

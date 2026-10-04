@@ -358,3 +358,94 @@ describe('再挑戦不可', () => {
     expect((await api.get<Session[]>('/sessions')).length).toBe(before);
   });
 });
+
+// docs/plans/2026-10-04-GM不在の募集.md「実装後の AI レビューで足したもの」
+describe('実装後の AI レビューで足した検査', () => {
+  const propose = (id: string, text = '鍬を借りたい') =>
+    api.post<Session>(`/sessions/${id}/proposals`, { text });
+
+  it('通常の募集で自動解決のシナリオ（村はずれの一歩）を始めると、提案は GM の裁定を待つ（自動で採用しない）', async () => {
+    const rc = await createRecruitment('sc-village-start', { capacity: 1 });
+    await api.post(`/recruitments/${rc.id}/apply`, { characterId: 'pc-jin' });
+    const s = await api.post<Session>(`/recruitments/${rc.id}/start`, {
+      characterIds: ['pc-jin'],
+      driverCharacterId: 'pc-jin',
+    });
+    expect(s.proposalHandling).toBe('gm-required');
+    const after = await propose(s.id);
+    expect(after.proposals[0].status).toBe('pending');
+    expect(after.status).toBe('playing');
+  });
+
+  it('GM 不在のセッションでは、GM がモードを切り替えられない（422）', async () => {
+    const s = await playFrom('rc-gmless', 'pc-jin');
+    await expect(api.post(`/sessions/${s.id}/mode`, { mode: 'dense' })).rejects.toMatchObject({
+      status: 422,
+      message: 'GM 不在のセッションは、システムが進行します',
+    });
+    expect((await getSession(s.id)).mode).toBe('light');
+  });
+
+  it('中断中に GM が終えると、中断の理由は残らない', async () => {
+    const s = await playFrom('rc-gmless', 'pc-jin');
+    await propose(s.id);
+    const ended = await api.post<Session>(`/sessions/${s.id}/end`);
+    expect(ended.status).toBe('ended');
+    expect(ended.suspendedFor).toBeUndefined();
+  });
+
+  it('裁定済みの提案をもう一度採用・却下すると 422 で、手札は増えない。終わったセッションの提案は裁定できない', async () => {
+    const s = await playFrom('rc-gmless', 'pc-jin');
+    const pid = (await propose(s.id)).proposals[0].id;
+    await api.post(`/sessions/${s.id}/proposals/${pid}/approve`, { cardName: '鍬を借りる' });
+    const handSize = (await getSession(s.id)).hand.length;
+    await expect(
+      api.post(`/sessions/${s.id}/proposals/${pid}/approve`, { cardName: '鍬を借りる' }),
+    ).rejects.toMatchObject({ status: 422, message: 'この提案はもう裁定しています' });
+    await expect(
+      api.post(`/sessions/${s.id}/proposals/${pid}/reject`, { reason: 'やっぱり無し' }),
+    ).rejects.toMatchObject({ status: 422 });
+    expect((await getSession(s.id)).hand.length).toBe(handSize);
+
+    await resume(s.id);
+    const pid2 = (await propose(s.id, '水を汲みたい')).proposals[0].id;
+    await api.post(`/sessions/${s.id}/end`);
+    await expect(
+      api.post(`/sessions/${s.id}/proposals/${pid2}/approve`, { cardName: '水を汲む' }),
+    ).rejects.toMatchObject({ status: 422, message: 'このセッションは終了しています' });
+  });
+
+  it('採用の移り先：GM 不在のセッションでは自動戦闘のシーンも選べ、外したシーンは選べない', async () => {
+    const rc = await gmless('sc-village-start', { excludedNodeIds: ['vs-shop'] });
+    const s = await playFrom(rc.id, 'pc-jin');
+    const pid = (await propose(s.id)).proposals[0].id;
+    await expect(
+      api.post(`/sessions/${s.id}/proposals/${pid}/approve`, {
+        cardName: 'x',
+        nextNodeId: 'vs-shop',
+      }),
+    ).rejects.toMatchObject({ status: 422 });
+    expect((await getSession(s.id)).proposals[0].status).toBe('pending');
+    const approved = await api.post<Session>(`/sessions/${s.id}/proposals/${pid}/approve`, {
+      cardName: '試験を受けに行く',
+      nextNodeId: 'vs-exam',
+    });
+    expect(approved.hand.find((c) => c.name === '試験を受けに行く')?.nextNodeId).toBe('vs-exam');
+  });
+
+  it('採用の移り先：GM 不在でないセッションでは、自動戦闘のシーンは選べない', async () => {
+    const rc = await createRecruitment('sc-village-start', { capacity: 1 });
+    await api.post(`/recruitments/${rc.id}/apply`, { characterId: 'pc-jin' });
+    const s = await api.post<Session>(`/recruitments/${rc.id}/start`, {
+      characterIds: ['pc-jin'],
+      driverCharacterId: 'pc-jin',
+    });
+    const pid = (await propose(s.id)).proposals[0].id;
+    await expect(
+      api.post(`/sessions/${s.id}/proposals/${pid}/approve`, {
+        cardName: 'x',
+        nextNodeId: 'vs-exam',
+      }),
+    ).rejects.toMatchObject({ status: 422 });
+  });
+});

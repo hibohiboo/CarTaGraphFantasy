@@ -5,7 +5,7 @@ import {
   type DealtChoice,
   isAtEnding,
   isEmptyNarration,
-  narrationTargets,
+  sessionNarrationTargets,
 } from '@cartagraph/domain/session/narrate';
 import { findDeckNode } from '@cartagraph/domain/session/transition';
 import { useRef, useState } from 'react';
@@ -34,7 +34,7 @@ export function NarrationPanel({ session }: { session: Session }) {
   const nextKey = useRef(0);
 
   const deck = scenario.data ? sessionDeck(scenario.data.deck, session.excludedNodeIds ?? []) : [];
-  const targets = narrationTargets(deck, session.currentScene.nodeId);
+  const targets = scenario.data ? sessionNarrationTargets(scenario.data, session) : [];
   const handChoices = session.hand.filter((c) => c.kind === 'choice');
   // 開いたあとでセッションが変わる（ドライバーがプレイして手札・シーンが変わる）と、取り下げのチェックと移り先が古くなる。
   // 手札かシーンが変わったら、手札に無くなったチェックと選べなくなった移り先を state から捨てる（あとで同じ ID の

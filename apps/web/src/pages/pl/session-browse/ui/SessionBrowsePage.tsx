@@ -10,16 +10,20 @@ import { useApply, usePlayFromRecruitment } from '@/entities/session/api/mutatio
 import { useRecruitments } from '@/entities/session/api/queries';
 import { useMe } from '@/entities/user/api/queries';
 import s from '@/shared/ui/page.module.css';
-import { Button, Chip, ChipGroup, ErrorNote, Loading, PageHeader } from '@/shared/ui/ui';
+import { Button, Chip, ChipGroup, EmptyNote, ErrorNote, Loading, PageHeader } from '@/shared/ui/ui';
 
-/** PCが持つタグ（結末タグ＋デッキのタグ）と募集の前提タグを突き合わせる。ソフトガイドなのでブロックはしない */
+/**
+ * PCが持つタグ（結末タグ＋デッキのタグ）と募集の前提タグを突き合わせる。ソフトガイドなのでブロックはしない
+ * （GM 不在の募集でも表示だけはする。unlock.md「強制力」）
+ */
 function fitOf(rc: Recruitment, chars: Character[]) {
   if (rc.prerequisiteTags.length === 0)
     return { fit: 'good' as const, label: '多くのPCが参加できます' };
   const anyFits = chars.some((c) => rc.prerequisiteTags.every((t) => hasTag(c, t)));
   if (anyFits) return { fit: 'good' as const, label: '前提を満たすPCがいます' };
   const missing = rc.prerequisiteTags.filter((t) => !chars.some((c) => hasTag(c, t)));
-  return { fit: 'partial' as const, label: `${missing.join('・')}不足（応募は可能）` };
+  const can = rc.kind === 'gmless' ? '始めることは可能' : '応募は可能';
+  return { fit: 'partial' as const, label: `${missing.join('・')}不足（${can}）` };
 }
 
 function hasTag(c: Character, tag: string) {
@@ -55,6 +59,11 @@ export function SessionBrowsePage() {
         />
         GM 不在の募集だけ
       </label>
+      {shown.length === 0 && (
+        <EmptyNote>
+          {onlyGmless ? 'GM 不在の募集はありません。' : '募集中のシナリオはありません。'}
+        </EmptyNote>
+      )}
       <div className={s.cardsRow}>
         {shown.map((rc) => (
           <RecruitCard key={rc.id} rc={rc} chars={chars} myId={myId} />
@@ -71,12 +80,12 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
   // 再挑戦不可（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）の判定にシナリオの結末を使う
   const scenario = useScenario(rc.scenarioId);
   const gmless = rc.kind === 'gmless';
-  const fit = fitOf(rc, chars);
   // GM 不在の募集は、自分が所有者の PC だけ（借りた PC は使えない。solo-village.md「適用範囲」）
   const candidates = gmless ? chars.filter((c) => c.ownerId === myId) : chars;
+  const fit = fitOf(rc, candidates);
   const blocked = (c: Character) => (scenario.data ? !!replayBlockedBy(scenario.data, c) : false);
   const [picked, setPicked] = useState<string>();
-  // 初期値（と、選んだ PC がクリア済みになったとき）は、選べる PC の先頭
+  // 初期値（と、選んだ PC が再挑戦不可になったとき）は、選べる PC の先頭
   const characterId =
     candidates.find((c) => c.id === picked && !blocked(c))?.id ??
     candidates.find((c) => !blocked(c))?.id ??
@@ -84,7 +93,8 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
   // 応募した人で判定する（借りたPCで応募しても応募済みと出す）
   const applied = rc.applicants.some((a) => a.userId === myId);
   const closed = !gmless && rc.applicants.length >= rc.capacity;
-  const busy = apply.isPending || play.isPending;
+  // 再挑戦不可の判定にシナリオが要るので、読み込むまでは始めない・応募しない
+  const busy = apply.isPending || play.isPending || scenario.isPending;
 
   return (
     <article className={s.recruit}>
@@ -95,11 +105,9 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
       <h2 className={s.recruitTitle}>{rc.scenarioTitle}</h2>
       <p className={s.recruitSub}>GM：{rc.gmName}</p>
       {rc.note && <p className={s.recruitSub}>{rc.note}</p>}
-      {!gmless && (
-        <span className={s.fit} data-fit={fit.fit}>
-          {fit.label}
-        </span>
-      )}
+      <span className={s.fit} data-fit={fit.fit}>
+        {fit.label}
+      </span>
       <hr className={s.recruitDivider} />
       <div className={s.recruitMeta}>
         <span>
@@ -150,7 +158,7 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
                 <option key={c.id} value={c.id} disabled={blocked(c)}>
                   {c.name}（{ARCHETYPE_LABEL[deriveArchetype(c)]}
                   {c.ownerId !== myId ? `・${c.ownerName}から借用` : ''}）
-                  {blocked(c) ? '（このシナリオはクリア済み）' : ''}
+                  {blocked(c) ? '（このシナリオは再挑戦不可）' : ''}
                 </option>
               ))}
             </select>
@@ -178,7 +186,14 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
                 {apply.isPending ? '応募中…' : '応募する'}
               </Button>
             )}
-            {(apply.error || play.error) && <ErrorNote error={apply.error ?? play.error} />}
+            {!characterId && (
+              <p className={s.recruitNote}>
+                {gmless ? '始められる自分の PC がありません。' : '応募できる PC がありません。'}
+              </p>
+            )}
+            {(apply.error || play.error || scenario.error) && (
+              <ErrorNote error={apply.error ?? play.error ?? scenario.error} />
+            )}
             {gmless ? (
               <p className={s.recruitNote}>
                 応募は不要。自分の PC で、すぐに1人で始める。提案の扱い：

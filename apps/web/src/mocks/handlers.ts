@@ -27,6 +27,7 @@ import {
   type NarrationInput,
   narrateHand,
   narrationTargets,
+  sessionNarrationTargets,
 } from '@cartagraph/domain/session/narrate';
 import {
   buildParticipants,
@@ -51,9 +52,9 @@ import { HttpResponse, http } from 'msw';
 import { toDictionaryForm } from '@/shared/lib/japanese';
 import * as fx from './fixtures';
 
-// GMレスのソロセッションには SYSTEM_GM_ID のダミーGMを割り当てる（packages/domain）。
-// 提案の自動解決の可否は Session.gmId ではなく Session.proposalHandling で判定する
-// （docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」。シナリオ側が選ぶ設定）。
+// ソロ開始のセッションの GM 欄には SYSTEM_GM_ID のダミーを入れる（packages/domain）。GM 不在かどうかは Session.gmless、
+// 提案の扱いは Session.proposalHandling（開始時にシナリオか募集からコピーした値）で判定する
+// （docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）。
 const DEFAULT_PROPOSAL_CARD_NAME = '新たな選択肢';
 
 type Db = {
@@ -310,6 +311,14 @@ const autoCombatBusy = () =>
 
 const sessionEnded = () => unprocessable('このセッションは終了しています');
 
+/** 裁定（採用・却下）できない提案を断る。終わったセッションの提案と、もう裁定した提案（二重の裁定を防ぐ） */
+const cannotRule = (s: Session, p: Proposal) =>
+  s.status === 'ended'
+    ? sessionEnded()
+    : p.status !== 'pending'
+      ? unprocessable('この提案はもう裁定しています')
+      : null;
+
 /**
  * 進行中でないセッションへのプレイ・提案・自動戦闘を断る。中断（docs/cartagraph/party-and-session.md「中断」）は
  * 終了ではないが、再開するまで何もできない
@@ -435,6 +444,10 @@ export const handlers = [
         gmName: rc.gmName,
         gmless: false,
         partyName: partyName || defaultPartyName(driverApplicant.characterName),
+        // 自動解決はソロ開始の GM 不在のセッションでだけ使う。通常の募集では GM が裁定する
+        // （docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
+        proposalHandling:
+          base.proposalHandling === 'auto-resolve' ? 'gm-required' : base.proposalHandling,
         participants: buildParticipants({
           gm: { userId: rc.gmId, name: rc.gmName },
           selected,
@@ -614,11 +627,11 @@ export const handlers = [
     const driver = s.participants.find((p) => p.role === 'driver');
     const character = db.characters.find((c) => c.id === driver?.characterId);
     const scenario = scenarioOf(s);
-    const soloGm = s.gmless;
-    // GM不在のソロの村の成長（docs/cartagraph/solo-village.md、仮ルール）。人間GMのセッションでは働かせない。
+    const gmless = s.gmless;
+    // GM不在のセッションの村の成長（docs/cartagraph/solo-village.md、仮ルール）。GM不在でないセッションでは働かせない。
     // 使える条件の検査→効果の計算→（効果を適用した後の状態で）遷移の計算、と全部通ってから書き込む
     let grown: { character: Character; lines: string[]; achievement?: CardDef } | undefined;
-    if (soloGm) {
+    if (gmless) {
       const reason = unplayableReason(card, character ? heldCards(character, s.field) : []);
       if (reason) return unprocessable(reason);
       if (card.soloEffect) {
@@ -669,7 +682,7 @@ export const handlers = [
     // GM不在のセッションで、次のシーンへ進まず簡易スクリプトも無い選択肢は、描写する人がいない。
     // システムがカードの説明文（無ければ定型文）を描写として返し、選んだカードだけを手札から消して
     // 同じシーンに留まる（docs/cartagraph/play-and-field.md「GMレスセッションでの選択肢の描写」）
-    const selfNarrated = card.kind === 'choice' && !transition && !script && soloGm;
+    const selfNarrated = card.kind === 'choice' && !transition && !script && gmless;
     if (selfNarrated) {
       s.hand = s.hand.filter((c) => c.id !== card.id);
       // 空文字の説明文は無いものとして扱う（遷移するときと同じ）
@@ -712,12 +725,12 @@ export const handlers = [
       applyTransition(
         s,
         transition,
-        soloGm ? grownFlavor || card.description || undefined : undefined,
+        gmless ? grownFlavor || card.description || undefined : undefined,
       );
       // 結末タグは、GM不在のソロでは結末に至った時点で即時に付ける（solo-village.md「結末タグ」、仮ルール）
       const actorNow = db.characters.find((c) => c.id === driver?.characterId);
       const granted =
-        soloGm && transition.endingTag && actorNow
+        gmless && transition.endingTag && actorNow
           ? grantEndingTag(actorNow, transition.endingTag)
           : undefined;
       // すでに持っていれば grantEndingTag は同じキャラクターを返す。そのときは「得た」と記録しない
@@ -802,6 +815,8 @@ export const handlers = [
     if (!s) return notFound('セッション');
     const p = s.proposals.find((x) => x.id === params.pid);
     if (!p) return notFound('提案');
+    const notRuleable = cannotRule(s, p);
+    if (notRuleable) return notRuleable;
     const { cardName, nextNodeId } = (await request.json()) as {
       cardName: string;
       nextNodeId?: unknown;
@@ -809,12 +824,13 @@ export const handlers = [
     if (!cardName?.trim())
       return HttpResponse.json({ message: 'カード名を入力してください' }, { status: 422 });
     // 採用で作るカードにも移り先を付けられる（docs/cartagraph/play-and-field.md「次のシーンへ進む」）。
-    // 候補は描写の枠と同じ narrationTargets（外したシーン・自動戦闘・NPC など・いま居るノードは除く）
+    // 候補は描写の枠と同じ sessionNarrationTargets（外したシーン・NPC など・いま居るノードは除く。
+    // 自動戦闘のノードは GM 不在のセッションでだけ含める）
     if (nextNodeId !== undefined && nextNodeId !== '') {
       if (typeof nextNodeId !== 'string')
         return unprocessable('移り先の指定の形が正しくありません');
-      const scenario = scenarioOf(s);
-      const targets = scenario ? narrationTargets(scenario.deck, s.currentScene.nodeId) : [];
+      const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
+      const targets = scenario ? sessionNarrationTargets(scenario, s) : [];
       if (!targets.some((t) => t.id === nextNodeId))
         return unprocessable(`「${nextNodeId}」へは、選択肢で進めません`);
     }
@@ -832,6 +848,8 @@ export const handlers = [
     if (!s) return notFound('セッション');
     const p = s.proposals.find((x) => x.id === params.pid);
     if (!p) return notFound('提案');
+    const notRuleable = cannotRule(s, p);
+    if (notRuleable) return notRuleable;
     const { reason } = (await request.json()) as { reason: string };
     p.status = 'rejected';
     p.resolution = reason?.trim() || '（理由未記入）';
@@ -891,6 +909,9 @@ export const handlers = [
   http.post('/api/sessions/:id/mode', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
+    // GM 不在のセッションの GM は、提案の裁定と終了だけを行う（docs/cartagraph/party-and-session.md）
+    if (s.gmless) return unprocessable('GM 不在のセッションは、システムが進行します');
+    if (s.status !== 'playing') return notPlaying(s);
     const { mode } = (await request.json()) as { mode: Session['mode'] };
     s.mode = mode;
     s.feed.unshift({
@@ -905,6 +926,8 @@ export const handlers = [
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
     s.status = 'ended';
+    // 中断中に終えたら、中断の理由は残さない（終わったセッションに「裁定待ち」を出さない）
+    delete s.suspendedFor;
     s.feed.unshift({
       id: nextId('f'),
       at: nowIso(),

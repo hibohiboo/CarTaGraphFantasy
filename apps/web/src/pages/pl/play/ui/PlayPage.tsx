@@ -36,16 +36,16 @@ export function PlayPage() {
   const resume = useResume();
   const [proposing, setProposing] = useState(false);
   const [text, setText] = useState('');
-  // GM不在のソロでは、使える条件（docs/cartagraph/solo-village.md、仮ルール）の判定にドライバーのキャラクターを使う
-  const soloGm = session.data?.gmless === true;
+  // GM不在のセッションでは、使える条件（docs/cartagraph/solo-village.md、仮ルール）の判定にドライバーのキャラクターを使う
+  const gmless = session.data?.gmless === true;
   const driverCharacterId =
     session.data?.participants.find((p) => p.role === 'driver')?.characterId ?? '';
-  const character = useCharacter(soloGm ? driverCharacterId : '');
+  const character = useCharacter(gmless ? driverCharacterId : '');
   const me = useMe();
-  // 終わったセッションでは、結末に着いて終わったかの判定と、GM不在のソロの結末タグの即時反映（仮ルール）を示すため、
+  // 終わったセッションでは、結末に着いて終わったかの判定と、GM不在のセッションの結末タグの即時反映（仮ルール）を示すため、
   // シナリオを読む
   const endedAny = session.data?.status === 'ended';
-  const endedSolo = soloGm && endedAny;
+  const endedGmless = gmless && endedAny;
   const scenario = useScenario(endedAny ? (session.data?.scenarioId ?? '') : '');
 
   if (session.isPending) return <Loading what="卓を準備中" />;
@@ -63,7 +63,7 @@ export function PlayPage() {
   const held = character.data && heldCards(character.data, s.field);
   const reasonFor = held ? (card: CardDef) => unplayableReason(card, held) : undefined;
   // 仮ルールに関わるカードが手札にあれば「仮」と出す（architecture.md「境界」）
-  const usesSoloRules = soloGm && s.hand.some(isSoloRuleCard);
+  const usesSoloRules = gmless && s.hand.some(isSoloRuleCard);
   const gotEndingTag = scenario.data?.endings.some(
     (e) => e.grantsTag && character.data?.endingTags.includes(e.grantsTag),
   );
@@ -131,7 +131,7 @@ export function PlayPage() {
         />
       )}
       <StatusLine>
-        {endedSolo && gotEndingTag && (
+        {endedGmless && gotEndingTag && (
           <span className="u-dim u-small">結末タグの即時反映は仮ルール（GM不在）</span>
         )}
         {usesSoloRules && !ended && (
@@ -141,7 +141,7 @@ export function PlayPage() {
         )}
         {play.error && <ErrorNote error={play.error} />}
         {propose.error && <ErrorNote error={propose.error} />}
-        {pending && (
+        {pending && !ended && (
           <>
             <span>「新たな選択肢を提案」で送信済み：{pending.text}</span>
             <StatusPill status="pending">GM裁定待ち</StatusPill>

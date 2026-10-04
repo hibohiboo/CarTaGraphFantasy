@@ -220,9 +220,14 @@ describe('checkResume（中断したセッションを再開できるか。docs/
   const driver = { userId: 'u-me', role: 'driver' as const };
   const gm = { userId: 'u-kirino', role: 'gm' as const };
   const session = (
-    over: { status?: Session['status']; proposals?: { status: ProposalStatus }[] } = {},
+    over: {
+      status?: Session['status'];
+      suspendedFor?: Session['suspendedFor'];
+      proposals?: { status: ProposalStatus }[];
+    } = {},
   ) => ({
     status: 'suspended' as Session['status'],
+    suspendedFor: 'proposal' as Session['suspendedFor'],
     participants: [gm, driver],
     proposals: [{ status: 'approved' as ProposalStatus }],
     ...over,
@@ -247,6 +252,14 @@ describe('checkResume（中断したセッションを再開できるか。docs/
         status: 422,
         error: '中断していないセッションは再開できません',
       });
+  });
+
+  it('無反応による中断は、再開のしかたが未決なので 422（open-questions「無反応による中断の再開」）', () => {
+    expect(checkResume(session({ suspendedFor: 'inactivity' }), 'u-me')).toEqual({
+      ok: false,
+      status: 422,
+      error: 'この中断の再開のしかたは、まだ決まっていません',
+    });
   });
 
   it('裁定待ちの提案が残っていれば 422', () => {
