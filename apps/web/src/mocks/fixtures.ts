@@ -405,6 +405,8 @@ function villageAlwaysWin(): Scenario {
   if (!base) throw new Error('scenarios/sc-village-start.json がありません');
   const s = structuredClone(base);
   s.id = 'sc-village-always-win';
+  // 村はずれの一歩は公開済みだが、テスト専用のシナリオは公開済みの一覧（GM のシナリオ一覧）に出さない
+  s.libraryStatus = 'draft';
   s.title = '（テスト用）必ず合格する村はずれ';
   s.summary = 'テスト専用シナリオ。';
   const exam = s.deck.find((n) => n.id === 'vs-exam');
@@ -645,6 +647,27 @@ export const recruitments: Recruitment[] = [
     status: 'open',
     excludedNodeIds: [],
     note: '自分の卓。灰色館をじっくり遊ぶ',
+  },
+  // 自分（u-me）が出した GM 不在の募集（docs/cartagraph/scenario-flow.md「募集とセッション」）。
+  // 応募は無く、PL が自分の PC ですぐに始める。提案は GM が後から裁定する
+  {
+    id: 'rc-gmless',
+    kind: 'gmless',
+    proposalHandling: 'gm-required',
+    scenarioId: 'sc-village-start',
+    scenarioTitle: '村はずれの一歩',
+    gmId: 'u-me',
+    gmName: 'ユウ',
+    partySize: { min: 1, max: 1 },
+    spaceModel: null,
+    recommendedCp: 0,
+    referenceTags: ['体・技・心を参照', 'HPを参照', '戦闘スキルを参照'],
+    prerequisiteTags: [],
+    applicants: [],
+    capacity: 0,
+    status: 'open',
+    excludedNodeIds: [],
+    note: '誰でもどうぞ。旅人から冒険者へ',
   },
 ];
 

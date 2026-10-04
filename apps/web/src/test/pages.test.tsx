@@ -553,15 +553,24 @@ describe('セッション選択', () => {
 
   it('定員まで埋まった募集は、応募できない表示になる', async () => {
     renderAt('/pl/sessions');
-    // シードの rc-full（村はずれの一歩・柊）は定員1に応募1
-    const full = (await screen.findByText('村はずれの一歩')).closest('article')!;
+    // シードの rc-full（村はずれの一歩・柊）は定員1に応募1。村はずれの一歩には GM 不在の募集（ユウ）もあるので、GM で絞る
+    const full = (await screen.findAllByText('村はずれの一歩'))
+      .map((el) => el.closest('article')!)
+      .find((a) => within(a).queryByText('GM：柊'))!;
     expect(within(full).getByText('募集枠が埋まっています。')).toBeInTheDocument();
     expect(within(full).queryByRole('button', { name: '応募する' })).not.toBeInTheDocument();
   });
 
   it('始めた募集は出なくなる', async () => {
+    // rc-mine（灰色館の一夜・ユウ）。ユウは GM 不在の募集（村はずれの一歩）も出しているので、題名と GM で特定する
+    const mine = () =>
+      screen
+        .queryAllByText('灰色館の一夜')
+        .map((el) => el.closest('article')!)
+        .filter((a) => within(a).queryByText('GM：ユウ'));
     renderAt('/pl/sessions');
-    expect(await screen.findByText('GM：ユウ')).toBeInTheDocument();
+    await screen.findAllByText('GM：ユウ');
+    expect(mine()).toHaveLength(1);
     await api.post('/recruitments/rc-mine/start', {
       characterIds: ['pc-jin'],
       driverCharacterId: 'pc-jin',
@@ -570,7 +579,7 @@ describe('セッション選択', () => {
     cleanup();
     renderAt('/pl/sessions');
     await screen.findAllByText('GM：霧乃');
-    expect(screen.queryByText('GM：ユウ')).not.toBeInTheDocument();
+    expect(mine()).toHaveLength(0);
   });
 });
 

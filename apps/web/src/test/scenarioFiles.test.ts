@@ -55,9 +55,10 @@ describe('scenarios/*.json の読み込み', () => {
 });
 
 describe('テスト専用の sc-village-always-win（村はずれの一歩の JSON から作る）', () => {
-  it('sc-village-start との違いは、id・題名・概要・試験官の HP・広場のテスト用カードだけ', () => {
+  it('sc-village-start との違いは、id・題名・概要・公開の状態（下書き）・試験官の HP・広場のテスト用カードだけ', () => {
     const expected = structuredClone(byId('sc-village-start'));
     expected.id = 'sc-village-always-win';
+    expected.libraryStatus = 'draft';
     expected.title = '（テスト用）必ず合格する村はずれ';
     expected.summary = 'テスト専用シナリオ。';
     const exam = expected.deck.find((n) => n.id === 'vs-exam');
@@ -132,9 +133,14 @@ describe('MSW 経由で取得する（M1 の完成の条件2）', () => {
     }
   });
 
-  it('公開済みの一覧は JSON の公開済み3本だけで、下書きの村はずれの一歩・涸れ井戸・テスト専用は出ない', async () => {
+  it('公開済みの一覧は JSON の公開済み4本（村はずれの一歩を含む）だけで、下書きの涸れ井戸・テスト専用は出ない', async () => {
     const list = await api.get<Scenario[]>('/scenarios');
-    expect(list.map((s) => s.id)).toEqual(['sc-corridor-after', 'sc-galleon', 'sc-gray-mansion']);
+    expect(list.map((s) => s.id)).toEqual([
+      'sc-corridor-after',
+      'sc-galleon',
+      'sc-gray-mansion',
+      'sc-village-start',
+    ]);
   });
 
   it('自分のシナリオの一覧には、JSON のガレオンと fixtures の下書きの涸れ井戸が両方出る', async () => {

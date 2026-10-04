@@ -639,10 +639,11 @@
     {
       "id": "vs-e-adventurer",
       "name": "冒険者として旅立つ",
-      "grantsTag": "冒険者になった"
+      "grantsTag": "冒険者になった",
+      "noReplay": true
     }
   ],
-  "libraryStatus": "draft",
+  "libraryStatus": "published",
   "updatedAt": "2026-10-03T00:00:00.000Z",
   "soloGrowth": {
     "hp": 20,

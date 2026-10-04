@@ -11,6 +11,7 @@ import {
 import type { CardDef } from '@cartagraph/domain/card/model';
 import type { Character } from '@cartagraph/domain/character/model';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
+import { replayBlockedBy, replayBlockedMessage } from '@cartagraph/domain/scenario/replay';
 import { excludesFixedNode, sessionDeck } from '@cartagraph/domain/session/deck';
 import {
   type Proposal,
@@ -27,7 +28,13 @@ import {
   narrateHand,
   narrationTargets,
 } from '@cartagraph/domain/session/narrate';
-import { buildParticipants, checkStart, defaultPartyName } from '@cartagraph/domain/session/start';
+import {
+  buildParticipants,
+  checkPlayFromRecruitment,
+  checkResume,
+  checkStart,
+  defaultPartyName,
+} from '@cartagraph/domain/session/start';
 import {
   dealChoices,
   findDeckNode,
@@ -146,10 +153,16 @@ function findSession(id: string) {
 }
 
 /** 提案の採用処理（人間GMの手動承認・GMレスの自動承認の両方から呼ぶ共通ロジック） */
-function resolveApprovedProposal(s: Session, p: Proposal, cardName: string) {
+function resolveApprovedProposal(s: Session, p: Proposal, cardName: string, nextNodeId?: string) {
   p.status = 'approved';
   p.resolution = cardName;
-  const card: CardDef = { id: nextId('ch'), kind: 'choice', name: cardName, tags: ['GM生成'] };
+  const card: CardDef = {
+    id: nextId('ch'),
+    kind: 'choice',
+    name: cardName,
+    tags: ['GM生成'],
+    ...(nextNodeId && { nextNodeId }),
+  };
   const lastChoice = s.hand.map((c) => c.kind).lastIndexOf('choice');
   s.hand.splice(lastChoice + 1, 0, card);
   s.feed.unshift({
@@ -204,7 +217,12 @@ function buildSoloCharacter(name: string, starter?: Scenario['soloStarter']): Ch
 function buildSession(
   scenario: Scenario,
   v: Pick<Session, 'gmId' | 'gmName' | 'gmless' | 'partyName' | 'participants'> &
-    Pick<Session, 'recruitmentId' | 'excludedNodeIds'> & { driver: Character; startedText: string },
+    Pick<Session, 'recruitmentId' | 'excludedNodeIds'> & {
+      driver: Character;
+      startedText: string;
+      /** GM 不在の募集から始めるときの、募集の提案の扱い（無ければシナリオの値） */
+      proposalHandling?: Session['proposalHandling'];
+    },
 ): Session | null {
   const intro = scenario.deck.find((d) => d.kind === 'intro');
   if (!intro) return null;
@@ -223,7 +241,7 @@ function buildSession(
     partyName: v.partyName,
     status: 'playing',
     mode: 'light',
-    proposalHandling: scenario.proposalHandling,
+    proposalHandling: v.proposalHandling ?? scenario.proposalHandling,
     currentScene: {
       index: 0,
       total: scenario.deck.length,
@@ -240,6 +258,13 @@ function buildSession(
     lastActivityAt: nowIso(),
     suspendAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
   };
+}
+
+/** 募集のシナリオの再挑戦不可に当たれば、その理由（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」） */
+function blockedReason(rc: Recruitment, ch: Character): string | null {
+  const scenario = db.scenarios.find((x) => x.id === rc.scenarioId);
+  const ending = scenario && replayBlockedBy(scenario, ch);
+  return ending ? replayBlockedMessage(ch.name, ending) : null;
 }
 
 function buildSoloSession(scenario: Scenario, character: Character): Session | null {
@@ -284,6 +309,13 @@ const autoCombatBusy = () =>
   unprocessable('戦闘中は、戦い方（優先順位）を決めて戦闘を終えるまで他の行動はできません');
 
 const sessionEnded = () => unprocessable('このセッションは終了しています');
+
+/**
+ * 進行中でないセッションへのプレイ・提案・自動戦闘を断る。中断（docs/cartagraph/party-and-session.md「中断」）は
+ * 終了ではないが、再開するまで何もできない
+ */
+const notPlaying = (s: Session) =>
+  s.status === 'ended' ? sessionEnded() : unprocessable('このセッションは中断しています');
 
 /**
  * 基本操作8「次のシーンへ進む」の計算結果（planTransition）をセッションへ書き込む。
@@ -338,9 +370,13 @@ export const handlers = [
     const rc = db.recruitments.find((r) => r.id === params.id);
     if (!rc) return notFound('募集');
     if (rc.status !== 'open') return unprocessable('この募集はもう始まっています');
+    if (rc.kind === 'gmless')
+      return unprocessable('GM 不在の募集には応募できません。自分の PC ですぐに始められます');
     const body = (await request.json()) as { characterId: string };
     const ch = db.characters.find((c) => c.id === body.characterId);
     if (!ch) return notFound('キャラクター');
+    const blocked = blockedReason(rc, ch);
+    if (blocked) return unprocessable(blocked);
     if (rc.applicants.some((a) => a.characterId === ch.id)) {
       return HttpResponse.json({ message: 'このPCは応募済みです' }, { status: 409 });
     }
@@ -360,6 +396,8 @@ export const handlers = [
     if (!rc) return notFound('募集');
     if (rc.gmId !== fx.me.id)
       return HttpResponse.json({ message: '自分が出した募集だけを始められます' }, { status: 403 });
+    if (rc.kind === 'gmless')
+      return unprocessable('GM 不在の募集は、PL が自分の PC で始めます（GM は始められません）');
     const body = (await readJson(request)) as {
       characterIds?: unknown;
       driverCharacterId?: unknown;
@@ -377,6 +415,12 @@ export const handlers = [
     if (!check.ok) return unprocessable(check.error);
     const base = db.scenarios.find((x) => x.id === rc.scenarioId);
     if (!base) return notFound('シナリオ');
+    // 応募のあとで結末タグを得た PC もあるので、始めるときにも再挑戦不可を確かめる
+    for (const id of selection.characterIds) {
+      const ch = db.characters.find((c) => c.id === id);
+      const blocked = ch && blockedReason(rc, ch);
+      if (blocked) return unprocessable(blocked);
+    }
     const selected = selection.characterIds.flatMap(
       (id) => rc.applicants.find((a) => a.characterId === id) ?? [],
     );
@@ -405,6 +449,55 @@ export const handlers = [
     );
     if (!session) return unprocessable('このシナリオは導入シーンを持っていません');
     rc.status = 'started';
+    db.sessions.push(session);
+    return HttpResponse.json(session, { status: 201 });
+  }),
+
+  // GM 不在の募集から、PL が自分の PC で始める（docs/cartagraph/scenario-flow.md「募集とセッション」）。
+  // 始めるたびに、その PL だけのセッションができる。募集は受付中のまま残る。検査は packages/domain の
+  // checkPlayFromRecruitment。エラーのときは何も変えない
+  http.post('/api/recruitments/:id/play', async ({ params, request }) => {
+    const rc = db.recruitments.find((r) => r.id === params.id);
+    if (!rc) return notFound('募集');
+    const body = (await readJson(request)) as { characterId?: unknown } | null;
+    const ch = db.characters.find((c) => c.id === body?.characterId);
+    if (!ch) return notFound('キャラクター');
+    const base = db.scenarios.find((x) => x.id === rc.scenarioId);
+    if (!base) return notFound('シナリオ');
+    const check = checkPlayFromRecruitment(rc, ch, {
+      meId: fx.me.id,
+      blockedBy: replayBlockedBy(base, ch),
+    });
+    if (!check.ok) return unprocessable(check.error);
+    const session = buildSession(
+      { ...base, deck: sessionDeck(base.deck, rc.excludedNodeIds) },
+      {
+        gmId: rc.gmId,
+        gmName: rc.gmName,
+        gmless: true,
+        partyName: ch.name,
+        // GM の行（提案を裁定する人）とドライバーの行。ソロ開始時の初期装備は配らない（既存の PC で始めるため）
+        participants: buildParticipants({
+          gm: { userId: rc.gmId, name: rc.gmName },
+          selected: [
+            {
+              characterId: ch.id,
+              characterName: ch.name,
+              userId: fx.me.id,
+              playerName: fx.me.name,
+            },
+          ],
+          driverCharacterId: ch.id,
+          at: nowIso(),
+        }),
+        driver: ch,
+        recruitmentId: rc.id,
+        excludedNodeIds: [...rc.excludedNodeIds],
+        proposalHandling: rc.proposalHandling,
+        startedText: `${ch.name}が GM 不在の募集から${base.title}を始めた`,
+      },
+    );
+    if (!session) return unprocessable('このシナリオは導入シーンを持っていません');
     db.sessions.push(session);
     return HttpResponse.json(session, { status: 201 });
   }),
@@ -513,7 +606,7 @@ export const handlers = [
   http.post('/api/sessions/:id/play', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
-    if (s.status === 'ended') return sessionEnded();
+    if (s.status !== 'playing') return notPlaying(s);
     if (inAutoCombat(s)) return autoCombatBusy();
     const { cardId } = (await request.json()) as { cardId: string };
     const card = s.hand.find((c) => c.id === cardId);
@@ -645,7 +738,7 @@ export const handlers = [
   http.post('/api/sessions/:id/proposals', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
-    if (s.status === 'ended') return sessionEnded();
+    if (s.status !== 'playing') return notPlaying(s);
     if (inAutoCombat(s)) return autoCombatBusy();
     if (s.proposalHandling === 'disabled')
       return HttpResponse.json(
@@ -676,7 +769,32 @@ export const handlers = [
     // シナリオが「自動解決」を選んでいれば、人間GMの裁定を待たずシステムが即座に採用する
     // （docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
     if (s.proposalHandling === 'auto-resolve') autoApproveProposal(s, proposal);
+    // GM 不在の募集から始めたセッション（裁定する人間の GM がいる）で「GM が後から裁定」なら、裁定まで中断する
+    // （docs/cartagraph/play-and-field.md「停止の粒度」の例外）。ソロ開始は裁定する人がいないので中断しない
+    if (s.gmless && s.recruitmentId && s.proposalHandling === 'gm-required') {
+      s.status = 'suspended';
+      s.suspendedFor = 'proposal';
+      s.feed.unshift({
+        id: nextId('f'),
+        at: nowIso(),
+        text: `${s.gmName}の裁定を待つため、セッションを中断した`,
+      });
+    }
     return HttpResponse.json(s, { status: 201 });
+  }),
+
+  // 中断したセッションを、ドライバーが再開する（docs/cartagraph/party-and-session.md「中断」）。
+  // 検査は packages/domain の checkResume（403 → 422 の順）
+  http.post('/api/sessions/:id/resume', ({ params }) => {
+    const s = findSession(String(params.id));
+    if (!s) return notFound('セッション');
+    const check = checkResume(s, fx.me.id);
+    if (!check.ok) return HttpResponse.json({ message: check.error }, { status: check.status });
+    s.status = 'playing';
+    delete s.suspendedFor;
+    s.feed.unshift({ id: nextId('f'), at: nowIso(), text: 'セッションを再開した' });
+    s.lastActivityAt = nowIso();
+    return HttpResponse.json(s);
   }),
 
   http.post('/api/sessions/:id/proposals/:pid/approve', async ({ params, request }) => {
@@ -684,10 +802,28 @@ export const handlers = [
     if (!s) return notFound('セッション');
     const p = s.proposals.find((x) => x.id === params.pid);
     if (!p) return notFound('提案');
-    const { cardName } = (await request.json()) as { cardName: string };
+    const { cardName, nextNodeId } = (await request.json()) as {
+      cardName: string;
+      nextNodeId?: unknown;
+    };
     if (!cardName?.trim())
       return HttpResponse.json({ message: 'カード名を入力してください' }, { status: 422 });
-    resolveApprovedProposal(s, p, cardName.trim());
+    // 採用で作るカードにも移り先を付けられる（docs/cartagraph/play-and-field.md「次のシーンへ進む」）。
+    // 候補は描写の枠と同じ narrationTargets（外したシーン・自動戦闘・NPC など・いま居るノードは除く）
+    if (nextNodeId !== undefined && nextNodeId !== '') {
+      if (typeof nextNodeId !== 'string')
+        return unprocessable('移り先の指定の形が正しくありません');
+      const scenario = scenarioOf(s);
+      const targets = scenario ? narrationTargets(scenario.deck, s.currentScene.nodeId) : [];
+      if (!targets.some((t) => t.id === nextNodeId))
+        return unprocessable(`「${nextNodeId}」へは、選択肢で進めません`);
+    }
+    resolveApprovedProposal(
+      s,
+      p,
+      cardName.trim(),
+      typeof nextNodeId === 'string' && nextNodeId ? nextNodeId : undefined,
+    );
     return HttpResponse.json(s);
   }),
 
@@ -714,6 +850,8 @@ export const handlers = [
         { message: '自分が GM のセッションだけを進行できます' },
         { status: 403 },
       );
+    // GM 不在のセッションの GM は、提案の裁定と終了だけを行う（docs/cartagraph/party-and-session.md）
+    if (s.gmless) return unprocessable('GM 不在のセッションは、システムが進行します');
     const input = parseNarration(await readJson(request));
     if (!input) return unprocessable('描写・選択肢の指定の形が正しくありません');
     const scenario = scenarioOf(s);
@@ -780,7 +918,7 @@ export const handlers = [
   http.post('/api/sessions/:id/auto-combat', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
-    if (s.status === 'ended') return sessionEnded();
+    if (s.status !== 'playing') return notPlaying(s);
     const ac = s.autoCombat;
     if (!ac) return unprocessable('いまのシーンでは自動戦闘を行いません');
     if (ac.status === 'won') return unprocessable('この戦闘には既に勝利しています');
@@ -964,12 +1102,28 @@ export const handlers = [
     const s = db.scenarios.find((x) => x.id === params.id);
     if (!s) return notFound('シナリオ');
     const body = ((await readJson(request)) ?? {}) as {
+      kind?: unknown;
       capacity: number;
       note?: string;
       excludedNodeIds?: unknown;
+      proposalHandling?: unknown;
     };
-    if (!Number.isInteger(body.capacity) || body.capacity < 1)
+    const kind = body.kind ?? 'normal';
+    if (kind !== 'normal' && kind !== 'gmless')
+      return unprocessable('募集の種類は通常か GM 不在のどちらかで指定してください');
+    // GM 不在の募集は応募を持たないので、募集人数は使わない（docs/cartagraph/scenario-flow.md「募集とセッション」）
+    if (kind === 'normal' && (!Number.isInteger(body.capacity) || body.capacity < 1))
       return unprocessable('募集人数は1以上の整数で指定してください');
+    // GM 不在の募集の提案の扱いは「GM が後から裁定」か「提案不可」。シナリオが提案不可なら提案不可だけ
+    // （docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
+    let proposalHandling: Recruitment['proposalHandling'];
+    if (kind === 'gmless') {
+      if (body.proposalHandling !== 'gm-required' && body.proposalHandling !== 'disabled')
+        return unprocessable('提案の扱いは「GM が後から裁定」か「提案不可」で指定してください');
+      if (s.proposalHandling === 'disabled' && body.proposalHandling !== 'disabled')
+        return unprocessable('このシナリオは提案不可なので、GM 不在の募集でも提案不可になります');
+      proposalHandling = body.proposalHandling;
+    }
     const excludedNodeIds = body.excludedNodeIds ?? [];
     if (!isStringArray(excludedNodeIds))
       return unprocessable('外すシーンの指定の形が正しくありません');
@@ -980,7 +1134,8 @@ export const handlers = [
       return unprocessable('導入と結末のシーンは外せません（外すシーンの中にある場合も含む）');
     const rc: Recruitment = {
       id: nextId('rc'),
-      kind: 'normal',
+      kind,
+      ...(proposalHandling && { proposalHandling }),
       scenarioId: s.id,
       scenarioTitle: s.title,
       gmId: fx.me.id,
@@ -991,7 +1146,7 @@ export const handlers = [
       referenceTags: s.referenceTags,
       prerequisiteTags: s.prerequisiteTags,
       applicants: [],
-      capacity: body.capacity,
+      capacity: kind === 'gmless' ? 0 : body.capacity,
       status: 'open',
       excludedNodeIds,
       note: body.note,
