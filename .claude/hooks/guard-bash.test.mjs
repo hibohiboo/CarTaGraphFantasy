@@ -12,6 +12,16 @@ describe('インタプリタへの heredoc', () => {
     assert.ok(blocked('cd x && node <<EOF\nconsole.log(1)\nEOF'));
   });
 
+  it('ファイル名の拡張子（.tsx・.py）をインタプリタと読まない（2026-10-05 の誤検知）', () => {
+    assert.ok(!blocked("cat >> HomePage.tsx <<'EOF'\nx\nEOF"));
+    assert.ok(!blocked("cat > tool.py <<'EOF'\nprint(1)\nEOF"));
+  });
+
+  it('パスで書いたインタプリタ・2行目以降のインタプリタへの heredoc は止める', () => {
+    assert.ok(blocked("/usr/bin/python3 <<'EOF'\nprint(1)\nEOF"));
+    assert.ok(blocked("cat <<'A'\nx\nA\npython <<'B'\nprint(1)\nB"));
+  });
+
   it('インタプリタ以外の heredoc・クォートの中の << は止めない', () => {
     assert.ok(!blocked("cat <<'EOF' > a.txt\nx\nEOF"));
     assert.ok(!blocked('node scripts/x.mjs "a << b"'));

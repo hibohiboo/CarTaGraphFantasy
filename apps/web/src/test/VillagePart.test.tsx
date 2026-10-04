@@ -6,14 +6,12 @@
 import { deriveArchetype } from '@cartagraph/domain/character/archetype';
 import type { Character } from '@cartagraph/domain/character/model';
 import type { Session } from '@cartagraph/domain/session/model';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
-import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { routeObjects } from '@/app/router';
 import { api } from '@/shared/api/api';
 import { scenarios } from '../mocks/fixtures';
+import { renderAt } from './renderAt';
 
 /** 村パートで得る HP・行動値（村はずれの一歩の JSON の値） */
 const soloGrowth = (() => {
@@ -21,17 +19,6 @@ const soloGrowth = (() => {
   if (!g) throw new Error('sc-village-start に soloGrowth がありません');
   return g;
 })();
-
-function renderAt(path: string) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const router = createMemoryRouter(routeObjects, { initialEntries: [path] });
-  render(
-    <QueryClientProvider client={qc}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
-  );
-  return router;
-}
 
 const start = (scenarioId: string, name = '新人') =>
   api.post<Session>(`/scenarios/${scenarioId}/start-solo`, { name });

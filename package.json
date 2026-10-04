@@ -9,6 +9,7 @@
     "docs:preview": "vitepress preview docs",
     "web:dev": "pnpm --filter @cartagraph/web dev",
     "web:dev:agent": "pnpm --filter @cartagraph/web dev --port 5174",
+    "web:dev:agent:stop": "node scripts/stop-dev-agent.mjs",
     "web:build": "pnpm --filter @cartagraph/web build",
     "web:test": "pnpm --filter @cartagraph/web test",
     "web:e2e": "pnpm --filter @cartagraph/web e2e",

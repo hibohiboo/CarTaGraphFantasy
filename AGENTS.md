@@ -31,6 +31,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 ```sh
 pnpm web:dev          # http://localhost:5173（MSW 有効）。人間が手で起動する用
 pnpm web:dev:agent    # http://localhost:5174。エージェントがブラウザで確かめる用（人間の開発サーバーと取り合わない）
+pnpm web:dev:agent:stop # 上の開発サーバーを止める（5174 番の vite だけを止める。残った子プロセスも止める）
 pnpm web:test         # Vitest（MSW の node サーバーで全ページを描画）
 pnpm web:typecheck    # tsc
 pnpm domain:test      # Vitest（packages/domain の純粋関数）

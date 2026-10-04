@@ -15,7 +15,9 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const INTERPRETER_HEREDOC = /\b(?:python3?|py|node|tsx|deno|bun)\b[^\n|;&]*<</;
+// インタプリタの名前は、行頭・空白・区切り記号・パスの / のあとにあるときだけ見る。`cat >> Page.tsx <<'EOF'` の
+// 拡張子 .tsx・.py をインタプリタと読まないため（2026-10-05、PR #16 の振り返り。\b は . のあとも切れ目になる）
+const INTERPRETER_HEREDOC = /(?:^|[\s;&|(/])(?:python3?|py|node|tsx|deno|bun)\b[^\n|;&]*<</m;
 const NO_VERIFY = /\bgit\b[^\n|;&]*\b(?:commit|push)\b[^\n|;&]*--no-verify\b/;
 // `python -`・`node -` のように、引数に単独の `-` を渡す（`python -c` や `--` は止めない）。
 // インタプリタがコマンドの先頭（行頭か ; & | の後、環境変数の代入の後）にあるときだけ見る
