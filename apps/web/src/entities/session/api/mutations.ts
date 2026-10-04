@@ -44,6 +44,23 @@ export function useStartSession() {
   });
 }
 
+/**
+ * GM 不在の募集から、自分の PC で始める（docs/cartagraph/scenario-flow.md「募集とセッション」）。
+ * 募集は受付中のまま残るが、募集の一覧（始まったセッションの件数）を出す画面のために無効化する
+ */
+export function usePlayFromRecruitment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { recruitmentId: string; characterId: string }) =>
+      api.post<Session>(`/recruitments/${v.recruitmentId}/play`, { characterId: v.characterId }),
+    onSuccess: (s) => {
+      qc.setQueryData(keys.session(s.id), s);
+      void qc.invalidateQueries({ queryKey: keys.recruitments });
+      void qc.invalidateQueries({ queryKey: keys.sessions });
+    },
+  });
+}
+
 export function useApply() {
   const qc = useQueryClient();
   return useMutation({
@@ -89,11 +106,20 @@ export const usePropose = () =>
     api.post<Session>(`/sessions/${v.sessionId}/proposals`, { text: v.text }),
   );
 
+/** 移り先（nextNodeId）を付けると、作るカードでそのノードへ進める（docs/cartagraph/play-and-field.md「次のシーンへ進む」） */
 export const useApproveProposal = () =>
-  useSessionMutation((v: { sessionId: string; proposalId: string; cardName: string }) =>
-    api.post<Session>(`/sessions/${v.sessionId}/proposals/${v.proposalId}/approve`, {
-      cardName: v.cardName,
-    }),
+  useSessionMutation(
+    (v: { sessionId: string; proposalId: string; cardName: string; nextNodeId?: string }) =>
+      api.post<Session>(`/sessions/${v.sessionId}/proposals/${v.proposalId}/approve`, {
+        cardName: v.cardName,
+        ...(v.nextNodeId && { nextNodeId: v.nextNodeId }),
+      }),
+  );
+
+/** 中断したセッションを、ドライバーが再開する（docs/cartagraph/party-and-session.md「中断」） */
+export const useResume = () =>
+  useSessionMutation((v: { sessionId: string }) =>
+    api.post<Session>(`/sessions/${v.sessionId}/resume`),
   );
 
 export const useRejectProposal = () =>
@@ -145,7 +171,9 @@ export function useCreateRecruitment() {
   return useMutation({
     mutationFn: (v: {
       scenarioId: string;
-      capacity: number;
+      kind: Recruitment['kind'];
+      capacity?: number;
+      proposalHandling?: Recruitment['proposalHandling'];
       note?: string;
       excludedNodeIds?: string[];
     }) => api.post<Recruitment>(`/scenarios/${v.scenarioId}/recruitments`, v),

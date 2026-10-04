@@ -44,20 +44,33 @@ export function GmSessionListPage() {
       <div className={s.stack}>
         <Panel
           title="自分の募集"
-          sub="応募の中から参加させるPCとドライバーを選んで、セッションを始める。始めた募集は一覧から消える。"
+          sub="通常の募集は、応募の中から参加させるPCとドライバーを選んで、セッションを始める（始めた募集は一覧から消える）。GM 不在の募集は、PL が自分のPCで自由に始める（受付中のまま残る）。"
         >
           {myRecruitments.length === 0 && <EmptyNote>受付中の募集はありません。</EmptyNote>}
           <div className={s.cardsRow}>
-            {myRecruitments.map((rc) => (
-              <StartFromRecruitment key={rc.id} rc={rc} />
-            ))}
+            {myRecruitments.map((rc) =>
+              rc.kind === 'gmless' ? (
+                <article key={rc.id} className={s.recruit}>
+                  <h3 className={s.recruitTitle}>{rc.scenarioTitle}</h3>
+                  {rc.note && <p className={s.recruitSub}>{rc.note}</p>}
+                  <StatusPill status="neutral">GM 不在</StatusPill>
+                  <hr className={s.recruitDivider} />
+                  <p className={s.recruitNote}>
+                    PL が自由に始める。始まったセッション{' '}
+                    {sessions.data.filter((x) => x.recruitmentId === rc.id).length} 件
+                  </p>
+                </article>
+              ) : (
+                <StartFromRecruitment key={rc.id} rc={rc} />
+              ),
+            )}
           </div>
         </Panel>
         <Panel title="GMとして進行中">
           {mine.length === 0 && <EmptyNote>GMを務めるセッションはまだありません。</EmptyNote>}
           <div className={s.list}>
             {mine.map((x) => (
-              <div key={x.id} className={s.listItem}>
+              <div key={x.id} className={s.listItem} data-session-row>
                 <div className={s.itemLeft}>
                   <RoleBadge badgeRole="gm">GM</RoleBadge>
                   <span>
@@ -69,12 +82,17 @@ export function GmSessionListPage() {
                   </span>
                 </div>
                 <span className="u-row">
+                  {x.gmless && <StatusPill status="neutral">GM 不在</StatusPill>}
                   <StatusPill status={x.status === 'playing' ? 'good' : 'neutral'}>
                     {STATUS_LABEL[x.status]}
                   </StatusPill>
-                  {x.proposals.some((p) => p.status === 'pending') && (
-                    <StatusPill status="pending">裁定待ちあり</StatusPill>
+                  {x.suspendedFor === 'proposal' && (
+                    <StatusPill status="pending">提案の裁定待ち</StatusPill>
                   )}
+                  {x.suspendedFor !== 'proposal' &&
+                    x.proposals.some((p) => p.status === 'pending') && (
+                      <StatusPill status="pending">裁定待ちあり</StatusPill>
+                    )}
                   <span className={s.itemTime}>最終反応 {relativeTime(x.lastActivityAt)}</span>
                 </span>
               </div>

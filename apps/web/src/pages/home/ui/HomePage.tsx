@@ -18,8 +18,9 @@ export function HomePage() {
   const sessions = useSessions();
   const characters = useCharacters();
 
+  // 中断中（提案の裁定待ちなど）も、再開しに戻れるように出す（docs/cartagraph/party-and-session.md「中断」）
   const mySessions = (sessions.data ?? []).filter(
-    (x) => x.status === 'playing' && x.participants.some((p) => p.userId === me.data?.id),
+    (x) => x.status !== 'ended' && x.participants.some((p) => p.userId === me.data?.id),
   );
   const myChars = (characters.data ?? []).filter((c) => c.ownerId === me.data?.id);
 
@@ -49,7 +50,9 @@ export function HomePage() {
                 </span>
               )}
               {mySessions.map((x) => {
-                const mine = x.participants.find((p) => p.userId === me.data?.id);
+                // GM とドライバーを兼ねる（GM 不在の募集・GM が PL を兼ねる）なら、プレイ画面へ行くドライバーの行を優先する
+                const rows = x.participants.filter((p) => p.userId === me.data?.id);
+                const mine = rows.find((p) => p.role === 'driver') ?? rows[0];
                 const to =
                   mine?.role === 'gm' ? `/gm/sessions/${x.id}` : `/pl/sessions/${x.id}/play`;
                 return (
@@ -62,7 +65,10 @@ export function HomePage() {
                           : 'ナビゲーター'}
                     </RoleBadge>
                     <Link to={to}>{x.scenarioTitle}</Link>
-                    <span className="u-dim u-small">{x.currentScene.name}</span>
+                    <span className="u-dim u-small">
+                      {x.currentScene.name}
+                      {x.status === 'suspended' && '（中断中）'}
+                    </span>
                   </span>
                 );
               })}

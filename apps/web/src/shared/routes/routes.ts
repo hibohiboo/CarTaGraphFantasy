@@ -42,7 +42,8 @@ export const routes: RouteMeta[] = [
     path: '/pl/sessions',
     title: 'セッション選択',
     group: 'pl',
-    description: '募集中のシナリオを見て、自分または借りたPCで応募する',
+    description:
+      '募集中のシナリオを見て、自分または借りたPCで応募する。GM 不在の募集に絞り込み、自分のPCですぐに始める',
     nav: true,
   },
   {
@@ -98,14 +99,15 @@ export const routes: RouteMeta[] = [
     path: '/gm/scenarios/:scenarioId',
     title: 'シナリオのカスタマイズと募集',
     group: 'gm',
-    description: '使うシーン・カードを取捨選択し、募集を出す',
+    description: '使うシーン・カードを取捨選択し、募集（通常／GM 不在）を出す',
     example: '/gm/scenarios/sc-gray-mansion',
   },
   {
     path: '/gm/sessions',
     title: 'セッション管理（GM）',
     group: 'gm',
-    description: '自分の募集からセッションを始める・自分がGMを務めるセッションの一覧',
+    description:
+      '自分の募集からセッションを始める（GM 不在の募集は始まったセッションの件数）・自分がGMを務めるセッションの一覧',
     nav: true,
   },
   {

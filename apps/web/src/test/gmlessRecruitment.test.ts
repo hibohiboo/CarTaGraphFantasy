@@ -7,42 +7,17 @@ import type { Recruitment, Session } from '@cartagraph/domain/session/model';
 import { describe, expect, it } from 'vitest';
 import * as fx from '@/mocks/fixtures';
 import { api } from '@/shared/api/api';
+import { clearVillageWith, createGmlessRecruitment, playFromRecruitment } from './gmlessHelpers';
 
 const createRecruitment = (scenarioId: string, body: object) =>
   api.post<Recruitment>(`/scenarios/${scenarioId}/recruitments`, body);
-const gmless = (scenarioId: string, over: object = {}) =>
-  createRecruitment(scenarioId, { kind: 'gmless', proposalHandling: 'gm-required', ...over });
-const playFrom = (recruitmentId: string, characterId: string) =>
-  api.post<Session>(`/recruitments/${recruitmentId}/play`, { characterId });
+const gmless = createGmlessRecruitment;
+const playFrom = playFromRecruitment;
 const play = (sessionId: string, cardId: string) =>
   api.post<Session>(`/sessions/${sessionId}/play`, { cardId });
 const getSession = (id: string) => api.get<Session>(`/sessions/${id}`);
 const resume = (id: string) => api.post<Session>(`/sessions/${id}/resume`);
 const handIds = (s: Session) => s.hand.map((c) => c.id);
-
-/**
- * 結末タグを得る手順：sc-village-always-win（村はずれの一歩の複製。試験官の HP が 1）の GM 不在の募集を
- * 迅で遊び、結末まで進める。結末タグの文字列が同じなので、本物の村はずれの一歩でも再挑戦不可になる
- */
-async function clearVillageWith(characterId: string) {
-  const rc = await gmless('sc-village-always-win');
-  const s = await playFrom(rc.id, characterId);
-  for (const id of [
-    'vs-to-square',
-    'vs-to-quest-0',
-    'vs-quest-0-body',
-    'vs-to-shop',
-    'vs-learn-c-slash',
-    'vs-shop-leave',
-    'vs-to-guild',
-    'vs-to-exam',
-  ])
-    await play(s.id, id);
-  await api.post(`/sessions/${s.id}/auto-combat`, {
-    priority: [{ cardId: 'c-slash', when: 'always' }],
-  });
-  return play(s.id, 'vs-accept');
-}
 
 const characterOf = (id: string) => api.get<Character>(`/characters/${id}`);
 
