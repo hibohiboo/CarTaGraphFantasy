@@ -13,3 +13,4 @@
 - Bash ツールで長い heredoc（`cat <<'EOF' ... EOF` 等）を使って大きなファイルを書くと、内容が途中で切れて壊れることがある。大きなファイルは Write ツールで書く（LF 改行で書かれることは確認済み）。
 - 同じ理由で、複数のファイルを書き換えるスクリプト（Python など）も heredoc で渡さず、Write でスクラッチパッドにファイルとして書いてから実行する（インタプリタへの heredoc と、git フックの省略は `.claude/hooks/guard-bash.mjs` が止める）。heredoc ではバックスラッシュの解釈が崩れ、途中まで書き換えて止まることがある。日本語を出力するスクリプトは `PYTHONIOENCODING=utf-8` を付けて実行する（Windows のコンソールは cp932 で、出力の途中で例外になる）。
 - Bash ツールは Git Bash で動くので、`/` で始まる値（`WEB_BASE=/CarTaGraphFantasy/app/` など）を渡すと Windows のパスに書き換えられる。ビルドやサーバーを起動する前に `docs/architecture/web-app.md`「ローカル開発の注意」を読む。
+- ブラウザで確かめるときは `pnpm web:dev:agent`（http://localhost:5174）をバックグラウンドで起動する。Windows では、そのタスクを止めても vite の子プロセスが残り、5174 番を使い続ける（次の起動が strictPort で失敗する）。止めたあとは、5174 番を待ち受けるプロセスが `vite.js --port 5174` であることを確かめてから止める（PowerShell の `Get-NetTCPConnection -LocalPort 5174` で探す）。
