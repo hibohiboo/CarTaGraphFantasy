@@ -1039,7 +1039,21 @@ describe('GM 不在の募集', () => {
         screen.getAllByRole('link', { name: '村はずれの一歩' }).map((l) => l.getAttribute('href')),
       ).toContain(`/pl/sessions/${s.id}/play`),
     );
-    expect(screen.getByText(/（中断中）/)).toBeInTheDocument();
+    expect(screen.getByText('中断中：GM の裁定待ち')).toBeInTheDocument();
+    expect(screen.queryByText('中断中：再開できます')).not.toBeInTheDocument();
+  });
+
+  it('ホーム：GM が裁定すると、中断中のセッションに「再開できます」と出る', async () => {
+    const s = await playFromRecruitment('rc-gmless', 'pc-jin');
+    const suspended = await api.post<Session>(`/sessions/${s.id}/proposals`, {
+      text: '鍬を借りたい',
+    });
+    await api.post(`/sessions/${s.id}/proposals/${suspended.proposals[0].id}/approve`, {
+      cardName: '鍬を借りる',
+    });
+    renderAt('/home');
+    expect(await screen.findByText('中断中：再開できます')).toBeInTheDocument();
+    expect(screen.queryByText('中断中：GM の裁定待ち')).not.toBeInTheDocument();
   });
 
   it('通し：GM が GM 不在で募集 → PL が絞り込んで迅で始める → 提案して中断 → GM が採用 → 再開 → 結末 → 迅は再挑戦不可', async () => {

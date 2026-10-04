@@ -1,12 +1,14 @@
 import { deriveArchetype } from '@cartagraph/domain/character/archetype';
 import { ARCHETYPE_LABEL } from '@cartagraph/domain/character/model';
+import type { Session } from '@cartagraph/domain/session/model';
+import { checkResume } from '@cartagraph/domain/session/start';
 import { Link } from 'react-router';
 import { useCharacters } from '@/entities/character/api/queries';
 import { useSessions } from '@/entities/session/api/queries';
 import { useMe } from '@/entities/user/api/queries';
 import { routes } from '@/shared/routes/routes';
 import s from '@/shared/ui/page.module.css';
-import { Loading, RoleBadge } from '@/shared/ui/ui';
+import { Loading, RoleBadge, StatusPill } from '@/shared/ui/ui';
 
 // トップページはプレイヤーの入り口だけをメインで見せる（「全部見える」トップにしない）。
 // GM・シナリオ作成者向けの入り口はヘッダー下のフッターへ、システム管理者向けはさらに
@@ -65,10 +67,8 @@ export function HomePage() {
                           : 'ナビゲーター'}
                     </RoleBadge>
                     <Link to={to}>{x.scenarioTitle}</Link>
-                    <span className="u-dim u-small">
-                      {x.currentScene.name}
-                      {x.status === 'suspended' && '（中断中）'}
-                    </span>
+                    <span className="u-dim u-small">{x.currentScene.name}</span>
+                    {x.status === 'suspended' && <SuspendedPill session={x} meId={me.data?.id} />}
                   </span>
                 );
               })}
@@ -100,4 +100,16 @@ export function HomePage() {
       </p>
     </>
   );
+}
+
+/**
+ * 中断中のセッションが、いま再開できるか（docs/cartagraph/party-and-session.md「中断」）。GM の裁定が済んで
+ * 自分が再開できるようになったことを、プレイ画面を開かなくても分かるようにする。判定はサーバーと同じ checkResume
+ */
+function SuspendedPill({ session, meId }: { session: Session; meId?: string }) {
+  if (meId && checkResume(session, meId).ok)
+    return <StatusPill status="approved">中断中：再開できます</StatusPill>;
+  if (session.proposals.some((p) => p.status === 'pending'))
+    return <StatusPill status="pending">中断中：GM の裁定待ち</StatusPill>;
+  return <StatusPill status="neutral">中断中</StatusPill>;
 }
