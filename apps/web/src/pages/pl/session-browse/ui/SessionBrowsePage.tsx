@@ -94,7 +94,7 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
   const applied = rc.applicants.some((a) => a.userId === myId);
   const closed = !gmless && rc.applicants.length >= rc.capacity;
   // 再挑戦不可の判定にシナリオが要るので、読み込むまでは始めない・応募しない
-  const busy = apply.isPending || play.isPending || scenario.isPending;
+  const busy = apply.isPending || play.isPending || scenario.isPending || !!scenario.error;
 
   return (
     <article className={s.recruit}>

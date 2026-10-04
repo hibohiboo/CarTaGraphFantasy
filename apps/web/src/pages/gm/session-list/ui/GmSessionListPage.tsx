@@ -85,7 +85,8 @@ export function GmSessionListPage() {
                   {x.status === 'suspended' && x.suspendedFor === 'proposal' && (
                     <StatusPill status="pending">提案の裁定待ち</StatusPill>
                   )}
-                  {x.suspendedFor !== 'proposal' &&
+                  {x.status !== 'ended' &&
+                    x.suspendedFor !== 'proposal' &&
                     x.proposals.some((p) => p.status === 'pending') && (
                       <StatusPill status="pending">裁定待ちあり</StatusPill>
                     )}

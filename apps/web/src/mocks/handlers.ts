@@ -926,8 +926,15 @@ export const handlers = [
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
     s.status = 'ended';
-    // 中断中に終えたら、中断の理由は残さない（終わったセッションに「裁定待ち」を出さない）
+    // 中断中に終えたら、中断の理由は残さない。裁定待ちの提案は、もう裁定できないので「今回は使われなかった」で閉じる
+    // （裁定より先に別の選択肢が選ばれたときと同じ扱い。docs/cartagraph/play-and-field.md「元の選択肢は選べるか」）
     delete s.suspendedFor;
+    for (const p of s.proposals) {
+      if (p.status === 'pending') {
+        p.status = 'approved-unused';
+        p.resolution = 'セッションが終わったため、この提案は今回使われなかった。';
+      }
+    }
     s.feed.unshift({
       id: nextId('f'),
       at: nowIso(),

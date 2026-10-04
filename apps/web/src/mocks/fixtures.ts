@@ -871,7 +871,7 @@ export const sessions: Session[] = [
     suspendAt: ago(24 * 11),
   },
   {
-    // テスト専用：人間GMのセッションで、村の成長（GM不在のソロの仮ルール）が働かないことの確認用。
+    // テスト専用：GM不在でないセッションで、村の成長（GM不在のセッションの仮ルール）が働かないことの確認用。
     // 手札は依頼の解決カード（成長の効果）とお店で習うカード（使える条件＋成長の効果）
     id: 'ss-village-human-gm',
     scenarioId: 'sc-village-always-win',

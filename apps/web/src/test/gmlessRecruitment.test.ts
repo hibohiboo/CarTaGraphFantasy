@@ -392,6 +392,8 @@ describe('実装後の AI レビューで足した検査', () => {
     const ended = await api.post<Session>(`/sessions/${s.id}/end`);
     expect(ended.status).toBe('ended');
     expect(ended.suspendedFor).toBeUndefined();
+    // 裁定待ちの提案は「今回は使われなかった」で閉じ、裁定待ちのまま残らない
+    expect(ended.proposals.map((p) => p.status)).toEqual(['approved-unused']);
   });
 
   it('裁定済みの提案をもう一度採用・却下すると 422 で、手札は増えない。終わったセッションの提案は裁定できない', async () => {
