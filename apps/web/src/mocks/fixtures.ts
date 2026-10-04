@@ -550,6 +550,7 @@ export const scenarios: Scenario[] = [
 export const recruitments: Recruitment[] = [
   {
     id: 'rc-1',
+    kind: 'normal',
     scenarioId: 'sc-gray-mansion',
     scenarioTitle: '灰色館の一夜',
     gmId: 'u-kirino',
@@ -568,6 +569,7 @@ export const recruitments: Recruitment[] = [
   },
   {
     id: 'rc-2',
+    kind: 'normal',
     scenarioId: 'sc-galleon',
     scenarioTitle: '鉄鎖のガレオン船',
     gmId: 'u-hiiragi',
@@ -587,6 +589,7 @@ export const recruitments: Recruitment[] = [
   },
   {
     id: 'rc-3',
+    kind: 'normal',
     scenarioId: 'sc-corridor-after',
     scenarioTitle: '灯りの回廊・後日談',
     gmId: 'u-kirino',
@@ -604,6 +607,7 @@ export const recruitments: Recruitment[] = [
   // 定員まで埋まった募集（PL の一覧で「募集枠が埋まっています」になる）
   {
     id: 'rc-full',
+    kind: 'normal',
     scenarioId: 'sc-village-start',
     scenarioTitle: '村はずれの一歩',
     gmId: 'u-hiiragi',
@@ -623,6 +627,7 @@ export const recruitments: Recruitment[] = [
   // 自分（u-me）が GM の募集。自分の PC と、カヤの PC が応募している（募集からセッションを始めるテスト用）
   {
     id: 'rc-mine',
+    kind: 'normal',
     scenarioId: 'sc-gray-mansion',
     scenarioTitle: '灰色館の一夜',
     gmId: 'u-me',

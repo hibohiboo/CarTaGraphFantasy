@@ -980,6 +980,7 @@ export const handlers = [
       return unprocessable('導入と結末のシーンは外せません（外すシーンの中にある場合も含む）');
     const rc: Recruitment = {
       id: nextId('rc'),
+      kind: 'normal',
       scenarioId: s.id,
       scenarioTitle: s.title,
       gmId: fx.me.id,

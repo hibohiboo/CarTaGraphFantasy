@@ -2,7 +2,10 @@
 // 「セッション開始までの全体フロー」5、party-and-session.md「ドライバーとナビゲーター」）。
 // 画面（開始のフォーム）とサーバー（MSW の開始 API）の両方がここを使う。
 
-import type { Participant, Recruitment } from './model';
+import type { Character } from '../character/model';
+import type { EndingDef } from '../scenario/model';
+import { replayBlockedMessage } from '../scenario/replay';
+import type { Participant, Recruitment, Session } from './model';
 
 export interface StartSelection {
   /** 参加させる PC（応募の characterId） */
@@ -71,4 +74,42 @@ export function buildParticipants(v: {
     ...driver.map((a) => row(a, 'driver')),
     ...navigators.map((a) => row(a, 'navigator')),
   ];
+}
+
+/**
+ * GM 不在の募集から、この PC で始められるか（docs/cartagraph/scenario-flow.md「募集とセッション」）。
+ * エラーは上から順に最初の1つを返す。blockedBy は replayBlockedBy（scenario/replay.ts）の結果
+ */
+export function checkPlayFromRecruitment(
+  recruitment: Pick<Recruitment, 'kind'>,
+  character: Pick<Character, 'name' | 'ownerId'>,
+  v: { meId: string; blockedBy: EndingDef | null },
+): { ok: false; error: string } | { ok: true } {
+  if (recruitment.kind !== 'gmless')
+    return { ok: false, error: 'この募集は GM 不在の募集ではありません' };
+  // 即時反映の前提「所有者＝ドライバー」を崩さないため、借りた PC は使えない（solo-village.md「適用範囲」）
+  if (character.ownerId !== v.meId)
+    return { ok: false, error: 'GM 不在の募集では、自分が所有者の PC だけで遊べます' };
+  if (v.blockedBy) return { ok: false, error: replayBlockedMessage(character.name, v.blockedBy) };
+  return { ok: true };
+}
+
+/**
+ * 中断したセッションを再開できるか（docs/cartagraph/party-and-session.md「中断」）。再開するのはドライバー。
+ * 提案の裁定待ちで中断したセッションは、GM が裁定してから再開する。エラーは上から順に最初の1つを返す
+ */
+export function checkResume(
+  session: Pick<Session, 'status'> & {
+    participants: Pick<Session['participants'][number], 'userId' | 'role'>[];
+    proposals: Pick<Session['proposals'][number], 'status'>[];
+  },
+  meId: string,
+): { ok: false; status: 403 | 422; error: string } | { ok: true } {
+  if (!session.participants.some((p) => p.role === 'driver' && p.userId === meId))
+    return { ok: false, status: 403, error: 'ドライバーだけが再開できます' };
+  if (session.status !== 'suspended')
+    return { ok: false, status: 422, error: '中断していないセッションは再開できません' };
+  if (session.proposals.some((p) => p.status === 'pending'))
+    return { ok: false, status: 422, error: 'GM の裁定を待っています' };
+  return { ok: true };
 }

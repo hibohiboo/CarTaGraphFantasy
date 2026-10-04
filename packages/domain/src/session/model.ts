@@ -13,6 +13,17 @@ import type { ProposalHandling, SpaceModel } from '../scenario/model';
  */
 export interface Recruitment {
   id: string;
+  /**
+   * 通常の募集（応募を受けて GM が始める。募集1つからセッション1つ）か、GM 不在の募集（応募は無く、PL が自分の
+   * PC ですぐ始める。受付中のまま残り続け、募集1つからセッションが複数）か（docs/cartagraph/scenario-flow.md
+   * 「募集とセッション」）。GM 不在の募集は applicants が空で、capacity は 0
+   */
+  kind: 'normal' | 'gmless';
+  /**
+   * GM 不在の募集だけが持つ、提案の扱い（GM が後から裁定＝gm-required／提案不可＝disabled）。
+   * 始めたセッションへコピーする（docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
+   */
+  proposalHandling?: 'gm-required' | 'disabled';
   scenarioId: string;
   scenarioTitle: string;
   gmId: string;
@@ -110,6 +121,11 @@ export interface Session {
   gmless: boolean;
   partyName: string;
   status: SessionStatus['status'];
+  /**
+   * 中断の理由（status が suspended のときだけ。docs/cartagraph/party-and-session.md「中断」）。
+   * いま書き込むのは proposal（GM 不在の募集のセッションで提案の裁定を待つ）だけ
+   */
+  suspendedFor?: 'inactivity' | 'proposal';
   mode: SessionMode;
   /** セッション開始時にScenarioからコピーする（セッションスナップショットの一部） */
   proposalHandling: ProposalHandling;
