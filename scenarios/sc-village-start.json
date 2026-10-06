@@ -15,6 +15,10 @@
   "recommendedCp": 0,
   "baseCp": 0,
   "proposalHandling": "auto-resolve",
+  "soloGrowth": {
+    "hp": 20,
+    "baseActionValue": 10
+  },
   "deck": [
     {
       "id": "vs-intro",
@@ -418,7 +422,6 @@
             "hasTags": ["引換"]
           },
           "soloEffect": {
-            "consumeTag": "引換",
             "gainCards": [
               {
                 "id": "c-slash",
@@ -438,7 +441,8 @@
                   }
                 }
               }
-            ]
+            ],
+            "consumeTag": "引換"
           }
         },
         {
@@ -454,7 +458,6 @@
             "hasTags": ["引換"]
           },
           "soloEffect": {
-            "consumeTag": "引換",
             "gainCards": [
               {
                 "id": "c-heavy-blow",
@@ -474,7 +477,8 @@
                   }
                 }
               }
-            ]
+            ],
+            "consumeTag": "引換"
           }
         },
         {
@@ -490,7 +494,6 @@
             "hasTags": ["引換"]
           },
           "soloEffect": {
-            "consumeTag": "引換",
             "gainCards": [
               {
                 "id": "c-quick-thrust",
@@ -510,7 +513,8 @@
                   }
                 }
               }
-            ]
+            ],
+            "consumeTag": "引換"
           }
         },
         {
@@ -526,7 +530,6 @@
             "hasTags": ["引換"]
           },
           "soloEffect": {
-            "consumeTag": "引換",
             "gainCards": [
               {
                 "id": "c-first-aid",
@@ -546,7 +549,8 @@
                   }
                 }
               }
-            ]
+            ],
+            "consumeTag": "引換"
           }
         },
         {
@@ -644,9 +648,5 @@
     }
   ],
   "libraryStatus": "published",
-  "updatedAt": "2026-10-03T00:00:00.000Z",
-  "soloGrowth": {
-    "hp": 20,
-    "baseActionValue": 10
-  }
+  "updatedAt": "2026-10-03T00:00:00.000Z"
 }

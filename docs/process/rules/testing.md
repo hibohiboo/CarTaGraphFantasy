@@ -6,6 +6,7 @@ paths:
   - "apps/web/src/mocks/**"
   - "scenarios/**"
   - "apps/web/vite.config.ts"
+  - "apps/web/vite/**"
   - "apps/web/e2e/**"
   - "apps/web/playwright.config.ts"
 ---
@@ -45,11 +46,12 @@ paths:
 
 ## シードデータ（MSW）
 
-- モックデータの定義は、遊べるシナリオの `scenarios/*.json` と、それ以外（テスト専用のシナリオを含む）の `apps/web/src/mocks/fixtures.ts` の**2箇所**に限る。テストやページの中で独自のマジック値を作らない。テストでシナリオの値を使うときは、書き写さずに `fixtures.ts` の `scenarios` から引く
+- モックデータの定義は、遊べるシナリオの `scenarios/*.json` と、それ以外（デモの下書き・テスト専用のシナリオを含む）の `apps/web/src/mocks/fixtures.ts` の**2箇所**に限る。テストやページの中で独自のマジック値を作らない。テストでシナリオの値を使うときは、書き写さずに `fixtures.ts` の `scenarios` から引く
 - テスト専用のシナリオを遊べるシナリオから作るときは、`structuredClone` で深く複製してから差し替える（`scenarios/*.json` から読んだオブジェクトを書き換えない）
 - 各テストの後に `resetDb()` で状態を戻す（`src/test/setup.ts`）。テストは実行順に依存しない
 - 変更を伴うテストは、既存のシードを書き換えるのではなく、テストの中で操作して結果を確認し、`resetDb()` に後始末を任せる
 - 未処理のリクエストはエラーにする（`onUnhandledRequest: 'error'`）。新しい API を呼ぶなら先に `handlers.ts` へ追加する
+- 公開したシナリオの保存先（`setScenarioFileStore`）は、テストでは既定で無し（デモと同じ。`setup.ts` が毎回戻す）。ファイルへの書き込みを確かめるテストだけ、渡されたシナリオを記録する偽の保存先を差し込む。開発サーバーの書き込みの口（`apps/web/vite/`）のテストは、`mkdtemp` の一時ディレクトリに書き、リポジトリの `scenarios/` には書かない
 
 ## 骨抜き禁止
 

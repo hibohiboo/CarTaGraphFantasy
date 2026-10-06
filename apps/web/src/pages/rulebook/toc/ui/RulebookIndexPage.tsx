@@ -43,7 +43,7 @@ export function RulebookIndexPage() {
             kind: 'relation',
             name: '共有設定',
             description:
-              'セッションから積みあがり、共有ライブラリへ格上げされた設定・カード。新しいシナリオの土台に使える。',
+              'セッションから積みあがり、共有設定へ格上げされた設定・カード。新しいシナリオの土台に使える。',
           }}
           fluid
           showDescription

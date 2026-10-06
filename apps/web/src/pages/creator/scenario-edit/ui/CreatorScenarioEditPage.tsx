@@ -1,12 +1,19 @@
 import type { DeckNode, EndingDef, Scenario } from '@cartagraph/domain/scenario/model';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { useUpdateScenario } from '@/entities/scenario/api/mutations';
+import {
+  usePublishScenario,
+  useUnpublishScenario,
+  useUpdateScenario,
+} from '@/entities/scenario/api/mutations';
 import { useScenario } from '@/entities/scenario/api/queries';
+import type { ScenarioFileResult, ScenarioSaveResult } from '@/entities/scenario/api/types';
 import { DeckTree } from '@/entities/scenario/ui/DeckTree';
+import { ScenarioFileNote } from '@/entities/scenario/ui/ScenarioFileNote';
 import s from '@/shared/ui/page.module.css';
 import {
   Button,
+  EmptyNote,
   ErrorNote,
   Field,
   Loading,
@@ -23,6 +30,28 @@ export function CreatorScenarioEditPage() {
   const { scenarioId = '' } = useParams();
   const scenario = useScenario(scenarioId);
   const update = useUpdateScenario();
+  const publish = usePublishScenario();
+  const unpublish = useUnpublishScenario();
+  // 知らせと誤りはページ側に持つ（Editor は保存のたびに key={updatedAt} で作り直されるので、中に置くと消える）
+  // 操作を始めたら前の知らせを消す。別のシナリオへ移ったら出さない（ページのコンポーネントは使い回される）
+  const [outcome, setOutcome] = useState<{
+    scenarioId: string;
+    file?: ScenarioFileResult;
+    error?: unknown;
+  } | null>(null);
+  const run = (
+    mutate: (callbacks: {
+      onSuccess: (r: ScenarioSaveResult) => void;
+      onError: (error: unknown) => void;
+    }) => void,
+  ) => {
+    setOutcome(null);
+    mutate({
+      onSuccess: (r) => setOutcome({ scenarioId, file: r.file }),
+      onError: (error) => setOutcome({ scenarioId, error }),
+    });
+  };
+  const shown = outcome?.scenarioId === scenarioId ? outcome : null;
 
   if (scenario.isPending) return <Loading />;
   if (scenario.error) return <ErrorNote error={scenario.error} />;
@@ -30,9 +59,17 @@ export function CreatorScenarioEditPage() {
     <Editor
       key={scenario.data.updatedAt}
       sc={scenario.data}
-      save={(patch) => update.mutate({ id: scenarioId, patch })}
-      saving={update.isPending}
-      error={update.error}
+      save={(patch) => run((cb) => update.mutate({ id: scenarioId, patch }, cb))}
+      setPublished={(published) =>
+        run((cb) => (published ? publish : unpublish).mutate(scenarioId, cb))
+      }
+      saving={update.isPending || publish.isPending || unpublish.isPending}
+      note={
+        <>
+          {shown?.error ? <ErrorNote error={shown.error} /> : null}
+          <ScenarioFileNote file={shown?.file} />
+        </>
+      }
     />
   );
 }
@@ -40,13 +77,15 @@ export function CreatorScenarioEditPage() {
 function Editor({
   sc,
   save,
+  setPublished,
   saving,
-  error,
+  note,
 }: {
   sc: Scenario;
   save: (p: Partial<Scenario>) => void;
+  setPublished: (published: boolean) => void;
   saving: boolean;
-  error: unknown;
+  note: ReactNode;
 }) {
   const [draft, setDraft] = useState<Scenario>(sc);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(sc), [draft, sc]);
@@ -105,24 +144,24 @@ function Editor({
           <>
             <RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>
             <StatusPill status={sc.libraryStatus === 'published' ? 'approved' : 'neutral'}>
-              {sc.libraryStatus === 'published' ? '共有ライブラリ公開中' : '下書き'}
+              {sc.libraryStatus === 'published' ? 'シナリオ集に公開中' : '下書き'}
             </StatusPill>
             <Button disabled={!dirty || saving} onClick={() => save(draft)}>
               {saving ? '保存中…' : '保存'}
             </Button>
+            {/* 編集中に押すと保存前の内容で公開されるので、保存してからにする */}
             <Button
               variant="ghost"
-              disabled={saving}
-              onClick={() =>
-                save({ libraryStatus: sc.libraryStatus === 'published' ? 'draft' : 'published' })
-              }
+              disabled={dirty || saving}
+              onClick={() => setPublished(sc.libraryStatus !== 'published')}
             >
-              {sc.libraryStatus === 'published' ? '非公開にする' : '共有ライブラリへ公開'}
+              {sc.libraryStatus === 'published' ? '非公開にする' : 'シナリオ集へ公開'}
             </Button>
           </>
         }
       />
-      {error ? <ErrorNote error={error} /> : null}
+      {dirty ? <EmptyNote>保存してから公開・非公開にできます。</EmptyNote> : null}
+      {note}
       <div className={s.twoCol}>
         <aside className="u-stack">
           <Panel
