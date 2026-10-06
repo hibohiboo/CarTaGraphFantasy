@@ -10,6 +10,7 @@ import {
 } from '@cartagraph/domain/autoCombat/resolve';
 import type { CardDef } from '@cartagraph/domain/card/model';
 import type { Character } from '@cartagraph/domain/character/model';
+import { safeParseScenarioFile, toScenarioFile } from '@cartagraph/domain/scenario/file';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import { replayBlockedBy, replayBlockedMessage } from '@cartagraph/domain/scenario/replay';
 import { excludesFixedNode, sessionDeck } from '@cartagraph/domain/session/deck';
@@ -49,8 +50,10 @@ import {
   unplayableReason,
 } from '@cartagraph/domain/soloVillage/rules';
 import { HttpResponse, http } from 'msw';
+import type { ScenarioFileResult, ScenarioSaveResult } from '@/entities/scenario/api/types';
 import { toDictionaryForm } from '@/shared/lib/japanese';
 import * as fx from './fixtures';
+import { scenarioFiles } from './scenarioFiles';
 
 // ソロ開始のセッションの GM 欄には SYSTEM_GM_ID のダミーを入れる（packages/domain）。GM 不在かどうかは Session.gmless、
 // 提案の扱いは Session.proposalHandling（開始時にシナリオか募集からコピーした値）で判定する
@@ -85,6 +88,109 @@ export function resetDb(): void {
 let seq = 1000;
 const nextId = (prefix: string) => `${prefix}-${++seq}`;
 const nowIso = () => new Date().toISOString();
+
+/**
+ * 使われていない id になるまで gen を進める。seq はリロードで数え直すので、開発サーバーで書き込んだ
+ * scenarios/sc-1001.json があると、同じ id を作って公開で上書きしてしまうため。テストのために公開
+ */
+export function nextFreeId(gen: () => string, isTaken: (id: string) => boolean): string {
+  let id = gen();
+  while (isTaken(id)) id = gen();
+  return id;
+}
+
+// ---------- シナリオのファイルへの書き込み（docs/plans/2026-10-06-シナリオ公開のJSON書き込み.md） ----------
+
+/** 公開したシナリオの保存先。開発サーバーでは scenarios/<id>.json に書く口へ送る（mocks/devScenarioFileStore.ts） */
+export type ScenarioFileStore = { write(scenario: Scenario): Promise<void> };
+
+/** 既定は null＝書き込まない（GitHub Pages のデモ・テスト） */
+let scenarioFileStore: ScenarioFileStore | null = null;
+
+/** browser.ts（口が開いているとき）と、書き込みを確かめるテストが差し込む */
+export function setScenarioFileStore(store: ScenarioFileStore | null): void {
+  scenarioFileStore = store;
+}
+
+/** fixtures にしか無いシナリオ（デモの下書き・テスト専用）。公開できない（プランの D7） */
+const fixtureOnlyScenarioIds = new Set(
+  fx.scenarios.filter((s) => !scenarioFiles.some((f) => f.id === s.id)).map((s) => s.id),
+);
+
+/** 書き込み（公開・非公開・保存）できるシナリオ。製作者が自分のものだけ（プランの D8） */
+function editableScenario(id: unknown): { scenario: Scenario } | { error: Response } {
+  const scenario = db.scenarios.find((x) => x.id === id);
+  if (!scenario) return { error: notFound('シナリオ') };
+  if (scenario.authorId !== fx.me.id) {
+    return {
+      error: HttpResponse.json({ message: '製作者でないため変更できません' }, { status: 403 }),
+    };
+  }
+  return { scenario };
+}
+
+/**
+ * 書き込みの対象（公開・非公開・公開中の保存）を、ファイルに書く形にして検査し、保存先があれば書く。
+ * 検査はデモでもかける（開発サーバーとデモで、公開できるシナリオを揃える）。失敗したら応答を返し、呼び出し側はメモリを変えない
+ */
+async function writeScenarioFile(
+  next: Scenario,
+): Promise<{ file: ScenarioFileResult } | { error: Response }> {
+  const path = `scenarios/${next.id}.json`;
+  const checked = safeParseScenarioFile(path, toScenarioFile(next));
+  if (!checked.ok) {
+    return { error: HttpResponse.json({ message: checked.message }, { status: 422 }) };
+  }
+  if (!scenarioFileStore) return { file: { saved: false } };
+  try {
+    await scenarioFileStore.write(checked.scenario);
+  } catch (e) {
+    return {
+      error: HttpResponse.json(
+        { message: `${path} に保存できませんでした：${(e as Error).message}` },
+        { status: 500 },
+      ),
+    };
+  }
+  return { file: { saved: true, path } };
+}
+
+function replaceScenario(next: Scenario): void {
+  db.scenarios = db.scenarios.map((s) => (s.id === next.id ? next : s));
+}
+
+/**
+ * 同じシナリオへの保存・公開・非公開を、届いた順に1つずつ処理する。書き込みを待つ間に別のタブから届いた操作が、
+ * 待つ前に読んだ古い値で上書きされて失われないように
+ */
+const scenarioQueues = new Map<string, Promise<unknown>>();
+function inScenarioQueue<T>(id: string, fn: () => Promise<T>): Promise<T> {
+  const run = (scenarioQueues.get(id) ?? Promise.resolve()).then(fn, fn);
+  scenarioQueues.set(
+    id,
+    run.catch(() => undefined),
+  );
+  return run;
+}
+
+/** 公開・非公開。公開中を公開・下書きを非公開にしても誤りにせず書き直す（ボタンの二度押しで失敗させない） */
+function setLibraryStatus(id: unknown, status: Scenario['libraryStatus']) {
+  return inScenarioQueue(String(id), async () => {
+    const found = editableScenario(id);
+    if ('error' in found) return found.error;
+    if (fixtureOnlyScenarioIds.has(found.scenario.id)) {
+      return HttpResponse.json(
+        { message: 'デモ用のシナリオは公開・非公開を変えられません' },
+        { status: 422 },
+      );
+    }
+    const next: Scenario = { ...found.scenario, libraryStatus: status, updatedAt: nowIso() };
+    const written = await writeScenarioFile(next);
+    if ('error' in written) return written.error;
+    replaceScenario(next);
+    return HttpResponse.json<ScenarioSaveResult>({ scenario: next, file: written.file });
+  });
+}
 
 /** JSON の本文を読む。空・壊れた本文は null（MSW の未処理の例外にしない） */
 async function readJson(request: Request): Promise<unknown> {
@@ -1096,7 +1202,10 @@ export const handlers = [
     if (!body.title?.trim())
       return HttpResponse.json({ message: 'タイトルを入力してください' }, { status: 422 });
     const s: Scenario = {
-      id: nextId('sc'),
+      id: nextFreeId(
+        () => nextId('sc'),
+        (id) => db.scenarios.some((x) => x.id === id),
+      ),
       title: body.title.trim(),
       authorId: fx.me.id,
       authorName: fx.me.name,
@@ -1120,13 +1229,41 @@ export const handlers = [
     return HttpResponse.json(s, { status: 201 });
   }),
 
+  // 保存。公開・非公開は publish・unpublish だけで変えるので、本文の libraryStatus は無視する。
+  // 公開中のシナリオはファイルにも書き直す。下書きは検査も書き込みもしない（書きかけの参照切れも保存できる）
   http.patch('/api/scenarios/:id', async ({ params, request }) => {
-    const s = db.scenarios.find((x) => x.id === params.id);
-    if (!s) return notFound('シナリオ');
-    const patch = (await request.json()) as Partial<Scenario>;
-    Object.assign(s, patch, { id: s.id, authorId: s.authorId, updatedAt: nowIso() });
-    return HttpResponse.json(s);
+    const body = await readJson(request);
+    if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+      return HttpResponse.json({ message: '本文はオブジェクトにしてください' }, { status: 400 });
+    }
+    const patch = body as Partial<Scenario>;
+    return inScenarioQueue(String(params.id), async () => {
+      const found = editableScenario(params.id);
+      if ('error' in found) return found.error;
+      const s = found.scenario;
+      const next: Scenario = {
+        ...s,
+        ...patch,
+        id: s.id,
+        authorId: s.authorId,
+        authorName: s.authorName,
+        libraryStatus: s.libraryStatus,
+        updatedAt: nowIso(),
+      };
+      let file: ScenarioFileResult = null;
+      if (s.libraryStatus === 'published') {
+        const written = await writeScenarioFile(next);
+        if ('error' in written) return written.error;
+        file = written.file;
+      }
+      replaceScenario(next);
+      return HttpResponse.json<ScenarioSaveResult>({ scenario: next, file });
+    });
   }),
+
+  http.post('/api/scenarios/:id/publish', ({ params }) => setLibraryStatus(params.id, 'published')),
+
+  http.post('/api/scenarios/:id/unpublish', ({ params }) => setLibraryStatus(params.id, 'draft')),
 
   http.post('/api/scenarios/:id/recruitments', async ({ params, request }) => {
     const s = db.scenarios.find((x) => x.id === params.id);
@@ -1185,6 +1322,6 @@ export const handlers = [
     return HttpResponse.json(rc, { status: 201 });
   }),
 
-  // ---------- 共有ライブラリ ----------
+  // ---------- 共有設定 ----------
   http.get('/api/library', () => HttpResponse.json(fx.library)),
 ];

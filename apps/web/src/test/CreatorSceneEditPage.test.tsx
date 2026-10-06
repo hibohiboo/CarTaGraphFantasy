@@ -19,7 +19,8 @@ function renderAt(path: string) {
   return router;
 }
 
-const SCENE_URL = '/creator/scenarios/sc-gray-mansion/scenes/d-s2';
+// 保存するテストがあるので、製作者が自分のテスト専用の写し（fixtures の sc-mansion-mine。中身は灰色館の一夜）を使う
+const SCENE_URL = '/creator/scenarios/sc-mansion-mine/scenes/d-s2';
 
 describe('CreatorSceneEditPage', () => {
   it('シーン名・目的・終了条件を編集して保存すると、再取得結果に反映される', async () => {
@@ -297,7 +298,7 @@ describe('CreatorSceneEditPage', () => {
       >
         <RouterProvider
           router={createMemoryRouter(routeObjects, {
-            initialEntries: ['/creator/scenarios/sc-gray-mansion'],
+            initialEntries: ['/creator/scenarios/sc-mansion-mine'],
           })}
         />
       </QueryClientProvider>,

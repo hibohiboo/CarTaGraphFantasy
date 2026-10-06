@@ -183,7 +183,7 @@ export function ComponentCatalogPage() {
           <RoleBadge badgeRole="gm">霧乃（GM）</RoleBadge>
           <RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>
           <RoleBadge badgeRole="mode">軽量モード</RoleBadge>
-          <RoleBadge badgeRole="library">共有ライブラリ公開中</RoleBadge>
+          <RoleBadge badgeRole="library">シナリオ集に公開中</RoleBadge>
         </Section>
 
         <Section title="StatusPill" note="状態セマンティック色。アクセントの金とは役割を分離">

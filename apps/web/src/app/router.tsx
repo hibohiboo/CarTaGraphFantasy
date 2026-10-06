@@ -20,7 +20,7 @@ import { RulebookIndexPage } from '@/pages/rulebook/toc/ui/RulebookIndexPage';
 import { Loading } from '@/shared/ui/ui';
 import { AppShell } from './AppShell';
 
-// 通常のプレイヤー・GM導線では訪れないロール別ページ（管理者・シナリオ作成者）は
+// 通常のプレイヤー・GM導線では訪れないロール別ページ（管理者・シナリオ製作者）は
 // 初期バンドルから外し、遅延importする（docs/plans/2026-09-22-react-best-practices適用.md 3.1）
 const SitemapPage = lazy(() =>
   import('@/pages/admin/sitemap/ui/SitemapPage').then((m) => ({ default: m.SitemapPage })),

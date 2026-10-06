@@ -30,9 +30,12 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
                 handlers.ts（MSW ハンドラ）、browser.ts / node.ts
     test/       層の外。Vitest のテスト（docs/process/rules/testing.md）
   e2e/          Playwright のテスト
+  vite/         層の外。開発サーバーのプラグイン（scenarioFilePlugin.ts：公開したシナリオを scenarios/ に書く口）。
+                vite.config.ts から読むので、@cartagraph/domain も @/ も静的に import しない（Node が解決できず設定の読み込みで落ちる）
 packages/domain/src/      ドメイン型と、UIに依存しないゲームロジック（純粋関数）。
                           仕様ページに合わせたドメインごとのディレクトリ（下の「packages/domain の中の置き場所」）
-scenarios/                遊べるシナリオの JSON（シードの一部。読み込みと検査は Webアプリの仕組み「シナリオの JSON」）
+scenarios/                公開したことのあるシナリオの JSON（非公開にしたものは draft のまま残る。シードの一部。
+                          読み込み・検査・画面からの公開は Webアプリの仕組み「シナリオの JSON」）
 scripts/                  ビルド補助（GitHub Pages へのコピー、自動戦闘のシミュレーション）
 ```
 
@@ -42,7 +45,7 @@ scripts/                  ビルド補助（GitHub Pages へのコピー、自�
 2. 1つのページでしか使わない → そのページのスライス（`pages/<グループ>/<ページ>/`）のセグメントに置く（部品は `ui/`、副作用は `api/`、変換は `lib/`）。一度しか使わないものは、使う側に置く
 3. 複数のページで使う → 何かで分ける。エンティティ（カード・シナリオなど）の見た目・取得・変更は `entities/<エンティティ>/`、利用者の操作と UI が対になったものは `features/`、画面の大きなまとまりは `widgets/`、業務のロジックを持たず、どこからでも使う部品・関数・静的な内容（UI の部品、fetch のラッパー、ルート一覧、ルールブックの本文など）は `shared/`。ただし2ページ目が現れるまで共通化しない
 4. API へのアクセス → `entities/<エンティティ>/api/` の取得（queries.ts）・変更（mutations.ts）のフックを経由する。ページから `fetch` を直接呼ばない。クエリキーは `shared/api/queryKeys.ts`
-5. モックデータの追加 → 遊べるシナリオはリポジトリ直下の `scenarios/<id>.json`、それ以外（テスト専用のシナリオを含む）は `mocks/fixtures.ts` に置く。ページやテストの中で独自のデータを作らない
+5. モックデータの追加 → 遊べるシナリオ（公開したことのあるもの）はリポジトリ直下の `scenarios/<id>.json`、それ以外（デモの下書き・テスト専用のシナリオを含む）は `mocks/fixtures.ts` に置く。ページやテストの中で独自のデータを作らない
 
 ## 依存の向き
 
@@ -89,7 +92,7 @@ check ← card ← library        user（どこにも依存しない）
 | `session/` | party-and-session.md・play-and-field.md・scenario-flow.md（募集） |
 | `soloVillage/` | solo-village.md |
 | `user/` | graph.md（ロール）・unlock.md・character-growth.md（解放済みカードプール） |
-| `library/` | graph.md（共有ライブラリ） |
+| `library/` | graph.md（共有設定） |
 
 **機械的な検査は Biome**（コミット前のフックと CI の lint）。各ディレクトリが import してよい先の正は `biome.json` の `overrides`（`style/noRestrictedImports` の許可リスト）で、表に無いディレクトリはほかのディレクトリを import できない。循環は `suspicious/noImportCycles`、barrel は下の「境界」の barrel 禁止に従う。ディレクトリを足す・依存の向きを変えるときは、この節と `biome.json` を一緒に直す（`biome.json` はコメントを書けないので、理由はここに書く）。
 

@@ -14,7 +14,7 @@ import {
   StatusPill,
 } from '@/shared/ui/ui';
 
-/** シナリオ作成者のシナリオ管理：自分が作ったシナリオの一覧と新規作成 */
+/** シナリオ製作者のシナリオ管理：自分が作ったシナリオの一覧と新規作成 */
 export function CreatorScenarioListPage() {
   const scenarios = useScenarios(true);
   const create = useCreateScenario();
@@ -28,13 +28,13 @@ export function CreatorScenarioListPage() {
     <>
       <PageHeader
         title="自分のシナリオ"
-        crumb="シナリオ製作者＝シナリオを作る人。GMとの兼任は妨げない。共有ライブラリに公開すると、他のGMが選べるようになる。"
+        crumb="シナリオ製作者＝シナリオを作る人。GMとの兼任は妨げない。シナリオ集に公開すると、他のGMが選べるようになる。"
         actions={<RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>}
       />
       <div className={s.stack}>
         <Panel
           title="新しいシナリオを作る"
-          sub="共有ライブラリの設定をテンプレートとして使える（ルールブック → 共有設定）。"
+          sub="共有設定をテンプレートとして使える（ルールブック → 共有設定）。"
         >
           <div className="u-row">
             <input
@@ -77,7 +77,7 @@ export function CreatorScenarioListPage() {
                   </span>
                 </div>
                 <StatusPill status={sc.libraryStatus === 'published' ? 'approved' : 'neutral'}>
-                  {sc.libraryStatus === 'published' ? '共有ライブラリ公開中' : '下書き'}
+                  {sc.libraryStatus === 'published' ? 'シナリオ集に公開中' : '下書き'}
                 </StatusPill>
               </div>
             ))}

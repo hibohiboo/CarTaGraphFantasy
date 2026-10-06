@@ -2,6 +2,7 @@
 // 遊べるシナリオの正は scenarios/*.json。fixtures に残る重複（プランの「重複の記録」1〜3）は、
 // 統合するまでずれをここで検知する。
 
+import { toScenarioFile } from '@cartagraph/domain/scenario/file';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import { scenarioSchema } from '@cartagraph/domain/scenario/model';
 import { describe, expect, it } from 'vitest';
@@ -21,27 +22,34 @@ const byId = (id: string) => {
   return s;
 };
 
+// 開発サーバーで公開したシナリオ（docs/plans/2026-10-06-シナリオ公開のJSON書き込み.md）をコミットしても
+// 落ちないよう、ファイルの数は固定しない。元からある4本は名指しで確かめる（glob の空振りも検知する）。
+const ORIGINAL_FILES = ['sc-corridor-after', 'sc-galleon', 'sc-gray-mansion', 'sc-village-start'];
+const fileIds = () => scenarioFiles.map((s) => s.id);
+
 describe('scenarios/*.json の読み込み', () => {
-  it('遊べる4本を id 順に読む', () => {
-    expect(scenarioFiles.map((s) => s.id)).toEqual([
-      'sc-corridor-after',
-      'sc-galleon',
-      'sc-gray-mansion',
-      'sc-village-start',
-    ]);
+  it('元からある4本を含み、id 順に読む', () => {
+    expect(fileIds()).toEqual(expect.arrayContaining(ORIGINAL_FILES));
+    expect(fileIds()).toEqual([...fileIds()].sort((a, b) => a.localeCompare(b)));
+    expect(Object.keys(rawFiles)).toHaveLength(scenarioFiles.length);
   });
 
-  it('検査を通しても、JSON の中身は変わらない', () => {
-    const raws = Object.values(rawFiles);
-    expect(raws).toHaveLength(4);
-    for (const raw of raws) expect(scenarioSchema.parse(raw)).toEqual(raw);
+  it('検査を通しても、JSON の中身もキーの順も変わらない（書き直しでキーの並べ替えの差分を出さない）', () => {
+    for (const raw of Object.values(rawFiles)) {
+      expect(scenarioSchema.parse(raw)).toEqual(raw);
+      expect(JSON.stringify(scenarioSchema.parse(raw))).toBe(JSON.stringify(raw));
+    }
   });
 
-  it('fixtures のシナリオは、JSON の4本・下書き・テスト専用で、id が重複しない', () => {
+  it('画像の無い JSON は、ファイルに書く形（toScenarioFile）にしても変わらない', () => {
+    for (const s of scenarioFiles) expect(toScenarioFile(s)).toEqual(s);
+  });
+
+  it('fixtures のシナリオは、JSON・下書き・テスト専用の順で、id が重複しない', () => {
     const ids = scenarios.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids.slice(0, 4)).toEqual(scenarioFiles.map((s) => s.id));
-    expect(ids.slice(4)).toEqual([
+    expect(ids.slice(0, scenarioFiles.length)).toEqual(fileIds());
+    expect(ids.slice(scenarioFiles.length)).toEqual([
       'sc-draft-well',
       'sc-village-always-win',
       'sc-exam-always-win',
@@ -50,6 +58,7 @@ describe('scenarios/*.json の読み込み', () => {
       'sc-exam-no-starter',
       'sc-village-no-propose',
       'sc-no-intro',
+      'sc-mansion-mine',
     ]);
   });
 });
@@ -123,7 +132,7 @@ describe('fixtures に残る重複のずれ検知（統合するまで）', () =
 });
 
 describe('MSW 経由で取得する（M1 の完成の条件2）', () => {
-  it('GET /api/scenarios/:id は、scenarios/<id>.json の中身を返す（4本とも）', async () => {
+  it('GET /api/scenarios/:id は、scenarios/<id>.json の中身を返す（全ファイル）', async () => {
     for (const [path, raw] of Object.entries(rawFiles)) {
       const id = path
         .split('/')
@@ -133,18 +142,24 @@ describe('MSW 経由で取得する（M1 の完成の条件2）', () => {
     }
   });
 
-  it('公開済みの一覧は JSON の公開済み4本（村はずれの一歩を含む）だけで、下書きの涸れ井戸・テスト専用は出ない', async () => {
+  it('公開済みの一覧は JSON の公開済みのもの（元からある4本を含む）だけで、下書きの涸れ井戸・テスト専用は出ない', async () => {
     const list = await api.get<Scenario[]>('/scenarios');
-    expect(list.map((s) => s.id)).toEqual([
-      'sc-corridor-after',
-      'sc-galleon',
-      'sc-gray-mansion',
-      'sc-village-start',
-    ]);
+    const ids = list.map((s) => s.id);
+    expect(ids).toEqual(
+      scenarioFiles.filter((s) => s.libraryStatus === 'published').map((s) => s.id),
+    );
+    expect(ids).toEqual(expect.arrayContaining(ORIGINAL_FILES));
+    expect(ids).not.toContain('sc-draft-well');
   });
 
-  it('自分のシナリオの一覧には、JSON のガレオンと fixtures の下書きの涸れ井戸が両方出る', async () => {
+  it('自分のシナリオの一覧には、JSON の自分のもの（ガレオン）と fixtures の下書き（涸れ井戸・テスト専用の自分の灰色館）が出る', async () => {
     const list = await api.get<Scenario[]>('/scenarios?mine=1');
-    expect(list.map((s) => s.id)).toEqual(['sc-galleon', 'sc-draft-well']);
+    const ids = list.map((s) => s.id);
+    expect(ids).toEqual([
+      ...scenarioFiles.filter((s) => s.authorId === 'u-me').map((s) => s.id),
+      'sc-draft-well',
+      'sc-mansion-mine',
+    ]);
+    expect(ids).toContain('sc-galleon');
   });
 });

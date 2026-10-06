@@ -137,7 +137,7 @@ export const scenarioSchema = z.strictObject({
   soloGrowth: z.strictObject({ hp: z.number(), baseActionValue: z.number() }).optional(),
   deck: z.array(deckNodeSchema),
   endings: z.array(endingDefSchema),
-  /** 共有ライブラリへの公開状態 */
+  /** シナリオ集への公開状態 */
   libraryStatus: z.enum(['draft', 'published']),
   /** ISO 8601 の日時。時差付き（+09:00 など）も書ける */
   updatedAt: z.iso.datetime({ offset: true }),

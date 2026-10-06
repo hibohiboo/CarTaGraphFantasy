@@ -5,7 +5,7 @@ import s from './AppShell.module.css';
 const DOCS_URL = 'https://hibohiboo.github.io/CarTaGraphFantasy/';
 
 // ヘッダーはプレイヤー（主役）とルールブック（誰でも参照する）だけを常時表示する。
-// GM・シナリオ作成者向けの入り口はフッターへ、システム管理者向けはさらに控えめに
+// GM・シナリオ製作者向けの入り口はフッターへ、システム管理者向けはさらに控えめに
 // フッターの隅へ移した（トップページを「全部見える」状態にしないための整理）。
 const headerGroupOrder: RouteGroup[] = ['common', 'pl', 'rulebook'];
 const footerGroupOrder: RouteGroup[] = ['gm', 'creator'];

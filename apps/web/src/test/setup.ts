@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll } from 'vitest';
-import { resetDb } from '../mocks/handlers';
+import { resetDb, setScenarioFileStore } from '../mocks/handlers';
 import { server } from '../mocks/node';
 
 // Node 24 は globalThis.localStorage に「--localstorage-file 未指定だと使えない」実験的な
@@ -53,6 +53,8 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   resetDb();
+  // シナリオのファイルの保存先は既定で無し（デモと同じ）。書き込みを確かめるテストだけが偽の保存先を差し込む
+  setScenarioFileStore(null);
   window.localStorage.clear();
 });
 afterAll(() => server.close());

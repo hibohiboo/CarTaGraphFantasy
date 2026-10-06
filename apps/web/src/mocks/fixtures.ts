@@ -425,6 +425,23 @@ function villageAlwaysWin(): Scenario {
   return s;
 }
 
+/**
+ * テスト専用の sc-mansion-mine。灰色館の一夜の JSON を深く複製し、製作者を自分（u-me）・下書きにする。
+ * シーン編集のテストが保存するため（他人の灰色館は製作者でないので保存できない。
+ * docs/plans/2026-10-06-シナリオ公開のJSON書き込み.md D8）。ノード・カードの id は灰色館のまま
+ */
+function mansionMine(): Scenario {
+  const base = scenarioFiles.find((s) => s.id === 'sc-gray-mansion');
+  if (!base) throw new Error('scenarios/sc-gray-mansion.json がありません');
+  const s = structuredClone(base);
+  s.id = 'sc-mansion-mine';
+  s.title = '（テスト用）自分の灰色館';
+  s.authorId = me.id;
+  s.authorName = me.name;
+  s.libraryStatus = 'draft';
+  return s;
+}
+
 export const scenarios: Scenario[] = [
   // 遊べるシナリオ（リポジトリ直下の scenarios/*.json。docs/plans/2026-10-03-シナリオのJSON管理.md）
   ...scenarioFiles,
@@ -546,6 +563,8 @@ export const scenarios: Scenario[] = [
     libraryStatus: 'draft',
     updatedAt: ago(0),
   },
+  // ---- シーン編集のテスト専用シナリオ。灰色館の一夜の写しで、製作者が自分 ----
+  mansionMine(),
 ];
 
 // ---------- 募集 ----------
@@ -915,7 +934,7 @@ export const sessions: Session[] = [
   },
 ];
 
-// ---------- 共有ライブラリ ----------
+// ---------- 共有設定 ----------
 export const library: LibraryEntry[] = [
   {
     id: 'lib-1',
@@ -952,7 +971,7 @@ export const library: LibraryEntry[] = [
     kind: 'equipment',
     name: '炎の剣',
     description:
-      '「鉄鎖のガレオン船」の報酬カード。共有ライブラリに格上げされ、他のシナリオでも報酬として使える。',
+      '「鉄鎖のガレオン船」の報酬カード。共有設定に格上げされ、他のシナリオでも報酬として使える。',
     tags: ['武器', '報酬'],
     originScenarioTitle: '鉄鎖のガレオン船',
     promotedBy: 'ユウ',

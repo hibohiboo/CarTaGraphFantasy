@@ -106,7 +106,7 @@ export const soloEffectSchema = z.strictObject({
 /** GM不在のソロで、選択肢カードを選んだときの成長の効果（docs/cartagraph/solo-village.md、仮ルール） */
 export type SoloEffect = z.infer<typeof soloEffectSchema>;
 
-/** カード1枚。生成元（作者／GM／進化）に関わらず同じ構造を持つ */
+/** カード1枚。生成元（シナリオ製作者／GM／進化）に関わらず同じ構造を持つ */
 export const cardDefSchema = z.strictObject({
   $comment: commentSchema,
   id: idSchema,
@@ -142,5 +142,5 @@ export const cardDefSchema = z.strictObject({
   },
 });
 
-/** カード1枚。生成元（作者／GM／進化）に関わらず同じ構造を持つ */
+/** カード1枚。生成元（シナリオ製作者／GM／進化）に関わらず同じ構造を持つ */
 export type CardDef = z.infer<typeof cardDefSchema>;

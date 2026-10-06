@@ -1,11 +1,12 @@
 import type { CardDef, CardKind } from '@cartagraph/domain/card/model';
 import { CARD_KIND_LABEL } from '@cartagraph/domain/card/model';
 import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '@/entities/card/ui/GameCard';
 import { useUpdateScenario } from '@/entities/scenario/api/mutations';
 import { useScenario } from '@/entities/scenario/api/queries';
+import { ScenarioFileNote } from '@/entities/scenario/ui/ScenarioFileNote';
 import s from '@/shared/ui/page.module.css';
 import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 import { loadCardImage, removeCardImage, saveCardImage } from '../api/cardImageStorage';
@@ -66,6 +67,8 @@ export function CreatorSceneEditPage() {
       }}
       saving={update.isPending}
       error={update.error}
+      // ファイルへの書き込みの知らせ（公開中のシナリオ）。ミューテーションはこの親にあるので、再マウントをまたいで残る
+      fileNote={<ScenarioFileNote file={update.isSuccess ? update.data.file : undefined} />}
     />
   );
 }
@@ -76,6 +79,7 @@ function SceneEditor({
   save,
   saving,
   error,
+  fileNote,
   imageSaveError,
 }: {
   sc: Scenario;
@@ -83,6 +87,7 @@ function SceneEditor({
   save: (n: DeckNode) => void;
   saving: boolean;
   error: unknown;
+  fileNote: ReactNode;
   imageSaveError: string | null;
 }) {
   const [draft, setDraft] = useState<DeckNode>(scene);
@@ -187,6 +192,7 @@ function SceneEditor({
         }
       />
       {error ? <ErrorNote error={error} /> : null}
+      {fileNote}
       <div className={s.twoCol}>
         <aside className="u-stack">
           <Panel title="シーン情報">

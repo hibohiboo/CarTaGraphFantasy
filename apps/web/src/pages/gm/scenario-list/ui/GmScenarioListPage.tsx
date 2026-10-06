@@ -3,7 +3,7 @@ import { useScenarios } from '@/entities/scenario/api/queries';
 import s from '@/shared/ui/page.module.css';
 import { Chip, ChipGroup, ErrorNote, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 
-/** GMのシナリオ管理：共有ライブラリから選ぶ（GM＝シナリオを選んで運営する人） */
+/** GMのシナリオ管理：シナリオ集から選ぶ（GM＝シナリオを選んで運営する人） */
 export function GmScenarioListPage() {
   const scenarios = useScenarios(false);
   if (scenarios.isPending) return <Loading />;
@@ -13,7 +13,7 @@ export function GmScenarioListPage() {
     <>
       <PageHeader
         title="シナリオを選ぶ"
-        crumb="共有ライブラリに公開されているシナリオ。選んでカードを取捨選択し、募集を出す。自分で作るならシナリオ作成者のページへ。"
+        crumb="シナリオ集に公開されているシナリオ。選んでカードを取捨選択し、募集を出す。自分で作るならシナリオ製作者のページへ。"
         actions={<Link to="/creator/scenarios">シナリオを作る →</Link>}
       />
       <div className={s.stack}>

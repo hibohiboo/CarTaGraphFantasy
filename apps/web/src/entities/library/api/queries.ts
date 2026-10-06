@@ -1,4 +1,4 @@
-// 共有ライブラリの取得。ページからは API のパスを直接触らず、ここを経由する。
+// 共有設定の取得。ページからは API のパスを直接触らず、ここを経由する。
 
 import type { LibraryEntry } from '@cartagraph/domain/library/model';
 import { useQuery } from '@tanstack/react-query';

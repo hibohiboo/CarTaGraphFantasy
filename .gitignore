@@ -5,3 +5,5 @@ apps/*/dist/
 apps/web/playwright-report/
 apps/web/test-results/
 *.log
+# 開発サーバーの書き込みの口が書いている途中の一時ファイル（apps/web/vite/scenarioFilePlugin.ts）
+scenarios/.*.tmp

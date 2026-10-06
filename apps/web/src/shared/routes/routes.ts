@@ -7,7 +7,7 @@ export const GROUP_LABEL: Record<RouteGroup, string> = {
   common: '共通',
   pl: 'PL',
   gm: 'GM',
-  creator: 'シナリオ作成者',
+  creator: 'シナリオ製作者',
   rulebook: 'ルールブック',
   admin: 'システム管理者',
 };
@@ -92,7 +92,7 @@ export const routes: RouteMeta[] = [
     path: '/gm/scenarios',
     title: 'シナリオ管理（GM）',
     group: 'gm',
-    description: '共有ライブラリからシナリオを選ぶ',
+    description: 'シナリオ集からシナリオを選ぶ',
     nav: true,
   },
   {
@@ -121,7 +121,7 @@ export const routes: RouteMeta[] = [
 
   {
     path: '/creator/scenarios',
-    title: 'シナリオ管理（作成者）',
+    title: 'シナリオ管理（製作者）',
     group: 'creator',
     description: '自分が作ったシナリオの一覧と新規作成',
     nav: true,
@@ -130,7 +130,7 @@ export const routes: RouteMeta[] = [
     path: '/creator/scenarios/:scenarioId',
     title: 'シナリオ編集',
     group: 'creator',
-    description: 'メタデータ・シナリオデッキの構造・結末タグを編集し、共有ライブラリへ公開する',
+    description: 'メタデータ・シナリオデッキの構造・結末タグを編集し、シナリオ集へ公開する',
     example: '/creator/scenarios/sc-galleon',
   },
   {
@@ -164,8 +164,7 @@ export const routes: RouteMeta[] = [
     path: '/rulebook/library',
     title: '共有設定',
     group: 'rulebook',
-    description:
-      'セッションから積みあがった共有ライブラリ（正史グラフから格上げされた設定・カード）',
+    description: 'セッションから積みあがった共有設定（正史グラフから格上げされた設定・カード）',
   },
 
   {

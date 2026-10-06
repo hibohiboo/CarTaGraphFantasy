@@ -11,7 +11,7 @@ import s from '@/shared/ui/page.module.css';
 import { Loading, RoleBadge, StatusPill } from '@/shared/ui/ui';
 
 // トップページはプレイヤーの入り口だけをメインで見せる（「全部見える」トップにしない）。
-// GM・シナリオ作成者向けの入り口はヘッダー下のフッターへ、システム管理者向けはさらに
+// GM・シナリオ製作者向けの入り口はヘッダー下のフッターへ、システム管理者向けはさらに
 // 控えめにフッターの隅へ移した（AppShell.tsx参照）。
 const plRoutes = routes.filter((r) => r.group === 'pl' && !r.path.includes(':'));
 
@@ -96,7 +96,7 @@ export function HomePage() {
         </section>
       </div>
       <p className="u-small u-dim u-mt">
-        GM・シナリオ作成者向けの入り口はページ下部に、システム管理者向けはさらにその隅にあります。
+        GM・シナリオ製作者向けの入り口はページ下部に、システム管理者向けはさらにその隅にあります。
       </p>
     </>
   );
