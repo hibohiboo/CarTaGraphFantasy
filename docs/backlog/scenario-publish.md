@@ -6,9 +6,9 @@ summary: シナリオ製作者がシナリオを作り、公開できる。ロ�
 plans:
   - 2026-10-06-シナリオ公開のJSON書き込み.md
 cycles:
-  - { name: C1 公開で JSON に書き込む, status: 進行中 }
+  - { name: C1 公開で JSON に書き込む, status: 完了, pr: 17 }
   - { name: C2 選択肢の行き先と結末の編集, status: 未着手 }
-updated: 2026-10-06
+updated: 2026-10-07
 ---
 
 # シナリオ製作者がシナリオを作って公開する
