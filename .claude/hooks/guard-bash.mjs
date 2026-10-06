@@ -8,6 +8,10 @@
 // 3. インタプリタに `-`（標準入力からスクリプトを読む）を渡す
 //    → 入力が来ないとコマンドが止まったままになる（2026-10-03、PR #14 の作業中に2回）。1. と同じく Write でファイルにする
 //
+// 4. sed の書き換え（-i・--in-place）
+//    → 同じ語を2回当てて化けても気づけない（2026-10-07、「製製作者」。テストの期待値も同じ置換で化けて通った）。
+//      node scripts/replace-once.mjs（件数と二重の当たりを確かめてから書く）か Edit を使う
+//
 // 判定の前に、クォートした引数の中身を取り除く。引数の文字列（Markdown の箇条書きの「\n- 」、コミットメッセージに
 // 書いた「--no-verify」など）を、コマンドとして読まないため（2026-10-04、PR #15 の振り返り）。
 // テストは同じディレクトリの guard-bash.test.mjs（pnpm tools:test）。
@@ -24,6 +28,9 @@ const NO_VERIFY = /\bgit\b[^\n|;&]*\b(?:commit|push)\b[^\n|;&]*--no-verify\b/;
 const INTERPRETER_STDIN =
   /(?:^|[;&|]\s*)(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*(?:python3?|py|node|tsx|deno|bun)(?:\s+[^\s|;&<>]+)*?\s+-(?=\s|$|[|;&<>])/m;
 
+// sed の後ろ（同じコマンドの中）に、-i・-ni のような i を含む短いオプションか --in-place がある
+const SED_IN_PLACE = /(?:^|[\s;&|(])sed\b[^\n|;&]*?\s(?:-[a-zA-Z]*i[^\s]*|--in-place\S*)(?=\s|$)/m;
+
 /** '…' と "…" の中身を空にする（"…" の中の \" は閉じとみなさない） */
 const stripQuoted = (command) => command.replace(/'[^']*'|"(?:[^"\\]|\\[\s\S])*"/g, '""');
 
@@ -34,6 +41,8 @@ export function checkCommand(command) {
     return 'インタプリタに heredoc でスクリプトを渡さない（バックスラッシュが崩れる）。Write でスクラッチパッドにファイルとして書いてから実行する（CLAUDE.md「Claude Code 固有の補足」）。';
   if (INTERPRETER_STDIN.test(bare))
     return 'インタプリタに `-`（標準入力からスクリプトを読む）を渡さない（入力が来ないと止まったままになる）。Write でスクラッチパッドにファイルとして書いてから実行する（CLAUDE.md「Claude Code 固有の補足」）。';
+  if (SED_IN_PLACE.test(bare))
+    return 'sed -i でファイルを書き換えない（同じ語に2回当たって化けても気づけない）。node scripts/replace-once.mjs <spec.json>（件数を確かめ、二重の当たりを止める）か Edit を使う（CLAUDE.md「Claude Code 固有の補足」）。';
   if (NO_VERIFY.test(bare))
     return 'git commit・git push に --no-verify を付けない（git フックを飛ばすのは人間の許可が要る）。フックが止めた理由を直すか、人間に確認する。';
   return '';

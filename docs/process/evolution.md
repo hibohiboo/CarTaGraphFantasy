@@ -43,6 +43,23 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。
 
+### 2026-10-07 シナリオの公開 C1（PR #17）の振り返りから5件を採用
+
+- **内容**
+  1. `scripts/replace-once.mjs` に、件数を書く全件置換（`count`）と、同じファイルへの前の置換の結果に後の置換前が含まれるときの誤り（二重の当たり）を足した。`.claude/hooks/guard-bash.mjs` が `sed -i`・`--in-place` を止める
+  2. 既にあった `scripts/mutate-check.mjs` を、AGENTS.md の「コマンド」と tdd スキルから案内した（`replace-once.mjs` も「コマンド」に載せた）
+  3. 開発サーバーでのシナリオの公開をブラウザで通しで確かめる `apps/web/e2e/dev/scenario-publish.mjs`（`pnpm web:check:publish`）を置いた。作ったファイルを消し、`scenarios/` の git の状態が戻ることまで確かめる
+  4. 依頼文「2」に、設計がツール・ライブラリの挙動に頼るなら依存の実装（node_modules）を読んで確かめる、を足した
+  5. CLAUDE.md の起動例を `pnpm -w web:dev:agent` にした。`web:dev:agent:stop` が、エージェントの preview（4174 番の `vite preview`）も止める
+- **理由**
+  1. 用語をそろえるとき `sed -i` で「作者でない」を2回当て、「製製作者でない」に化けた。テストの期待値も同じ置換で化けたので、テストは通ってしまい、セルフレビューで初めて気づいた
+  2. `mutate-check.mjs` は testing.md にだけ書いてあり、AI が見つけられずにスクラッチパッドで同じものを作り直した。その確かめで、守っていないテストが2件見つかった
+  3. 書き直しで全体リロードが起きる競合（HMR を止める記録が書き込みの後だった）は、単体テストでも AI レビューでも見つからず、使い捨ての Playwright のスクリプトで初めて見つかった
+  4. プランレビューの P0 2件（設定から domain を import すると起動しない、新規ファイルで HMR が止まらない）は、依頼文に Vite の実装を読むよう書いたときだけ見つかった
+  5. バックグラウンドの起動が作業ディレクトリ違い（`apps/web`）で失敗した。手で起動した `vite preview` が残った
+- **反映先** — `scripts/replace-once.mjs`・`scripts/stop-dev-agent.mjs`・`.claude/hooks/guard-bash.mjs`（とテスト）、`apps/web/e2e/dev/scenario-publish.mjs`、`package.json`・`apps/web/package.json`、`AGENTS.md`、`CLAUDE.md`、`.claude/skills/tdd/SKILL.md`、`docs/process/prompt-sample.md`、`docs/process/rules/architecture.md`、`docs/architecture/web-app.md`
+- **きっかけ** — 1・2・3・5 作業中の失敗、4 AI レビュー ／ **止め方** — 1・5 機械（スクリプト・Claude Code のフック）、2 置き場所（入口から案内）、3 機械（確かめのスクリプト。CI では回さない）、4 手順・ルール（依頼文）
+
 ### 2026-10-07 重複・分散は見つけ次第直す（最重要ルール3を書き換え）
 
 - **内容** — AGENTS.md の最重要ルール3を「重複・分散に気づいたら報告する。黙って統合・削除せず」から「その場で直して報告する。正が決められないときだけ止めて聞く」に書き換えた。あわせて、「共有ライブラリ」の2つの意味を「シナリオ集」（シナリオの公開先）と「共有設定」（格上げしたカード・設定の置き場）に分け、「シナリオ作成者／制作者／作者」を「シナリオ製作者」にそろえた（用語集に2語を足した）

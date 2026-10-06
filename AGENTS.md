@@ -31,7 +31,8 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 ```sh
 pnpm web:dev          # http://localhost:5173（MSW 有効）。人間が手で起動する用
 pnpm web:dev:agent    # http://localhost:5174。エージェントがブラウザで確かめる用（人間の開発サーバーと取り合わない。公開したシナリオを scenarios/ に書かない）
-pnpm web:dev:agent:stop # 上の開発サーバーを止める（5174 番の vite だけを止める。残った子プロセスも止める）
+pnpm web:dev:agent:stop # 上の開発サーバーと、エージェントの preview（4174 番の vite preview）を止める。ほかのプロセスには触らない
+pnpm web:check:publish # 開発サーバーでのシナリオの公開をブラウザで通しで確かめる（書き込みを開いた web:dev:agent が要る。CIでは回さない）
 pnpm web:test         # Vitest（MSW の node サーバーで全ページを描画）
 pnpm web:typecheck    # tsc
 pnpm domain:test      # Vitest（packages/domain の純粋関数）
@@ -43,6 +44,8 @@ pnpm docs:build       # 仕様書サイトのビルド（リンク切れ・見�
 pnpm build:pages      # docs + app をまとめてビルド（CI と同じ）
 pnpm lint             # Biome（フォーマット・import整理・lintをまとめてチェック）
 pnpm lint:fix         # 同上、安全な修正を自動適用
+node scripts/replace-once.mjs <spec.json>  # ファイルの文字列を置き換える。件数（既定1件・count で指定）と二重の当たりを確かめてから書く
+node scripts/mutate-check.mjs <spec.json>  # 守る条件を1つずつ外し、テストが落ちることを確かめて元に戻す（testing.md「骨抜き禁止」）
 ```
 
 コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`scripts/`・`.claude/hooks/` を触ったら `pnpm tools:test` も通す。`scenarios/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオを使うテストが走る。pre-push でも走る）。

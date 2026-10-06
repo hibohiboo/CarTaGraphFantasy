@@ -61,3 +61,19 @@ describe('--no-verify', () => {
     assert.ok(!blocked('git commit -m "--no-verify を止めるフックを足す"'));
   });
 });
+
+describe('sed の書き換え（-i）', () => {
+  it('止める（2026-10-07、2回当てて「製製作者」に化けた）', () => {
+    assert.ok(blocked("sed -i 's/a/b/' x.md"));
+    assert.ok(blocked("sed -i.bak -e 's/a/b/' x.md"));
+    assert.ok(blocked("for f in a b; do sed -i 's/a/b/g' $f; done"));
+    assert.ok(blocked("sed --in-place 's/a/b/' x.md"));
+    assert.ok(blocked("sed -ni 's/a/b/p' x.md"));
+  });
+
+  it('読むだけの sed・クォートの中の sed -i は止めない', () => {
+    assert.ok(!blocked("sed -n '1,20p' x.md"));
+    assert.ok(!blocked('git commit -m "sed -i を止めるフックを足す"'));
+    assert.ok(!blocked('grep -i sed x.md'));
+  });
+});

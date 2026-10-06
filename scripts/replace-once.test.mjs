@@ -16,6 +16,28 @@ const read = (path) => {
 const plan = (specs) => planReplacements(specs, { cwd: resolve('/w'), read });
 
 describe('planReplacements', () => {
+  it('count を書くと、置換前がちょうどその件数のときに全部を置き換える', () => {
+    const r = plan([{ file: 'b.ts', from: 'x', to: 'y', count: 2 }]);
+    assert.deepEqual(r.errors, []);
+    assert.deepEqual(r.writes, [[resolve('/w/b.ts'), 'y\ny\n']]);
+  });
+
+  it('count と件数が違えば、何も書かない', () => {
+    const r = plan([{ file: 'b.ts', from: 'x', to: 'y', count: 3 }]);
+    assert.match(r.errors[0], /1件目.*2 件（3件であるべき）/);
+    assert.deepEqual(r.writes, []);
+  });
+
+  it('置換前の文字列が、同じファイルへの前の置換の結果の中にも当たるなら、何も書かない（二重に当たって化けるのを止める）', () => {
+    // 2026-10-07、「作者でない」→「製作者でない」を当てた後に、もう一度「作者でない」を当てて「製製作者」に化けた
+    const r = plan([
+      { file: 'a.ts', from: '古い', to: 'より古い' },
+      { file: 'a.ts', from: '古い', to: '新しい' },
+    ]);
+    assert.match(r.errors[0], /2件目.*1件目の置換後/);
+    assert.deepEqual(r.writes, []);
+  });
+
   it('置換前がちょうど1か所なら、`//` で始まる置換後もそのまま書く内容になる', () => {
     const r = plan([{ file: 'a.ts', from: '// 古いコメント', to: '// 新しいコメント' }]);
     assert.deepEqual(r.errors, []);

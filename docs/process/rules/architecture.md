@@ -29,7 +29,7 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
     mocks/      層の外。fixtures.ts（モックデータのシード）、scenarioFiles.ts（scenarios/*.json の読み込み）、
                 handlers.ts（MSW ハンドラ）、browser.ts / node.ts
     test/       層の外。Vitest のテスト（docs/process/rules/testing.md）
-  e2e/          Playwright のテスト
+  e2e/          Playwright のテスト（CI の E2E は *.test.ts。dev/ は開発サーバーで手で回す確かめのスクリプト）
   vite/         層の外。開発サーバーのプラグイン（scenarioFilePlugin.ts：公開したシナリオを scenarios/ に書く口）。
                 vite.config.ts から読むので、@cartagraph/domain も @/ も静的に import しない（Node が解決できず設定の読み込みで落ちる）
 packages/domain/src/      ドメイン型と、UIに依存しないゲームロジック（純粋関数）。
