@@ -63,12 +63,12 @@ describe('findScenarioRefErrors', () => {
     expect(findScenarioRefErrors(s)).toEqual([]);
   });
 
-  it('endingId を持たない結末ノード、nextNodeId を持たないカードは整合', () => {
+  it('endingId を持たない結末のノード、nextNodeId を持たないカードは整合', () => {
     const s = scenario([node('a', [card('x')]), node('end', [], { kind: 'ending' })]);
     expect(findScenarioRefErrors(s)).toEqual([]);
   });
 
-  it('存在しないノードを指す nextNodeId を、カード id と行き先を含めて報告する', () => {
+  it('存在しないノードを指す nextNodeId を、カード id と移り先を含めて報告する', () => {
     const s = scenario([node('a', [card('lost', { nextNodeId: 'nowhere' })])]);
     const errors = findScenarioRefErrors(s);
     expect(errors).toHaveLength(1);
@@ -132,7 +132,7 @@ describe('findScenarioRefErrors', () => {
     expect(errors[0]).toContain('e1');
   });
 
-  it('成長の効果で得るカード・達成カード・自動戦闘の敵のカードは、重複も行き先も検査しない', () => {
+  it('成長の効果で得るカード・達成カード・自動戦闘の敵のカードは、重複も移り先も検査しない', () => {
     const skill = card('c-slash', { kind: 'skill' });
     const s = scenario([
       node('a', [

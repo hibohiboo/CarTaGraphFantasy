@@ -130,7 +130,9 @@ describe('シナリオ編集の公開・非公開・保存', () => {
     expect(button('非公開にする')).toBeDisabled();
   });
 
-  it('公開中のシナリオで、選択肢から指されているシーンを消して保存すると、誤りが出て公開中のまま', async () => {
+  // 移り先になっているシーンは、削除そのものが止まる（docs/plans/2026-10-07-選択肢の移り先と結末の編集.md D1）。
+  // 保存で 422 になる経路は scenarioPublish.test.ts「公開中のシナリオで参照が切れる保存は 422」が守る
+  it('公開中のシナリオで、選択肢から指されているシーンは削除できず、保存も書き込みも起きず公開中のまま', async () => {
     const user = userEvent.setup();
     const written = fakeStore();
     // ガレオンの導入に、1つ目のシーンへ進む選択肢を足しておく（公開中のまま保存できる）
@@ -153,8 +155,11 @@ describe('シナリオ編集の公開・非公開・保存', () => {
         name: '削除',
       })[0] as HTMLElement,
     );
-    await user.click(button('保存'));
-    expect(await screen.findByRole('alert')).toHaveTextContent('g-s1');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '『桟橋へ』（港の酒場）から指されているので削除できません',
+    );
+    expect(screen.getByText('1 鎖の桟橋')).toBeInTheDocument();
+    expect(button('保存')).toBeDisabled();
     expect(within(header()).getByText('シナリオ集に公開中')).toBeInTheDocument();
     expect(written).toEqual([]);
   });

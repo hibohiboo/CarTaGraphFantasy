@@ -1,5 +1,6 @@
 import type { CardDef, CardKind } from '@cartagraph/domain/card/model';
 import { CARD_KIND_LABEL } from '@cartagraph/domain/card/model';
+import { moveTargets } from '@cartagraph/domain/scenario/edit';
 import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -10,9 +11,17 @@ import { ScenarioFileNote } from '@/entities/scenario/ui/ScenarioFileNote';
 import s from '@/shared/ui/page.module.css';
 import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 import { loadCardImage, removeCardImage, saveCardImage } from '../api/cardImageStorage';
+import { EndingNodeEditor } from './EndingNodeEditor';
+import { MoveTargetSelect } from './MoveTargetSelect';
 
 /** 追加できるカード種別（ロケーションは専用の枠で扱うため含めない） */
 const ADDABLE_KINDS: CardKind[] = ['npc', 'info', 'choice', 'enemy'];
+
+/**
+ * この画面で開けるノード：最上位のシーン・導入・結末（docs/plans/2026-10-07-選択肢の移り先と結末の編集.md D4）。
+ * プール用のノード（npc/info/enemy）と入れ子のノードは開けない
+ */
+const EDITABLE_KINDS = new Set<DeckNode['kind']>(['scene', 'intro', 'ending']);
 
 /** 画像1枚あたりの警告しきい値（目安200KB。data URLはbase64なので概算） */
 const IMAGE_WARN_BYTES = 200 * 1024;
@@ -23,6 +32,8 @@ const dataUrlBytes = (dataUrl: string) => Math.floor((dataUrl.length * 3) / 4);
  * 試作HTML scene-builder.html をもとにReact化したもの（試作は削除済みで git 履歴にある）
  * （docs/plans/2026-09-16-scene-builder.md）。
  * シーンの目的・終了条件は未決の仮ルール（docs/open-questions.md）。
+ * 導入も同じ画面で編集する（目的・終了条件は出さない）。結末は EndingNodeEditor
+ * （docs/plans/2026-10-07-選択肢の移り先と結末の編集.md）。
  */
 export function CreatorSceneEditPage() {
   const { scenarioId = '', sceneId = '' } = useParams();
@@ -34,11 +45,30 @@ export function CreatorSceneEditPage() {
 
   if (scenario.isPending) return <Loading />;
   if (scenario.error) return <ErrorNote error={scenario.error} />;
-  // kind !== 'scene' のノード（独立したnpc/info/enemyのプールノード、導入、結末）は
-  // この画面の対象外（docs/plans/2026-09-16-scene-builder.md スコープ外）。
-  // URLを直接叩いて開けないよう、シーン以外は「見つからない」扱いにする。
-  const scene = scenario.data.deck.find((n) => n.id === sceneId && n.kind === 'scene');
+  // プール用のノード（独立した npc/info/enemy）は、URL を直接叩いても開けないよう「見つからない」扱いにする
+  const scene = scenario.data.deck.find((n) => n.id === sceneId && EDITABLE_KINDS.has(n.kind));
   if (!scene) return <ErrorNote error={new Error('シーンが見つかりません')} />;
+
+  const saveNode = (next: DeckNode) =>
+    update.mutate({
+      id: scenarioId,
+      patch: { deck: scenario.data.deck.map((n) => (n.id === next.id ? next : n)) },
+    });
+  // ファイルへの書き込みの知らせ（公開中のシナリオ）。ミューテーションはこの親にあるので、再マウントをまたいで残る
+  const fileNote = <ScenarioFileNote file={update.isSuccess ? update.data.file : undefined} />;
+
+  if (scene.kind === 'ending')
+    return (
+      <EndingNodeEditor
+        key={`${scenario.data.updatedAt}-${scene.id}`}
+        sc={scenario.data}
+        node={scene}
+        save={saveNode}
+        saving={update.isPending}
+        error={update.error}
+        fileNote={fileNote}
+      />
+    );
 
   return (
     <SceneEditor
@@ -62,13 +92,11 @@ export function CreatorSceneEditPage() {
             );
           }
         }
-        const deck = scenario.data.deck.map((n) => (n.id === nextScene.id ? nextScene : n));
-        update.mutate({ id: scenarioId, patch: { deck } });
+        saveNode(nextScene);
       }}
       saving={update.isPending}
       error={update.error}
-      // ファイルへの書き込みの知らせ（公開中のシナリオ）。ミューテーションはこの親にあるので、再マウントをまたいで残る
-      fileNote={<ScenarioFileNote file={update.isSuccess ? update.data.file : undefined} />}
+      fileNote={fileNote}
     />
   );
 }
@@ -152,6 +180,13 @@ function SceneEditor({
     cancelAddCard();
   };
 
+  const isIntro = scene.kind === 'intro';
+  const targets = useMemo(() => moveTargets(sc.deck, scene.id), [sc.deck, scene.id]);
+  const replaceCard = (next: CardDef) =>
+    setField(
+      'cards',
+      draft.cards.map((c) => (c.id === next.id ? next : c)),
+    );
   const updateCard = (id: string, patch: Partial<CardDef>) =>
     setField(
       'cards',
@@ -195,32 +230,36 @@ function SceneEditor({
       {fileNote}
       <div className={s.twoCol}>
         <aside className="u-stack">
-          <Panel title="シーン情報">
+          <Panel title={isIntro ? '導入の情報' : 'シーン情報'}>
             <div className={s.form}>
-              <Field label="シーン名">
+              <Field label={isIntro ? '導入の名前' : 'シーン名'}>
                 <input
                   type="text"
                   value={draft.name}
                   onChange={(e) => setField('name', e.target.value)}
                 />
               </Field>
-              <Field label="目的（仮）">
-                <textarea
-                  value={draft.objective ?? ''}
-                  onChange={(e) => setField('objective', e.target.value)}
-                  placeholder="このシーンでPLに何をさせたいか"
-                />
-              </Field>
-              <Field label="終了条件（仮）">
-                <textarea
-                  value={draft.endCondition ?? ''}
-                  onChange={(e) => setField('endCondition', e.target.value)}
-                  placeholder="GMがこのシーンを終えて次へ進む目安"
-                />
-              </Field>
-              <p className="u-small u-dim">
-                「目的」「終了条件」は未決の仮ルール（docs/open-questions.md）。正式な仕様として決着したものではない。
-              </p>
+              {!isIntro && (
+                <>
+                  <Field label="目的（仮）">
+                    <textarea
+                      value={draft.objective ?? ''}
+                      onChange={(e) => setField('objective', e.target.value)}
+                      placeholder="このシーンでPLに何をさせたいか"
+                    />
+                  </Field>
+                  <Field label="終了条件（仮）">
+                    <textarea
+                      value={draft.endCondition ?? ''}
+                      onChange={(e) => setField('endCondition', e.target.value)}
+                      placeholder="GMがこのシーンを終えて次へ進む目安"
+                    />
+                  </Field>
+                  <p className="u-small u-dim">
+                    「目的」「終了条件」は未決の仮ルール（docs/open-questions.md）。正式な仕様として決着したものではない。
+                  </p>
+                </>
+              )}
             </div>
           </Panel>
           <Panel title="ロケーション" sub="1シーン1ロケーションを想定した暫定分類">
@@ -365,6 +404,14 @@ function SceneEditor({
                         >
                           {c.faceDown ? '表にする' : '裏にする'}
                         </Button>
+                      )}
+                      {c.kind === 'choice' && (
+                        <MoveTargetSelect
+                          card={c}
+                          deck={sc.deck}
+                          targets={targets}
+                          onChange={replaceCard}
+                        />
                       )}
                       <label className="u-small">
                         画像を選択

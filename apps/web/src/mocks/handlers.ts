@@ -10,6 +10,7 @@ import {
 } from '@cartagraph/domain/autoCombat/resolve';
 import type { CardDef } from '@cartagraph/domain/card/model';
 import type { Character } from '@cartagraph/domain/character/model';
+import { addEnding } from '@cartagraph/domain/scenario/edit';
 import { safeParseScenarioFile, toScenarioFile } from '@cartagraph/domain/scenario/file';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import { replayBlockedBy, replayBlockedMessage } from '@cartagraph/domain/scenario/replay';
@@ -1201,7 +1202,8 @@ export const handlers = [
     const body = (await request.json()) as { title: string };
     if (!body.title?.trim())
       return HttpResponse.json({ message: 'タイトルを入力してください' }, { status: 422 });
-    const s: Scenario = {
+    // 結末「結末」と、それを指す結末のノードを対で作る（結末タグは付けない。docs/plans/2026-10-07-選択肢の移り先と結末の編集.md D3）
+    const draft: Scenario = {
       id: nextFreeId(
         () => nextId('sc'),
         (id) => db.scenarios.some((x) => x.id === id),
@@ -1217,14 +1219,12 @@ export const handlers = [
       recommendedCp: 3,
       baseCp: 3,
       proposalHandling: 'gm-required',
-      deck: [
-        { id: nextId('d'), kind: 'intro', name: '導入', cards: [] },
-        { id: nextId('d'), kind: 'ending', name: '結末', cards: [] },
-      ],
+      deck: [{ id: nextId('d'), kind: 'intro', name: '導入', cards: [] }],
       endings: [],
       libraryStatus: 'draft',
       updatedAt: nowIso(),
     };
+    const s = addEnding(draft, '結末', { endingId: nextId('e'), nodeId: nextId('d') });
     db.scenarios.unshift(s);
     return HttpResponse.json(s, { status: 201 });
   }),

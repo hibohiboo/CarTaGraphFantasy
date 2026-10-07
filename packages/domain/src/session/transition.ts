@@ -49,7 +49,7 @@ export type TransitionPlan =
       choices: CardDef[];
       /** 移り先が自動戦闘のノードなら、その相手と上限 */
       autoCombat?: { enemy: AutoCombatEnemy; maxRounds: number };
-      /** GM不在のセッションで結末ノードへ移ったら true */
+      /** GM不在のセッションで結末のノードへ移ったら true */
       ended: boolean;
       /** ended のとき、結末のノードが指す結末の結末タグ（docs/cartagraph/solo-village.md「結末タグ」、仮ルール） */
       endingTag?: string;

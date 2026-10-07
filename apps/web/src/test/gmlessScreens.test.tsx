@@ -6,22 +6,17 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { api } from '@/shared/api/api';
-import { clearVillageWith, createGmlessRecruitment, playFromRecruitment } from './gmlessHelpers';
+import {
+  clearVillageWith,
+  createGmlessRecruitment,
+  DEAD_END,
+  playFromRecruitment,
+  recruitCard,
+  recruitPanel,
+} from './gmlessHelpers';
 import { renderAt } from './renderAt';
 
 describe('GM 不在の募集', () => {
-  const recruitPanel = async () =>
-    (await screen.findByRole('heading', { name: '募集を出す' })).closest('section') as HTMLElement;
-  const DEAD_END = /先へ進む選択肢の無いシーンがあります/;
-  /** PL の募集一覧で、題名と GM で募集のカードを特定する */
-  const recruitCard = async (title: string, gm: string) => {
-    await screen.findByRole('heading', { name: '参加できるセッション' });
-    const found = (await screen.findAllByRole('heading', { name: title }))
-      .map((el) => el.closest('article')!)
-      .find((a) => within(a).queryByText(`GM：${gm}`));
-    if (!found) throw new Error(`募集のカード（${title}・${gm}）がありません`);
-    return found;
-  };
   const optionOf = (card: HTMLElement, name: RegExp) =>
     within(card).getByRole('option', { name }) as HTMLOptionElement;
 
