@@ -181,7 +181,7 @@ describe('CreatorSceneEditPage', () => {
     expect(await screen.findByText(/見つかりません/)).toBeInTheDocument();
   });
 
-  it('独立プールノード（d-npc）のidをURLで直接指定してもエラー表示になる（kind!==sceneのため）', async () => {
+  it('独立プールノード（d-npc）のidをURLで直接指定してもエラー表示になる（プール用のノードは開けない）', async () => {
     renderAt('/creator/scenarios/sc-gray-mansion/scenes/d-npc');
     expect(await screen.findByText(/見つかりません/)).toBeInTheDocument();
   });
@@ -311,12 +311,13 @@ describe('CreatorSceneEditPage', () => {
     const router = renderAt('/creator/scenarios/sc-gray-mansion');
     await screen.findByRole('heading', { level: 1, name: '灰色館の一夜' });
 
-    const editLinks = screen.getAllByRole('link', { name: '編集' });
-    await user.click(editLinks[0]);
+    // 導入・結末にも「編集」があるので、シーンの行で絞って押す
+    const sceneRow = screen.getByText('3-1 地下回廊').closest('[data-kind]') as HTMLElement;
+    await user.click(within(sceneRow).getByRole('link', { name: '編集' }));
 
     await waitFor(() =>
       expect(router.state.location.pathname).toMatch(
-        /^\/creator\/scenarios\/sc-gray-mansion\/scenes\//,
+        /^\/creator\/scenarios\/sc-gray-mansion\/scenes\/d-s1$/,
       ),
     );
   });

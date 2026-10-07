@@ -60,7 +60,7 @@ export const deckNodeSchema = z.strictObject({
 
 export type DeckNode = z.infer<typeof deckNodeSchema>;
 
-/** 結末タグの定義（成功／失敗に限らず任意の数） */
+/** 結末の定義（成功／失敗に限らず任意の数）。結末タグは grantsTag */
 export const endingDefSchema = z
   .strictObject({
     id: idSchema,
@@ -84,7 +84,7 @@ export const endingDefSchema = z
       });
   });
 
-/** 結末タグの定義（成功／失敗に限らず任意の数） */
+/** 結末の定義（成功／失敗に限らず任意の数）。結末タグは grantsTag */
 export type EndingDef = z.infer<typeof endingDefSchema>;
 
 export const spaceModelSchema = z.enum(['1d', '2d']);

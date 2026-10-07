@@ -1,3 +1,11 @@
+import { walk } from '@cartagraph/domain/scenario/deck';
+import {
+  addEnding as addEndingPair,
+  referrerMessage,
+  removeNode as removeDeckNode,
+  removeEnding as removeEndingPair,
+  unusedId,
+} from '@cartagraph/domain/scenario/edit';
 import type { DeckNode, EndingDef, Scenario } from '@cartagraph/domain/scenario/model';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -100,10 +108,19 @@ function Editor({
         : [...draft.referenceTags, t],
     );
 
+  // 移り先として指されているノード・結末を消そうとしたときの理由（docs/plans/2026-10-07-選択肢の移り先と結末の編集.md D1・D2）
+  const [deckBlocked, setDeckBlocked] = useState<string | null>(null);
+  const [endingBlocked, setEndingBlocked] = useState<string | null>(null);
+  // 同じ時刻に続けて押しても id が重ならないように（unusedId）
+  const freshNodeId = (d: Scenario) => {
+    const taken = new Set(walk(d.deck).map((n) => n.id));
+    return unusedId(`d-${Date.now()}`, (id) => taken.has(id));
+  };
+
   const addScene = () => {
     const scenes = draft.deck.filter((n) => n.kind === 'scene').length;
     const node: DeckNode = {
-      id: `d-${Date.now()}`,
+      id: freshNodeId(draft),
       kind: 'scene',
       name: `${scenes + 1} 新しいシーン`,
       cards: [],
@@ -113,22 +130,56 @@ function Editor({
     deck.splice(endingIdx < 0 ? deck.length : endingIdx, 0, node);
     set('deck', deck);
   };
-  const removeNode = (id: string) =>
-    set(
-      'deck',
-      draft.deck.filter((n) => n.id !== id),
-    );
+  const removeNode = (id: string) => {
+    const r = removeDeckNode(draft.deck, id);
+    if (!r.ok) {
+      setDeckBlocked(referrerMessage(r.referrers));
+      setEndingBlocked(null);
+      return;
+    }
+    setDeckBlocked(null);
+    setEndingBlocked(null);
+    set('deck', r.deck);
+  };
   const toggleDense = (id: string) =>
     set(
       'deck',
       draft.deck.map((n) => (n.id === id ? { ...n, dense: !n.dense } : n)),
     );
+  // 結末と、それを指す結末のノードを対で足す・消す（D6・D2）
   const addEnding = () =>
-    set('endings', [...draft.endings, { id: `e-${Date.now()}`, name: '新しい結末' }]);
+    setDraft((d) => {
+      const taken = new Set(d.endings.map((e) => e.id));
+      return addEndingPair(d, '新しい結末', {
+        endingId: unusedId(`e-${Date.now()}`, (id) => taken.has(id)),
+        nodeId: freshNodeId(d),
+      });
+    });
+  const removeEnding = (id: string) => {
+    const r = removeEndingPair(draft, id);
+    if (!r.ok) {
+      setEndingBlocked(referrerMessage(r.referrers));
+      setDeckBlocked(null);
+      return;
+    }
+    setEndingBlocked(null);
+    setDeckBlocked(null);
+    setDraft(r.scenario);
+  };
   const setEnding = (id: string, patch: Partial<EndingDef>) =>
     set(
       'endings',
       draft.endings.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+    );
+
+  // シーン編集は保存済みのシナリオから開くので、まだ保存していないノードには「編集」を出さない
+  // （押すと「シーンが見つかりません」になり、編集中の下書きも消えるため）
+  const savedNodeIds = new Set(walk(sc.deck).map((n) => n.id));
+  const editLink = (n: DeckNode) =>
+    savedNodeIds.has(n.id) ? (
+      <Link to={`/creator/scenarios/${sc.id}/scenes/${n.id}`}>編集</Link>
+    ) : (
+      <span className="u-small u-dim">保存すると編集できる</span>
     );
 
   return (
@@ -275,12 +326,13 @@ function Editor({
               </Button>
             }
           >
+            {deckBlocked ? <ErrorNote error={new Error(deckBlocked)} /> : null}
             <DeckTree
               nodes={draft.deck}
               renderActions={(n) =>
                 n.kind === 'scene' ? (
                   <>
-                    <Link to={`/creator/scenarios/${sc.id}/scenes/${n.id}`}>編集</Link>
+                    {editLink(n)}
                     <Button size="sm" variant="ghost" onClick={() => toggleDense(n.id)}>
                       {n.dense ? '軽量に' : '濃密に'}
                     </Button>
@@ -288,19 +340,23 @@ function Editor({
                       削除
                     </Button>
                   </>
+                ) : n.kind === 'intro' || n.kind === 'ending' ? (
+                  // 導入・結末も同じ画面で編集する（D4）。消すのは結末の枠の「削除」から
+                  editLink(n)
                 ) : null
               }
             />
           </Panel>
           <Panel
-            title="結末タグ"
-            sub="結末は成功／失敗の2値に限らず、任意の数を定義できる。配るタグは後続シナリオの前提タグと同じ仕組みで突き合わされる。"
+            title="結末"
+            sub="結末は成功／失敗の2値に限らず、任意の数を定義できる。結末を追加すると、それを指す結末のノードもデッキにできる。結末タグは後続シナリオの前提タグと同じ仕組みで突き合わされる。"
             actions={
               <Button size="sm" variant="ghost" onClick={addEnding}>
                 結末を追加
               </Button>
             }
           >
+            {endingBlocked ? <ErrorNote error={new Error(endingBlocked)} /> : null}
             <div className={s.list}>
               {draft.endings.map((e) => (
                 <div key={e.id} className={s.listItem}>
@@ -315,10 +371,13 @@ function Editor({
                     type="text"
                     style={{ flex: 1, minWidth: 140, width: 'auto' }}
                     value={e.grantsTag ?? ''}
-                    placeholder="配る前提タグ（空なら単発）"
+                    placeholder="結末タグ（空なら単発）"
                     onChange={(ev) => setEnding(e.id, { grantsTag: ev.target.value || undefined })}
-                    aria-label="配る前提タグ"
+                    aria-label="結末タグ"
                   />
+                  <Button size="sm" variant="ghost" onClick={() => removeEnding(e.id)}>
+                    削除
+                  </Button>
                 </div>
               ))}
             </div>

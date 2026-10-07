@@ -137,7 +137,8 @@ export const routes: RouteMeta[] = [
     path: '/creator/scenarios/:scenarioId/scenes/:sceneId',
     title: 'シーン編集',
     group: 'creator',
-    description: 'ロケーション・NPC・情報・イベントカードの配置、目的・終了条件（仮）の編集',
+    description:
+      'ロケーション・NPC・情報・選択肢・エネミーのカードの配置と選択肢の移り先、目的・終了条件（仮）の編集。導入・結末のノードも開ける',
     example: '/creator/scenarios/sc-gray-mansion/scenes/d-s2',
   },
 

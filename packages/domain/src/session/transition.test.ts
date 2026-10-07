@@ -80,7 +80,7 @@ describe('planTransition', () => {
     expect(plan.ok && plan.autoCombat).toEqual({ enemy, maxRounds: 20 });
   });
 
-  it('GM不在のセッションで結末ノードへ移ると終了する', () => {
+  it('GM不在のセッションで結末のノードへ移ると終了する', () => {
     const plan = planTransition({ deck, endings: [] }, soloGm, 'end', []);
     expect(plan.ok && plan.ended).toBe(true);
   });
@@ -92,7 +92,7 @@ describe('planTransition', () => {
     });
   });
 
-  it('GM不在でないセッションでは結末ノードへ移っても終了しない（GMが宣言する）', () => {
+  it('GM不在でないセッションでは結末のノードへ移っても終了しない（GMが宣言する）', () => {
     const plan = planTransition({ deck, endings: [] }, humanGm, 'end', []);
     expect(plan.ok && plan.ended).toBe(false);
   });

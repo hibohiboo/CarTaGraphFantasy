@@ -2,6 +2,7 @@
 // 保存先は既定で null（デモ。setup.ts が毎回戻す）。書き込みを確かめるテストだけ、偽の保存先を差し込む。
 
 import type { CardDef } from '@cartagraph/domain/card/model';
+import { safeParseScenarioFile } from '@cartagraph/domain/scenario/file';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import { waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
@@ -272,6 +273,24 @@ describe('保存の本文', () => {
       expect(await get(sc.id)).toEqual(sc);
     },
   );
+});
+
+describe('新規作成のシナリオ', () => {
+  it('結末「結末」（結末タグなし）と、それを指す結末のノードを1つずつ持ち、公開できる形', async () => {
+    const sc = await create();
+    expect(sc.endings).toEqual([{ id: expect.any(String), name: '結末' }]);
+    const endingNodes = sc.deck.filter((n) => n.kind === 'ending');
+    expect(endingNodes).toEqual([
+      {
+        id: expect.any(String),
+        kind: 'ending',
+        name: '結末',
+        cards: [],
+        endingId: sc.endings[0]?.id,
+      },
+    ]);
+    expect(safeParseScenarioFile(`scenarios/${sc.id}.json`, sc).ok).toBe(true);
+  });
 });
 
 describe('新規作成の id（nextFreeId）', () => {

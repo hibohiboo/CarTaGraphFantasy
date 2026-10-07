@@ -2,10 +2,8 @@
 // どちらも募集は止めない。GM が判断するための注意に使う。
 // deck は、GM が外したシーンを除いたデッキ（session/deck.ts の sessionDeck）を渡す。
 
+import { walk } from './deck';
 import type { DeckNode } from './model';
-
-const walk = (nodes: DeckNode[]): DeckNode[] =>
-  nodes.flatMap((n) => [n, ...walk(n.children ?? [])]);
 
 /**
  * 先へ進む選択肢の無いシーン：種類が導入・シーンで、移り先を持つ選択肢カードが1枚も無いノード（入れ子も見る）。

@@ -65,7 +65,7 @@ describe('sessionDeck（GMが外したシーンを除いたデッキ。docs/cart
     expect(ids(sessionDeck(deck, ['alley']))).toEqual(['intro', 'town', 'square', 'forest', 'end']);
   });
 
-  it('外したシーンとその子孫へ進む選択肢カードは無くなり、ほかのシーンへ進むもの・行き先の無いものは残る', () => {
+  it('外したシーンとその子孫へ進む選択肢カードは無くなり、ほかのシーンへ進むもの・移り先の無いものは残る', () => {
     const d = sessionDeck(deck, ['alley']);
     // well は alley の子孫なので、導入の「井戸へ」も広場の「井戸へ」も無くなる
     expect(cardIds(d[0])).toEqual(['街へ', '森へ', '見回す']);
