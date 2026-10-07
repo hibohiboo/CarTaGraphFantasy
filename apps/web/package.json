@@ -11,6 +11,7 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "check:publish": "node e2e/dev/scenario-publish.mjs",
+    "check:authoring": "node e2e/dev/scenario-authoring.mjs",
     "msw:init": "msw init public/ --save"
   },
   "dependencies": {
