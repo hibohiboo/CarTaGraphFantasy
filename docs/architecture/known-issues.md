@@ -189,6 +189,15 @@
 - **見つけた経緯** — 2026-10-03、FSD 移行（`docs/plans/2026-10-03-webのFSD移行.md` D6）で、振る舞いを変えないため1ファイルのまま移した
 - **直すときの目安** — 部品ごとのファイル（`shared/ui/Button.tsx` など。セグメントの中にフォルダは作らない。architecture.md「依存の向き」）に分け、エンティティ寄りの部品は `entities/<エンティティ>/ui/` へ移す。CSS Modules も分ける
 
+### 複雑度・行数の上限を超える既存のコード
+
+- **起きること** — [静的解析ルール](../process/rules/static-analysis.md)「コードの複雑さ」の上限を超える箇所が16件あり、`biome-ignore` で個別に抑えている。数字は導入時（2026-10-09）の値
+  - 認知的複雑度（上限15）：`mocks/handlers.ts` の4つのハンドラ（`/api/sessions/:id/play` 73・`/auto-combat` 27・`/api/scenarios/:id/recruitments` 21・`/api/recruitments/:id/start` 19）、`TutorialPage` 60、`GameCard` 52、`PlayPage` 49、`SessionBrowsePage` の `RecruitCard` 46、`resolveAutoCombat`（`packages/domain/src/autoCombat/resolve.ts`）29、`CreatorSceneEditPage` の `SceneEditor` 20、`GmSessionManagePage` 20 とその `ProposalTicket` 16、`vite/scenarioFilePlugin.ts` の書き込みの口 19、`applySoloEffect`（`packages/domain/src/soloVillage/rules.ts`）18
+  - 関数の行数（上限200）：`TutorialPage` 235行
+  - ファイルの行数（上限1000）：`apps/web/src/mocks/handlers.ts`（1327行）
+- **見つけた経緯** — 2026-10-09、SonarJS 相当のルールを Biome で有効にしたとき
+- **直すときの目安** — 定期作業のテスト駆動リファクタリング（[開発プロセス](../process/index.md)）で、数字の大きいものから分ける。判定・計算は純粋関数へ、画面は区画ごとの子コンポーネントへ、`handlers.ts` は API のまとまりごとのファイルへ。分けたら `biome-ignore` を消し、ここの一覧からも消す
+
 ## ドキュメント・用語
 
 ### 結末タグの持ち方が、仕様（カードの一種）と実装（文字列の配列）でずれている

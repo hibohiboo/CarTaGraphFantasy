@@ -43,6 +43,13 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。
 
+### 2026-10-09 SonarJS 相当の複雑さのルールを Biome で有効にし、静的解析のページを作った
+
+- **内容** — `biome.json` で `complexity/noExcessiveCognitiveComplexity`（15）・`noExcessiveLinesPerFunction`（200行、テストは除く）・`useMaxParams`（4）・`style/noExcessiveLinesPerFile`（1000行）を error で有効にした。既存の違反16件は `biome-ignore`（理由つき）で個別に抑え、[既知の問題](../architecture/known-issues.md)に一覧を置いた。`biome.json` の理由を集める[静的解析ルール](rules/static-analysis.md)を新設し、サイドバーと `AGENTS.md` のルール表から辿れるようにした
+- **理由** — 人間から「SonarJS の Biome 版は無いか。コードの品質を保ちたい」と依頼された。SonarJS のプラグインは Biome で使えないが、中心のルール（認知的複雑度・行数・引数の数）は Biome にあり、推奨ルールに含まれないので無効だった。重複コードの検出などは Biome に無く、入れていない（ページの「入れていないもの」）
+- **反映先** — `biome.json`、`apps/web/src/**`・`apps/web/vite/scenarioFilePlugin.ts`・`packages/domain/src/**` の `biome-ignore`（10ファイル）、`docs/process/rules/static-analysis.md`、`docs/.vitepress/config.mts`、`AGENTS.md`、`docs/architecture/known-issues.md`
+- **きっかけ** — 人間の要望 ／ **止め方** — 機械（lint）、置き場所（ページを新設）
+
 ### 2026-10-07 シナリオの公開 C2（PR #18）の振り返りから3件を採用
 
 - **内容**

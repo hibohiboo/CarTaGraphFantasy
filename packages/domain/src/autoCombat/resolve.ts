@@ -80,6 +80,7 @@ export interface AutoCombatResult {
  * PL と敵の1対1の戦闘を、カウント制で最後まで自動解決する（auto-combat.md「解決の手順」）。
  * 入力が不正（優先順位リストが validatePriority を通らない、行動値・HP・ラウンド上限が1未満）なら例外を投げる。
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 export function resolveAutoCombat(input: {
   pl: Combatant;
   enemy: Combatant;

@@ -55,6 +55,7 @@ export function grantEndingTag(character: Character, tag: string): Character {
  * 文には達成カードを書かない（GM専用ゾーンの存在をPLに見せないため）。
  * 達成カードを場に置くのは呼び出し側の仕事。
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 export function applySoloEffect(
   character: Character,
   effect: SoloEffect,

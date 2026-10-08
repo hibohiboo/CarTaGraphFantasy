@@ -47,6 +47,34 @@
         "noSkippedTests": "error",
         "noFocusedTests": "error",
         "noImportCycles": "error"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": {
+            "maxAllowedComplexity": 15
+          }
+        },
+        "noExcessiveLinesPerFunction": {
+          "level": "error",
+          "options": {
+            "maxLines": 200
+          }
+        },
+        "useMaxParams": {
+          "level": "error",
+          "options": {
+            "max": 4
+          }
+        }
+      },
+      "style": {
+        "noExcessiveLinesPerFile": {
+          "level": "error",
+          "options": {
+            "maxLines": 1000
+          }
+        }
       }
     },
     "domains": {
@@ -68,6 +96,9 @@
         "rules": {
           "style": {
             "noNonNullAssertion": "off"
+          },
+          "complexity": {
+            "noExcessiveLinesPerFunction": "off"
           }
         }
       }

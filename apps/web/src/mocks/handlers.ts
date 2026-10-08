@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 // MSW ハンドラ。バックエンドができるまでの代替。
 // 状態はメモリ上に持ち、リロードで初期化される（永続化はしない）。
 
@@ -507,6 +508,7 @@ export const handlers = [
 
   // 募集からセッションを始める（docs/cartagraph/scenario-flow.md「全体フロー」5）。
   // 検査と参加者の行は packages/domain の checkStart・buildParticipants。エラーのときは何も変えない
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
   http.post('/api/recruitments/:id/start', async ({ params, request }) => {
     const rc = db.recruitments.find((r) => r.id === params.id);
     if (!rc) return notFound('募集');
@@ -723,6 +725,7 @@ export const handlers = [
     return s ? HttpResponse.json(s) : notFound('セッション');
   }),
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
   http.post('/api/sessions/:id/play', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
@@ -1052,6 +1055,7 @@ export const handlers = [
 
   // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）。優先順位リストを受け取り、決着まで一括で解決する。
   // 判定・計算は packages/domain の resolveAutoCombat（乱数だけここで Math.random を渡す）
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
   http.post('/api/sessions/:id/auto-combat', async ({ params, request }) => {
     const s = findSession(String(params.id));
     if (!s) return notFound('セッション');
@@ -1265,6 +1269,7 @@ export const handlers = [
 
   http.post('/api/scenarios/:id/unpublish', ({ params }) => setLibraryStatus(params.id, 'draft')),
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
   http.post('/api/scenarios/:id/recruitments', async ({ params, request }) => {
     const s = db.scenarios.find((x) => x.id === params.id);
     if (!s) return notFound('シナリオ');

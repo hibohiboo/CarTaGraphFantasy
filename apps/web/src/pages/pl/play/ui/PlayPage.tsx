@@ -28,6 +28,7 @@ const PROPOSE_CARD: CardDef = {
 };
 
 /** ドライバー視点のプレイ画面。HUD＋卓＋手札の1画面完結レイアウト（session-play.html を移植） */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 export function PlayPage() {
   const { sessionId = '' } = useParams();
   const session = useSession(sessionId);

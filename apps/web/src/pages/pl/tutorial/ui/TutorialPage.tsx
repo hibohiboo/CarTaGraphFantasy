@@ -124,6 +124,8 @@ const RESOLVE_LINES: Line[] = [
  * 保存するため、ブラウザを閉じる等で途中離脱した場合は、それまでの入力だけが反映された
  * 「旅人」または「探索者」のキャラクターが結果的に残る。
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 export function TutorialPage() {
   const pool = useCardPool();
   const create = useCreateCharacter();

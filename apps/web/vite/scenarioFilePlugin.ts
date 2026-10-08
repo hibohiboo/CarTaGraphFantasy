@@ -222,6 +222,7 @@ export function scenarioFilePlugin(): Plugin {
       if (!open) return;
       const format = createBiomeFormatter();
       server.middlewares.use(SCENARIO_FILE_ENDPOINT, (req, res) => {
+        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
         void (async () => {
           const { safeParseScenarioFile, scenarioFileIdPattern } = (await server.ssrLoadModule(
             '@cartagraph/domain/scenario/file',

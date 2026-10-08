@@ -37,6 +37,7 @@ import {
 import { NarrationPanel } from './NarrationPanel';
 
 /** GMのセッション管理（session-gm-manage.html）＋提案の承認（session-gm-review.html）を1ページに統合 */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 export function GmSessionManagePage() {
   const { sessionId = '' } = useParams();
   const session = useSession(sessionId);
@@ -247,6 +248,7 @@ export function GmSessionManagePage() {
   );
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 function ProposalTicket({ p, session }: { p: Proposal; session: Session }) {
   const approve = useApproveProposal();
   const reject = useRejectProposal();

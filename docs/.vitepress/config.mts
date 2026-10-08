@@ -95,6 +95,7 @@ export default defineConfig({
               { text: 'アーキテクチャ（構成と依存の向き）', link: '/process/rules/architecture' },
               { text: 'テスト', link: '/process/rules/testing' },
               { text: 'レビュー', link: '/process/rules/review' },
+              { text: '静的解析', link: '/process/rules/static-analysis' },
             ],
           },
           {

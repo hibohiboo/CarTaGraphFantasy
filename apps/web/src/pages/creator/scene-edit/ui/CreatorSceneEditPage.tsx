@@ -101,6 +101,7 @@ export function CreatorSceneEditPage() {
   );
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 function SceneEditor({
   sc,
   scene,
