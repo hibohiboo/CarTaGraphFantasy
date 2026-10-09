@@ -30,6 +30,17 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 - **直したら** — `pnpm web:test` を通す（ライトルート。[開発プロセス](../process/index.md)）
 - **画面から公開する** — シナリオ製作者が「シナリオ集へ公開」すると、開発サーバー（`pnpm web:dev`）では `scenarios/<id>.json` に書く。公開中のシナリオの保存（シーン編集を含む）と「非公開にする」（`draft` で書き直す）でも書き直す。下書きはメモリだけ。書けるのは作者が自分のシナリオだけで、`fixtures.ts` にしか無いデモ・テスト用のシナリオは公開できない。カード画像（`data:` の URL）は書かない。GitHub Pages のデモは書かず、画面で「保存されません」と知らせる。書き込みの口は `apps/web/vite/scenarioFilePlugin.ts`、ブラウザ側の保存先は `src/mocks/devScenarioFileStore.ts`（`docs/plans/2026-10-06-シナリオ公開のJSON書き込み.md`）
 
+## ルールの JSON
+
+システム製作者が作るルールは、リポジトリ直下の `rules/` に JSON で置く。M1 では専用の画面は無く、JSON を直してコミットする（[ロードマップ](../roadmap.md) M1 の完成の条件1。`docs/plans/2026-10-10-ルールとカードプールのJSON管理.md`）。将来バックエンドができたら、同じ JSON を投入データとして使う。
+
+- **`rules/cards.json`** — システムのカード一覧。キャラクターが持つカード（[基本カードプール](../glossary.md#基本カードプール)のカード、村はずれの一歩のお店で習う戦闘スキル、仮に置いた報酬カード）を1か所で定義する。仕様の用語ではなく実装上のカタログで、基本カードプールより広い
+- **`rules/character-creation.json`** — 基本カードプール（カードの id の列）、CP 予算、能力値の配分（合計と範囲）、能力値を持って作ったときの HP。配分と HP は仮ルール（上の「仕様との関係」）。能力値の上限は、GM不在のソロの村の成長の上限にも使う。値は[数値バランスの相場観](../cartagraph/balance.md)の相場観の中で決める
+- **読み込み** — `src/mocks/rulesFiles.ts` が2ファイルを直接 import し、`packages/domain` の `loadRules` で検査する。シード（`fixtures.ts`）のキャラクターのデッキ・手札は `systemCard(id)` で引く（深い複製を返す）
+- **検査** — 形（知らないキーは誤り。数値は整数で、CP 予算・HP・能力値の下限は1以上）、能力値の範囲と合計の関係、カード id の重複、基本カードプールの id の実在・重複・CP コスト。誤りがあれば、アプリ（MSW）の起動とテストがファイル名つきで止まる
+- **シナリオからの参照** — シナリオの JSON は、システムのカードを `soloEffect.gainCardIds` に id だけで書く（お店で習う戦闘スキル）。シナリオ固有のカード（引換カード・達成カード）は今までどおり `gainCards`・`achievement` に中身ごと書く。読み込み時に、`gainCardIds` の実在と、シナリオ固有のカードの id がシステムのカードとぶつからないことを確かめる（`findSystemCardRefErrors`）
+- **注記・整形・直したら** — 「シナリオの JSON」と同じ（`$comment`、Biome、`pnpm web:test`）。中身だけを直す変更はライトルート（[開発プロセス](../process/index.md)）
+
 ## ページ一覧（グループ別）
 
 ページの一覧は、アプリ内のサイトマップ（`/admin/sitemap`）が `src/shared/routes/routes.ts` から生成している。ロールごとの画面の一覧・できること・画面どうしの導線図は [画面一覧と導線](../screens/index.md)、画面ごとの課題は [画面ごとの課題](../screens/issues.md) に置く（ここには書き写さない）。
@@ -38,7 +49,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 
 - 仕様の正は引き続き `docs/` 配下。アプリ内のルールブック（`src/shared/content/rulebook.ts`）は docs の**要約**で、各節に出典リンクを持つ。docs 側と食い違ったら docs を正としてアプリ側を直す。
 - `packages/domain` の型は docs の用語（カード種別・ロール・ゾーン・提案の状態など）に対応する。用語の意味を変える場合は docs を先に更新する。
-- キャラクター作成の体・技・心の初期配分は[未決](../open-questions.md#次に詰める候補)のため、アプリでは「合計9を1〜5で配分」という**仮ルール**で動かしている（画面にもその旨を表示）。
+- キャラクター作成の体・技・心の初期配分と作成時の HP は[未決](../open-questions.md#次に詰める候補)のため、アプリでは `rules/character-creation.json` の値（合計を範囲内で配分・能力値を持つときの HP）という**仮ルール**で動かしている（画面にもその旨を表示。下の「ルールの JSON」）。
 
 ## ルーティングと配信
 
@@ -65,7 +76,7 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 
 - **実行** — `pnpm sim:auto-combat`。回数・乱数の種は `pnpm sim:auto-combat -- --runs=10000 --seed=42` のように変えられる
 - **いつ回すか** — CI・git フックでは回さない。次のようなときに手で回し、書き出された `docs/cartagraph/auto-combat-simulation.md` も一緒にコミットする
-  - 村パートで得る HP・行動値、お店のスキル、試験官・戦闘スキルカードの数値（HP・行動値・コスト・ダイス）を `scenarios/sc-village-start.json` で変えたとき
+  - 村パートで得る HP・行動値、試験官の数値を `scenarios/sc-village-start.json` で、お店で習う戦闘スキルのカードの数値（コスト・ダイス）を `rules/cards.json` で変えたとき
   - 自動戦闘のエンジン（`packages/domain/src/autoCombat/resolve.ts`）の判定を変えたとき
   - 比べる戦い方を増やしたいとき（スクリプト内の `STRATEGIES` に足す）
 - **結果の読み方** — 乱数は種つきなので、数値が同じなら何度回しても同じ表になる。回し直して表に差分が出たら、数値かエンジンが変わったということ

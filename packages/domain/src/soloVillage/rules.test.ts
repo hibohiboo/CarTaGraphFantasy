@@ -10,6 +10,7 @@ import {
   grantEndingTag,
   heldCards,
   isSoloRuleCard,
+  resolveGainCards,
   unplayableReason,
 } from './rules';
 
@@ -27,6 +28,9 @@ const achievement = card('ach-boar', ['達成', '達成:猪'], {
   name: '猪の件を片づけた',
 });
 const growth = { hp: 20, baseActionValue: 10 };
+const lantern = card('c-lantern', ['道具'], { name: '灯火のランタン', cpCost: 1 });
+/** システムのカード一覧と能力値の上限（rules/。docs/plans/2026-10-10-ルールとカードプールのJSON管理.md） */
+const system = { cards: [slash, lantern], abilityMax: 5 };
 
 const traveler = (extra: Partial<Character> = {}): Character => ({
   id: 'pc',
@@ -46,8 +50,13 @@ const field = (gmOnly: CardDef[] = [], plVisible: CardDef[] = []): Session['fiel
 });
 
 /** 効果を適用し、成功を前提にキャラクターと文を返す */
-function apply(c: Character, effect: Parameters<typeof applySoloEffect>[1], g = growth) {
-  const r = applySoloEffect(c, effect, g);
+function apply(
+  c: Character,
+  effect: Parameters<typeof applySoloEffect>[1],
+  g = growth,
+  s = system,
+) {
+  const r = applySoloEffect(c, effect, g, s);
   if (!r.ok) throw new Error(r.error);
   return r;
 }
@@ -111,13 +120,26 @@ describe('applySoloEffect：能力値', () => {
     });
   });
 
-  it('上限5：4なら5に上がり、5なら5のまま', () => {
+  it('上限（渡した abilityMax。ここでは5）：4なら5に上がり、5なら5のまま', () => {
     const at = (body: number) =>
       traveler({ abilities: { body, skill: 1, mind: 1 }, hp: { current: 20, max: 20 } });
     expect(apply(at(4), { raiseAbility: 'body' }).character.abilities?.body).toBe(5);
     const capped = apply(at(5), { raiseAbility: 'body' });
     expect(capped.character.abilities?.body).toBe(5);
     expect(capped.lines).toEqual(['体はこれ以上上がらない（体 5）']);
+  });
+
+  it('上限は渡した abilityMax：上限3なら 2→3 に上がり、3 で止まる。上限を超えた値（4）は下がらない', () => {
+    const at = (body: number) =>
+      traveler({ abilities: { body, skill: 1, mind: 1 }, hp: { current: 20, max: 20 } });
+    const max3 = { ...system, abilityMax: 3 };
+    expect(apply(at(2), { raiseAbility: 'body' }, growth, max3).character.abilities?.body).toBe(3);
+    expect(apply(at(3), { raiseAbility: 'body' }, growth, max3).lines).toEqual([
+      '体はこれ以上上がらない（体 3）',
+    ]);
+    const over = apply(at(4), { raiseAbility: 'body' }, growth, max3);
+    expect(over.character.abilities?.body).toBe(4);
+    expect(over.lines).toEqual(['体はこれ以上上がらない（体 4）']);
   });
 
   it('上げる順番によらず同じ結果になる', () => {
@@ -141,7 +163,7 @@ describe('applySoloEffect：HP・行動値', () => {
     expect(apply(c, { raiseAbility: 'body' }).character.hp).toEqual({ current: 15, max: 15 });
   });
   it('シナリオが成長の値を持たなければ HP は付かない', () => {
-    const r = applySoloEffect(traveler(), { raiseAbility: 'body' }, undefined);
+    const r = applySoloEffect(traveler(), { raiseAbility: 'body' }, undefined, system);
     expect(r.ok && r.character.hp).toBeUndefined();
     expect(r.ok && r.character.abilities).toEqual({ body: 2, skill: 1, mind: 1 });
   });
@@ -176,7 +198,50 @@ describe('applySoloEffect：HP・行動値', () => {
   });
 });
 
+describe('resolveGainCards', () => {
+  it('gainCards → gainCardIds の順に、深く複製して返す', () => {
+    const r = resolveGainCards({ gainCards: [voucher()], gainCardIds: ['c-slash'] }, system.cards);
+    if (!r.ok) throw new Error(r.error);
+    expect(r.cards.map((c) => c.id)).toEqual(['v1', 'c-slash']);
+    expect(r.cards[1]).toEqual(slash);
+    expect(r.cards[1]).not.toBe(slash);
+    expect(r.cards[1]?.tags).not.toBe(slash.tags);
+  });
+
+  it('どちらも無ければ空', () => {
+    expect(resolveGainCards({}, system.cards)).toEqual({ ok: true, cards: [] });
+  });
+
+  it('一覧に無い id は誤りで、文に id が入る', () => {
+    const r = resolveGainCards({ gainCardIds: ['c-slash', 'c-nope'] }, system.cards);
+    expect(r.ok).toBe(false);
+    expect(!r.ok && r.error).toMatch(/c-nope/);
+  });
+});
+
 describe('applySoloEffect：カードの出入り', () => {
+  it('gainCardIds の戦闘スキルは一覧から引いて「習った」、スキルでないカードは「受け取った」', () => {
+    const { character, lines } = apply(traveler(), { gainCardIds: ['c-slash', 'c-lantern'] });
+    expect(character.deck).toEqual([slash, lantern]);
+    // 続く文は HP・行動値の付与（戦闘スキルを初めて得たため）
+    expect(lines.slice(0, 2)).toEqual(['『斬撃』を習った', '『灯火のランタン』を受け取った']);
+  });
+
+  it('得たカードの tags に push しても、一覧のカードは元のまま', () => {
+    const before = structuredClone(system.cards);
+    const { character } = apply(traveler(), { gainCardIds: ['c-slash'] });
+    character.deck[0]?.tags.push('汚す');
+    expect(system.cards).toEqual(before);
+  });
+
+  it('一覧に無い id と手放すタグを両方持つとき、失敗してキャラクターは変わらない', () => {
+    const c = traveler({ deck: [voucher()] });
+    const r = applySoloEffect(c, { consumeTag: '引換', gainCardIds: ['c-nope'] }, growth, system);
+    expect(r.ok).toBe(false);
+    expect(!r.ok && r.error).toMatch(/c-nope/);
+    expect(c.deck.map((x) => x.id)).toEqual(['v1']);
+  });
+
   it('得たカードは元の定義と同じ ID の別オブジェクト', () => {
     const { character } = apply(traveler(), { gainCards: [slash] });
     expect(character.deck).toHaveLength(1);
@@ -194,7 +259,7 @@ describe('applySoloEffect：カードの出入り', () => {
 
   it('手放すタグのカードが無ければ失敗し、キャラクターは変わらない', () => {
     const c = traveler();
-    const r = applySoloEffect(c, { consumeTag: '引換', gainCards: [slash] }, growth);
+    const r = applySoloEffect(c, { consumeTag: '引換', gainCards: [slash] }, growth, system);
     expect(r).toEqual({ ok: false, error: '『引換』のカードを持っていない' });
     expect(c.deck).toEqual([]);
   });

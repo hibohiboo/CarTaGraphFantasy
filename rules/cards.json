@@ -1,0 +1,145 @@
+{
+  "$comment": "システムのカード一覧（実装上のカタログ）。キャラクターが持つカードを1か所で定義する。基本カードプール（character-creation.json の basicPoolCardIds）より広く、お店で習う戦闘スキルと、仮に置いた報酬カードも含む。シナリオからは id で指す（soloEffect.gainCardIds）。読み込み・検査は docs/architecture/web-app.md「ルールの JSON」",
+  "cards": [
+    {
+      "id": "c-lantern",
+      "kind": "item",
+      "name": "灯火のランタン",
+      "description": "暗い場所を照らす",
+      "tags": ["道具"],
+      "cpCost": 1
+    },
+    {
+      "id": "c-night-eye",
+      "kind": "trait",
+      "name": "夜目が利く",
+      "description": "暗所での判定に強い",
+      "tags": ["感覚"],
+      "cpCost": 1
+    },
+    {
+      "id": "c-foresight",
+      "kind": "skill",
+      "name": "先読み",
+      "description": "危険な仕掛けに気づきやすい",
+      "tags": ["探索"],
+      "cpCost": 2
+    },
+    {
+      "id": "c-lockpick",
+      "kind": "item",
+      "name": "解錠具",
+      "description": "鍵のかかった扉や箱を開ける",
+      "tags": ["道具"],
+      "cpCost": 1
+    },
+    {
+      "id": "c-rope",
+      "kind": "item",
+      "name": "丈夫な縄",
+      "description": "登る・縛る・渡る",
+      "tags": ["道具"],
+      "cpCost": 1
+    },
+    {
+      "id": "c-charm",
+      "kind": "trait",
+      "name": "人当たりが良い",
+      "description": "対人交渉の判定に強い",
+      "tags": ["対人"],
+      "cpCost": 1
+    },
+    {
+      "$comment": "自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）での効果。数値はプレイテスト前の目安",
+      "id": "c-slash",
+      "kind": "skill",
+      "name": "斬撃",
+      "description": "射程1。ダイスでダメージを決める基本攻撃",
+      "tags": ["戦闘スキル", "攻撃"],
+      "cpCost": 2,
+      "actionCost": 3,
+      "range": 1,
+      "combatEffect": { "type": "damage", "dice": { "count": 1, "sides": 4, "bonus": 0 } }
+    },
+    {
+      "id": "c-heavy-blow",
+      "kind": "skill",
+      "name": "渾身の一撃",
+      "description": "射程1。コストが高いぶん大きく削る",
+      "tags": ["戦闘スキル", "攻撃"],
+      "cpCost": 3,
+      "actionCost": 6,
+      "range": 1,
+      "combatEffect": { "type": "damage", "dice": { "count": 2, "sides": 4, "bonus": 0 } }
+    },
+    {
+      "id": "c-guard",
+      "kind": "skill",
+      "name": "受け流し",
+      "description": "味方1人へのダメージを軽減する補助",
+      "tags": ["戦闘スキル", "補助"],
+      "cpCost": 2,
+      "actionCost": 2,
+      "range": 0
+    },
+    {
+      "id": "c-first-aid",
+      "kind": "skill",
+      "name": "応急手当",
+      "description": "判定なしでHPを回復する",
+      "tags": ["戦闘スキル", "回復"],
+      "cpCost": 2,
+      "actionCost": 4,
+      "range": 1,
+      "combatEffect": { "type": "heal", "dice": { "count": 2, "sides": 4, "bonus": 2 } }
+    },
+    {
+      "$comment": "基本カードプールには入れない（村はずれの一歩のお店で習う）。数値は docs/plans/2026-09-27-村パート.md のシミュレーションで選んだプレイテスト前の目安",
+      "id": "c-quick-thrust",
+      "kind": "skill",
+      "name": "素早い突き",
+      "description": "射程1。軽いぶん手数を稼げる",
+      "tags": ["戦闘スキル", "攻撃"],
+      "cpCost": 1,
+      "actionCost": 2,
+      "range": 1,
+      "combatEffect": { "type": "damage", "dice": { "count": 1, "sides": 2, "bonus": 0 } }
+    },
+    {
+      "id": "c-step",
+      "kind": "skill",
+      "name": "踏み込み",
+      "description": "移動カード。隣のグループへ移る",
+      "tags": ["戦闘スキル", "移動"],
+      "cpCost": 1,
+      "actionCost": 2,
+      "range": 0
+    },
+    {
+      "id": "c-short-sword",
+      "kind": "equipment",
+      "name": "短剣",
+      "description": "軽い刃物。斬撃の基本装備",
+      "tags": ["武器"],
+      "cpCost": 1
+    },
+    {
+      "$comment": "報酬カード（鉄鎖のガレオン船）。仕様では報酬カードの持ち主はシナリオ（または共有設定）だが、シナリオに報酬の定義が無いので仮にここに置く（docs/architecture/known-issues.md）。基本カードプールには入れない",
+      "id": "c-sea-legs",
+      "kind": "trait",
+      "name": "航海の心得",
+      "description": "船上での行動に慣れている",
+      "tags": ["航海の心得"],
+      "cpCost": 1
+    },
+    {
+      "$comment": "報酬カード（鉄鎖のガレオン船）。c-sea-legs と同じく仮にここに置く",
+      "id": "c-flame-sword",
+      "kind": "equipment",
+      "name": "炎の剣",
+      "description": "「鉄鎖のガレオン船」の報酬カード。以後のPCもCPで選べる",
+      "tags": ["武器", "報酬"],
+      "cpCost": 4
+    }
+  ]
+}

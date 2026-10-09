@@ -422,26 +422,7 @@
             "hasTags": ["引換"]
           },
           "soloEffect": {
-            "gainCards": [
-              {
-                "id": "c-slash",
-                "kind": "skill",
-                "name": "斬撃",
-                "description": "射程1。ダイスでダメージを決める基本攻撃",
-                "tags": ["戦闘スキル", "攻撃"],
-                "cpCost": 2,
-                "actionCost": 3,
-                "range": 1,
-                "combatEffect": {
-                  "type": "damage",
-                  "dice": {
-                    "count": 1,
-                    "sides": 4,
-                    "bonus": 0
-                  }
-                }
-              }
-            ],
+            "gainCardIds": ["c-slash"],
             "consumeTag": "引換"
           }
         },
@@ -458,26 +439,7 @@
             "hasTags": ["引換"]
           },
           "soloEffect": {
-            "gainCards": [
-              {
-                "id": "c-heavy-blow",
-                "kind": "skill",
-                "name": "渾身の一撃",
-                "description": "射程1。コストが高いぶん大きく削る",
-                "tags": ["戦闘スキル", "攻撃"],
-                "cpCost": 3,
-                "actionCost": 6,
-                "range": 1,
-                "combatEffect": {
-                  "type": "damage",
-                  "dice": {
-                    "count": 2,
-                    "sides": 4,
-                    "bonus": 0
-                  }
-                }
-              }
-            ],
+            "gainCardIds": ["c-heavy-blow"],
             "consumeTag": "引換"
           }
         },
@@ -494,26 +456,7 @@
             "hasTags": ["引換"]
           },
           "soloEffect": {
-            "gainCards": [
-              {
-                "id": "c-quick-thrust",
-                "kind": "skill",
-                "name": "素早い突き",
-                "description": "射程1。軽いぶん手数を稼げる",
-                "tags": ["戦闘スキル", "攻撃"],
-                "cpCost": 1,
-                "actionCost": 2,
-                "range": 1,
-                "combatEffect": {
-                  "type": "damage",
-                  "dice": {
-                    "count": 1,
-                    "sides": 2,
-                    "bonus": 0
-                  }
-                }
-              }
-            ],
+            "gainCardIds": ["c-quick-thrust"],
             "consumeTag": "引換"
           }
         },
@@ -530,26 +473,7 @@
             "hasTags": ["引換"]
           },
           "soloEffect": {
-            "gainCards": [
-              {
-                "id": "c-first-aid",
-                "kind": "skill",
-                "name": "応急手当",
-                "description": "判定なしでHPを回復する",
-                "tags": ["戦闘スキル", "回復"],
-                "cpCost": 2,
-                "actionCost": 4,
-                "range": 1,
-                "combatEffect": {
-                  "type": "heal",
-                  "dice": {
-                    "count": 2,
-                    "sides": 4,
-                    "bonus": 2
-                  }
-                }
-              }
-            ],
+            "gainCardIds": ["c-first-aid"],
             "consumeTag": "引換"
           }
         },

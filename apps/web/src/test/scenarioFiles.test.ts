@@ -1,13 +1,14 @@
 // scenarios/*.json の読み込みと、fixtures との関係（docs/plans/2026-10-03-シナリオのJSON管理.md）。
-// 遊べるシナリオの正は scenarios/*.json。fixtures に残る重複（プランの「重複の記録」1〜3）は、
-// 統合するまでずれをここで検知する。
+// 遊べるシナリオの正は scenarios/*.json。fixtures に残る重複（灰色館の一夜の手札）は、統合するまでずれをここで検知する。
+// お店の戦闘スキルと試験官の重複は、rules/ のカード一覧と JSON からの読み込みで1か所になった（rulesFiles.test.ts。
+// docs/plans/2026-10-10-ルールとカードプールのJSON管理.md）。
 
 import { toScenarioFile } from '@cartagraph/domain/scenario/file';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import { scenarioSchema } from '@cartagraph/domain/scenario/model';
 import { describe, expect, it } from 'vitest';
 import { api } from '@/shared/api/api';
-import { examiner, cards as fixtureCards, scenarios, sessions } from '../mocks/fixtures';
+import { scenarios, sessions } from '../mocks/fixtures';
 import { playScript } from '../mocks/handlers';
 import { scenarioFiles } from '../mocks/scenarioFiles';
 
@@ -99,26 +100,6 @@ describe('テスト専用の sc-village-always-win（村はずれの一歩の JS
 });
 
 describe('fixtures に残る重複のずれ検知（統合するまで）', () => {
-  it('村はずれの一歩のお店で習うスキルは、fixtures のカードと同じ', () => {
-    const shop = byId('sc-village-start').deck.find((n) => n.id === 'vs-shop');
-    const learned = shop?.cards.flatMap((c) => c.soloEffect?.gainCards ?? []) ?? [];
-    expect(learned.map((c) => c.id)).toEqual([
-      'c-slash',
-      'c-heavy-blow',
-      'c-quick-thrust',
-      'c-first-aid',
-    ]);
-    const all = Object.values(fixtureCards);
-    for (const c of learned) expect(c).toEqual(all.find((x) => x.id === c.id));
-  });
-
-  it('村はずれの一歩の試験官は、fixtures の examiner と同じ（注記を除く）', () => {
-    const exam = byId('sc-village-start').deck.find((n) => n.id === 'vs-exam');
-    const { $comment, ...enemy } = exam?.autoCombat?.enemy ?? {};
-    expect($comment).toEqual(expect.any(String));
-    expect(enemy).toEqual(examiner);
-  });
-
   it('灰色館の一夜の選択肢カードは、fixtures のセッションの手札と同じで、playScript のキーは JSON に実在する', () => {
     const door = byId('sc-gray-mansion').deck.find((n) => n.id === 'd-s2');
     const hand = sessions.find((s) => s.id === 'ss-mansion')?.hand ?? [];

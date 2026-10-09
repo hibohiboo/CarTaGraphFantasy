@@ -3,6 +3,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  loadScenarioFiles,
   parseScenarioFile,
   safeParseScenarioFile,
   scenarioFileIdPattern,
@@ -218,5 +219,39 @@ describe('toScenarioFile', () => {
     const s = withImages();
     toScenarioFile(s);
     expect(s.deck[0]?.cards[0]?.portraitUrl).toBe(img);
+  });
+});
+
+// 遊べるシナリオの読み込み（docs/plans/2026-10-10-ルールとカードプールのJSON管理.md E6）
+describe('loadScenarioFiles', () => {
+  const learn = (gainCardIds: string[]) => ({
+    deck: [
+      {
+        id: 'a',
+        kind: 'intro',
+        name: '導入',
+        cards: [
+          { id: 'learn', kind: 'choice', name: '習う', tags: [], soloEffect: { gainCardIds } },
+        ],
+      },
+    ],
+  });
+
+  it('正しいファイル群を id 順で返す', () => {
+    const files = {
+      '../../../../scenarios/sc-y.json': raw({ id: 'sc-y' }),
+      [PATH]: raw(learn(['c-slash'])),
+    };
+    expect(loadScenarioFiles(files, ['c-slash']).map((s) => s.id)).toEqual(['sc-x', 'sc-y']);
+  });
+
+  it('システムのカード一覧に無い id を指すファイルは、そのパスつきで止まる', () => {
+    expect(() => loadScenarioFiles({ [PATH]: raw(learn(['c-nope'])) }, ['c-slash'])).toThrow(
+      /scenarios\/sc-x\.json.*「c-nope」/s,
+    );
+  });
+
+  it('形の誤りも、そのパスつきで止まる', () => {
+    expect(() => loadScenarioFiles({ [PATH]: raw({ title: 1 }) }, [])).toThrow(/sc-x\.json/);
   });
 });

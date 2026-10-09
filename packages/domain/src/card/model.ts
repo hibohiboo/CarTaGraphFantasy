@@ -91,10 +91,18 @@ export type CardCondition = z.infer<typeof cardConditionSchema>;
 /** GM不在のソロで、選択肢カードを選んだときの成長の効果（docs/cartagraph/solo-village.md、仮ルール） */
 export const soloEffectSchema = z.strictObject({
   raiseAbility: abilityKeySchema.optional(),
-  /** キャラクターデッキへ加える（引換カード・習ったスキル）。ID はそのまま保ち、オブジェクトだけ複製する */
+  /**
+   * キャラクターデッキへ加える、シナリオ固有のカード（引換カードなど）。中身ごと書く。
+   * ID はそのまま保ち、オブジェクトだけ複製する
+   */
   get gainCards(): z.ZodOptional<z.ZodArray<typeof cardDefSchema>> {
     return z.array(cardDefSchema).optional();
   },
+  /**
+   * キャラクターデッキへ加える、システムのカード（rules/cards.json。お店で習う戦闘スキルなど）の id。
+   * 使うときに一覧から引いて複製する。gainCards の後に加える
+   */
+  gainCardIds: z.array(idSchema).optional(),
   /** このタグのカードをキャラクターデッキから1枚手放す（引換カード） */
   consumeTag: z.string().optional(),
   /** GM専用ゾーンに置く達成カード */
@@ -144,3 +152,13 @@ export const cardDefSchema = z.strictObject({
 
 /** カード1枚。生成元（シナリオ製作者／GM／進化）に関わらず同じ構造を持つ */
 export type CardDef = z.infer<typeof cardDefSchema>;
+
+/**
+ * システムのカード一覧のファイル（rules/cards.json）。キャラクターが持つカード（基本カードプールのカード、
+ * お店で習う戦闘スキル、仮に置く報酬カード）を1か所で定義する実装上のカタログで、基本カードプールより広い
+ * （docs/plans/2026-10-10-ルールとカードプールのJSON管理.md）
+ */
+export const systemCardsFileSchema = z.strictObject({
+  $comment: commentSchema,
+  cards: z.array(cardDefSchema),
+});

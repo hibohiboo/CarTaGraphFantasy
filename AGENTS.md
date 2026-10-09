@@ -23,7 +23,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 - `docs/plans/` … プランドキュメント（作業単位の設計書。VitePress のビルド対象外）
 - `docs/backlog/` … 要望（PBI）を1要望1ファイルで置く。先頭の状態・判断待ちから、トップページのダッシュボードをビルド時に組み立てる（`docs/.vitepress/*.data.ts`）
 - `docs/public/preview/` … HTML/CSS のみのUI試作。未React化の画面だけを残し、React 化したら削除する（`docs/architecture/web-app.md`「未React化の画面」）
-- `apps/`・`packages/`・`scenarios/`・`scripts/` … コード。ディレクトリ構成と依存の向きは `docs/process/rules/architecture.md`「構造」「依存の向き」が正（ここには書き写さない）
+- `apps/`・`packages/`・`scenarios/`・`rules/`・`scripts/` … コード（`rules/` はシステム製作者のルールの JSON）。ディレクトリ構成と依存の向きは `docs/process/rules/architecture.md`「構造」「依存の向き」が正（ここには書き写さない）
 - `.claude/` … Claude Code 固有の設定（agents / skills / hooks / settings）。手順の本文は `docs/process/` が正
 
 ## コマンド
@@ -49,7 +49,7 @@ node scripts/replace-once.mjs <spec.json>  # ファイルの文字列を置き�
 node scripts/mutate-check.mjs <spec.json>  # 守る条件を1つずつ外し、テストが落ちることを確かめて元に戻す（testing.md「骨抜き禁止」）
 ```
 
-コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`scripts/`・`.claude/hooks/` を触ったら `pnpm tools:test` も通す。`scenarios/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオを使うテストが走る。pre-push でも走る）。
+コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`scripts/`・`.claude/hooks/` を触ったら `pnpm tools:test` も通す。`scenarios/`・`rules/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオ・ルールを使うテストが走る。pre-push でも走る）。
 
 lint・型検査・テスト・docsビルドは、AI にトークンを使わせず git フックで機械的に止める。
 - `.githooks/pre-commit` … ステージ済みファイルだけ `biome check --staged --write` を実行し、安全な指摘（フォーマット崩れ等）は自動修正して再ステージする。`--unsafe`が要る指摘（意図的に自動適用しない方針）だけコミットを止める
@@ -64,7 +64,7 @@ lint・型検査・テスト・docsビルドは、AI にトークンを使わせ
 | 対象 | 必ず読むルール |
 |---|---|
 | `apps/**`, `packages/**` | `docs/process/rules/architecture.md` |
-| `apps/**/*.test.*`, `apps/web/src/test/**`, `apps/web/src/mocks/**`, `scenarios/**`, テストの追加・変更 | `docs/process/rules/testing.md` |
+| `apps/**/*.test.*`, `apps/web/src/test/**`, `apps/web/src/mocks/**`, `scenarios/**`, `rules/**`, テストの追加・変更 | `docs/process/rules/testing.md` |
 | `biome.json`、lint の指摘を抑える・しきい値を変えるとき | `docs/process/rules/static-analysis.md` |
 | push・マージ前、レビュー実行時 | `docs/process/rules/review.md` |
 | 機能追加・振る舞いの変更（プラン作成から） | `docs/process/index.md`（開発サイクル） |

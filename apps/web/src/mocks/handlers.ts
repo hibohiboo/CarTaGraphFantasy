@@ -10,6 +10,7 @@ import {
   validatePriority,
 } from '@cartagraph/domain/autoCombat/resolve';
 import type { CardDef } from '@cartagraph/domain/card/model';
+import { basicPool } from '@cartagraph/domain/character/creation';
 import type { Character } from '@cartagraph/domain/character/model';
 import { addEnding } from '@cartagraph/domain/scenario/edit';
 import { safeParseScenarioFile, toScenarioFile } from '@cartagraph/domain/scenario/file';
@@ -55,6 +56,7 @@ import { HttpResponse, http } from 'msw';
 import type { ScenarioFileResult, ScenarioSaveResult } from '@/entities/scenario/api/types';
 import { toDictionaryForm } from '@/shared/lib/japanese';
 import * as fx from './fixtures';
+import { characterCreation, systemCards } from './rulesFiles';
 import { scenarioFiles } from './scenarioFiles';
 
 // ソロ開始のセッションの GM 欄には SYSTEM_GM_ID のダミーを入れる（packages/domain）。GM 不在かどうかは Session.gmless、
@@ -70,6 +72,18 @@ type Db = {
 };
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
+
+/**
+ * キャラクター作成で CP を払って選べるカード：基本カードプール（rules/）と、デモのプレイヤーの解放済みプール
+ * （docs/cartagraph/character-growth.md「CPで選べるカードの範囲」）
+ */
+const creationPool = () => [...basicPool(characterCreation, systemCards), ...fx.unlockedPool];
+
+/** 能力値を持って作ったときの HP（rules/character-creation.json の initialHp。仮ルール） */
+const initialHp = () => ({
+  current: characterCreation.initialHp,
+  max: characterCreation.initialHp,
+});
 
 let db: Db = createDb();
 
@@ -313,7 +327,7 @@ function buildSoloCharacter(name: string, starter?: Scenario['soloStarter']): Ch
     deck: starter ? clone(starter.cards) : [],
     titles: [],
     endingTags: [],
-    cp: { total: fx.initialCpBudget, spent: 0 },
+    cp: { total: characterCreation.cpBudget, spent: 0 },
     createdAt: nowIso(),
   };
 }
@@ -634,9 +648,10 @@ export const handlers = [
 
   http.get('/api/card-pool', () =>
     HttpResponse.json({
-      basic: fx.basicPool,
+      basic: basicPool(characterCreation, systemCards),
       unlocked: fx.unlockedPool,
-      budget: fx.initialCpBudget,
+      budget: characterCreation.cpBudget,
+      abilities: characterCreation.abilities,
     }),
   ),
 
@@ -646,15 +661,17 @@ export const handlers = [
       abilities?: Character['abilities'];
       cardIds: string[];
     };
-    const pool = [...fx.basicPool, ...fx.unlockedPool];
+    const pool = creationPool();
+    // カード一覧は resetDb() で戻らないので、デッキには複製を入れる
     const deck = body.cardIds
       .map((id) => pool.find((c) => c.id === id))
-      .filter((c): c is CardDef => !!c);
+      .filter((c): c is CardDef => !!c)
+      .map(clone);
     const spent = deck.reduce((sum, c) => sum + (c.cpCost ?? 0), 0);
-    if (spent > fx.initialCpBudget) {
+    if (spent > characterCreation.cpBudget) {
       // CP予算はハードな制約（docs/cartagraph/character-growth.md）
       return HttpResponse.json(
-        { message: `CP予算（${fx.initialCpBudget}）を超えています` },
+        { message: `CP予算（${characterCreation.cpBudget}）を超えています` },
         { status: 422 },
       );
     }
@@ -666,11 +683,11 @@ export const handlers = [
       ownerId: fx.me.id,
       ownerName: fx.me.name,
       abilities: body.abilities,
-      hp: body.abilities ? { current: 14, max: 14 } : undefined,
+      hp: body.abilities ? initialHp() : undefined,
       deck,
       titles: [],
       endingTags: [],
-      cp: { total: fx.initialCpBudget, spent },
+      cp: { total: characterCreation.cpBudget, spent },
       createdAt: nowIso(),
     };
     db.characters.push(ch);
@@ -689,13 +706,14 @@ export const handlers = [
     };
     if (body.abilities) {
       ch.abilities = body.abilities;
-      ch.hp = { current: 14, max: 14 };
+      ch.hp = initialHp();
     }
     if (body.addCardIds?.length) {
-      const pool = [...fx.basicPool, ...fx.unlockedPool];
+      const pool = creationPool();
       const added = body.addCardIds
         .map((id) => pool.find((c) => c.id === id))
-        .filter((c): c is CardDef => !!c);
+        .filter((c): c is CardDef => !!c)
+        .map(clone);
       if (added.length !== body.addCardIds.length) {
         return HttpResponse.json(
           { message: '存在しないカードが指定されています' },
@@ -746,7 +764,10 @@ export const handlers = [
       if (reason) return unprocessable(reason);
       if (card.soloEffect) {
         if (!character) return notFound('キャラクター');
-        const r = applySoloEffect(character, card.soloEffect, scenario?.soloGrowth);
+        const r = applySoloEffect(character, card.soloEffect, scenario?.soloGrowth, {
+          cards: systemCards,
+          abilityMax: characterCreation.abilities.max,
+        });
         if (!r.ok) return unprocessable(r.error);
         grown = { ...r, achievement: card.soloEffect.achievement };
       }

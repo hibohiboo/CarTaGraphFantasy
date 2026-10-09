@@ -5,6 +5,7 @@ paths:
   - "apps/web/src/test/**"
   - "apps/web/src/mocks/**"
   - "scenarios/**"
+  - "rules/**"
   - "apps/web/vite.config.ts"
   - "apps/web/vite/**"
   - "apps/web/e2e/**"
@@ -46,7 +47,7 @@ paths:
 
 ## シードデータ（MSW）
 
-- モックデータの定義は、遊べるシナリオの `scenarios/*.json` と、それ以外（デモの下書き・テスト専用のシナリオを含む）の `apps/web/src/mocks/fixtures.ts` の**2箇所**に限る。テストやページの中で独自のマジック値を作らない。テストでシナリオの値を使うときは、書き写さずに `fixtures.ts` の `scenarios` から引く
+- モックデータの定義は、遊べるシナリオの `scenarios/*.json`、システムのカードとキャラクター作成のルールの `rules/*.json`、それ以外（デモの下書き・テスト専用のシナリオを含む）の `apps/web/src/mocks/fixtures.ts` の**3箇所**に限る。テストやページの中で独自のマジック値を作らない。テストでシナリオの値を使うときは、書き写さずに `fixtures.ts` の `scenarios` から引く。ルールの値（CP 予算・能力値・カードのコストなど）は `mocks/rulesFiles.ts` から引く（CP の組は `test/rulesHelpers.ts` の `cardsCosting`）
 - テスト専用のシナリオを遊べるシナリオから作るときは、`structuredClone` で深く複製してから差し替える（`scenarios/*.json` から読んだオブジェクトを書き換えない）
 - 各テストの後に `resetDb()` で状態を戻す（`src/test/setup.ts`）。テストは実行順に依存しない
 - 変更を伴うテストは、既存のシードを書き換えるのではなく、テストの中で操作して結果を確認し、`resetDb()` に後始末を任せる

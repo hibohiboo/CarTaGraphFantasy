@@ -1,4 +1,6 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
+import { abilitiesValid, defaultAbilities } from '@cartagraph/domain/character/creation';
+import type { Abilities } from '@cartagraph/domain/check/model';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { CardGrid, GameCard } from '@/entities/card/ui/GameCard';
@@ -10,9 +12,9 @@ import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/u
 /**
  * キャラクター作成。CP予算はハードな制約（character-growth.md）。
  * 体・技・心の初期配分方法は未決（open-questions.md「次に詰める候補」）のため、
- * ここでは仮に「合計9を1〜5で自由に配分」としている。
+ * ここでは仮に「合計を範囲内で自由に配分」としている。合計・範囲・CP予算の値は rules/character-creation.json
+ * （/api/card-pool が返す。docs/plans/2026-10-10-ルールとカードプールのJSON管理.md）
  */
-const ABILITY_TOTAL = 9;
 
 export function CharacterCreatePage() {
   const pool = useCardPool();
@@ -20,7 +22,8 @@ export function CharacterCreatePage() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [hasAbilities, setHasAbilities] = useState(true);
-  const [ab, setAb] = useState({ body: 3, skill: 3, mind: 3 });
+  /** 触るまでは null（初期値はルールが届いてから defaultAbilities で作る） */
+  const [edited, setAb] = useState<Abilities | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const allCards = useMemo(
@@ -32,10 +35,13 @@ export function CharacterCreatePage() {
     .reduce((sum, c) => sum + (c.cpCost ?? 0), 0);
   const budget = pool.data?.budget ?? 0;
   const over = spent > budget;
-  const abilitySum = ab.body + ab.skill + ab.mind;
 
   if (pool.isPending) return <Loading />;
   if (pool.error) return <ErrorNote error={pool.error} />;
+
+  const rule = pool.data.abilities;
+  const ab = edited ?? defaultAbilities(rule);
+  const abilitySum = ab.body + ab.skill + ab.mind;
 
   const toggle = (c: CardDef) =>
     setSelected((prev) => {
@@ -85,8 +91,8 @@ export function CharacterCreatePage() {
                       <Field key={k} label={{ body: '体', skill: '技', mind: '心' }[k]}>
                         <input
                           type="number"
-                          min={1}
-                          max={5}
+                          min={rule.min}
+                          max={rule.max}
                           value={ab[k]}
                           onChange={(e) => setAb({ ...ab, [k]: Number(e.target.value) })}
                         />
@@ -94,7 +100,7 @@ export function CharacterCreatePage() {
                     ))}
                   </div>
                   <p className="u-small u-dim">
-                    合計 {abilitySum} / {ABILITY_TOTAL}（配分方法は未決の仮ルール）
+                    合計 {abilitySum} / {rule.total}（配分方法は未決の仮ルール）
                   </p>
                 </>
               )}
@@ -113,7 +119,7 @@ export function CharacterCreatePage() {
                   create.isPending ||
                   over ||
                   !name.trim() ||
-                  (hasAbilities && abilitySum !== ABILITY_TOTAL)
+                  (hasAbilities && !abilitiesValid(ab, rule))
                 }
               >
                 {create.isPending ? '作成中…' : 'このPCを作成する'}
