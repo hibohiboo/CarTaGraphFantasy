@@ -11,7 +11,7 @@ import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/u
 
 /**
  * キャラクター作成。CP予算はハードな制約（character-growth.md）。
- * 体・技・心の初期配分方法は未決（open-questions.md「次に詰める候補」）のため、
+ * 体・技・心の初期配分方法は未決（docs/provisional/character-creation.md）のため、
  * ここでは仮に「合計を範囲内で自由に配分」としている。合計・範囲・CP予算の値は rules/character-creation.json
  * （/api/card-pool が返す。docs/plans/2026-10-10-ルールとカードプールのJSON管理.md）
  */

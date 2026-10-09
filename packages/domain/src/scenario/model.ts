@@ -42,8 +42,8 @@ export const deckNodeSchema = z.strictObject({
     return z.array(deckNodeSchema).optional();
   },
   /**
-   * シーンの目的（仮ルール）。docs/open-questions.md「シーンカードの『目的』『終了条件』
-   * という属性」が未決のため、正式仕様ではない。意味を持つのは kind === 'scene' のときだけ
+   * シーンの目的（仮ルール）。シーンに目的・終了条件を持たせるかが未決のため
+   * （docs/provisional/scene-objective.md）、正式仕様ではない。意味を持つのは kind === 'scene' のときだけ
    * （型では強制しない）。
    */
   objective: z.string().optional(),

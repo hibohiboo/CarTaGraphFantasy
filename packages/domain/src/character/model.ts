@@ -39,7 +39,7 @@ const positiveInt = z.number().int().min(1);
  * キャラクター作成のルール（rules/character-creation.json。システム製作者が JSON を直してコミットする）。
  * CP 予算はハードな制約（docs/cartagraph/character-growth.md）。
  * 能力値の配分（abilities）と作成時の HP（initialHp）は**仮ルール**：配分方法と作成時の HP は未解決論点
- * （docs/open-questions.md「キャラクター作成時の体・技・心の初期配分方法」）。この形は「合計を範囲内で配る」
+ * （docs/provisional/character-creation.md）。この形は「合計を範囲内で配る」
  * いまの仮ルールを表すだけで、論点が決まったら作り直す。
  * 関係の検査（min ≤ max、合計が3つの範囲で作れる）もここで行う。カード一覧との検査は creation.ts
  */

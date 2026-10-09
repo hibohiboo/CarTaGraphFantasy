@@ -5,6 +5,7 @@ import { withBase } from 'vitepress';
 import { computed } from 'vue';
 import { type BacklogItem, type BacklogStatus, data as backlog } from '../backlog.data';
 import { data as decisions } from '../decisions.data';
+import { data as provisional } from '../provisional.data';
 import { data as roadmap } from '../roadmap.data';
 
 const REPO = 'https://github.com/hibohiboo/CarTaGraphFantasy';
@@ -81,6 +82,25 @@ const withCycles = (items: BacklogItem[]) =>
       </li>
     </ul>
     <p v-else class="empty">いまはありません。</p>
+
+    <h3>仮ルール（決めたら消す。残り {{ provisional.length }} 件）</h3>
+    <table v-if="provisional.length">
+      <thead>
+        <tr><th>仮ルール</th><th>何を決めれば消せるか</th><th>仕様ページ</th></tr>
+      </thead>
+      <tbody>
+        <tr v-for="p in provisional" :key="p.url">
+          <td><a :href="withBase(p.url)">{{ p.title }}</a></td>
+          <td>{{ p.decide }}</td>
+          <td>
+            <a v-for="s in p.spec" :key="s" :href="withBase(`/${s.replace(/\.md$/, '')}`)" class="spec">仕様ページ</a>
+            <span v-if="!p.spec.length" class="empty">（アプリだけ）</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p v-else class="empty">仮ルールは残っていません。</p>
+    <p class="plans">書き方は<a :href="withBase('/provisional/')">仮ルール</a>を参照。</p>
 
     <h3>未解決論点（次に詰める候補）</h3>
     <ul>

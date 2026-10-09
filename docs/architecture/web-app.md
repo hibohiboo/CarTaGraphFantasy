@@ -50,7 +50,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 
 - 仕様の正は引き続き `docs/` 配下。アプリ内のルールブック（`src/shared/content/rulebook.ts`）は docs の**要約**で、各節に出典リンクを持つ。docs 側と食い違ったら docs を正としてアプリ側を直す。
 - `packages/domain` の型は docs の用語（カード種別・ロール・ゾーン・提案の状態など）に対応する。用語の意味を変える場合は docs を先に更新する。
-- キャラクター作成の体・技・心の初期配分と作成時の HP は[未決](../open-questions.md#次に詰める候補)のため、アプリでは `rules/character-creation.json` の値（合計を範囲内で配分・能力値を持つときの HP）という**仮ルール**で動かしている（キャラクター作成の画面にもその旨を表示。上の「ルールの JSON」）。
+- キャラクター作成の体・技・心の初期配分と作成時の HP は[未決](../provisional/character-creation.md)のため、アプリでは `rules/character-creation.json` の値（合計を範囲内で配分・能力値を持つときの HP）という**仮ルール**で動かしている（キャラクター作成の画面にもその旨を表示。上の「ルールの JSON」）。
 
 ## ルーティングと配信
 

@@ -31,7 +31,7 @@ const dataUrlBytes = (dataUrl: string) => Math.floor((dataUrl.length * 3) / 4);
  * シーン構築画面（シナリオ製作者専用）。
  * 試作HTML scene-builder.html をもとにReact化したもの（試作は削除済みで git 履歴にある）
  * （docs/plans/2026-09-16-scene-builder.md）。
- * シーンの目的・終了条件は未決の仮ルール（docs/open-questions.md）。
+ * シーンの目的・終了条件は未決の仮ルール（docs/provisional/scene-objective.md）。
  * 導入も同じ画面で編集する（目的・終了条件は出さない）。結末は EndingNodeEditor
  * （docs/plans/2026-10-07-選択肢の移り先と結末の編集.md）。
  */
@@ -257,7 +257,7 @@ function SceneEditor({
                     />
                   </Field>
                   <p className="u-small u-dim">
-                    「目的」「終了条件」は未決の仮ルール（docs/open-questions.md）。正式な仕様として決着したものではない。
+                    「目的」「終了条件」は未決の仮ルール（docs/provisional/scene-objective.md）。正式な仕様として決着したものではない。
                   </p>
                 </>
               )}

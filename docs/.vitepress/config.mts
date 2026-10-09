@@ -85,6 +85,7 @@ export default withMermaid(
             { text: 'ダッシュボード', link: '/' },
             { text: 'ロードマップ', link: '/roadmap' },
             { text: '要望（バックログ）', link: '/backlog/' },
+            { text: '仮ルール', link: '/provisional/' },
             { text: '画面一覧と導線', link: '/screens/' },
             { text: '画面ごとの課題', link: '/screens/issues' },
           ],

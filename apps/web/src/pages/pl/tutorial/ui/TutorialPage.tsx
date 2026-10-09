@@ -24,7 +24,7 @@ type Line = {
 };
 
 /**
- * 体技心の配分方法は正式仕様として未決（docs/open-questions.md「次に詰める候補」）。
+ * 体技心の配分方法は正式仕様として未決（docs/provisional/character-creation.md）。
  * ここでは3択の固定プリセットという、このチュートリアル固有の仮ルールで進める
  * （CharacterCreatePageの「合計を範囲内で自由配分」とは別の仮ルール。合計は rules/character-creation.json の
  * abilities.total（いまは9）に揃えている）。
