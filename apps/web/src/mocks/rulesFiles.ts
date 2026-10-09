@@ -1,5 +1,5 @@
 // システム製作者のルール（リポジトリ直下の rules/*.json）を読み込む（docs/plans/2026-10-10-ルールとカードプールのJSON管理.md）。
-// 検査（形・数値の関係・id の重複・基本カードプールの参照）は packages/domain の loadRules。誤りがあれば読み込みで止まる。
+// 検査（形・数値の関係・カードの id の重複と CP コスト・基本カードプールの参照）は packages/domain の loadRules。誤りがあれば読み込みで止まる。
 // ファイルは2つで固定なので glob にせず直接 import する（ファイル名の誤りはビルドで止まる）。
 
 import type { CardDef } from '@cartagraph/domain/card/model';
