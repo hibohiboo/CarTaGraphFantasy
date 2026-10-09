@@ -10,7 +10,7 @@ import {
   validatePriority,
 } from '@cartagraph/domain/autoCombat/resolve';
 import type { CardDef } from '@cartagraph/domain/card/model';
-import { basicPool } from '@cartagraph/domain/character/creation';
+import { basicPool, pickCards } from '@cartagraph/domain/character/creation';
 import type { Character } from '@cartagraph/domain/character/model';
 import { addEnding } from '@cartagraph/domain/scenario/edit';
 import { safeParseScenarioFile, toScenarioFile } from '@cartagraph/domain/scenario/file';
@@ -652,6 +652,7 @@ export const handlers = [
       unlocked: fx.unlockedPool,
       budget: characterCreation.cpBudget,
       abilities: characterCreation.abilities,
+      initialHp: characterCreation.initialHp,
     }),
   ),
 
@@ -661,12 +662,8 @@ export const handlers = [
       abilities?: Character['abilities'];
       cardIds: string[];
     };
-    const pool = creationPool();
-    // カード一覧は resetDb() で戻らないので、デッキには複製を入れる
-    const deck = body.cardIds
-      .map((id) => pool.find((c) => c.id === id))
-      .filter((c): c is CardDef => !!c)
-      .map(clone);
+    // カード一覧は resetDb() で戻らないので、デッキには複製を入れる（pickCards）
+    const deck = pickCards(creationPool(), body.cardIds);
     const spent = deck.reduce((sum, c) => sum + (c.cpCost ?? 0), 0);
     if (spent > characterCreation.cpBudget) {
       // CP予算はハードな制約（docs/cartagraph/character-growth.md）
@@ -709,11 +706,7 @@ export const handlers = [
       ch.hp = initialHp();
     }
     if (body.addCardIds?.length) {
-      const pool = creationPool();
-      const added = body.addCardIds
-        .map((id) => pool.find((c) => c.id === id))
-        .filter((c): c is CardDef => !!c)
-        .map(clone);
+      const added = pickCards(creationPool(), body.addCardIds);
       if (added.length !== body.addCardIds.length) {
         return HttpResponse.json(
           { message: '存在しないカードが指定されています' },

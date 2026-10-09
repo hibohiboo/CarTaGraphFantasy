@@ -94,7 +94,7 @@
       "combatEffect": { "type": "heal", "dice": { "count": 2, "sides": 4, "bonus": 2 } }
     },
     {
-      "$comment": "基本カードプールには入れない（村はずれの一歩のお店で習う）。数値は docs/plans/2026-09-27-村パート.md のシミュレーションで選んだプレイテスト前の目安",
+      "$comment": "基本カードプールには入れない（村はずれの一歩のお店で習う。仮にここに置く。docs/architecture/known-issues.md）。数値は docs/plans/2026-09-27-村パート.md のシミュレーションで選んだプレイテスト前の目安",
       "id": "c-quick-thrust",
       "kind": "skill",
       "name": "素早い突き",
@@ -124,7 +124,7 @@
       "cpCost": 1
     },
     {
-      "$comment": "報酬カード（鉄鎖のガレオン船）。仕様では報酬カードの持ち主はシナリオ（または共有設定）だが、シナリオに報酬の定義が無いので仮にここに置く（docs/architecture/known-issues.md）。基本カードプールには入れない",
+      "$comment": "報酬カード（鉄鎖のガレオン船）。仕様では報酬カードはシナリオがあらかじめ用意するカードだが、シナリオに報酬の定義が無いので仮にここに置く（docs/architecture/known-issues.md）。基本カードプールには入れない",
       "id": "c-sea-legs",
       "kind": "trait",
       "name": "航海の心得",

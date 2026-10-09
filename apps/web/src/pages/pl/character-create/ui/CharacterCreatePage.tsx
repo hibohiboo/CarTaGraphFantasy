@@ -23,7 +23,7 @@ export function CharacterCreatePage() {
   const [name, setName] = useState('');
   const [hasAbilities, setHasAbilities] = useState(true);
   /** 触るまでは null（初期値はルールが届いてから defaultAbilities で作る） */
-  const [edited, setAb] = useState<Abilities | null>(null);
+  const [edited, setEdited] = useState<Abilities | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const allCards = useMemo(
@@ -94,7 +94,7 @@ export function CharacterCreatePage() {
                           min={rule.min}
                           max={rule.max}
                           value={ab[k]}
-                          onChange={(e) => setAb({ ...ab, [k]: Number(e.target.value) })}
+                          onChange={(e) => setEdited({ ...ab, [k]: Number(e.target.value) })}
                         />
                       </Field>
                     ))}
@@ -102,6 +102,7 @@ export function CharacterCreatePage() {
                   <p className="u-small u-dim">
                     合計 {abilitySum} / {rule.total}（配分方法は未決の仮ルール）
                   </p>
+                  <p className="u-small u-dim">HP {pool.data.initialHp} で始める（仮ルール）</p>
                 </>
               )}
             </div>

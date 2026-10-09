@@ -564,6 +564,9 @@ describe('キャラクター作成', () => {
     expect(
       screen.getByText(`合計 ${abilities.total} / ${abilities.total}（配分方法は未決の仮ルール）`),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(`HP ${characterCreation.initialHp} で始める（仮ルール）`),
+    ).toBeInTheDocument();
     expect(createButton()).toBeEnabled();
   });
 

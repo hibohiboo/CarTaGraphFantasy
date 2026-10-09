@@ -23,7 +23,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 
 公開したことのあるシナリオ（村はずれの一歩・灰色館の一夜など）は、リポジトリ直下の `scenarios/<id>.json` に1シナリオ1ファイルで置く。非公開にしたシナリオも `libraryStatus: draft` のまま残る（消すかは人間が git で決める）。将来バックエンドができたら、同じ JSON を投入データとして使う。テスト専用のシナリオと下書きのデモデータは `src/mocks/fixtures.ts` に置く。
 
-- **読み込み** — `src/mocks/scenarioFiles.ts` が `import.meta.glob` で読み、`packages/domain` の `parseScenarioFile` で検査してから `fixtures.ts` の `scenarios` に入れる。GitHub Pages のビルドにも入る。開発サーバーの起動中に手で新しいファイルを足したときは、再起動すると拾う（既存のファイルの編集はそのまま反映される）。画面から公開して書いたファイルは、次に手でリロードしたときに拾う（下の「画面から公開する」）
+- **読み込み** — `src/mocks/scenarioFiles.ts` が `import.meta.glob` で読み、`packages/domain` の `loadScenarioFiles` で検査（形・ファイル名と id・参照の整合に加え、システムのカード一覧への参照。下の「ルールの JSON」）してから `fixtures.ts` の `scenarios` に入れる。GitHub Pages のビルドにも入る。開発サーバーの起動中に手で新しいファイルを足したときは、再起動すると拾う（既存のファイルの編集はそのまま反映される）。画面から公開して書いたファイルは、次に手でリロードしたときに拾う（下の「画面から公開する」）
 - **検査** — 形（`scenarioSchema`。知らないキーは誤り、省略可能な項目に `null` は書けない）、ファイル名と `id` の一致、参照の整合（`findScenarioRefErrors`。`nextNodeId`・`endingId`・id の重複）。誤りがあれば、アプリ（MSW）の起動とテストがファイル名つきで止まる
 - **注記** — JSON にはコメントが書けないので、なぜそのデータかの注記は `"$comment"` に書く（シナリオ・ノード・カード・自動戦闘の敵）。画面には出さない
 - **整形** — Biome が正（コミット前フックが整形する）
@@ -35,7 +35,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 システム製作者が作るルールは、リポジトリ直下の `rules/` に JSON で置く。M1 では専用の画面は無く、JSON を直してコミットする（[ロードマップ](../roadmap.md) M1 の完成の条件1。`docs/plans/2026-10-10-ルールとカードプールのJSON管理.md`）。将来バックエンドができたら、同じ JSON を投入データとして使う。
 
 - **`rules/cards.json`** — システムのカード一覧。キャラクターが持つカード（[基本カードプール](../glossary.md#基本カードプール)のカード、村はずれの一歩のお店で習う戦闘スキル、仮に置いた報酬カード）を1か所で定義する。仕様の用語ではなく実装上のカタログで、基本カードプールより広い
-- **`rules/character-creation.json`** — 基本カードプール（カードの id の列）、CP 予算、能力値の配分（合計と範囲）、能力値を持って作ったときの HP。配分と HP は仮ルール（上の「仕様との関係」）。能力値の上限は、GM不在のソロの村の成長の上限にも使う。値は[数値バランスの相場観](../cartagraph/balance.md)の相場観の中で決める
+- **`rules/character-creation.json`** — 基本カードプール（カードの id の列）、CP 予算、能力値の配分（合計と範囲）、能力値を持って作ったときの HP。配分と HP は仮ルール（下の「仕様との関係」）。能力値の上限は、GM不在のソロの村の成長の上限（[GM不在のソロの進行](../cartagraph/solo-village.md)「能力値の上がり方」の「上限は5」）にも同じ値として使う。値は[数値バランスの相場観](../cartagraph/balance.md)の中で決める
 - **読み込み** — `src/mocks/rulesFiles.ts` が2ファイルを直接 import し、`packages/domain` の `loadRules` で検査する。シード（`fixtures.ts`）のキャラクターのデッキ・手札は `systemCard(id)` で引く（深い複製を返す）
 - **検査** — 形（知らないキーは誤り。数値は整数で、CP 予算・HP・能力値の下限は1以上）、能力値の範囲と合計の関係、カード id の重複、基本カードプールの id の実在・重複・CP コスト。誤りがあれば、アプリ（MSW）の起動とテストがファイル名つきで止まる
 - **シナリオからの参照** — シナリオの JSON は、システムのカードを `soloEffect.gainCardIds` に id だけで書く（お店で習う戦闘スキル）。シナリオ固有のカード（引換カード・達成カード）は今までどおり `gainCards`・`achievement` に中身ごと書く。読み込み時に、`gainCardIds` の実在と、シナリオ固有のカードの id がシステムのカードとぶつからないことを確かめる（`findSystemCardRefErrors`）
@@ -49,7 +49,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 
 - 仕様の正は引き続き `docs/` 配下。アプリ内のルールブック（`src/shared/content/rulebook.ts`）は docs の**要約**で、各節に出典リンクを持つ。docs 側と食い違ったら docs を正としてアプリ側を直す。
 - `packages/domain` の型は docs の用語（カード種別・ロール・ゾーン・提案の状態など）に対応する。用語の意味を変える場合は docs を先に更新する。
-- キャラクター作成の体・技・心の初期配分と作成時の HP は[未決](../open-questions.md#次に詰める候補)のため、アプリでは `rules/character-creation.json` の値（合計を範囲内で配分・能力値を持つときの HP）という**仮ルール**で動かしている（画面にもその旨を表示。下の「ルールの JSON」）。
+- キャラクター作成の体・技・心の初期配分と作成時の HP は[未決](../open-questions.md#次に詰める候補)のため、アプリでは `rules/character-creation.json` の値（合計を範囲内で配分・能力値を持つときの HP）という**仮ルール**で動かしている（キャラクター作成の画面にもその旨を表示。上の「ルールの JSON」）。
 
 ## ルーティングと配信
 
@@ -72,7 +72,7 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 
 ## 自動戦闘の数値シミュレーション
 
-[自動戦闘（仮ルール）](../cartagraph/auto-combat.md)の数値バランスを確かめるスクリプト（`scripts/simulate-auto-combat.ts`）。村スタートのシナリオ `sc-village-start`（`scenarios/sc-village-start.json`）で村パートを終えたときの HP・行動値（`soloGrowth`）、お店で習える戦闘スキル、試験官の数値のまま、代表的な戦い方ごとに5,000回ずつ戦わせ、勝率と決着ラウンドの表を [シミュレーション結果](../cartagraph/auto-combat-simulation.md) に書き出す。
+[自動戦闘（仮ルール）](../cartagraph/auto-combat.md)の数値バランスを確かめるスクリプト（`scripts/simulate-auto-combat.ts`）。村スタートのシナリオ `sc-village-start`（`scenarios/sc-village-start.json`）で村パートを終えたときの HP・行動値（`soloGrowth`）、お店で習える戦闘スキル（`rules/cards.json`）、試験官の数値のまま、代表的な戦い方ごとに5,000回ずつ戦わせ、勝率と決着ラウンドの表を [シミュレーション結果](../cartagraph/auto-combat-simulation.md) に書き出す。
 
 - **実行** — `pnpm sim:auto-combat`。回数・乱数の種は `pnpm sim:auto-combat -- --runs=10000 --seed=42` のように変えられる
 - **いつ回すか** — CI・git フックでは回さない。次のようなときに手で回し、書き出された `docs/cartagraph/auto-combat-simulation.md` も一緒にコミットする

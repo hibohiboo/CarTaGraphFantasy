@@ -14,12 +14,14 @@ export const useMe = () =>
 export const useCardPool = () =>
   useQuery({
     queryKey: keys.cardPool,
-    // 能力値の配分のルール（abilities）もここで返す（キャラクター作成で使う。rules/character-creation.json）
+    // 能力値の配分のルール（abilities）と作成時の HP（initialHp）もここで返す（キャラクター作成で使う。
+    // rules/character-creation.json。どちらも仮ルール）
     queryFn: () =>
       api.get<{
         basic: CardDef[];
         unlocked: CardDef[];
         budget: number;
         abilities: CharacterCreationRules['abilities'];
+        initialHp: CharacterCreationRules['initialHp'];
       }>('/card-pool'),
   });

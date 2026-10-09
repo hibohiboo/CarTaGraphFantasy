@@ -19,6 +19,14 @@ export function parseSystemCards(path: string, raw: unknown): CardDef[] {
     if (seen.has(c.id)) dup.add(c.id);
     seen.add(c.id);
   }
+  const badCost = cards.filter(
+    (c) => c.cpCost !== undefined && !(Number.isInteger(c.cpCost) && c.cpCost >= 0),
+  );
+  if (badCost.length > 0) {
+    throw new Error(
+      `${path} の CP コストが0以上の整数でない:\n${badCost.map((c) => `- 「${c.id}」の CP コスト ${c.cpCost}`).join('\n')}`,
+    );
+  }
   if (dup.size > 0) {
     throw new Error(
       `${path} のカード id が重複している:\n${[...dup].map((id) => `- 「${id}」が重複`).join('\n')}`,

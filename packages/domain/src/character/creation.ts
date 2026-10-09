@@ -51,7 +51,10 @@ export function basicPool(rules: CharacterCreationRules, cards: CardDef[]): Card
   return rules.basicPoolCardIds.flatMap((id) => cards.filter((c) => c.id === id));
 }
 
-/** 画面の能力値の初期値：合計を3つにできるだけ均等に配り、余りは体から1ずつ（仮ルールの範囲に収まる） */
+/**
+ * 画面の能力値の初期値：合計を3つにできるだけ均等に配り、余りは体から1ずつ。
+ * スキーマの不変条件（3×min ≤ total ≤ 3×max）があるので、均等に配れば必ず min〜max に収まる
+ */
 export function defaultAbilities(a: CharacterCreationRules['abilities']): Abilities {
   const base = Math.floor(a.total / 3);
   const rest = a.total - base * 3;
@@ -62,7 +65,18 @@ export function defaultAbilities(a: CharacterCreationRules['abilities']): Abilit
 export function abilitiesValid(values: Abilities, a: CharacterCreationRules['abilities']): boolean {
   const list = [values.body, values.skill, values.mind];
   const sum = list.reduce((s, v) => s + v, 0);
-  return sum === a.total && list.every((v) => v >= a.min && v <= a.max);
+  return sum === a.total && list.every((v) => Number.isInteger(v) && v >= a.min && v <= a.max);
+}
+
+/**
+ * プールから id の順にカードを引き、深い複製で返す（無い id は捨てる。数が合うかは呼び出し側が見る）。
+ * プールはモジュールの定数（rules/cards.json）なので、デッキに入れて書き換えても汚さないよう複製する
+ */
+export function pickCards(pool: CardDef[], ids: string[]): CardDef[] {
+  return ids.flatMap((id) => {
+    const card = pool.find((c) => c.id === id);
+    return card ? [structuredClone(card)] : [];
+  });
 }
 
 /** rules/ の2ファイル（[パス, 中身]）を読み、検査する */

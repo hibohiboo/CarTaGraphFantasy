@@ -38,4 +38,16 @@ describe('parseSystemCards', () => {
       parseSystemCards(PATH, { cards: [card('c-a'), card('c-b'), card('c-a')] }),
     ).toThrow(/rules\/cards\.json.*「c-a」が重複/s);
   });
+
+  it('CP コストは、書くなら0以上の整数（負・小数は止まり、0 と書かないのは通る）', () => {
+    expect(() => parseSystemCards(PATH, { cards: [card('c-a', { cpCost: -4 })] })).toThrow(
+      /「c-a」.*CP コスト/,
+    );
+    expect(() => parseSystemCards(PATH, { cards: [card('c-a', { cpCost: 0.5 })] })).toThrow(
+      /「c-a」.*CP コスト/,
+    );
+    expect(() =>
+      parseSystemCards(PATH, { cards: [card('c-a', { cpCost: 0 }), card('c-b')] }),
+    ).not.toThrow();
+  });
 });

@@ -29,6 +29,7 @@ describe('/api/card-pool', () => {
     expect(p.basic).toEqual(basicPool(characterCreation, systemCards));
     expect(p.budget).toBe(characterCreation.cpBudget);
     expect(p.abilities).toEqual(characterCreation.abilities);
+    expect(p).toMatchObject({ initialHp: characterCreation.initialHp });
   });
 });
 
@@ -86,12 +87,8 @@ describe('村はずれの一歩のお店で習うカード', () => {
   it('お店の選択肢はシステムのカードを id で指す（中身を持たない）', () => {
     const shop = byId('sc-village-start').deck.find((n) => n.id === 'vs-shop');
     const effects = shop?.cards.flatMap((c) => (c.soloEffect ? [c.soloEffect] : [])) ?? [];
-    expect(effects.flatMap((e) => e.gainCardIds ?? [])).toEqual([
-      'c-slash',
-      'c-heavy-blow',
-      'c-quick-thrust',
-      'c-first-aid',
-    ]);
+    // 並ぶスキルの中身は rules/ と JSON を直せば変えられる（ライトルート）ので、ここでは書き写さない
+    expect(effects.flatMap((e) => e.gainCardIds ?? []).length).toBeGreaterThan(0);
     expect(effects.flatMap((e) => e.gainCards ?? [])).toEqual([]);
   });
 
@@ -134,6 +131,9 @@ describe('試験官', () => {
     expect($comment).toEqual(expect.any(String));
     expect(exam[0]?.enemy).toEqual(enemy);
     expect(exam[0]?.enemy).not.toBe(villageExaminer());
+    // 入れ子まで深く複製している（試験シナリオの敵を書き換えても、村はずれの一歩の試験官を汚さない）
+    expect(exam[0]?.enemy.priority).not.toBe(villageExaminer()?.priority);
+    expect(exam[0]?.enemy.card).not.toBe(villageExaminer()?.card);
   });
 
   it('試験シナリオを組み立てたあとも、村はずれの一歩の試験官は JSON の値のまま', async () => {

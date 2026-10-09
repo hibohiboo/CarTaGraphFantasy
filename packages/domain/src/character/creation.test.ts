@@ -9,6 +9,7 @@ import {
   defaultAbilities,
   loadRules,
   parseCharacterCreationRules,
+  pickCards,
 } from './creation';
 
 const PATH = '../../../../rules/character-creation.json';
@@ -156,6 +157,20 @@ describe('abilitiesValid', () => {
     ['min − 1 を含む', { body: 5, skill: 4, mind: 0 }],
   ])('合計は合うが範囲外（%s）なら偽', (_, v) => {
     expect(abilitiesValid(v, a)).toBe(false);
+  });
+  it('合計も範囲も合うが、整数でない値を含むなら偽', () => {
+    expect(abilitiesValid({ body: 2.5, skill: 3.5, mind: 3 }, a)).toBe(false);
+  });
+});
+
+describe('pickCards', () => {
+  const pool = [card('c-a'), card('c-b')];
+  it('id の順に、プールのカードの深い複製を返し、無い id は捨てる', () => {
+    const picked = pickCards(pool, ['c-b', 'c-nope', 'c-a']);
+    expect(picked.map((c) => c.id)).toEqual(['c-b', 'c-a']);
+    expect(picked[0]).toEqual(pool[1]);
+    expect(picked[0]).not.toBe(pool[1]);
+    expect(picked[0]?.tags).not.toBe(pool[1]?.tags);
   });
 });
 
