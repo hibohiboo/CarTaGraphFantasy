@@ -1,5 +1,6 @@
 // 全ルートを MSW（node）＋メモリルーターで描画し、見出しが出ることと主要な操作が通ることを確認する。
 
+import { defaultAbilities } from '@cartagraph/domain/character/creation';
 import type { Character } from '@cartagraph/domain/character/model';
 import type { Session } from '@cartagraph/domain/session/model';
 import { cleanup, screen, within } from '@testing-library/react';
@@ -11,7 +12,9 @@ import * as fx from '@/mocks/fixtures';
 import { ApiError, api } from '@/shared/api/api';
 import { routes } from '@/shared/routes/routes';
 import { server } from '../mocks/node';
+import { characterCreation } from '../mocks/rulesFiles';
 import { renderAt } from './renderAt';
+import { cardsCosting } from './rulesHelpers';
 
 /** 「＋名を名乗る」の提案カードから名乗る（旅立ちの酒場・村スタート共通の操作） */
 async function introduceAs(user: ReturnType<typeof userEvent.setup>, name: string) {
@@ -506,16 +509,93 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
 });
 
 describe('キャラクター作成', () => {
-  it('CP予算を超えると作成ボタンが無効になる', async () => {
+  const { cpBudget, abilities } = characterCreation;
+  const createButton = () => screen.getByRole('button', { name: 'このPCを作成する' });
+  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  /** 名前を入れ、合計が cost になる基本カードプールのカードを選ぶ（組は rules/ の CP コストから作る） */
+  async function openWithCards(cost: number) {
     const user = userEvent.setup();
     renderAt('/pl/characters/new');
     await screen.findByText('基本カードプール');
     await user.type(screen.getByLabelText('名前'), '新人');
-    // 炎の剣(4) + 渾身の一撃(3) = 7 > 5
-    await user.click(screen.getByRole('button', { name: /炎の剣/ }));
-    await user.click(screen.getByRole('button', { name: /渾身の一撃/ }));
-    expect(screen.getByText('7 / 5')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'このPCを作成する' })).toBeDisabled();
+    for (const c of cardsCosting(cost))
+      await user.click(screen.getByRole('button', { name: new RegExp(escapeRegExp(c.name)) }));
+    return user;
+  }
+  const setAbility = async (user: ReturnType<typeof userEvent.setup>, label: string, v: number) => {
+    const input = screen.getByLabelText(label);
+    await user.clear(input);
+    await user.type(input, String(v));
+  };
+  const setAbilities = async (
+    user: ReturnType<typeof userEvent.setup>,
+    v: { body: number; skill: number; mind: number },
+  ) => {
+    await setAbility(user, '体', v.body);
+    await setAbility(user, '技', v.skill);
+    await setAbility(user, '心', v.mind);
+  };
+
+  it('CP予算を1超えると作成ボタンが無効になる', async () => {
+    await openWithCards(cpBudget + 1);
+    expect(screen.getByText(`${cpBudget + 1} / ${cpBudget}`)).toBeInTheDocument();
+    expect(createButton()).toBeDisabled();
+  });
+
+  it('CP予算をちょうど使い切ると作成ボタンが押せる', async () => {
+    await openWithCards(cpBudget);
+    expect(screen.getByText(`${cpBudget} / ${cpBudget}`)).toBeInTheDocument();
+    expect(createButton()).toBeEnabled();
+  });
+
+  it('能力値の初期値・入力欄の範囲・合計は rules/ の値で、仮ルールと示す', async () => {
+    await openWithCards(0);
+    const initial = defaultAbilities(abilities);
+    for (const [label, key] of [
+      ['体', 'body'],
+      ['技', 'skill'],
+      ['心', 'mind'],
+    ] as const) {
+      const input = screen.getByLabelText(label);
+      expect(input).toHaveValue(initial[key]);
+      expect(input).toHaveAttribute('min', String(abilities.min));
+      expect(input).toHaveAttribute('max', String(abilities.max));
+    }
+    expect(
+      screen.getByText(`合計 ${abilities.total} / ${abilities.total}（配分方法は未決の仮ルール）`),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(`HP ${characterCreation.initialHp} で始める（仮ルール）`),
+    ).toBeInTheDocument();
+    expect(createButton()).toBeEnabled();
+  });
+
+  it('能力値の合計が total より1多い・1少ないと作成できず、ちょうどなら作成できる', async () => {
+    const user = await openWithCards(0);
+    const base = defaultAbilities(abilities);
+    await setAbilities(user, { ...base, mind: base.mind + 1 });
+    expect(createButton()).toBeDisabled();
+    await setAbilities(user, { ...base, mind: base.mind - 1 });
+    expect(createButton()).toBeDisabled();
+    await setAbilities(user, base);
+    expect(createButton()).toBeEnabled();
+  });
+
+  it('合計は合っていても、範囲の外の能力値があれば作成できない', async () => {
+    const user = await openWithCards(0);
+    const body = abilities.max + 1;
+    const mind = abilities.min;
+    await setAbilities(user, { body, skill: abilities.total - body - mind, mind });
+    expect(screen.getByText(new RegExp(`合計 ${abilities.total} /`))).toBeInTheDocument();
+    expect(createButton()).toBeDisabled();
+  });
+
+  it('能力値を持たないなら、合計に関係なく作成できる', async () => {
+    const user = await openWithCards(0);
+    const base = defaultAbilities(abilities);
+    await setAbilities(user, { ...base, mind: base.mind + 1 });
+    await user.click(screen.getByLabelText(/能力値（体・技・心）を持つ/));
+    expect(createButton()).toBeEnabled();
   });
 
   it('予算内なら作成でき、シートへ遷移する', async () => {
@@ -602,7 +682,10 @@ describe('チュートリアル（旅立ちの酒場）', () => {
     const user = userEvent.setup();
     server.use(
       http.patch('/api/characters/:id', () =>
-        HttpResponse.json({ message: 'CP予算（5）を超えています' }, { status: 422 }),
+        HttpResponse.json(
+          { message: `CP予算（${characterCreation.cpBudget}）を超えています` },
+          { status: 422 },
+        ),
       ),
     );
     renderAt('/pl/tutorial');
@@ -613,7 +696,9 @@ describe('チュートリアル（旅立ちの酒場）', () => {
     await user.click(screen.getByRole('button', { name: '名乗る' }));
     await user.click(await screen.findByRole('button', { name: /腕試しをしていく/ }));
     await user.click(await screen.findByRole('button', { name: /力自慢/ }));
-    expect(await screen.findByText('CP予算（5）を超えています')).toBeInTheDocument();
+    expect(
+      await screen.findByText(`CP予算（${characterCreation.cpBudget}）を超えています`),
+    ).toBeInTheDocument();
     expect(screen.queryByText('旅には何か持たせてやろう')).not.toBeInTheDocument();
   });
 

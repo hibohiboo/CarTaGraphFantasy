@@ -2,6 +2,7 @@
 // ページからは API のパスを直接触らず、ここを経由する。
 
 import type { CardDef } from '@cartagraph/domain/card/model';
+import type { CharacterCreationRules } from '@cartagraph/domain/character/model';
 import type { CurrentUser } from '@cartagraph/domain/user/model';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/shared/api/api';
@@ -13,5 +14,14 @@ export const useMe = () =>
 export const useCardPool = () =>
   useQuery({
     queryKey: keys.cardPool,
-    queryFn: () => api.get<{ basic: CardDef[]; unlocked: CardDef[]; budget: number }>('/card-pool'),
+    // 能力値の配分のルール（abilities）と作成時の HP（initialHp）もここで返す（キャラクター作成で使う。
+    // rules/character-creation.json。どちらも仮ルール）
+    queryFn: () =>
+      api.get<{
+        basic: CardDef[];
+        unlocked: CardDef[];
+        budget: number;
+        abilities: CharacterCreationRules['abilities'];
+        initialHp: CharacterCreationRules['initialHp'];
+      }>('/card-pool'),
   });

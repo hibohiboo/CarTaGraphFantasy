@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CardDef } from '../card/model';
 import type { DeckNode, Scenario } from './model';
-import { findScenarioRefErrors } from './refs';
+import { findScenarioRefErrors, findSystemCardRefErrors } from './refs';
 
 const card = (id: string, o: Partial<CardDef> = {}): CardDef => ({
   id,
@@ -165,5 +165,61 @@ describe('findScenarioRefErrors', () => {
       node('a', [], { kind: 'ending', endingId: 'e-x' }),
     ]);
     expect(findScenarioRefErrors(s)).toHaveLength(4);
+  });
+});
+
+// シナリオからシステムのカード一覧（rules/cards.json）への参照（docs/plans/2026-10-10-ルールとカードプールのJSON管理.md E5）
+describe('findSystemCardRefErrors', () => {
+  const system = ['c-slash', 'c-guard'];
+  const learn = (id: string, gainCardIds?: string[], o: Partial<CardDef> = {}) =>
+    card(id, { soloEffect: { ...(gainCardIds && { gainCardIds }) }, ...o });
+
+  it('gainCardIds がすべて一覧にあれば空配列', () => {
+    const s = scenario([node('shop', [learn('learn-slash', ['c-slash', 'c-guard'])])]);
+    expect(findSystemCardRefErrors(s, system)).toEqual([]);
+  });
+
+  it('gainCardIds が無い・空でも空配列', () => {
+    const s = scenario([node('a', [learn('x'), learn('y', [])])]);
+    expect(findSystemCardRefErrors(s, system)).toEqual([]);
+  });
+
+  it('シナリオ固有のカード（gainCards の引換カード・達成カード）は、一覧に無くても誤りにしない', () => {
+    const s = scenario([
+      node('quest', [
+        card('q', {
+          soloEffect: { gainCards: [card('c-voucher-0')], achievement: card('ach-0') },
+        }),
+      ]),
+    ]);
+    expect(findSystemCardRefErrors(s, system)).toEqual([]);
+  });
+
+  it('一覧に無い id は、ノードとカードの id つきで誤り。入れ子のノードでも見つけ、全部返す', () => {
+    const s = scenario([
+      node('a', [learn('learn-1', ['c-slahs'])], {
+        children: [node('b', [learn('learn-2', ['c-slash', 'c-nope'])])],
+      }),
+    ]);
+    expect(findSystemCardRefErrors(s, system)).toEqual([
+      'ノード「a」のカード「learn-1」の gainCardIds「c-slahs」が、システムのカード一覧に無い',
+      'ノード「b」のカード「learn-2」の gainCardIds「c-nope」が、システムのカード一覧に無い',
+    ]);
+  });
+
+  it.each([
+    ['ノードに置いたカード', scenario([node('a', [card('c-slash')])])],
+    [
+      'gainCards のカード',
+      scenario([node('a', [card('x', { soloEffect: { gainCards: [card('c-guard')] } })])]),
+    ],
+    [
+      '達成カード',
+      scenario([node('a', [card('x', { soloEffect: { achievement: card('c-slash') } })])]),
+    ],
+  ])('シナリオ固有のカードの id がシステムのカードとぶつかれば誤り（%s）', (_, s) => {
+    const errors = findSystemCardRefErrors(s, system);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/システムのカードと同じ id/);
   });
 });

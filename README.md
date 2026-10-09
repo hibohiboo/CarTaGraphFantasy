@@ -36,6 +36,6 @@ pnpm docs:build                       # 仕様書サイトのビルド（リン�
 ## ディレクトリ
 
 - ドキュメント（`docs/`）の置き場所は [AGENTS.md](AGENTS.md)「ディレクトリ構成」
-- コード（`apps/web/`・`packages/domain/`・`scenarios/`）の構成と依存の向きは [アーキテクチャルール](docs/process/rules/architecture.md)「構造」「依存の向き」
+- コード（`apps/web/`・`packages/domain/`・`scenarios/`・`rules/`）の構成と依存の向きは [アーキテクチャルール](docs/process/rules/architecture.md)「構造」「依存の向き」
 
 開発の進め方（プラン→レビュー→実装→テストの開発サイクル）は [docs/process/index.md](docs/process/index.md) にある。

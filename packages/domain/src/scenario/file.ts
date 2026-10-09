@@ -7,7 +7,7 @@
 import { z } from 'zod';
 import type { Scenario } from './model';
 import { scenarioSchema } from './model';
-import { findScenarioRefErrors } from './refs';
+import { findScenarioRefErrors, findSystemCardRefErrors } from './refs';
 
 /** ファイルにできるシナリオの id（ファイル名になるので、リポジトリの外を指せない文字だけ） */
 export const scenarioFileIdPattern = /^[a-z0-9-]+$/;
@@ -47,6 +47,29 @@ export function parseScenarioFile(path: string, raw: unknown): Scenario {
   const result = safeParseScenarioFile(path, raw);
   if (!result.ok) throw new Error(result.message);
   return result.scenario;
+}
+
+/**
+ * 遊べるシナリオのファイル群（パス → 中身）を読み、id 順で返す。parseScenarioFile の検査に加え、
+ * システムのカード一覧への参照（findSystemCardRefErrors）も確かめ、誤りはファイルのパスつきの例外にする
+ * （apps/web/src/mocks/scenarioFiles.ts が起動時に使う。docs/plans/2026-10-10-ルールとカードプールのJSON管理.md E6）
+ */
+export function loadScenarioFiles(
+  files: Record<string, unknown>,
+  systemCardIds: string[],
+): Scenario[] {
+  return Object.entries(files)
+    .map(([path, raw]) => {
+      const scenario = parseScenarioFile(path, raw);
+      const errors = findSystemCardRefErrors(scenario, systemCardIds);
+      if (errors.length > 0) {
+        throw new Error(
+          `${path} のシステムのカードの参照に誤りがある:\n${errors.map((e) => `- ${e}`).join('\n')}`,
+        );
+      }
+      return scenario;
+    })
+    .sort((a, b) => a.id.localeCompare(b.id));
 }
 
 /**

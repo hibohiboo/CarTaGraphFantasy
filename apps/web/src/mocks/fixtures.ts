@@ -7,6 +7,7 @@ import type { LibraryEntry } from '@cartagraph/domain/library/model';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import type { Recruitment, Session } from '@cartagraph/domain/session/model';
 import type { CurrentUser } from '@cartagraph/domain/user/model';
+import { systemCard } from './rulesFiles';
 import { scenarioFiles } from './scenarioFiles';
 
 const now = Date.now();
@@ -14,163 +15,8 @@ const ago = (hours: number) => new Date(now - hours * 3600_000).toISOString();
 const later = (hours: number) => new Date(now + hours * 3600_000).toISOString();
 
 // ---------- カード ----------
-export const cards = {
-  lantern: {
-    id: 'c-lantern',
-    kind: 'item',
-    name: '灯火のランタン',
-    description: '暗い場所を照らす',
-    tags: ['道具'],
-    cpCost: 1,
-  },
-  nightEye: {
-    id: 'c-night-eye',
-    kind: 'trait',
-    name: '夜目が利く',
-    description: '暗所での判定に強い',
-    tags: ['感覚'],
-    cpCost: 1,
-  },
-  foresight: {
-    id: 'c-foresight',
-    kind: 'skill',
-    name: '先読み',
-    description: '危険な仕掛けに気づきやすい',
-    tags: ['探索'],
-    cpCost: 2,
-  },
-  lockpick: {
-    id: 'c-lockpick',
-    kind: 'item',
-    name: '解錠具',
-    description: '鍵のかかった扉や箱を開ける',
-    tags: ['道具'],
-    cpCost: 1,
-  },
-  rope: {
-    id: 'c-rope',
-    kind: 'item',
-    name: '丈夫な縄',
-    description: '登る・縛る・渡る',
-    tags: ['道具'],
-    cpCost: 1,
-  },
-  charm: {
-    id: 'c-charm',
-    kind: 'trait',
-    name: '人当たりが良い',
-    description: '対人交渉の判定に強い',
-    tags: ['対人'],
-    cpCost: 1,
-  },
-  slash: {
-    id: 'c-slash',
-    kind: 'skill',
-    name: '斬撃',
-    description: '射程1。ダイスでダメージを決める基本攻撃',
-    tags: ['戦闘スキル', '攻撃'],
-    cpCost: 2,
-    actionCost: 3,
-    range: 1,
-    // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）での効果。数値はプレイテスト前の目安
-    combatEffect: { type: 'damage', dice: { count: 1, sides: 4, bonus: 0 } },
-  },
-  heavyBlow: {
-    id: 'c-heavy-blow',
-    kind: 'skill',
-    name: '渾身の一撃',
-    description: '射程1。コストが高いぶん大きく削る',
-    tags: ['戦闘スキル', '攻撃'],
-    cpCost: 3,
-    actionCost: 6,
-    range: 1,
-    combatEffect: { type: 'damage', dice: { count: 2, sides: 4, bonus: 0 } },
-  },
-  guard: {
-    id: 'c-guard',
-    kind: 'skill',
-    name: '受け流し',
-    description: '味方1人へのダメージを軽減する補助',
-    tags: ['戦闘スキル', '補助'],
-    cpCost: 2,
-    actionCost: 2,
-    range: 0,
-  },
-  firstAid: {
-    id: 'c-first-aid',
-    kind: 'skill',
-    name: '応急手当',
-    description: '判定なしでHPを回復する',
-    tags: ['戦闘スキル', '回復'],
-    cpCost: 2,
-    actionCost: 4,
-    range: 1,
-    combatEffect: { type: 'heal', dice: { count: 2, sides: 4, bonus: 2 } },
-  },
-  quickThrust: {
-    id: 'c-quick-thrust',
-    kind: 'skill',
-    name: '素早い突き',
-    description: '射程1。軽いぶん手数を稼げる',
-    tags: ['戦闘スキル', '攻撃'],
-    cpCost: 1,
-    actionCost: 2,
-    range: 1,
-    // 数値は docs/plans/2026-09-27-村パート.md のシミュレーションで選んだプレイテスト前の目安
-    combatEffect: { type: 'damage', dice: { count: 1, sides: 2, bonus: 0 } },
-  },
-  step: {
-    id: 'c-step',
-    kind: 'skill',
-    name: '踏み込み',
-    description: '移動カード。隣のグループへ移る',
-    tags: ['戦闘スキル', '移動'],
-    cpCost: 1,
-    actionCost: 2,
-    range: 0,
-  },
-  shortSword: {
-    id: 'c-short-sword',
-    kind: 'equipment',
-    name: '短剣',
-    description: '軽い刃物。斬撃の基本装備',
-    tags: ['武器'],
-    cpCost: 1,
-  },
-  seaLegs: {
-    id: 'c-sea-legs',
-    kind: 'trait',
-    name: '航海の心得',
-    description: '船上での行動に慣れている',
-    tags: ['航海の心得'],
-    cpCost: 1,
-  },
-  flameSword: {
-    id: 'c-flame-sword',
-    kind: 'equipment',
-    name: '炎の剣',
-    description: '「鉄鎖のガレオン船」の報酬カード。以後のPCもCPで選べる',
-    tags: ['武器', '報酬'],
-    cpCost: 4,
-  },
-} satisfies Record<string, CardDef>;
-
-export const basicPool: CardDef[] = [
-  cards.lantern,
-  cards.nightEye,
-  cards.foresight,
-  cards.lockpick,
-  cards.rope,
-  cards.charm,
-  cards.slash,
-  cards.heavyBlow,
-  cards.guard,
-  cards.firstAid,
-  cards.step,
-  cards.shortSword,
-];
-export const unlockedPool: CardDef[] = [cards.seaLegs, cards.flameSword];
-export const initialCpBudget = 5;
+// システムのカードは rules/cards.json（mocks/rulesFiles.ts の systemCard で引く）。解放済みプールはデモのプレイヤーのデータ
+export const unlockedPool: CardDef[] = [systemCard('c-sea-legs'), systemCard('c-flame-sword')];
 
 // ---------- ユーザー ----------
 export const me: CurrentUser = {
@@ -190,7 +36,7 @@ export const characters: Character[] = [
     ownerName: 'ユウ',
     abilities: { body: 3, skill: 4, mind: 2 },
     hp: { current: 16, max: 16 },
-    deck: [cards.lantern, cards.nightEye, cards.foresight],
+    deck: [systemCard('c-lantern'), systemCard('c-night-eye'), systemCard('c-foresight')],
     titles: ['夜歩き'],
     endingTags: [],
     cp: { total: 5, spent: 4 },
@@ -201,7 +47,7 @@ export const characters: Character[] = [
     name: '灯',
     ownerId: 'u-me',
     ownerName: 'ユウ',
-    deck: [cards.charm, cards.rope],
+    deck: [systemCard('c-charm'), systemCard('c-rope')],
     titles: [],
     endingTags: ['灯りの回廊を経験'],
     cp: { total: 5, spent: 2 },
@@ -215,7 +61,12 @@ export const characters: Character[] = [
     abilities: { body: 4, skill: 2, mind: 3 },
     hp: { current: 20, max: 20 },
     baseActionValue: 13,
-    deck: [cards.slash, cards.heavyBlow, cards.shortSword, cards.step],
+    deck: [
+      systemCard('c-slash'),
+      systemCard('c-heavy-blow'),
+      systemCard('c-short-sword'),
+      systemCard('c-step'),
+    ],
     titles: ['一匹狼'],
     endingTags: [],
     cp: { total: 8, spent: 7 },
@@ -229,7 +80,7 @@ export const characters: Character[] = [
     abilities: { body: 2, skill: 3, mind: 5 },
     hp: { current: 12, max: 14 },
     baseActionValue: 10,
-    deck: [cards.firstAid, cards.guard, cards.seaLegs],
+    deck: [systemCard('c-first-aid'), systemCard('c-guard'), systemCard('c-sea-legs')],
     titles: ['クール'],
     endingTags: [],
     cp: { total: 8, spent: 5 },
@@ -275,13 +126,13 @@ const goBack: CardDef = { id: 'ch-back', kind: 'choice', name: '戻る', tags: [
 const soloStarter: NonNullable<Scenario['soloStarter']> = {
   hp: 20,
   baseActionValue: 10,
-  cards: [cards.slash, cards.heavyBlow, cards.firstAid],
+  cards: [systemCard('c-slash'), systemCard('c-heavy-blow'), systemCard('c-first-aid')],
 };
 
 /** テスト用シナリオの初期装備。自動戦闘の効果を持たないカード（短剣）も混ぜ、優先順位に入れられないことを確かめる */
 const testStarter: NonNullable<Scenario['soloStarter']> = {
   ...soloStarter,
-  cards: [...soloStarter.cards, cards.shortSword],
+  cards: [...soloStarter.cards, systemCard('c-short-sword')],
 };
 
 const enemyAttack = (
@@ -298,28 +149,22 @@ const enemyAttack = (
   combatEffect: { type: 'damage', dice },
 });
 
-const examinerCard: CardDef = {
-  id: 'en-examiner',
-  kind: 'enemy',
-  name: '試験官',
-  description: '冒険者ギルドの試験官。木剣を構えている',
-  tags: [],
-};
-
-/** 敵の優先順位の行（試験官は条件を付けず、すべて「いつでも」） */
+/** 敵の優先順位の行（テスト用の敵の攻撃は条件を付けず、すべて「いつでも」） */
 const always = (card: CardDef): PriorityEntry => ({ card, when: 'always' });
 
-const examinerActions = [
-  enemyAttack('ea-heavy', '重い打ち込み', 6, { count: 1, sides: 6, bonus: 0 }),
-  enemyAttack('ea-feint', '牽制', 3, { count: 1, sides: 3, bonus: 0 }),
-];
-
-export const examiner: AutoCombatEnemy = {
-  card: examinerCard,
-  hp: 26,
-  baseActionValue: 9,
-  priority: examinerActions.map(always),
-};
+/**
+ * 試験官。テスト専用の試験シナリオ（sc-exam-*）は、村はずれの一歩（scenarios/sc-village-start.json）の試験官を
+ * 深く複製して使う（定義を1か所にする。docs/plans/2026-10-10-ルールとカードプールのJSON管理.md D4）。注記（$comment）は落とす
+ */
+export const examiner: AutoCombatEnemy = (() => {
+  const enemy = scenarioFiles
+    .find((s) => s.id === 'sc-village-start')
+    ?.deck.find((n) => n.id === 'vs-exam')?.autoCombat?.enemy;
+  if (!enemy)
+    throw new Error('村はずれの一歩（sc-village-start）の試験（vs-exam）に試験官がありません');
+  const { $comment, ...rest } = structuredClone(enemy);
+  return rest;
+})();
 
 /**
  * 導入→冒険者試験（自動戦闘）→結末 の一式を持つGMレスのソロ用シナリオを作る。
@@ -753,7 +598,14 @@ export const sessions: Session[] = [
         { id: 'loc-corridor', kind: 'location', name: '地下回廊', tags: [], zone: 'pl' },
       ],
     },
-    hand: [openDoor, inspectDoor, goBack, cards.lantern, cards.nightEye, cards.foresight],
+    hand: [
+      openDoor,
+      inspectDoor,
+      goBack,
+      systemCard('c-lantern'),
+      systemCard('c-night-eye'),
+      systemCard('c-foresight'),
+    ],
     flavor: '古びた扉の向こうから、かすかな音が聞こえる。',
     proposals: [
       {
@@ -837,7 +689,7 @@ export const sessions: Session[] = [
         { id: 'loc-deck', kind: 'location', name: '甲板', tags: [], zone: 'pl' },
       ],
     },
-    hand: [cards.slash, cards.heavyBlow, cards.step],
+    hand: [systemCard('c-slash'), systemCard('c-heavy-blow'), systemCard('c-step')],
     flavor: '鎖の軋む音とともに、亡霊が甲板へ這い上がってくる。カウント13、彰の手番。',
     proposals: [
       {

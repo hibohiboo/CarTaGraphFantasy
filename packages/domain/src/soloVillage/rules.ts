@@ -11,8 +11,6 @@ import type { Scenario } from '../scenario/model';
 import type { Session } from '../session/model';
 
 const ACHIEVEMENT_TAG = '達成';
-/** 能力値の上限（balance.md「1〜5程度」。仮ルール） */
-const ABILITY_MAX = 5;
 const ABILITY_LABEL: Record<keyof Abilities, string> = { body: '体', skill: '技', mind: '心' };
 
 /** 条件の判定に使うカード：キャラクターデッキと、GM専用ゾーンのうちタグ「達成」を持つもの */
@@ -51,16 +49,39 @@ export function grantEndingTag(character: Character, tag: string): Character {
 }
 
 /**
+ * 成長の効果でキャラクターデッキへ加えるカード：シナリオ固有のカード（gainCards）→ システムのカード（gainCardIds を
+ * 一覧から引く）の順に、深く複製して返す。一覧に無い id は誤り（読み込み時の検査で止まるので、ここに来るのは
+ * MSW のメモリ上で壊したときだけ。docs/plans/2026-10-10-ルールとカードプールのJSON管理.md E7）
+ */
+export function resolveGainCards(
+  effect: SoloEffect,
+  systemCards: CardDef[],
+): { ok: true; cards: CardDef[] } | { ok: false; error: string } {
+  const cards = [...(effect.gainCards ?? [])];
+  for (const id of effect.gainCardIds ?? []) {
+    const found = systemCards.find((c) => c.id === id);
+    if (!found) return { ok: false, error: `カード「${id}」がシステムのカード一覧に無い` };
+    cards.push(found);
+  }
+  return { ok: true, cards: cards.map((c) => structuredClone(c)) };
+}
+
+/**
  * 成長の効果を適用した後のキャラクターと、描写・feed に出す文を返す。入力は書き換えない。
  * 文には達成カードを書かない（GM専用ゾーンの存在をPLに見せないため）。
  * 達成カードを場に置くのは呼び出し側の仕事。
+ * system はシステムのカード一覧（gainCardIds を引く）と能力値の上限（rules/character-creation.json の
+ * abilities.max。solo-village.md「能力値の上がり方」）
  */
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 export function applySoloEffect(
   character: Character,
   effect: SoloEffect,
   growth: Scenario['soloGrowth'],
+  system: { cards: CardDef[]; abilityMax: number },
 ): { ok: true; character: Character; lines: string[] } | { ok: false; error: string } {
+  const gained = resolveGainCards(effect, system.cards);
+  if (!gained.ok) return gained;
   const lines: string[] = [];
   let deck = [...character.deck];
 
@@ -78,7 +99,7 @@ export function applySoloEffect(
     const label = ABILITY_LABEL[key];
     // 能力値を持たなければ各1から始める（体・技・心の初期配分は未解決論点。仮ルール）
     abilities ??= { body: 1, skill: 1, mind: 1 };
-    if (abilities[key] >= ABILITY_MAX) {
+    if (abilities[key] >= system.abilityMax) {
       lines.push(`${label}はこれ以上上がらない（${label} ${abilities[key]}）`);
     } else {
       abilities[key] += 1;
@@ -86,9 +107,9 @@ export function applySoloEffect(
     }
   }
 
-  for (const gained of effect.gainCards ?? []) {
-    deck.push(structuredClone(gained));
-    lines.push(`『${gained.name}』を${gained.kind === 'skill' ? '習った' : '受け取った'}`);
+  for (const card of gained.cards) {
+    deck.push(card);
+    lines.push(`『${card.name}』を${card.kind === 'skill' ? '習った' : '受け取った'}`);
   }
 
   const next: Character = { ...character, deck, ...(abilities && { abilities }) };

@@ -27,6 +27,7 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
                 routes/（routes.ts：ルート一覧＝ナビ・サイトマップの唯一の情報源）
     main.tsx    エントリ（層の外）
     mocks/      層の外。fixtures.ts（モックデータのシード）、scenarioFiles.ts（scenarios/*.json の読み込み）、
+                rulesFiles.ts（rules/*.json の読み込み）、
                 handlers.ts（MSW ハンドラ）、browser.ts / node.ts
     test/       層の外。Vitest のテスト（docs/process/rules/testing.md）
   e2e/          Playwright のテスト（CI の E2E は *.test.ts。dev/ は開発サーバーで手で回す確かめのスクリプト）
@@ -36,6 +37,8 @@ packages/domain/src/      ドメイン型と、UIに依存しないゲームロ�
                           仕様ページに合わせたドメインごとのディレクトリ（下の「packages/domain の中の置き場所」）
 scenarios/                公開したことのあるシナリオの JSON（非公開にしたものは draft のまま残る。シードの一部。
                           読み込み・検査・画面からの公開は Webアプリの仕組み「シナリオの JSON」）
+rules/                    システム製作者のルールの JSON（システムのカード一覧・キャラクター作成のルール。シードの一部。
+                          読み込み・検査は Webアプリの仕組み「ルールの JSON」）
 scripts/                  ビルド補助（GitHub Pages へのコピー、自動戦闘のシミュレーション）
 ```
 
@@ -45,14 +48,15 @@ scripts/                  ビルド補助（GitHub Pages へのコピー、自�
 2. 1つのページでしか使わない → そのページのスライス（`pages/<グループ>/<ページ>/`）のセグメントに置く（部品は `ui/`、副作用は `api/`、変換は `lib/`）。一度しか使わないものは、使う側に置く
 3. 複数のページで使う → 何かで分ける。エンティティ（カード・シナリオなど）の見た目・取得・変更は `entities/<エンティティ>/`、利用者の操作と UI が対になったものは `features/`、画面の大きなまとまりは `widgets/`、業務のロジックを持たず、どこからでも使う部品・関数・静的な内容（UI の部品、fetch のラッパー、ルート一覧、ルールブックの本文など）は `shared/`。ただし2ページ目が現れるまで共通化しない
 4. API へのアクセス → `entities/<エンティティ>/api/` の取得（queries.ts）・変更（mutations.ts）のフックを経由する。ページから `fetch` を直接呼ばない。クエリキーは `shared/api/queryKeys.ts`
-5. モックデータの追加 → 遊べるシナリオ（公開したことのあるもの）はリポジトリ直下の `scenarios/<id>.json`、それ以外（デモの下書き・テスト専用のシナリオを含む）は `mocks/fixtures.ts` に置く。ページやテストの中で独自のデータを作らない
+5. モックデータの追加 → 遊べるシナリオ（公開したことのあるもの）はリポジトリ直下の `scenarios/<id>.json`、キャラクターが持つシステムのカードとキャラクター作成のルールは `rules/`、それ以外（デモの下書き・テスト専用のシナリオを含む）は `mocks/fixtures.ts` に置く。ページやテストの中で独自のデータを作らない
 
 ## 依存の向き
 
 ```text
 apps/web ──→ packages/domain ──→ zod
    │
-   └──→ scenarios/*.json（mocks/scenarioFiles.ts が読み、packages/domain の検査を通す）
+   ├──→ scenarios/*.json（mocks/scenarioFiles.ts が読み、packages/domain の検査を通す）
+   └──→ rules/*.json（mocks/rulesFiles.ts が読み、packages/domain の検査を通す。scripts/ のシミュレーションも読む）
 ```
 
 - **パッケージの間** — `apps/web` は `packages/domain` を参照してよい。逆は禁止。`packages/domain` は React・DOM・MSW に依存しない（下の「境界」）

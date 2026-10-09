@@ -1,6 +1,6 @@
 // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）の数値バランスを確かめるシミュレーション。
 // 村スタートのシナリオ sc-village-start（scenarios/sc-village-start.json）で村パートを終えたときの HP・行動値（soloGrowth）、
-// お店で習える戦闘スキル、試験官を使い、
+// お店で習える戦闘スキル（rules/cards.json から id で引く）、試験官を使い、
 // 代表的な戦い方ごとに何千回も戦わせて、勝率と決着ラウンドを docs/cartagraph/auto-combat-simulation.md に書き出す。
 //
 // 実行は任意のタイミングで `pnpm sim:auto-combat`（CI・git フックでは回さない）。
@@ -15,13 +15,16 @@ import {
   type PriorityEntry,
 } from '../packages/domain/src/autoCombat/model';
 import { resolveAutoCombat } from '../packages/domain/src/autoCombat/resolve';
+import { parseSystemCards } from '../packages/domain/src/card/catalog';
 import type { CardDef } from '../packages/domain/src/card/model';
 import { parseScenarioFile } from '../packages/domain/src/scenario/file';
 import { findDeckNode } from '../packages/domain/src/session/transition';
+import { resolveGainCards } from '../packages/domain/src/soloVillage/rules';
 
 const SCENARIO_ID = 'sc-village-start';
 // import.meta.glob（apps/web の読み込み）は tsx で動かないので、ファイルを直接読んで同じ検査をかける
 const SCENARIO_PATH = resolve(`scenarios/${SCENARIO_ID}.json`);
+const CARDS_PATH = resolve('rules/cards.json');
 const EXAM_NODE_ID = 'vs-exam';
 const SHOP_NODE_ID = 'vs-shop';
 const OUTPUT = resolve('docs/cartagraph/auto-combat-simulation.md');
@@ -129,10 +132,16 @@ function main() {
     throw new Error(
       `${SCENARIO_ID} に成長の値（soloGrowth）・試験（${EXAM_NODE_ID}）・お店（${SHOP_NODE_ID}）のどれかがありません`,
     );
-  // 村パートを終えたPL：HP・行動値は soloGrowth、カードはお店で習える戦闘スキル
+  // 村パートを終えたPL：HP・行動値は soloGrowth、カードはお店で習える戦闘スキル（システムのカード一覧から引く）
+  const systemCards = parseSystemCards(CARDS_PATH, JSON.parse(readFileSync(CARDS_PATH, 'utf8')));
   const starter = {
     ...growth,
-    cards: shop.cards.flatMap((c) => c.soloEffect?.gainCards ?? []),
+    cards: shop.cards.flatMap((c) => {
+      if (!c.soloEffect) return [];
+      const r = resolveGainCards(c.soloEffect, systemCards);
+      if (!r.ok) throw new Error(`お店のカード ${c.id}：${r.error}`);
+      return r.cards;
+    }),
   };
   const { enemy, maxRounds } = combat;
   const cardById = (id: string) => {
