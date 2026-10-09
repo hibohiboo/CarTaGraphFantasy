@@ -27,7 +27,9 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.13",
+    "mermaid": "^11.17.2",
     "tsx": "^4.23.15",
-    "vitepress": "^1.6.4"
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17"
   }
 }
