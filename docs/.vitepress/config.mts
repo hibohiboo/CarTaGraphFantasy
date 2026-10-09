@@ -16,8 +16,8 @@ export default withMermaid(
     themeConfig: {
       nav: [
         { text: 'ホーム', link: '/' },
-        { text: 'コンセプト', link: '/concept/' },
-        { text: 'カルタグラフ', link: '/cartagraph/' },
+        // ゲームの仕様の入口は1つにする。各ページへは左メニューから辿る
+        { text: 'ドキュメント', link: '/concept/', activeMatch: '^/(concept|cartagraph)/' },
         { text: '用語集', link: '/glossary' },
         { text: '未解決論点', link: '/open-questions' },
         { text: 'アプリ', link: '/app/', target: '_self' },

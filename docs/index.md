@@ -6,11 +6,8 @@ hero:
   tagline: 遊ぶことでゲーム自体が進化していくTRPGを、AI と共同で設計・開発しています。
   actions:
     - theme: alt
-      text: コンセプトを読む
+      text: ドキュメントを読む
       link: /concept/
-    - theme: alt
-      text: カルタグラフ構想を読む
-      link: /cartagraph/
     - theme: alt
       text: アプリを開く
       link: /app/
