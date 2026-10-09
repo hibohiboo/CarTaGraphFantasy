@@ -3,7 +3,8 @@
 アプリ（`apps/web`）の画面の一覧と、画面どうしのつながり（導線）を置く。画面ごとの課題は [画面ごとの課題](issues.md) に置く。
 
 - **正の置き場所** — ルート（パス・画面名・一行の説明）の正は `apps/web/src/shared/routes/routes.ts`（アプリ内のサイトマップ `/admin/sitemap` もここから作る）。このページは、ロールごとのまとまりと導線を読むためのもの。画面を足す・消す・リンクを変えたら、このページの表と図も直す
-- **図の描き方** — 矢印は、画面の中のリンク・ボタンで移るもの。点線の枠は、まだ無い画面（課題として挙がっているもの）
+- **図の描き方** — ノードのラベルには、`routes.ts` と同じパスを書く（まだ無い画面はパスを書かず、点線の枠にする）。矢印は、画面の中のリンク・ボタンで移るもの
+- **食い違いの検査** — 画面の一覧の表・図のノード・[画面ごとの課題](issues.md)のパスがルート定義と食い違うと、`pnpm docs:build` が止まる（`scripts/check-screens.mjs`）。図の矢印は検査しないので、画面の中のリンクを変えたら手で直す
 - **共通ナビ** — 全画面の上部（とフッタ）にある共通ナビからは、どの画面からでも次へ移れる：ホーム・セッション選択・キャラクター管理・シナリオ管理（GM）・セッション管理（GM）・シナリオ管理（製作者）・ルールブック・サイトマップ。図には描かない（矢印が全画面から出て読めなくなるため）。どれを出すかは `routes.ts` の `nav` が正
 
 ## 導線図
@@ -17,24 +18,24 @@ flowchart TB
     tutorial["旅立ちの酒場 /pl/tutorial"]
     village["村はずれの一歩 /pl/village-start"]
     browse["セッション選択 /pl/sessions"]
-    play["プレイページ /pl/sessions/:id/play"]
+    play["プレイページ<br/>/pl/sessions/:sessionId/play"]
     charList["キャラクター管理 /pl/characters"]
     charNew["キャラクター作成 /pl/characters/new"]
-    charSheet["キャラクターシート /pl/characters/:id"]
+    charSheet["キャラクターシート<br/>/pl/characters/:characterId"]
   end
 
   subgraph GM["GM"]
     gmHome["GM のホーム（未実装）"]:::missing
     gmScenarios["シナリオ管理（GM） /gm/scenarios"]
-    gmScenario["カスタマイズと募集 /gm/scenarios/:id"]
+    gmScenario["カスタマイズと募集<br/>/gm/scenarios/:scenarioId"]
     gmSessions["セッション管理（GM） /gm/sessions"]
-    gmSession["進行管理 /gm/sessions/:id"]
+    gmSession["進行管理<br/>/gm/sessions/:sessionId"]
   end
 
   subgraph CR["シナリオ製作者"]
     crList["シナリオ管理（製作者） /creator/scenarios"]
-    crEdit["シナリオ編集 /creator/scenarios/:id"]
-    crScene["シーン編集 …/scenes/:sceneId"]
+    crEdit["シナリオ編集<br/>/creator/scenarios/:scenarioId"]
+    crScene["シーン編集<br/>/creator/scenarios/:scenarioId/scenes/:sceneId"]
   end
 
   subgraph RB["ルールブック"]

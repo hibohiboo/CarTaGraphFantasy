@@ -7,7 +7,7 @@ paths:
 
 # 静的解析ルール（Biome で止めるもの）
 
-コードの品質を、人やAIの注意ではなく機械で保つための設定と、その理由を置く。検査は Biome（lint・整形）が担い、コミット前のフック（`.githooks/pre-commit`）と CI の `pnpm lint` で必ず回る（コマンドは `AGENTS.md`）。型の検査は `tsc`、用語の旧称は `pnpm docs:build` の `scripts/check-terms.mjs` が止める。
+コードの品質を、人やAIの注意ではなく機械で保つための設定と、その理由を置く。検査は Biome（lint・整形）が担い、コミット前のフック（`.githooks/pre-commit`）と CI の `pnpm lint` で必ず回る（コマンドは `AGENTS.md`）。型の検査は `tsc`、用語の旧称は `pnpm docs:build` の `scripts/check-terms.mjs`、画面一覧・導線図とルート定義の食い違いは同じく `scripts/check-screens.mjs` が止める。
 
 **設定の正は `biome.json`、理由はこのページ。** `biome.json` にはコメントを書けない（書くと設定の読み込みが失敗し、既定の整形が当たる）。ルールを足す・外す・しきい値を変えるときは、`biome.json` とこのページを一緒に直す。
 

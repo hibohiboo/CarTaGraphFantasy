@@ -43,6 +43,13 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。
 
+### 2026-10-10 画面一覧・導線図とルート定義の食い違いを、ビルドで止める
+
+- **内容** — `scripts/check-screens.mjs` を作り、`pnpm docs:build` の最後に流す（pre-push・CI でも止まる）。[画面一覧と導線](../screens/index.md)の表・導線図のノード・[画面ごとの課題](../screens/issues.md)のパスを、`apps/web/src/shared/routes/routes.ts` と突き合わせる。図の矢印（画面の中のリンク）は見ない
+- **理由** — 画面一覧と導線図を作ったとき、ルートを変えるたびに手で直す必要があり、ずれていきやすい。人間から「すぐにやって」と依頼された。作った直後の図でも、パスの略記（`:id`）が食い違っていたのを見つけた
+- **反映先** — `scripts/check-screens.mjs`（とテスト）、`package.json`、`AGENTS.md`、`docs/process/rules/static-analysis.md`、`docs/screens/index.md`、`apps/web/src/shared/routes/routes.ts`（コメント）
+- **きっかけ** — 人間の要望 ／ **止め方** — 機械（ビルド時の検査）
+
 ### 2026-10-09 SonarJS 相当の複雑さのルールを Biome で有効にし、静的解析のページを作った
 
 - **内容** — `biome.json` で `complexity/noExcessiveCognitiveComplexity`（15）・`noExcessiveLinesPerFunction`（200行、テストは除く）・`useMaxParams`（4）・`style/noExcessiveLinesPerFile`（1000行）を error で有効にした。既存の違反16件は `biome-ignore`（理由つき）で個別に抑え、[既知の問題](../architecture/known-issues.md)に一覧を置いた。`biome.json` の理由を集める[静的解析ルール](rules/static-analysis.md)を新設し、サイドバーと `AGENTS.md` のルール表から辿れるようにした

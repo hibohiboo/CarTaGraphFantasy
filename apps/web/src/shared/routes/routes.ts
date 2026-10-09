@@ -1,5 +1,6 @@
 // ルート定義のメタデータ。ナビゲーションとサイトマップ（/admin/sitemap）の唯一の情報源。
 // 実際の要素との対応は router.tsx で行う。
+// ルートを足す・消す・パスを変えたら、docs/screens/index.md の画面の一覧と導線図も直す（食い違うと pnpm docs:build が止まる）。
 
 export type RouteGroup = 'common' | 'pl' | 'gm' | 'creator' | 'rulebook' | 'admin';
 
