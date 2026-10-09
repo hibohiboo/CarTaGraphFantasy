@@ -43,6 +43,21 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。
 
+### 2026-10-10 ルールとカードプールの JSON 管理（PR #19）の振り返りから4件を採用
+
+- **内容**
+  1. 正式仕様のページ（`docs/cartagraph/`・`docs/concept/`・用語集）が、実装のパス（`rules/`・`apps/`・`packages/`・`scenarios/`・`scripts/`）を指したら止める `scripts/check-spec-paths.mjs` を作り、`pnpm docs:build` の最後に流す（pre-push・CI でも止まる）。生成した参考資料（`auto-combat-simulation.md`）は見ない。実装との対応は `docs/architecture/web-app.md` に書く
+  2. 自動戦闘のシミュレーション（`pnpm sim:auto-combat`）は、結果が変わらなければ `auto-combat-simulation.md` を書き直さない（生成日だけの差分を出さない）
+  3. キャラクター作成と村はずれの一歩のお店が `rules/` のルールどおりかをブラウザで通しで確かめる `apps/web/e2e/dev/character-rules.mjs`（`pnpm web:check:character`）を残した。値は `rules/` から読み、書き写さない
+  4. 効いた仕組みの記録：複数ファイルを書き換えるスクリプト（件数の見込み違い、コメント中の `rules/cards.json` への置換の当たり）は2回とも書き込む前に止まり、半端な書き換えが残らなかった（2026-10-07 の「全部検査してから書く」）。`sed -i` はフック（`.claude/hooks/guard-bash.mjs`）が止めた。`scripts/mutate-check.mjs` は、守りを外しても落ちないテスト（ハンドラの中のカードの複製）を見つけ、`pickCards` に切り出して単体テストで守るきっかけになった
+- **理由**
+  1. プランで solo-village.md を「上限は作成の能力値の上限（rules/ の値）」と書き換え、実装レビューで「正式仕様が実装の仮の値を定義元として指している」と P1 になって戻した。プランレビューと実装レビューで、同じ仕様整合の観点の判断が分かれた。人の注意ではまた起きるので、機械で止める
+  2. 結果の表が同じでも生成日の差分が出て、手で戻していた
+  3. 2026-10-07 にシナリオ作成の確かめを残すと決めたのに、今回もキャラクター作成とお店の確かめを一時ファイルで書いて消した
+  4. 採用した仕組みが効いたかを、後から辿れるようにするため
+- **反映先** — `scripts/check-spec-paths.mjs`（とテスト）、`scripts/simulate-auto-combat.ts`、`apps/web/e2e/dev/character-rules.mjs`、`package.json`・`apps/web/package.json`、`AGENTS.md`、`docs/architecture/web-app.md`
+- **きっかけ** — 1 AI レビュー、2・3 作業中の手戻り、4 確認 ／ **止め方** — 1 機械（ビルド時の検査）、2 機械（自動で組み立てる）、3 機械（確かめのスクリプト。CI では回さない）
+
 ### 2026-10-10 画面一覧・導線図とルート定義の食い違いを、ビルドで止める
 
 - **内容** — `scripts/check-screens.mjs` を作り、`pnpm docs:build` の最後に流す（pre-push・CI でも止まる）。[画面一覧と導線](../screens/index.md)の表・導線図のノード・[画面ごとの課題](../screens/issues.md)のパスを、`apps/web/src/shared/routes/routes.ts` と突き合わせる。図の矢印（画面の中のリンク）は見ない

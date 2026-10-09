@@ -5,7 +5,7 @@
   "packageManager": "pnpm@11.18.0",
   "scripts": {
     "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs && node scripts/check-doc-anchors.mjs && node scripts/check-terms.mjs && node scripts/check-screens.mjs",
+    "docs:build": "vitepress build docs && node scripts/check-doc-anchors.mjs && node scripts/check-terms.mjs && node scripts/check-screens.mjs && node scripts/check-spec-paths.mjs",
     "docs:preview": "vitepress preview docs",
     "web:dev": "pnpm --filter @cartagraph/web dev",
     "web:dev:agent": "pnpm --filter @cartagraph/web dev --port 5174",
@@ -15,6 +15,7 @@
     "web:e2e": "pnpm --filter @cartagraph/web e2e",
     "web:check:publish": "pnpm --filter @cartagraph/web check:publish",
     "web:check:authoring": "pnpm --filter @cartagraph/web check:authoring",
+    "web:check:character": "pnpm --filter @cartagraph/web check:character",
     "web:typecheck": "pnpm --filter @cartagraph/web typecheck",
     "domain:test": "pnpm --filter @cartagraph/domain test",
     "domain:typecheck": "pnpm --filter @cartagraph/domain typecheck",

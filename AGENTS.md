@@ -34,6 +34,7 @@ pnpm web:dev:agent    # http://localhost:5174。エージェントがブラウ�
 pnpm web:dev:agent:stop # 上の開発サーバーと、エージェントの preview（4174 番の vite preview）を止める。ほかのプロセスには触らない
 pnpm web:check:publish # 開発サーバーでのシナリオの公開をブラウザで通しで確かめる（書き込みを開いた web:dev:agent が要る。CIでは回さない）
 pnpm web:check:authoring # 画面だけでシナリオを作り GM 不在で結末まで遊べるかをブラウザで通しで確かめる（web:dev:agent が要る。CIでは回さない）
+pnpm web:check:character # キャラクター作成と村はずれの一歩のお店が rules/ のルールどおりかをブラウザで通しで確かめる（web:dev:agent が要る。CIでは回さない）
 pnpm web:test         # Vitest（MSW の node サーバーで全ページを描画）
 pnpm web:typecheck    # tsc
 pnpm domain:test      # Vitest（packages/domain の純粋関数）
@@ -41,7 +42,7 @@ pnpm tools:test       # node --test（scripts/ と .claude/hooks/ の補助ス�
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
 pnpm sim:auto-combat  # 自動戦闘のシミュレーションを回し docs/cartagraph/auto-combat-simulation.md を作り直す（任意。CIでは回さない）
 pnpm docs:dev         # 仕様書サイトをローカルで確認
-pnpm docs:build       # 仕様書サイトのビルド（リンク切れ・見出しへのリンクの食い違い・用語の旧称（scripts/check-terms.mjs）・画面一覧とルート定義の食い違い（scripts/check-screens.mjs）があると失敗する）
+pnpm docs:build       # 仕様書サイトのビルド（リンク切れ・見出しへのリンクの食い違い・用語の旧称（scripts/check-terms.mjs）・画面一覧とルート定義の食い違い（scripts/check-screens.mjs）・正式仕様のページにある実装のパス（scripts/check-spec-paths.mjs）があると失敗する）
 pnpm build:pages      # docs + app をまとめてビルド（CI と同じ）
 pnpm lint             # Biome（フォーマット・import整理・lintをまとめてチェック）
 pnpm lint:fix         # 同上、安全な修正を自動適用

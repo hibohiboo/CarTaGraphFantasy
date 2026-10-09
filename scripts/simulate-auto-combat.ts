@@ -7,7 +7,7 @@
 //   pnpm sim:auto-combat -- --runs=10000 --seed=42   回数・乱数の種を変える
 // 乱数は種つきなので、シナリオの数値が同じなら何度回しても同じ表になる（差分が出たら数値が変わったということ）。
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   HP_CONDITION_LABEL,
@@ -202,8 +202,14 @@ ${rows.join('\n')}
 - 条件の書かれていないカードは「いつでも」。
 - 決着ラウンドは、勝ち・負け・時間切れのすべてを含めた、戦闘が終わったラウンド。
 `;
-  writeFileSync(OUTPUT, md);
-  console.log(`wrote ${OUTPUT}`);
+  // 結果が同じなら書き直さない（生成日だけの差分を出さない。2026-10-10、ルールとカードプールの JSON 管理の振り返り）
+  const withoutDate = (s: string) => s.replace(/^- 生成日：.*$/m, '');
+  if (existsSync(OUTPUT) && withoutDate(readFileSync(OUTPUT, 'utf8')) === withoutDate(md)) {
+    console.log(`結果は変わらないので ${OUTPUT} を書き直さない`);
+  } else {
+    writeFileSync(OUTPUT, md);
+    console.log(`wrote ${OUTPUT}`);
+  }
   console.log(rows.join('\n'));
 }
 
