@@ -172,6 +172,12 @@ describe('pickCards', () => {
     expect(picked[0]).not.toBe(pool[1]);
     expect(picked[0]?.tags).not.toBe(pool[1]?.tags);
   });
+
+  it('同じ id を2回渡すと、別々の複製が2枚', () => {
+    const [first, second] = pickCards(pool, ['c-a', 'c-a']);
+    expect(first).toEqual(second);
+    expect(first).not.toBe(second);
+  });
 });
 
 describe('loadRules', () => {

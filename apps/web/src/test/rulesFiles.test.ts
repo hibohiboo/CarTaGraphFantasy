@@ -55,7 +55,8 @@ describe('POST /api/characters', () => {
   });
 
   // ハンドラがデッキへ複製を入れること（E8）は、メモリ上の DB を外から見られないので、ここでは確かめられない
-  // （応答は JSON を経由する）。カード一覧は systemCard の複製（下の describe）と domain の resolveGainCards が守る
+  // （応答は JSON を経由する）。複製は domain の pickCards（POST・PATCH が使う）と resolveGainCards の単体テスト、
+  // systemCard の複製（下の describe）が守る
   it('デッキのカードはカード一覧と同じ中身', async () => {
     const [id] = idsCosting(1);
     const ch = await create([id ?? '']);
@@ -64,6 +65,14 @@ describe('POST /api/characters', () => {
 });
 
 describe('PATCH /api/characters/:id', () => {
+  it('存在しないカードを足そうとすると 422 で、デッキは変わらない', async () => {
+    const ch = await create([]);
+    await expect(
+      api.patch(`/characters/${ch.id}`, { addCardIds: ['c-nope'] }),
+    ).rejects.toMatchObject({ status: 422 });
+    expect((await api.get<Character>(`/characters/${ch.id}`)).deck).toEqual([]);
+  });
+
   it('能力値を入れると HP は initialHp', async () => {
     const ch = await create([]);
     const patched = await api.patch<Character>(`/characters/${ch.id}`, { abilities: ABILITIES });
