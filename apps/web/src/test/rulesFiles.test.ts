@@ -61,6 +61,11 @@ describe('POST /api/characters', () => {
     expect(ch).toMatchObject({ abilities: ABILITIES, ...INITIAL });
   });
 
+  it('能力値に知らないキーを混ぜても、体・技・心だけを持つ', async () => {
+    const ch = await create([], { abilities: { ...ABILITIES, luck: 99 } });
+    expect(ch.abilities).toEqual(ABILITIES);
+  });
+
   const { total, min, max } = characterCreation.abilities;
   it.each<[string, unknown]>([
     ['能力値が無い', undefined],
@@ -133,6 +138,17 @@ describe('PATCH /api/characters/:id', () => {
     const after = await api.get<Character>(`/characters/${ch.id}`);
     expect(after.deck).toEqual([]);
     expect(after.abilities).toEqual(ABILITIES);
+  });
+
+  it.each<[string, unknown]>([
+    ['数', 5],
+    ['文字列', 'x'],
+    ['false', false],
+  ])('本文がオブジェクトでない（%s）なら 500 にせず 422', async (_, body) => {
+    const ch = await create([]);
+    await expect(api.patch(`/characters/${ch.id}`, body)).rejects.toMatchObject({
+      status: 422,
+    });
   });
 
   it('addCardIds だけなら足せる（反対側）', async () => {

@@ -63,14 +63,15 @@ export function defaultAbilities(a: CharacterCreationRules['abilities']): Abilit
 
 /**
  * 作成したときの能力値・HP・基本行動値（character-growth.md「PCが持つデータ」）。HP・行動値の値は
- * **仮ルール**（docs/provisional/character-creation.md）。能力値は複製して返す（配分の検査は呼び出し側）
+ * **仮ルール**（docs/provisional/character-creation.md）。能力値は体・技・心だけを複製して返す
+ * （API の本文に混ざった知らないキーを持ち込まない。配分の検査は呼び出し側）
  */
 export function creationStats(
   rules: CharacterCreationRules,
-  abilities: Abilities,
+  { body, skill, mind }: Abilities,
 ): Pick<Character, 'abilities' | 'hp' | 'baseActionValue'> {
   return {
-    abilities: { ...abilities },
+    abilities: { body, skill, mind },
     hp: { current: rules.initialHp, max: rules.initialHp },
     baseActionValue: rules.initialBaseActionValue,
   };

@@ -90,6 +90,27 @@ describe('旅立ちの酒場：保存の失敗', () => {
     expect((await characters()).length).toBe(before);
   });
 
+  it('作成に1回失敗しても、もう一度選べば PC がちょうど1人でき、エラーは消える', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post(
+        '/api/characters',
+        () => HttpResponse.json({ message: '一時的に保存できません' }, { status: 422 }),
+        { once: true },
+      ),
+    );
+    renderAt('/pl/tutorial');
+    await toPresets(user);
+    await user.click(await screen.findByRole('button', { name: /知恵者/ }));
+    expect(await screen.findByText('一時的に保存できません')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /知恵者/ }));
+    await screen.findByText('旅には何か持たせてやろう');
+    expect(screen.queryByText('一時的に保存できません')).not.toBeInTheDocument();
+    const pcs = await named('新人');
+    expect(pcs).toHaveLength(1);
+    expect(pcs[0]?.abilities).toEqual(preset('知恵者').abilities);
+  });
+
   it('カードの追加（PATCH）に失敗すると旅装で止まり、残る PC は能力値を持つ', async () => {
     const user = userEvent.setup();
     server.use(

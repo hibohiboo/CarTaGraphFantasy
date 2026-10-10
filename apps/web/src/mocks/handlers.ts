@@ -714,9 +714,10 @@ export const handlers = [
   http.patch('/api/characters/:id', async ({ params, request }) => {
     const ch = db.characters.find((c) => c.id === params.id);
     if (!ch) return notFound('キャラクター');
-    const body = ((await request.json()) ?? {}) as Record<string, unknown> & {
-      addCardIds?: string[];
-    };
+    const raw: unknown = await request.json();
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
+      return unprocessable('変更の内容をオブジェクトで送ってください');
+    const body = raw as Record<string, unknown> & { addCardIds?: string[] };
     if (['abilities', 'hp', 'baseActionValue'].some((k) => k in body))
       return unprocessable('能力値・HP・行動値は、作成したあとで変えられません');
     if (body.addCardIds?.length) {

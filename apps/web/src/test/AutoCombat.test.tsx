@@ -47,6 +47,32 @@ const runAutoCombat = (s: Session, cardIds: string[]) =>
     priority: cardIds.map((cardId) => ({ cardId, when: 'always' })),
   });
 
+// 「必ず勝つ／負ける」は、PL の HP・行動値（作成時の値。rules/character-creation.json）に頼っている。
+// ルールの値を変えて前提が崩れたら、勝敗が乱数次第になる前にここで気づく
+describe('テスト用の試験シナリオの前提', () => {
+  const enemyOf = (id: string) => {
+    const enemy = scenarios.find((x) => x.id === id)?.deck.find((n) => n.autoCombat)
+      ?.autoCombat?.enemy;
+    if (!enemy) throw new Error(`${id} に試験官がいません`);
+    return enemy;
+  };
+
+  it('必ず勝つ：試験官の行動値が PL より小さく、PL が先に動く', () => {
+    expect(enemyOf('sc-exam-always-win').baseActionValue).toBeLessThan(
+      characterCreation.initialBaseActionValue,
+    );
+  });
+
+  it('必ず負ける：試験官の行動値が PL より大きく、最小ダメージが PL の HP 以上', () => {
+    const enemy = enemyOf('sc-exam-always-lose');
+    expect(enemy.baseActionValue).toBeGreaterThan(characterCreation.initialBaseActionValue);
+    for (const { card } of enemy.priority) {
+      const dice = card.combatEffect?.dice;
+      expect(dice && dice.count + dice.bonus).toBeGreaterThanOrEqual(characterCreation.initialHp);
+    }
+  });
+});
+
 describe('試験シーンへの遷移（次のシーンへ進む）', () => {
   it('村はずれから「街の冒険者ギルドへ向かう」と、試験官が場に出て戦い方の設定画面になる', async () => {
     const user = userEvent.setup();

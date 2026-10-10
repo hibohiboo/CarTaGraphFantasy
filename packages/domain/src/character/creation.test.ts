@@ -163,6 +163,11 @@ describe('creationStats（作成時の値。仮ルール）', () => {
     stats.abilities.body = 1;
     expect(given.body).toBe(5);
   });
+
+  it('体・技・心のほかのキーは持ち込まない', () => {
+    const given = { body: 5, skill: 3, mind: 1, luck: 99 };
+    expect(creationStats(rules, given).abilities).toEqual({ body: 5, skill: 3, mind: 1 });
+  });
 });
 
 describe('abilitiesValid', () => {

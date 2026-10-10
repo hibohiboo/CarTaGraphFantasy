@@ -107,21 +107,21 @@ describe('applySoloEffect：能力値', () => {
 
   it('上限（渡した abilityMax。ここでは5）：4なら5に上がり、5なら5のまま', () => {
     const at = (body: number) => pc({ abilities: { body, skill: 1, mind: 1 } });
-    expect(apply(at(4), { raiseAbility: 'body' }).character.abilities?.body).toBe(5);
+    expect(apply(at(4), { raiseAbility: 'body' }).character.abilities.body).toBe(5);
     const capped = apply(at(5), { raiseAbility: 'body' });
-    expect(capped.character.abilities?.body).toBe(5);
+    expect(capped.character.abilities.body).toBe(5);
     expect(capped.lines).toEqual(['体はこれ以上上がらない（体 5）']);
   });
 
   it('上限は渡した abilityMax：上限3なら 2→3 に上がり、3 で止まる。上限を超えた値（4）は下がらない', () => {
     const at = (body: number) => pc({ abilities: { body, skill: 1, mind: 1 } });
     const max3 = { ...system, abilityMax: 3 };
-    expect(apply(at(2), { raiseAbility: 'body' }, max3).character.abilities?.body).toBe(3);
+    expect(apply(at(2), { raiseAbility: 'body' }, max3).character.abilities.body).toBe(3);
     expect(apply(at(3), { raiseAbility: 'body' }, max3).lines).toEqual([
       '体はこれ以上上がらない（体 3）',
     ]);
     const over = apply(at(4), { raiseAbility: 'body' }, max3);
-    expect(over.character.abilities?.body).toBe(4);
+    expect(over.character.abilities.body).toBe(4);
     expect(over.lines).toEqual(['体はこれ以上上がらない（体 4）']);
   });
 
