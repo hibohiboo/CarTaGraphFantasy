@@ -5,6 +5,8 @@ status: 進行中
 summary: API のリクエストの本文の形を zod のスキーマとして1か所（packages/schemas）に置き、モック（MSW）・画面・将来のバックエンドが同じものを使う。本文は検査してから使い、型を付け替えるだけの書き方は lint で止める。
 plans:
   - 2026-10-10-APIスキーマの共用.md
+cycles:
+  - { name: リクエストのスキーマ, status: 進行中, pr: 22 }
 updated: 2026-10-10
 ---
 
