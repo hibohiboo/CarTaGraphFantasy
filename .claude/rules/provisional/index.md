@@ -1,6 +1,5 @@
 ---
 paths:
-  - "docs/cartagraph/**"
   - "docs/provisional/**"
 ---
 

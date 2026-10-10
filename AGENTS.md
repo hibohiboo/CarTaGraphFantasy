@@ -17,7 +17,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 ## ディレクトリ構成
 
 - `docs/concept/`, `docs/cartagraph/`, `docs/architecture/`, `docs/glossary.md`, `docs/open-questions.md` … 正式仕様（SSOT）
-- `docs/notes/` … デザイナーノート。ゲームの仕様のページと1対1で、決めた理由・経緯・将来の拡張候補を置く。正式仕様ではない（仕様のページとの書き分けは `docs/notes/index.md`）
+- `docs/notes/` … デザイナーノート。ゲームの仕様のページと1対1で、決めた理由・経緯・将来の拡張候補を置く。正式仕様ではない（仕様のページとの書き分けは `docs/process/rules/spec-writing.md`）
 - `docs/interviews/` … 議論ログの一次資料。正式仕様ではない
 - `docs/process/` … 開発プロセス（開発サイクル・ルール・依頼文雛形・体制の進化ログ）。**正式仕様の一部**
 - `docs/public/teaser/` … プレイヤー向けのティザー映像（自動再生する HTML 1枚）。作り直すときは版ごとにファイルを分け（`movie-v1.html`・`movie-v2.html` …）、古い版も残す。GitHub Pages の `/CarTaGraphFantasy/teaser/<ファイル名>` で見られる
@@ -74,8 +74,9 @@ lint・型検査・テスト・docsビルドは、AI にトークンを使わせ
 | `biome.json`、lint のルール・しきい値を変えるとき | `docs/process/rules/static-analysis.md` |
 | push・マージ前、レビュー実行時 | `docs/process/rules/review.md` |
 | `docs/plans/**`、機能追加・振る舞いの変更（プラン作成から） | `docs/process/index.md`（開発サイクル） |
-| `docs/cartagraph/**`, `docs/notes/**` | `docs/notes/index.md`（仕様のページとデザイナーノートの書き分け） |
-| `docs/cartagraph/**`, `docs/provisional/**` | `docs/provisional/index.md`（仮ルールの書き方） |
+| `docs/cartagraph/**`, `docs/concept/**`, `docs/glossary.md` | `docs/process/rules/spec-writing.md`（仕様のページの書き方） |
+| `docs/notes/**` | `docs/notes/index.md`（デザイナーノートの書き方） |
+| `docs/provisional/**` | `docs/provisional/index.md`（仮ルールの書き方） |
 | `docs/backlog/**` | `docs/backlog/index.md`（要望の書き方） |
 
 ## 最重要ルール

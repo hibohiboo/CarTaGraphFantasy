@@ -102,6 +102,7 @@ export default withMermaid(
                 { text: 'テスト', link: '/process/rules/testing' },
                 { text: 'レビュー', link: '/process/rules/review' },
                 { text: '静的解析', link: '/process/rules/static-analysis' },
+                { text: '仕様のページの書き方', link: '/process/rules/spec-writing' },
               ],
             },
             {
