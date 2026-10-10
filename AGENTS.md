@@ -57,6 +57,7 @@ node scripts/sync-claude-rules.mjs          # ルールのページの frontmatt
 
 lint・型検査・テスト・docsビルドは、AI にトークンを使わせず git フックで機械的に止める。
 - `.githooks/pre-commit` … ステージ済みファイルだけ `biome check --staged --write` を実行し、安全な指摘（フォーマット崩れ等）は自動修正して再ステージする。`--unsafe`が要る指摘（意図的に自動適用しない方針）だけコミットを止める
+- `.githooks/commit-msg` … 進め方に関わるファイル（ルール・`AGENTS.md`・`CLAUDE.md`・`.claude/`・git フック・CI・検査のスクリプトなど。範囲は `scripts/check-evolution-log.mjs`）を変えたのに、体制の進化ログ（`docs/process/evolution.md`）が変わっていないコミットを止める。記録が要らない変更は、コミットメッセージに `進化ログ不要: <理由>` の行を書く
 - `.githooks/pre-push` … push前に `pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm web:test && pnpm tools:test && pnpm docs:build`（CIと同じ）を実行する
 
 `pnpm install` すると `prepare` スクリプトが `git config --local core.hooksPath .githooks` を自動で設定するので、通常は何もしなくてよい。設定されていない場合は手動で同じコマンドを実行する。CI（`.github/workflows/ci.yml`）にも同じチェック（lint・型検査・テスト・docsビルド）があり、フック未設定や `--no-verify` の取りこぼしを検出する。

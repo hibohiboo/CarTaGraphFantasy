@@ -1,0 +1,12 @@
+#!/bin/sh
+# 進め方に関わるファイル（ルール・AGENTS.md・CLAUDE.md・.claude/・git フック・CI・検査のスクリプトなど）を変えたのに、
+# 体制の進化ログ（docs/process/evolution.md）が変わっていないコミットを止める。
+# 記録が要らない変更は、コミットメッセージに「進化ログ不要: <理由>」の行を書けば通る。
+# 判定の本体とテストは scripts/check-evolution-log.mjs（pnpm tools:test）。
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "[commit-msg] node が見つかりません。進化ログの確認をスキップします（PATH を確認してください）" >&2
+  exit 0
+fi
+
+exec node scripts/check-evolution-log.mjs "$1"
