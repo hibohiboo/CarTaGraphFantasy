@@ -71,7 +71,7 @@ lint・型検査・テスト・docsビルドは、AI にトークンを使わせ
 |---|---|
 | `apps/**`, `packages/**` | `docs/process/rules/architecture.md` |
 | `apps/**/*.test.*`, `packages/**/*.test.*`, `apps/web/src/test/**`, `apps/web/src/mocks/**`, `scenarios/**`, `rules/**`, `apps/web/vite.config.ts`, `apps/web/vite/**`, `apps/web/e2e/**`, `apps/web/playwright.config.ts`、テストの追加・変更 | `docs/process/rules/testing.md` |
-| `biome.json`, `apps/**`, `packages/**`、lint の指摘を抑える・しきい値を変えるとき | `docs/process/rules/static-analysis.md` |
+| `biome.json`、lint のルール・しきい値を変えるとき | `docs/process/rules/static-analysis.md` |
 | push・マージ前、レビュー実行時 | `docs/process/rules/review.md` |
 | `docs/plans/**`、機能追加・振る舞いの変更（プラン作成から） | `docs/process/index.md`（開発サイクル） |
 | `docs/cartagraph/**`, `docs/notes/**` | `docs/notes/index.md`（仕様のページとデザイナーノートの書き分け） |
