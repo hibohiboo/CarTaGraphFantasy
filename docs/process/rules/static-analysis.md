@@ -33,7 +33,7 @@ Biome の推奨ルール（`"preset": "recommended"`）に加えて、次のル�
 | `complexity/useMaxParams` | 4個 | S107（既定7） | 引数の多い関数。オブジェクト1つで受ける。導入時の違反が0件だったので、Biome の既定（4）のまま厳しくした |
 
 - **引っかかったとき・`biome-ignore` で抑えるとき** — コードを書く側の決まりなので、[アーキテクチャルール](architecture.md)「1ファイル1責務」が正
-- **既存の違反** — 導入時に16件あった（認知的複雑度14件、関数の行数1件、ファイルの行数1件）。それぞれの箇所に `biome-ignore`（理由つき）を付けて止め、一覧と直し方は[既知の問題](../../architecture/known-issues.md)「複雑度・行数の上限を超える既存のコード」に置いた
+- **既存の違反** — 導入時に16件あった（認知的複雑度14件、関数の行数1件、ファイルの行数1件）。それぞれの箇所に `biome-ignore`（理由つき）を付けて止め、一覧と直し方は[既知の問題](../../architecture/known-issues.md)「複雑度・行数の上限を超える既存のコード」に置いた。一覧の件数・項目と、その見出しを指す `biome-ignore` の食い違いは `pnpm docs:build`（`scripts/check-suppressions.mjs`）が止める
 
 ## overrides で外しているもの
 

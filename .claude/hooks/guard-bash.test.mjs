@@ -77,3 +77,21 @@ describe('sed の書き換え（-i）', () => {
     assert.ok(!blocked('grep -i sed x.md'));
   });
 });
+
+describe('git stash', () => {
+  it('止める（2026-10-10、stash → pop でステージしたファイルの削除が解けた）', () => {
+    assert.ok(blocked('git stash'));
+    assert.ok(blocked('git stash -q && grep -c x a.ts; git stash pop -q'));
+    assert.ok(blocked('git stash push -m x'));
+    assert.ok(blocked('git stash pop'));
+    assert.ok(blocked('git stash apply stash@{0}'));
+    assert.ok(blocked('git stash drop'));
+  });
+
+  it('読むだけの stash（list・show）・main との比べ方・クォートの中は止めない', () => {
+    assert.ok(!blocked('git stash list'));
+    assert.ok(!blocked('git stash show -p stash@{0}'));
+    assert.ok(!blocked('git grep -c biome-ignore main -- apps'));
+    assert.ok(!blocked('git commit -m "git stash を止めるフックを足す"'));
+  });
+});
