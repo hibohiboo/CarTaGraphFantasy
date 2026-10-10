@@ -14,3 +14,5 @@ metadata:
 
 **Why:** v1 はその時点の仕様で作った演出のため、adventurer-only・ui-polish で体験が変わったら作り直したい。
 **How to apply:** ui-polish の完了が話題に出たら、作り直すかどうかを聞く。v2 は `movie-v2.html` として別ファイルにし、v1 は残す。作る前に、v1 のどこに課題を感じたかをユーザーに聞く（まだ聞いていない）。開発の話は入れず、プレイヤー体験に絞るのが要望。
+
+2026-10-10、ユーザーの依頼で「今の実装を見ず、展望とコンセプト（docs/concept・docs/cartagraph/index.md・docs/roadmap.md）だけから、魅力が伝わる30秒のテンポのよい映像」を `movie-v1-b.html` として作った。素材（カード・タグ・判子・ロゴ・ループ図・アイコン）は同じ HTML の下の素材集に並び、1つずつ HTML／SVG で書き出せる。`cartagraphSeek(秒)` でその時刻の絵で止まる（Playwright で静止画を撮って確かめた）。ui-polish 後の体験を見せる版は、まだ作っていない（v2 になる）。
