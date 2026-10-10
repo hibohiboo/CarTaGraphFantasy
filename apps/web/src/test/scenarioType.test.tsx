@@ -107,6 +107,22 @@ describe('公開・公開中の保存でのシナリオタイプの検査', () =
     expect((await get('sc-galleon')).scenarioType).toEqual(ADVENTURE);
   });
 
+  it('公開中のガレオンを、空間モデルを外して戦闘なしにしても、自動戦闘のシーンを足す保存は 422 で、メモリも変わらない', async () => {
+    const written = fakeStore();
+    const before = await get('sc-galleon');
+    await expect(
+      patch('sc-galleon', {
+        scenarioType: NO_COMBAT,
+        spaceModel: null,
+        deck: [...before.deck, examNode()],
+      }),
+    ).rejects.toMatchObject({ status: 422, message: expect.stringContaining('exam') });
+    expect(written).toEqual([]);
+    const after = await get('sc-galleon');
+    expect(after.scenarioType).toEqual(ADVENTURE);
+    expect(after.deck).toEqual(before.deck);
+  });
+
   it('公開中のガレオンでも、空間モデルを外して戦闘なしにする保存は通る（反対側）', async () => {
     const written = fakeStore();
     const res = await patch('sc-galleon', { scenarioType: NO_COMBAT, spaceModel: null });
@@ -163,15 +179,40 @@ describe('シナリオタイプの表示', () => {
     expect(screen.getByTestId('scenario-type')).toHaveTextContent('冒険');
     const space = screen.getByLabelText(/空間モデル/) as HTMLSelectElement;
     expect(space).toHaveValue('2d');
+    expect(space).toBeEnabled();
+    // 判定なしだけなら、空間モデルはそのまま選べる（反対側）
+    await user.click(screen.getByLabelText('判定なし'));
+    expect(space).toHaveValue('2d');
+    expect(space).toBeEnabled();
+    await user.click(screen.getByLabelText('判定なし'));
     await user.click(screen.getByLabelText('戦闘なし'));
     expect(space).toHaveValue('');
     expect(space).toBeDisabled();
     expect(screen.getByTestId('scenario-type')).toHaveTextContent('戦闘なし');
+    // 外すと選べるようになる（値は空間なしのまま）
+    await user.click(screen.getByLabelText('戦闘なし'));
+    expect(space).toBeEnabled();
+    expect(space).toHaveValue('');
+    await user.click(screen.getByLabelText('戦闘なし'));
     await user.click(screen.getByRole('button', { name: '保存' }));
     await waitFor(async () => {
       const saved = await get('sc-galleon');
       expect(saved.scenarioType).toEqual(NO_COMBAT);
       expect(saved.spaceModel).toBeNull();
     });
+  });
+
+  it('シナリオ編集：戦闘なしの下書きが空間モデルを持っていたら、選べるままにして外せる', async () => {
+    const user = userEvent.setup();
+    // 下書きの保存は検査しないので、食い違った下書きを作れる
+    await patch('sc-draft-well', { spaceModel: '2d' });
+    renderAt('/creator/scenarios/sc-draft-well');
+    await screen.findByRole('heading', { level: 1, name: '涸れ井戸の底（下書き）' });
+    const space = screen.getByLabelText(/空間モデル/) as HTMLSelectElement;
+    expect(screen.getByLabelText('戦闘なし')).toBeChecked();
+    expect(space).toHaveValue('2d');
+    expect(space).toBeEnabled();
+    await user.selectOptions(space, '');
+    expect(space).toBeDisabled();
   });
 });

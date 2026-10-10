@@ -132,7 +132,7 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
       <div className="u-mt">
         <ChipGroup>
           <span data-testid="scenario-type">
-            <Chip tone="ink">{scenarioTypeLabel(rc.scenarioType)}</Chip>
+            <Chip tone="ink">タイプ：{scenarioTypeLabel(rc.scenarioType)}</Chip>
           </span>
           {rc.prerequisiteTags.length === 0 && <Chip tone="ink">前提タグなし</Chip>}
           {rc.prerequisiteTags.map((t) => (

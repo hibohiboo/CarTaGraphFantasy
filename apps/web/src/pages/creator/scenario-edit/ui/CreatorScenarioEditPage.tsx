@@ -293,7 +293,8 @@ function Editor({
               <Field label="空間モデル（戦闘がある場合）">
                 <select
                   value={draft.spaceModel ?? ''}
-                  disabled={draft.scenarioType.noCombat}
+                  // 戦闘なしなら選べない。読み込んだ時点で空間モデルを持っていたら、外せるように選べるままにする
+                  disabled={draft.scenarioType.noCombat && draft.spaceModel === null}
                   onChange={(e) =>
                     set('spaceModel', (e.target.value || null) as Scenario['spaceModel'])
                   }

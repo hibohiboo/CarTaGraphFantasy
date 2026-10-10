@@ -35,20 +35,16 @@ export function safeParseScenarioFile(path: string, raw: unknown): ScenarioFileP
       message: `${path} の id「${scenario.id}」は、英小文字・数字・ハイフンだけにする`,
     };
   }
-  const errors = findScenarioRefErrors(scenario);
-  if (errors.length > 0) {
-    return {
-      ok: false,
-      message: `${path} の参照に誤りがある:\n${errors.map((e) => `- ${e}`).join('\n')}`,
-    };
-  }
-  const typeErrors = findScenarioTypeErrors(scenario);
-  if (typeErrors.length > 0) {
-    return {
-      ok: false,
-      message: `${path} のシナリオタイプと中身が食い違っている:\n${typeErrors.map((e) => `- ${e}`).join('\n')}`,
-    };
-  }
+  // 参照の誤りとシナリオタイプの食い違いは、一度に報告する（直して出し直す二度手間を避ける）
+  const sections = [
+    ['参照に誤りがある', findScenarioRefErrors(scenario)],
+    ['シナリオタイプと中身が食い違っている', findScenarioTypeErrors(scenario)],
+  ] as const;
+  const message = sections
+    .filter(([, errors]) => errors.length > 0)
+    .map(([title, errors]) => `${path} の${title}:\n${errors.map((e) => `- ${e}`).join('\n')}`)
+    .join('\n');
+  if (message) return { ok: false, message };
   return { ok: true, scenario };
 }
 

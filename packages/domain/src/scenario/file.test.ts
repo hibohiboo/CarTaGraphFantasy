@@ -259,6 +259,31 @@ describe('loadScenarioFiles', () => {
     const typed = raw({ scenarioType: { noCombat: true, noCheck: false }, spaceModel: '2d' });
     expect(() => loadScenarioFiles({ [PATH]: typed }, [])).toThrow(/sc-x\.json.*戦闘なし/s);
   });
+
+  it('戦闘なしなのに自動戦闘のシーンを持つファイルは、そのパスとノードの id つきで止まる', () => {
+    const typed = raw({
+      scenarioType: { noCombat: true, noCheck: false },
+      deck: [
+        { id: 'a', kind: 'intro', name: '導入', cards: [] },
+        {
+          id: 'exam',
+          kind: 'scene',
+          name: '試験',
+          cards: [],
+          autoCombat: {
+            maxRounds: 20,
+            enemy: {
+              card: { id: 'en', kind: 'enemy', name: '試験官', tags: [] },
+              hp: 10,
+              baseActionValue: 10,
+              priority: [],
+            },
+          },
+        },
+      ],
+    });
+    expect(() => loadScenarioFiles({ [PATH]: typed }, [])).toThrow(/sc-x\.json.*exam/s);
+  });
 });
 
 describe('safeParseScenarioFile のシナリオタイプの検査', () => {
@@ -291,6 +316,29 @@ describe('safeParseScenarioFile のシナリオタイプの検査', () => {
       expect(result.message).toContain('sc-x.json');
       expect(result.message).toContain('戦闘なし');
       expect(result.message).toContain('exam');
+    }
+  });
+
+  it('参照の誤りとシナリオタイプの食い違いは、一度に報告する', () => {
+    const result = safeParseScenarioFile(
+      PATH,
+      raw({
+        scenarioType: { noCombat: true, noCheck: false },
+        spaceModel: '1d',
+        deck: [
+          {
+            id: 'a',
+            kind: 'intro',
+            name: '導入',
+            cards: [{ id: 'go', kind: 'choice', name: '進む', tags: [], nextNodeId: 'nowhere' }],
+          },
+        ],
+      }),
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.message).toContain('nowhere');
+      expect(result.message).toContain('空間モデル');
     }
   });
 
