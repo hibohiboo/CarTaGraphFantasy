@@ -187,7 +187,8 @@ function examScenario(o: {
     authorId: 'system',
     authorName: 'システム',
     summary: o.summary,
-    referenceTags: ['HPを参照', '戦闘スキルを参照'],
+    // 自動戦闘はあるが、判定つきの選択肢は持たない（docs/cartagraph/scenario-type.md）
+    scenarioType: { noCombat: false, noCheck: true },
     prerequisiteTags: [],
     partySize: { min: 1, max: 1 },
     // 自動戦闘は空間モデルを使わない（docs/cartagraph/scenario-flow.md）
@@ -295,8 +296,8 @@ export const scenarios: Scenario[] = [
     title: '涸れ井戸の底（下書き）',
     authorId: 'u-me',
     authorName: 'ユウ',
-    summary: '村外れの涸れ井戸から続く横穴を探索する、書きかけの探索者向けシナリオ。',
-    referenceTags: ['体・技・心を参照'],
+    summary: '村外れの涸れ井戸から続く横穴を探索する、書きかけの戦闘のないシナリオ。',
+    scenarioType: { noCombat: true, noCheck: false },
     prerequisiteTags: [],
     partySize: { min: 2, max: 3 },
     spaceModel: null,
@@ -369,7 +370,7 @@ export const scenarios: Scenario[] = [
     authorId: 'system',
     authorName: 'システム',
     summary: 'テスト専用シナリオ。',
-    referenceTags: [],
+    scenarioType: { noCombat: true, noCheck: true },
     prerequisiteTags: [],
     partySize: { min: 1, max: 1 },
     spaceModel: null,
@@ -396,7 +397,7 @@ export const scenarios: Scenario[] = [
     authorId: 'system',
     authorName: 'システム',
     summary: 'テスト専用シナリオ。',
-    referenceTags: [],
+    scenarioType: { noCombat: true, noCheck: true },
     prerequisiteTags: [],
     partySize: { min: 1, max: 1 },
     spaceModel: null,
@@ -412,6 +413,13 @@ export const scenarios: Scenario[] = [
   mansionMine(),
 ];
 
+/** 募集のシナリオタイプは、元のシナリオから引く（募集を出すときにシナリオからコピーするのと同じ。書き写さない） */
+function scenarioTypeOf(scenarioId: string): Scenario['scenarioType'] {
+  const s = scenarios.find((x) => x.id === scenarioId);
+  if (!s) throw new Error(`募集のシナリオ「${scenarioId}」がありません`);
+  return { ...s.scenarioType };
+}
+
 // ---------- 募集 ----------
 export const recruitments: Recruitment[] = [
   {
@@ -424,7 +432,7 @@ export const recruitments: Recruitment[] = [
     partySize: { min: 2, max: 4 },
     spaceModel: null,
     recommendedCp: 3,
-    referenceTags: ['体・技・心'],
+    scenarioType: scenarioTypeOf('sc-gray-mansion'),
     prerequisiteTags: [],
     applicants: [
       { characterId: 'pc-mio', characterName: 'ミオ', userId: 'u-kaya', playerName: 'カヤ' },
@@ -443,7 +451,7 @@ export const recruitments: Recruitment[] = [
     partySize: { min: 3, max: 5 },
     spaceModel: '2d',
     recommendedCp: 5,
-    referenceTags: ['戦闘スキル'],
+    scenarioType: scenarioTypeOf('sc-galleon'),
     prerequisiteTags: ['航海の心得', '戦闘スキル'],
     applicants: [
       { characterId: 'pc-akira', characterName: 'アキラ', userId: 'u-hiiragi', playerName: '柊' },
@@ -463,7 +471,7 @@ export const recruitments: Recruitment[] = [
     partySize: { min: 1, max: 3 },
     spaceModel: null,
     recommendedCp: 2,
-    referenceTags: [],
+    scenarioType: scenarioTypeOf('sc-corridor-after'),
     prerequisiteTags: ['灯りの回廊を経験'],
     applicants: [],
     capacity: 3,
@@ -481,7 +489,7 @@ export const recruitments: Recruitment[] = [
     partySize: { min: 1, max: 1 },
     spaceModel: null,
     recommendedCp: 2,
-    referenceTags: [],
+    scenarioType: scenarioTypeOf('sc-village-start'),
     prerequisiteTags: [],
     applicants: [
       { characterId: 'pc-mio', characterName: 'ミオ', userId: 'u-kaya', playerName: 'カヤ' },
@@ -501,7 +509,7 @@ export const recruitments: Recruitment[] = [
     partySize: { min: 2, max: 4 },
     spaceModel: null,
     recommendedCp: 3,
-    referenceTags: ['体・技・心'],
+    scenarioType: scenarioTypeOf('sc-gray-mansion'),
     prerequisiteTags: [],
     applicants: [
       { characterId: 'pc-jin', characterName: 'ジン', userId: 'u-me', playerName: 'ユウ' },
@@ -525,7 +533,7 @@ export const recruitments: Recruitment[] = [
     partySize: { min: 1, max: 1 },
     spaceModel: null,
     recommendedCp: 0,
-    referenceTags: ['体・技・心を参照', 'HPを参照', '戦闘スキルを参照'],
+    scenarioType: scenarioTypeOf('sc-village-start'),
     prerequisiteTags: [],
     applicants: [],
     capacity: 0,

@@ -2,7 +2,8 @@
 // GM 不在の募集（作成・始める・中断と再開・再挑戦不可）を、MSW を直接呼んで確かめる。
 
 import type { Character } from '@cartagraph/domain/character/model';
-import { deadEndNodes, hasAutoCombat } from '@cartagraph/domain/scenario/deadEnd';
+import { deadEndNodes } from '@cartagraph/domain/scenario/deadEnd';
+import { hasAutoCombat } from '@cartagraph/domain/scenario/deck';
 import type { Recruitment, Session } from '@cartagraph/domain/session/model';
 import { describe, expect, it } from 'vitest';
 import * as fx from '@/mocks/fixtures';

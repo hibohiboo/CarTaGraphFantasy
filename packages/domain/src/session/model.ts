@@ -4,7 +4,7 @@
 
 import type { AutoCombatState, CombatRecord } from '../autoCombat/model';
 import type { CardDef } from '../card/model';
-import type { ProposalHandling, SpaceModel } from '../scenario/model';
+import type { ProposalHandling, ScenarioType, SpaceModel } from '../scenario/model';
 
 /**
  * GMが出した募集。セッションとは別のもの（docs/cartagraph/scenario-flow.md「募集とセッション」）。
@@ -31,7 +31,8 @@ export interface Recruitment {
   partySize: { min: number; max: number };
   spaceModel: SpaceModel | null;
   recommendedCp: number;
-  referenceTags: string[];
+  /** シナリオタイプ。募集を出すときにシナリオからコピーする（docs/cartagraph/scenario-type.md） */
+  scenarioType: ScenarioType;
   prerequisiteTags: string[];
   /** 応募（ドライバー候補とPC）。userId は応募した人（借りたPCなら、PCの所有者とは別の人） */
   applicants: { characterId: string; characterName: string; userId: string; playerName: string }[];

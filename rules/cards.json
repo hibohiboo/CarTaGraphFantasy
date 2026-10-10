@@ -86,7 +86,7 @@
       "id": "c-first-aid",
       "kind": "skill",
       "name": "応急手当",
-      "description": "判定なしでHPを回復する",
+      "description": "判定を使わずにHPを回復する",
       "tags": ["戦闘スキル", "回復"],
       "cpCost": 2,
       "actionCost": 4,

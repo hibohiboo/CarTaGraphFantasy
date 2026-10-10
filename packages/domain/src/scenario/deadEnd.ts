@@ -1,5 +1,5 @@
 // 募集を出すときの注意のための、デッキの構造の検査（docs/cartagraph/scenario-flow.md「募集とセッション」）。
-// どちらも募集は止めない。GM が判断するための注意に使う。
+// 募集は止めない。GM が判断するための注意に使う（自動戦闘のシーンの注意は deck.ts の hasAutoCombat）。
 // deck は、GM が外したシーンを除いたデッキ（session/deck.ts の sessionDeck）を渡す。
 
 import { walk } from './deck';
@@ -15,9 +15,4 @@ export function deadEndNodes(deck: DeckNode[]): DeckNode[] {
       (n.kind === 'intro' || n.kind === 'scene') &&
       !n.cards.some((c) => c.kind === 'choice' && c.nextNodeId),
   );
-}
-
-/** 自動戦闘のシーンがあるか（GM 不在でないセッションでは、自動戦闘のシーンへ進めない。auto-combat.md） */
-export function hasAutoCombat(deck: DeckNode[]): boolean {
-  return walk(deck).some((n) => n.autoCombat);
 }

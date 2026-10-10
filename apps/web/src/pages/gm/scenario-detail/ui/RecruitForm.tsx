@@ -1,4 +1,5 @@
-import { deadEndNodes, hasAutoCombat } from '@cartagraph/domain/scenario/deadEnd';
+import { deadEndNodes } from '@cartagraph/domain/scenario/deadEnd';
+import { hasAutoCombat } from '@cartagraph/domain/scenario/deck';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import { sessionDeck } from '@cartagraph/domain/session/deck';
 import type { Recruitment } from '@cartagraph/domain/session/model';

@@ -11,7 +11,7 @@ const minimal = () => ({
   authorId: 'u',
   authorName: '作者',
   summary: '',
-  referenceTags: [],
+  scenarioType: { noCombat: false, noCheck: false },
   prerequisiteTags: [],
   partySize: { min: 1, max: 1 },
   spaceModel: null,
@@ -179,6 +179,23 @@ describe('scenarioSchema', () => {
     expect(scenarioSchema.safeParse({ ...minimal(), spaceModel: '2d' }).success).toBe(true);
     const { spaceModel: _, ...without } = minimal();
     expect(scenarioSchema.safeParse(without).success).toBe(false);
+  });
+
+  it('scenarioType は noCombat・noCheck の真偽値を両方持たないと失敗する', () => {
+    const typed = (scenarioType: unknown) =>
+      scenarioSchema.safeParse({ ...minimal(), scenarioType }).success;
+    expect(typed({ noCombat: true, noCheck: true })).toBe(true);
+    expect(typed({ noCombat: true })).toBe(false);
+    expect(typed({ noCheck: false })).toBe(false);
+    expect(typed({ noCombat: 'true', noCheck: false })).toBe(false);
+    expect(typed({ noCombat: false, noCheck: false, noDense: true })).toBe(false);
+    expect(typed(null)).toBe(false);
+    const { scenarioType: _, ...without } = minimal();
+    expect(scenarioSchema.safeParse(without).success).toBe(false);
+  });
+
+  it('以前の referenceTags（参照するデータ種別のタグ）が残っていると失敗する', () => {
+    expect(scenarioSchema.safeParse({ ...minimal(), referenceTags: [] }).success).toBe(false);
   });
 
   it('省略可能な項目はキーが無ければ通り、null なら失敗する', () => {

@@ -27,7 +27,7 @@ const scenario = (deck: DeckNode[], endings: Scenario['endings'] = []): Scenario
   authorId: 'u',
   authorName: 'n',
   summary: '',
-  referenceTags: [],
+  scenarioType: { noCombat: false, noCheck: false },
   prerequisiteTags: [],
   partySize: { min: 1, max: 1 },
   spaceModel: null,

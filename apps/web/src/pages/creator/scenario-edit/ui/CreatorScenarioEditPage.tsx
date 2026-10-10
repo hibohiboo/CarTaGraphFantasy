@@ -6,7 +6,14 @@ import {
   removeEnding as removeEndingPair,
   unusedId,
 } from '@cartagraph/domain/scenario/edit';
-import type { DeckNode, EndingDef, Scenario } from '@cartagraph/domain/scenario/model';
+import {
+  type DeckNode,
+  type EndingDef,
+  SCENARIO_TYPE_FLAG_LABEL,
+  type Scenario,
+  type ScenarioType,
+} from '@cartagraph/domain/scenario/model';
+import { scenarioTypeLabel } from '@cartagraph/domain/scenario/type';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import {
@@ -31,7 +38,7 @@ import {
   StatusPill,
 } from '@/shared/ui/ui';
 
-const REFERENCE_TAGS = ['体・技・心を参照', 'HPを参照', '戦闘スキルを参照'];
+const SCENARIO_TYPE_FLAGS = ['noCombat', 'noCheck'] as const;
 
 /** シナリオ編集：メタデータ・デッキ構造・結末タグ（scenario-manage.html を編集可能にしたもの） */
 export function CreatorScenarioEditPage() {
@@ -100,13 +107,12 @@ function Editor({
 
   const set = <K extends keyof Scenario>(k: K, v: Scenario[K]) =>
     setDraft((d) => ({ ...d, [k]: v }));
-  const toggleTag = (t: string) =>
-    set(
-      'referenceTags',
-      draft.referenceTags.includes(t)
-        ? draft.referenceTags.filter((x) => x !== t)
-        : [...draft.referenceTags, t],
-    );
+  // 「戦闘なし」なら空間モデルを持たない（docs/cartagraph/scenario-type.md）。付けたときに外す
+  const toggleType = (flag: keyof ScenarioType) =>
+    setDraft((d) => {
+      const scenarioType = { ...d.scenarioType, [flag]: !d.scenarioType[flag] };
+      return { ...d, scenarioType, ...(scenarioType.noCombat && { spaceModel: null }) };
+    });
 
   // 移り先として指されているノード・結末を消そうとしたときの理由（docs/plans/2026-10-07-選択肢の移り先と結末の編集.md D1・D2）
   const [deckBlocked, setDeckBlocked] = useState<string | null>(null);
@@ -232,17 +238,18 @@ function Editor({
               </Field>
               <div>
                 <div className={s.metaLabel}>
-                  参照するデータ種別（旅人／探索者／冒険者はこの組み合わせの通称）
+                  使わない仕組み（シナリオタイプ：
+                  <span data-testid="scenario-type">{scenarioTypeLabel(draft.scenarioType)}</span>）
                 </div>
-                {REFERENCE_TAGS.map((t) => (
-                  <label key={t} className="u-row u-small" style={{ marginTop: 4 }}>
+                {SCENARIO_TYPE_FLAGS.map((flag) => (
+                  <label key={flag} className="u-row u-small" style={{ marginTop: 4 }}>
                     <input
                       type="checkbox"
                       style={{ width: 'auto' }}
-                      checked={draft.referenceTags.includes(t)}
-                      onChange={() => toggleTag(t)}
+                      checked={draft.scenarioType[flag]}
+                      onChange={() => toggleType(flag)}
                     />
-                    {t}
+                    {SCENARIO_TYPE_FLAG_LABEL[flag]}
                   </label>
                 ))}
               </div>
@@ -286,11 +293,12 @@ function Editor({
               <Field label="空間モデル（戦闘がある場合）">
                 <select
                   value={draft.spaceModel ?? ''}
+                  disabled={draft.scenarioType.noCombat}
                   onChange={(e) =>
                     set('spaceModel', (e.target.value || null) as Scenario['spaceModel'])
                   }
                 >
-                  <option value="">戦闘なし</option>
+                  <option value="">空間なし</option>
                   <option value="1d">1次元（敵後衛／敵前衛／味方前衛／味方後衛）</option>
                   <option value="2d">2次元（1マス1キャラクター）</option>
                 </select>

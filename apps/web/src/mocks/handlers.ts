@@ -1230,7 +1230,8 @@ export const handlers = [
       authorId: fx.me.id,
       authorName: fx.me.name,
       summary: '',
-      referenceTags: [],
+      // 新しいシナリオは冒険（docs/cartagraph/scenario-type.md。宣言がなければ冒険）
+      scenarioType: { noCombat: false, noCheck: false },
       prerequisiteTags: [],
       partySize: { min: 2, max: 4 },
       spaceModel: null,
@@ -1329,7 +1330,7 @@ export const handlers = [
       partySize: s.partySize,
       spaceModel: s.spaceModel,
       recommendedCp: s.recommendedCp,
-      referenceTags: s.referenceTags,
+      scenarioType: { ...s.scenarioType },
       prerequisiteTags: s.prerequisiteTags,
       applicants: [],
       capacity: kind === 'gmless' ? 0 : body.capacity,
