@@ -1,6 +1,6 @@
 ---
 title: PL のホームを、PL として遊ぶための入口にする
-milestone: M2
+milestone: ui-polish
 status: 未着手
 summary: PL として入ったホームには、PL として参加しているセッションと自分の PC だけが出て、GM・シナリオ製作者の情報や導線に邪魔されない。
 decisions:
@@ -10,7 +10,7 @@ updated: 2026-10-10
 
 # PL のホームを、PL として遊ぶための入口にする
 
-[ロードマップ](../roadmap.md) M2 の完成の条件1に当たる。課題は [画面ごとの課題「ホーム」](../screens/issues.md#ホーム) の HOME-1〜3。
+[ロードマップ](../roadmap.md#ui-polish) ui-polish の完成の条件1に当たる。課題は [画面ごとの課題「ホーム」](../screens/issues.md#ホーム) の HOME-1〜3。
 
 - いまのホームは、PL のホームのはずが「いま進んでいること」に GM として進めているセッションも出す
 - 共通ナビ・フッタに GM・シナリオ製作者の画面が並び、PL として遊ぶときの没入感を削ぐ

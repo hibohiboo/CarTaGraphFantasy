@@ -403,7 +403,7 @@ describe('シナリオ編集：削除と結末', () => {
   });
 });
 
-describe('通し：画面だけで作る → 公開 → GM 不在で募集 → PL が結末まで（M1 の完成の条件2）', () => {
+describe('通し：画面だけで作る → 公開 → GM 不在で募集 → PL が結末まで（local-flow の完成の条件2）', () => {
   it('作ったシナリオを、GM 不在のセッションで結末まで遊び、結末タグを得る', async () => {
     const user = userEvent.setup();
     const written: Scenario[] = [];

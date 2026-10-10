@@ -27,7 +27,7 @@ const closedItems = computed(() => backlog.filter(closed));
 const poDecisions = computed(() =>
   backlog.flatMap((b) => b.decisions.map((d) => ({ item: b, decision: d }))),
 );
-/** マイルストーンごとの要望と完了数。いま取り組むのは、未完了の要望が残る最初のマイルストーン */
+/** マイルストーンごとの要望と完了数。順番は roadmap.md の並び順。いま取り組むのは、未完了の要望が残る最初のマイルストーン */
 const milestones = computed(() =>
   roadmap.milestones.map((m) => {
     const items = backlog.filter((b) => b.milestone === m.id);
@@ -53,7 +53,7 @@ const toc = computed<{ group: string; entries: TocEntry[] }[]>(() => [
           ? [
               {
                 id: '残っている要望',
-                text: `${current.value.id} の残りの要望`,
+                text: `「${current.value.title}」の残りの要望`,
                 count: current.value.remaining.length,
               },
             ]
@@ -128,7 +128,7 @@ const toc = computed<{ group: string; entries: TocEntry[] }[]>(() => [
       <ol class="milestones">
         <li v-for="m in milestones" :key="m.id" :class="{ current: m.id === current?.id }">
           <div class="ms-head">
-            <strong>{{ m.id }} {{ m.title }}</strong>
+            <strong>{{ m.title }}</strong>
             <span v-if="m.id === current?.id" class="ms-now">いま取り組んでいる</span>
             <span v-if="m.items.length" class="ms-count">要望 {{ m.done }} / {{ m.items.length }} 完了</span>
             <span v-else class="ms-count">要望はまだ無い（前のマイルストーンの完成時に詰める）</span>
@@ -138,7 +138,7 @@ const toc = computed<{ group: string; entries: TocEntry[] }[]>(() => [
         </li>
       </ol>
       <template v-if="current">
-        <h3 id="残っている要望">{{ current.id }} の完成までに残っている要望</h3>
+        <h3 id="残っている要望">「{{ current.title }}」の完成までに残っている要望</h3>
         <table>
           <tbody>
             <tr v-for="b in current.remaining" :key="b.url">
@@ -149,7 +149,7 @@ const toc = computed<{ group: string; entries: TocEntry[] }[]>(() => [
           </tbody>
         </table>
         <p class="plans">
-          完成の条件は<a :href="withBase(`/roadmap#${current.id.toLowerCase()}`)">ロードマップの {{ current.id }}</a>を参照。
+          完成の条件は<a :href="withBase(`/roadmap#${current.id}`)">ロードマップの {{ current.id }}</a>を参照。
         </p>
       </template>
 

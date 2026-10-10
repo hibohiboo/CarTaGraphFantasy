@@ -163,7 +163,7 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     expect(exam.currentScene.name).toBe('冒険者試験');
   });
 
-  // M1 の完成の条件5（GM 不在のシナリオを JSON から結末まで遊べる）を直接確かめる。
+  // local-flow の完成の条件5（GM 不在のシナリオを JSON から結末まで遊べる）を直接確かめる。
   // 乱数は固定せず、scenarios/sc-village-start.json の試験官のまま自動戦闘を通す。
   // 斬撃だけの勝率は6〜7割（docs/cartagraph/auto-combat-simulation.md）なので、負けたら設定からやり直す
   it('本物のシナリオ（sc-village-start）で、依頼1件→お店で斬撃→試験に勝つ→結末まで、クリックだけで進める', async () => {

@@ -112,7 +112,7 @@ describe('fixtures に残る重複のずれ検知（統合するまで）', () =
   });
 });
 
-describe('MSW 経由で取得する（M1 の完成の条件2）', () => {
+describe('MSW 経由で取得する（local-flow の完成の条件2）', () => {
   it('GET /api/scenarios/:id は、scenarios/<id>.json の中身を返す（全ファイル）', async () => {
     for (const [path, raw] of Object.entries(rawFiles)) {
       const id = path

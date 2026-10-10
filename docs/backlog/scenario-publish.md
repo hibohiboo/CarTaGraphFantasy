@@ -1,6 +1,6 @@
 ---
 title: シナリオ製作者がシナリオを作って公開する
-milestone: M1
+milestone: local-flow
 status: 完了
 summary: シナリオ製作者がシナリオを作り、公開できる。ローカルの開発サーバーで公開すると、そのシナリオが JSON としてリポジトリに保存され、遊べるシナリオになる。
 plans:
@@ -14,7 +14,7 @@ updated: 2026-10-07
 
 # シナリオ製作者がシナリオを作って公開する
 
-[ロードマップ](../roadmap.md) M1 の完成の条件2（シナリオ製作者がシナリオを作って公開できる）に当たる。前提は [シナリオを JSON でリポジトリ管理する](scenario-json.md)。
+[ロードマップ](../roadmap.md#local-flow) local-flow の完成の条件2（シナリオ製作者がシナリオを作って公開できる）に当たる。前提は [シナリオを JSON でリポジトリ管理する](scenario-json.md)。
 
 - 既存のシナリオ編集画面・シーン編集画面を使う（[シーン構築画面の React 化](scene-builder.md)）
 - 保存先：ローカルの開発サーバー（`pnpm web:dev`）の専用の口で、`scenarios/<id>.json` に書き込む。書き込んだ JSON はそのままコミットできる

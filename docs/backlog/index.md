@@ -14,7 +14,7 @@ paths:
 ```yaml
 ---
 title: 村スタート冒険者キャンペーン
-milestone: M1       # どのマイルストーンのための要望か（docs/roadmap.md）。無ければ書かない
+milestone: local-flow  # どのマイルストーンのための要望か（docs/roadmap.md の id）。無ければ書かない
 status: 完了        # 未着手／検討中／進行中／判断待ち／完了／見送り
 summary: PO向けに1〜2文で、何が実現するか
 decisions:          # PO が決めないといけないこと（あれば）

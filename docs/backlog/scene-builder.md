@@ -1,6 +1,6 @@
 ---
 title: シーン構築画面の React 化
-milestone: M1
+milestone: local-flow
 status: 完了
 summary: シナリオ製作者が、シーンごとにロケーション・NPC・情報・イベント・エネミーのカードを編集できる画面をアプリに作る。
 plans:
