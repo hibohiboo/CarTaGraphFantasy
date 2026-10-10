@@ -164,7 +164,7 @@ describe('toScenarioFile', () => {
     parseScenarioFile(
       PATH,
       raw({
-        soloStarter: { hp: 10, baseActionValue: 10, cards: [card('starter')] },
+        soloStarter: { cards: [card('starter')] },
         deck: [
           {
             id: 'a',

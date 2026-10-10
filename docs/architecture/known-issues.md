@@ -27,6 +27,12 @@
 - **見つけた経緯** — PR #6 の導入体験の修正のレビュー
 - **直すときの目安** — 待ち状態の文言を、台詞カードではなく案内文（ヒント）に出す
 
+### 旅立ちの酒場の得意の3択を二重に押すと、PC が1人余分にできることがある
+
+- **起きること** — 旅立ちの酒場（`TutorialPage.tsx`）は、得意の3択を選んだ時点でキャラクターを作る（`POST /api/characters`）。二重送信は、`busy`（`useState`）による手札の無効化だけで防いでいる。描画が追いつく前に2回発火すると、2回作られ、画面が持たない PC が1人残る。コメントの「React の再描画を待たない同期ガード」も、`useState` なので実際には同期ではない
+- **見つけた経緯** — 2026-10-10、冒険者だけにする C3 の実装レビュー（異常系）。C3 で PC を作る時点が名乗りから3択へ移り、二重に発火したときの害が「名前だけの PC が残る」から「能力値を持つ PC が余分に残る」になった。人間の判断で後送りにした
+- **直すときの目安** — ガードを `useRef` にして同期で止め、二重クリックで PC が1人しか増えないことをテストで確かめる
+
 ## データ・API（MSW）
 
 ### 提案の採用・却下で、GM 本人かを確かめていない
@@ -100,9 +106,10 @@
 
 ### 自動戦闘のテストに、fixtures の値の書き写しがある
 
-- **起きること** — `apps/web/src/test/AutoCombat.test.tsx` の `PREFIX`（シナリオIDとノードIDの接頭辞の対応）と、初期装備の HP20・行動値10 は、`mocks/fixtures.ts` の値（テスト専用の試験シナリオ `sc-exam-*`）をテストに書き写している。[テストルール](../process/rules/testing.md)の「独自のマジック値を作らない」に反する（2026-10-03 確認：遊べるシナリオは `scenarios/*.json` に移ったが、ここで書き写しているのは fixtures に残るテスト専用シナリオの値）
+- **起きること** — `apps/web/src/test/AutoCombat.test.tsx` の `PREFIX`（シナリオIDとノードIDの接頭辞の対応）は、`mocks/fixtures.ts` の値（テスト専用の試験シナリオ `sc-exam-*`）をテストに書き写している。[テストルール](../process/rules/testing.md)の「独自のマジック値を作らない」に反する（2026-10-03 確認：遊べるシナリオは `scenarios/*.json` に移ったが、ここで書き写しているのは fixtures に残るテスト専用シナリオの値）
 - **見つけた経緯** — C2 の異常系レビュー
-- **直すときの目安** — fixtures から `soloStarter` と試験シナリオの接頭辞を export して参照する
+- **追記（2026-10-10）** — 一緒に挙げていた初期装備の HP20・行動値10 の書き写しは、冒険者だけにする C3 で HP・行動値の出どころが `rules/character-creation.json` になり、テストもそこから引くようにしたので片づいた
+- **直すときの目安** — fixtures から試験シナリオの接頭辞を export して参照する
 
 ### テスト専用のシナリオが、本番のシナリオ一覧のデータに入っている
 
@@ -134,11 +141,12 @@
 - **見つけた経緯** — 2026-10-10、ルールとカードプールの JSON 化のプランレビュー（スコープ外とした）
 - **直すときの目安** — 書き込む前の検査にも `findSystemCardRefErrors` をかける（開発サーバーの書き込みの口は `@cartagraph/domain` を静的に import できないので、MSW 側でかける）
 
-### キャラクターの作成・更新の API が、能力値をルールで検査しない
+### キャラクターの作成の API が、存在しないカードの id を黙って捨てる
 
-- **起きること** — 能力値の配分（`rules/character-creation.json` の合計・範囲・整数）は画面（キャラクター作成の作成ボタン）だけが守る。`POST`・`PATCH /api/characters` を直接呼ぶと、`{ body: 9, skill: 0, mind: 0 }` のような値も通り、HP が付く。あわせて、以前からの振る舞いとして、`POST` は存在しないカードの id を黙って捨て（`PATCH` は 422）、`PATCH` は能力値と HP を書き換えてからカードを検査するので、422 でも能力値・HP は書き換わったまま残る
-- **見つけた経緯** — 2026-10-10、ルールとカードプールの JSON 化の実装レビュー（異常系）。プランでスコープ外とした
-- **直すときの目安** — 両方の API で `abilitiesValid` に通して 422 を返す。`PATCH` は検査をすべて終えてから書き換える。`POST` の存在しない id は `PATCH` に合わせて 422 にする
+- **起きること** — `POST /api/characters` は、存在しないカードの id を黙って捨てて作る（`PATCH` は 422）
+- **追記（2026-10-10、冒険者だけにする C3 の実装レビュー（異常系））** — 以前から、`POST /api/characters` と `POST /api/scenarios/:id/start-solo` は本文の形を見ずに `name.trim()`・`cardIds` を使うので、本文が `null`・`cardIds` が無い・`name` が文字列でないと 500 になる（能力値の形は C3 で検査するようにした。`PATCH /api/characters/:id` も本文がオブジェクトでなければ 422 にした）。直すときは、本文を zod などで検査してから使う
+- **見つけた経緯** — 2026-10-10、ルールとカードプールの JSON 化の実装レビュー（異常系）。プランでスコープ外とした。同じとき見つけた「能力値をルールで検査しない」は、冒険者だけにする C3 で直した（`POST` は能力値を `abilitiesValid` で検査し、`PATCH` は能力値・HP・行動値を受け付けない）
+- **直すときの目安** — `POST` の存在しない id を `PATCH` に合わせて 422 にする
 
 ### 灰色館の一夜のカードの効果が、コード（handlers.ts）にある
 
@@ -209,8 +217,8 @@
 
 ### 複雑度・行数の上限を超える既存のコード
 
-- **起きること** — [静的解析ルール](../process/rules/static-analysis.md)「コードの複雑さ」の上限を超える箇所が16件あり、`biome-ignore` で個別に抑えている。数字は導入時（2026-10-09）の値
-  - 認知的複雑度（上限15）：`mocks/handlers.ts` の4つのハンドラ（`/api/sessions/:id/play` 73・`/auto-combat` 27・`/api/scenarios/:id/recruitments` 21・`/api/recruitments/:id/start` 19）、`TutorialPage` 60、`GameCard` 52、`PlayPage` 49、`SessionBrowsePage` の `RecruitCard` 46、`resolveAutoCombat`（`packages/domain/src/autoCombat/resolve.ts`）29、`CreatorSceneEditPage` の `SceneEditor` 20、`GmSessionManagePage` 20 とその `ProposalTicket` 16、`vite/scenarioFilePlugin.ts` の書き込みの口 19、`applySoloEffect`（`packages/domain/src/soloVillage/rules.ts`）18
+- **起きること** — [静的解析ルール](../process/rules/static-analysis.md)「コードの複雑さ」の上限を超える箇所が15件あり、`biome-ignore` で個別に抑えている。数字は導入時（2026-10-09）の値（2026-10-10、`applySoloEffect` は冒険者だけにする C3 で村の成長の HP・行動値の付与を消して上限の内に収まり、一覧から外した）
+  - 認知的複雑度（上限15）：`mocks/handlers.ts` の4つのハンドラ（`/api/sessions/:id/play` 73・`/auto-combat` 27・`/api/scenarios/:id/recruitments` 21・`/api/recruitments/:id/start` 19）、`TutorialPage` 60、`GameCard` 52、`PlayPage` 49、`SessionBrowsePage` の `RecruitCard` 46、`resolveAutoCombat`（`packages/domain/src/autoCombat/resolve.ts`）29、`CreatorSceneEditPage` の `SceneEditor` 20、`GmSessionManagePage` 20 とその `ProposalTicket` 16、`vite/scenarioFilePlugin.ts` の書き込みの口 19
   - 関数の行数（上限200）：`TutorialPage` 235行
   - ファイルの行数（上限1000）：`apps/web/src/mocks/handlers.ts`（1327行）
 - **見つけた経緯** — 2026-10-09、SonarJS 相当のルールを Biome で有効にしたとき

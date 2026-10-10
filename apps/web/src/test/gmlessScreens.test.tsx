@@ -6,6 +6,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { api } from '@/shared/api/api';
+import { recruitments } from '../mocks/fixtures';
 import {
   clearVillageWith,
   createGmlessRecruitment,
@@ -15,6 +16,13 @@ import {
   recruitPanel,
 } from './gmlessHelpers';
 import { renderAt } from './renderAt';
+
+/** シードの GM 不在の募集（rc-gmless）のメモ。題名と GM が同じ募集と見分けるのに使う */
+const gmlessNote = (() => {
+  const note = recruitments.find((r) => r.id === 'rc-gmless')?.note;
+  if (!note) throw new Error('rc-gmless にメモがありません');
+  return note;
+})();
 
 describe('GM 不在の募集', () => {
   const optionOf = (card: HTMLElement, name: RegExp) =>
@@ -122,7 +130,7 @@ describe('GM 不在の募集', () => {
     renderAt('/pl/sessions');
     await screen.findByRole('heading', { name: '参加できるセッション' });
     // テストで足した通常の村の募集も「村はずれの一歩・GM：ユウ」なので、シードの GM 不在の募集はメモで特定する
-    const gmless = (await screen.findByText('誰でもどうぞ。旅人から冒険者へ')).closest('article')!;
+    const gmless = (await screen.findByText(gmlessNote)).closest('article')!;
     await waitFor(() => expect(optionOf(gmless, /ジン.*再挑戦不可/).disabled).toBe(true));
     expect(within(gmless).getByLabelText('始める PC')).toHaveValue('pc-akari');
     const normal = (await screen.findByText('通常の村')).closest('article')!;
@@ -177,9 +185,7 @@ describe('GM 不在の募集', () => {
     await api.post(`/sessions/${s.id}/proposals`, { text: '鍬を借りたい' });
     renderAt('/gm/sessions');
     const mine = (await screen.findByRole('heading', { name: '自分の募集' })).closest('section')!;
-    const card = (await within(mine).findByText('誰でもどうぞ。旅人から冒険者へ')).closest(
-      'article',
-    )!;
+    const card = (await within(mine).findByText(gmlessNote)).closest('article')!;
     expect(within(card).getByText(/始まったセッション 1 件/)).toBeInTheDocument();
     const running = screen.getByRole('heading', { name: 'GMとして進行中' }).closest('section')!;
     const row = within(running)

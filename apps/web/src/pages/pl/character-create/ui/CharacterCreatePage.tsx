@@ -12,7 +12,8 @@ import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/u
 /**
  * キャラクター作成。CP予算はハードな制約（character-growth.md）。
  * 体・技・心の初期配分方法は未決（docs/provisional/character-creation.md）のため、
- * ここでは仮に「合計を範囲内で自由に配分」としている。合計・範囲・CP予算の値は rules/character-creation.json
+ * ここでは仮に「合計を範囲内で自由に配分」としている。どの PC も能力値を持ち、作成時の HP・行動値も仮ルール。
+ * 合計・範囲・HP・行動値・CP予算の値は rules/character-creation.json
  * （/api/card-pool が返す。docs/plans/2026-10-10-ルールとカードプールのJSON管理.md）
  */
 
@@ -21,7 +22,6 @@ export function CharacterCreatePage() {
   const create = useCreateCharacter();
   const navigate = useNavigate();
   const [name, setName] = useState('');
-  const [hasAbilities, setHasAbilities] = useState(true);
   /** 触るまでは null（初期値はルールが届いてから defaultAbilities で作る） */
   const [edited, setEdited] = useState<Abilities | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -53,7 +53,7 @@ export function CharacterCreatePage() {
 
   const submit = () =>
     create.mutate(
-      { name, abilities: hasAbilities ? ab : undefined, cardIds: [...selected] },
+      { name, abilities: ab, cardIds: [...selected] },
       { onSuccess: (ch) => navigate(`/pl/characters/${ch.id}`) },
     );
 
@@ -75,36 +75,26 @@ export function CharacterCreatePage() {
                   placeholder="例：ジン"
                 />
               </Field>
-              <label className="u-row u-small">
-                <input
-                  type="checkbox"
-                  checked={hasAbilities}
-                  onChange={(e) => setHasAbilities(e.target.checked)}
-                  style={{ width: 'auto' }}
-                />
-                能力値（体・技・心）を持つ ＝ 探索者として始める
-              </label>
-              {hasAbilities && (
-                <>
-                  <div className={s.abilityInputs}>
-                    {(['body', 'skill', 'mind'] as const).map((k) => (
-                      <Field key={k} label={{ body: '体', skill: '技', mind: '心' }[k]}>
-                        <input
-                          type="number"
-                          min={rule.min}
-                          max={rule.max}
-                          value={ab[k]}
-                          onChange={(e) => setEdited({ ...ab, [k]: Number(e.target.value) })}
-                        />
-                      </Field>
-                    ))}
-                  </div>
-                  <p className="u-small u-dim">
-                    合計 {abilitySum} / {rule.total}（配分方法は未決の仮ルール）
-                  </p>
-                  <p className="u-small u-dim">HP {pool.data.initialHp} で始める（仮ルール）</p>
-                </>
-              )}
+              <div className={s.abilityInputs}>
+                {(['body', 'skill', 'mind'] as const).map((k) => (
+                  <Field key={k} label={{ body: '体', skill: '技', mind: '心' }[k]}>
+                    <input
+                      type="number"
+                      min={rule.min}
+                      max={rule.max}
+                      value={ab[k]}
+                      onChange={(e) => setEdited({ ...ab, [k]: Number(e.target.value) })}
+                    />
+                  </Field>
+                ))}
+              </div>
+              <p className="u-small u-dim">
+                合計 {abilitySum} / {rule.total}（配分方法は未決の仮ルール）
+              </p>
+              <p className="u-small u-dim">
+                HP {pool.data.initialHp}・行動値 {pool.data.initialBaseActionValue}{' '}
+                で始める（仮ルール）
+              </p>
             </div>
           </Panel>
           <Panel title="CP予算">
@@ -116,12 +106,7 @@ export function CharacterCreatePage() {
               <Button
                 block
                 onClick={submit}
-                disabled={
-                  create.isPending ||
-                  over ||
-                  !name.trim() ||
-                  (hasAbilities && !abilitiesValid(ab, rule))
-                }
+                disabled={create.isPending || over || !name.trim() || !abilitiesValid(ab, rule)}
               >
                 {create.isPending ? '作成中…' : 'このPCを作成する'}
               </Button>

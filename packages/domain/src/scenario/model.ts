@@ -146,14 +146,7 @@ export const scenarioSchema = z.strictObject({
    * ソロ開始時にキャラクターへ無償で配る初期装備（docs/cartagraph/auto-combat.md「初期装備」、
    * 仮ルール）。村パートを持たないシナリオ用（いまはテスト専用のシナリオだけが使う）
    */
-  soloStarter: z
-    .strictObject({ hp: z.number(), baseActionValue: z.number(), cards: z.array(cardDefSchema) })
-    .optional(),
-  /**
-   * GM不在のソロの成長で与える HP（探索者になったとき）と基本行動値（冒険者になったとき）
-   * （docs/cartagraph/solo-village.md「HP・＜行動値＞」、仮ルール）
-   */
-  soloGrowth: z.strictObject({ hp: z.number(), baseActionValue: z.number() }).optional(),
+  soloStarter: z.strictObject({ cards: z.array(cardDefSchema) }).optional(),
   deck: z.array(deckNodeSchema),
   endings: z.array(endingDefSchema),
   /** シナリオ集への公開状態 */

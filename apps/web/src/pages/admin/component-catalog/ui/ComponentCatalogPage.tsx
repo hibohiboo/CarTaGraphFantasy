@@ -117,7 +117,7 @@ export function ComponentCatalogPage() {
           />
           <GameCard card={{ kind: 'info', name: '何かが書かれた紙', faceDown: true }} width={110} />
           <GameCard
-            card={{ kind: 'character', name: 'ジン', description: '探索者' }}
+            card={{ kind: 'character', name: 'ジン', description: '冒険者' }}
             width={130}
             portrait
             showDescription

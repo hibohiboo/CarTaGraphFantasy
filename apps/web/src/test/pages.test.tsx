@@ -567,7 +567,9 @@ describe('キャラクター作成', () => {
       screen.getByText(`合計 ${abilities.total} / ${abilities.total}（配分方法は未決の仮ルール）`),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(`HP ${characterCreation.initialHp} で始める（仮ルール）`),
+      screen.getByText(
+        `HP ${characterCreation.initialHp}・行動値 ${characterCreation.initialBaseActionValue} で始める（仮ルール）`,
+      ),
     ).toBeInTheDocument();
     expect(createButton()).toBeEnabled();
   });
@@ -592,12 +594,12 @@ describe('キャラクター作成', () => {
     expect(createButton()).toBeDisabled();
   });
 
-  it('能力値を持たないなら、合計に関係なく作成できる', async () => {
-    const user = await openWithCards(0);
-    const base = defaultAbilities(abilities);
-    await setAbilities(user, { ...base, mind: base.mind + 1 });
-    await user.click(screen.getByLabelText(/能力値（体・技・心）を持つ/));
-    expect(createButton()).toBeEnabled();
+  // どの PC も能力値を持つので、持つ／持たないを選ぶ欄は無く、能力値の入力が常に出る
+  it('能力値を持つかどうかのチェックは無く、能力値の入力が常に出る', async () => {
+    await openWithCards(0);
+    expect(screen.queryByRole('checkbox', { name: /能力値/ })).not.toBeInTheDocument();
+    for (const label of ['体', '技', '心'])
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
   });
 
   it('予算内なら作成でき、シートへ遷移する', async () => {
@@ -609,6 +611,12 @@ describe('キャラクター作成', () => {
     await user.click(screen.getByRole('button', { name: 'このPCを作成する' }));
     expect(await screen.findByRole('heading', { level: 1, name: '新人' })).toBeInTheDocument();
     expect(router.state.location.pathname).toMatch(/^\/pl\/characters\/pc-/);
+    const id = router.state.location.pathname.split('/').at(-1);
+    expect(await api.get<Character>(`/characters/${id}`)).toMatchObject({
+      abilities: defaultAbilities(abilities),
+      hp: { current: characterCreation.initialHp, max: characterCreation.initialHp },
+      baseActionValue: characterCreation.initialBaseActionValue,
+    });
   });
 });
 
@@ -680,30 +688,7 @@ describe('チュートリアル（旅立ちの酒場）', () => {
     expect(screen.getByRole('button', { name: '名乗る' })).toBeDisabled();
   });
 
-  it('保存に失敗すると次のステップへ進まずエラーを表示する', async () => {
-    const user = userEvent.setup();
-    server.use(
-      http.patch('/api/characters/:id', () =>
-        HttpResponse.json(
-          { message: `CP予算（${characterCreation.cpBudget}）を超えています` },
-          { status: 422 },
-        ),
-      ),
-    );
-    renderAt('/pl/tutorial');
-    // 台詞カードは1枚ずつ出るので、GMの情景描写カード→NPCの問いかけの順にクリックして進める
-    await user.click(await screen.findByRole('button', { name: /次へ/ }));
-    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
-    await user.type(screen.getByLabelText('名前'), '新人');
-    await user.click(screen.getByRole('button', { name: '名乗る' }));
-    await user.click(await screen.findByRole('button', { name: /腕試しをしていく/ }));
-    await user.click(await screen.findByRole('button', { name: /力自慢/ }));
-    expect(
-      await screen.findByText(`CP予算（${characterCreation.cpBudget}）を超えています`),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('旅には何か持たせてやろう')).not.toBeInTheDocument();
-  });
-
+  // 保存の失敗は tutorial.test.tsx（操作の連なり）
   it('全ステップを進めると（離脱の選択肢はなく一本道）冒険者になる', async () => {
     const user = userEvent.setup();
     const router = renderAt('/pl/tutorial');
@@ -716,7 +701,7 @@ describe('チュートリアル（旅立ちの酒場）', () => {
     await user.click(await screen.findByRole('button', { name: /力自慢/ }));
     await user.click(await screen.findByRole('button', { name: /灯火のランタン/ }));
     await user.click(await screen.findByRole('button', { name: /冒険者として登録する/ }));
-    expect(await screen.findByText('冒険者')).toBeInTheDocument();
+    expect(await screen.findByText('冒険者として旅立った。')).toBeInTheDocument();
     // 実際に保存されたPCへのリンクになっていることを確認する（キャラクター一覧にも反映される）
     await user.click(screen.getByRole('button', { name: 'キャラクターシートへ' }));
     expect(await screen.findByRole('heading', { level: 1, name: '新人' })).toBeInTheDocument();
@@ -724,7 +709,43 @@ describe('チュートリアル（旅立ちの酒場）', () => {
   });
 });
 
+describe('典型ロールの表示が無い（どの PC も冒険者）', () => {
+  const ROLE = /旅人|探索者/;
+
+  it('戦闘スキルを持たないジンのキャラクターシートに、ロールのバッジが無く、カードの説明は「冒険者」', async () => {
+    renderAt('/pl/characters/pc-jin');
+    await screen.findByRole('heading', { level: 1, name: 'ジン' });
+    // 以前は能力値を持ち戦闘スキルを持たない PC を「探索者」と出していた
+    expect(screen.queryByText(ROLE)).not.toBeInTheDocument();
+    expect(screen.getByText('冒険者')).toBeInTheDocument();
+  });
+
+  it.each(['/pl/characters', '/home'])('%s に「旅人」「探索者」が出ない', async (path) => {
+    renderAt(path);
+    await screen.findAllByText('ジン');
+    expect(screen.queryByText(ROLE)).not.toBeInTheDocument();
+  });
+
+  it('セッション選択の PC の選択肢は名前と借用の別だけ', async () => {
+    renderAt('/pl/sessions');
+    const [select] = await screen.findAllByLabelText(/始める PC|参加させるPC/);
+    const options = [...(select as HTMLSelectElement).options].map((o) => o.textContent);
+    expect(options).toContain('ジン');
+    expect(options.join('\n')).not.toMatch(ROLE);
+  });
+});
+
 describe('村はずれの一歩（GM不在のソロの入口）', () => {
+  it('開始画面に、ソロ開始の能力値（均等の配分）と HP・行動値を、仮ルールと示す', async () => {
+    renderAt('/pl/village-start');
+    const { body, skill, mind } = defaultAbilities(characterCreation.abilities);
+    expect(
+      await screen.findByText(
+        `体 ${body}・技 ${skill}・心 ${mind}、HP ${characterCreation.initialHp}・行動値 ${characterCreation.initialBaseActionValue} で始める（仮ルール）`,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('名前を入力して始めると、GMレスのセッションが開始されプレイページへ進む', async () => {
     const user = userEvent.setup();
     const router = renderAt('/pl/village-start');

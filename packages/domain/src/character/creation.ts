@@ -1,5 +1,5 @@
 // キャラクター作成のルール（rules/character-creation.json）の読み込みと、能力値の配分の判定
-// （docs/cartagraph/character-growth.md。能力値の配分と作成時の HP は仮ルール。
+// （docs/cartagraph/character-growth.md。能力値の配分と作成時の HP・行動値は仮ルール。
 // docs/plans/2026-10-10-ルールとカードプールのJSON管理.md）。
 // 読み込みは誤りがあればファイルのパスを含めて例外を投げる（apps/web/src/mocks/rulesFiles.ts が起動時に使う）。
 
@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { parseSystemCards } from '../card/catalog';
 import type { CardDef } from '../card/model';
 import type { Abilities } from '../check/model';
-import { type CharacterCreationRules, characterCreationRulesSchema } from './model';
+import { type Character, type CharacterCreationRules, characterCreationRulesSchema } from './model';
 
 /** 形・数値の関係に加え、基本カードプールの id がカード一覧に実在し、CP コストを持つかを確かめる */
 export function parseCharacterCreationRules(
@@ -59,6 +59,22 @@ export function defaultAbilities(a: CharacterCreationRules['abilities']): Abilit
   const base = Math.floor(a.total / 3);
   const rest = a.total - base * 3;
   return { body: base + (rest > 0 ? 1 : 0), skill: base + (rest > 1 ? 1 : 0), mind: base };
+}
+
+/**
+ * 作成したときの能力値・HP・基本行動値（character-growth.md「PCが持つデータ」）。HP・行動値の値は
+ * **仮ルール**（docs/provisional/character-creation.md）。能力値は体・技・心だけを複製して返す
+ * （API の本文に混ざった知らないキーを持ち込まない。配分の検査は呼び出し側）
+ */
+export function creationStats(
+  rules: CharacterCreationRules,
+  { body, skill, mind }: Abilities,
+): Pick<Character, 'abilities' | 'hp' | 'baseActionValue'> {
+  return {
+    abilities: { body, skill, mind },
+    hp: { current: rules.initialHp, max: rules.initialHp },
+    baseActionValue: rules.initialBaseActionValue,
+  };
 }
 
 /** 合計がちょうど total で、どれも min〜max か（仮ルール） */

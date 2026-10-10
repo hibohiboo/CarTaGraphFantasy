@@ -14,8 +14,8 @@ export const useMe = () =>
 export const useCardPool = () =>
   useQuery({
     queryKey: keys.cardPool,
-    // 能力値の配分のルール（abilities）と作成時の HP（initialHp）もここで返す（キャラクター作成で使う。
-    // rules/character-creation.json。どちらも仮ルール）
+    // 能力値の配分のルール（abilities）と作成時の HP・行動値（initialHp・initialBaseActionValue）もここで返す
+    // （キャラクター作成・村はずれの一歩の開始画面で使う。rules/character-creation.json。どれも仮ルール）
     queryFn: () =>
       api.get<{
         basic: CardDef[];
@@ -23,5 +23,6 @@ export const useCardPool = () =>
         budget: number;
         abilities: CharacterCreationRules['abilities'];
         initialHp: CharacterCreationRules['initialHp'];
+        initialBaseActionValue: CharacterCreationRules['initialBaseActionValue'];
       }>('/card-pool'),
   });

@@ -3,7 +3,7 @@
 // （キャラクターのキャッシュの無効化まで確かめるため、途中で API を直接呼んで状態を作らない）。
 // 試験まで通すときは、試験官が必ず倒れるテスト用シナリオ sc-village-always-win を使う。
 
-import { deriveArchetype } from '@cartagraph/domain/character/archetype';
+import { defaultAbilities } from '@cartagraph/domain/character/creation';
 import type { Character } from '@cartagraph/domain/character/model';
 import type { Session } from '@cartagraph/domain/session/model';
 import { screen, waitFor, within } from '@testing-library/react';
@@ -11,14 +11,17 @@ import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { api } from '@/shared/api/api';
 import { scenarios } from '../mocks/fixtures';
+import { characterCreation } from '../mocks/rulesFiles';
 import { renderAt } from './renderAt';
 
-/** 村パートで得る HP・行動値（村はずれの一歩の JSON の値） */
-const soloGrowth = (() => {
-  const g = scenarios.find((x) => x.id === 'sc-village-start')?.soloGrowth;
-  if (!g) throw new Error('sc-village-start に soloGrowth がありません');
-  return g;
-})();
+/** ソロ開始の PC の能力値（合計を均等に配る。仮ルール）と、作成時の HP・行動値（rules/character-creation.json） */
+const START = defaultAbilities(characterCreation.abilities);
+const INITIAL = {
+  hp: { current: characterCreation.initialHp, max: characterCreation.initialHp },
+  baseActionValue: characterCreation.initialBaseActionValue,
+};
+/** 村の成長で HP・行動値を与えていたころの文（いまは出ない） */
+const OLD_GROWTH_LINE = /HPを得た|行動値を得た/;
 
 const start = (scenarioId: string, name = '新人') =>
   api.post<Session>(`/scenarios/${scenarioId}/start-solo`, { name });
@@ -127,16 +130,19 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     expect(screen.getByText(/結末タグの即時反映は仮ルール/)).toBeInTheDocument();
 
     const pc = await characterOf(s);
-    expect(pc.abilities).toEqual({ body: 2, skill: 2, mind: 2 });
-    expect(pc.hp).toEqual({ current: soloGrowth.hp, max: soloGrowth.hp });
-    expect(pc.baseActionValue).toBe(soloGrowth.baseActionValue);
+    expect(pc.abilities).toEqual({
+      body: START.body + 1,
+      skill: START.skill + 1,
+      mind: START.mind + 1,
+    });
+    // HP・行動値は作成時の値のまま（村の成長では変わらない）
+    expect(pc).toMatchObject(INITIAL);
     expect(pc.deck.filter((c) => c.tags.includes('戦闘スキル')).map((c) => c.name)).toEqual([
       '斬撃',
       '渾身の一撃',
       '素早い突き',
     ]);
     expect(pc.deck.filter((c) => c.tags.includes('引換'))).toEqual([]);
-    expect(deriveArchetype(pc)).toBe('adventurer');
     expect(pc.endingTags).toEqual(['冒険者になった']);
   });
 
@@ -166,11 +172,22 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
   // local-flow の完成の条件5（GM 不在のシナリオを JSON から結末まで遊べる）を直接確かめる。
   // 乱数は固定せず、scenarios/sc-village-start.json の試験官のまま自動戦闘を通す。
   // 斬撃だけの勝率は6〜7割（docs/cartagraph/auto-combat-simulation.md）なので、負けたら設定からやり直す
-  it('本物のシナリオ（sc-village-start）で、依頼1件→お店で斬撃→試験に勝つ→結末まで、クリックだけで進める', async () => {
+  // 開始画面（/pl/village-start）で名乗るところから通す
+  it('本物のシナリオ（sc-village-start）で、名乗る→依頼1件→お店で斬撃→試験に勝つ→結末まで、クリックだけで進める', async () => {
     const MAX_ATTEMPTS = 20;
-    const { user, s } = await atSquare('sc-village-start');
+    const user = userEvent.setup();
+    const router = renderAt('/pl/village-start');
+    await user.click(await screen.findByRole('button', { name: /名を名乗る/ }));
+    await user.type(screen.getByLabelText('名前'), '新人');
+    await user.click(screen.getByRole('button', { name: '名乗る' }));
+    await play(user, /村の広場へ向かう/);
+    // プレイ画面に移った後なので、URL からセッションを引ける
+    const sessionId = router.state.location.pathname.split('/')[3];
     await play(user, /依頼「畑を荒らす猪」/);
     await play(user, /柵で畑を囲む/);
+    expect(
+      await screen.findByText(`体が1上がった（体 ${START.body + 1}）`, { exact: false }),
+    ).toBeInTheDocument();
     await play(user, /お店へ行く/);
     await playWhenEnabled(user, /斬撃を習う/);
     await waitFor(() =>
@@ -195,21 +212,24 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     expect(
       await screen.findByRole('heading', { name: '結末「冒険者として旅立つ」' }),
     ).toBeInTheDocument();
-    const ended = await api.get<Session>(`/sessions/${s.id}`);
+    const ended = await api.get<Session>(`/sessions/${sessionId}`);
     expect(ended.status).toBe('ended');
-    expect((await characterOf(s)).endingTags).toEqual(['冒険者になった']);
+    const pc = await characterOf(ended);
+    expect(pc.endingTags).toEqual(['冒険者になった']);
+    expect(pc).toMatchObject(INITIAL);
+    // 村の成長で HP・行動値を与えていたころの痕跡が無い（値そのものは作成時と同じなので、区別には使えない）
+    expect(ended.feed.some((f) => OLD_GROWTH_LINE.test(f.text))).toBe(false);
+    expect(screen.queryByText(OLD_GROWTH_LINE)).not.toBeInTheDocument();
     // 負けが続いたときのやり直し（最大20回）の分だけ、既定の5秒より長く待つ
   }, 30_000);
 });
 
-describe('村パート：旅人から始まる', () => {
-  it('開始直後は旅人で、広場の「街の冒険者ギルドへ向かう」は選べず、理由が出る', async () => {
+describe('村パート：開始直後', () => {
+  it('作成時の能力値・HP・行動値を持ち、戦闘スキルが無いので、広場の「街の冒険者ギルドへ向かう」は選べず、理由が出る', async () => {
     const { s } = await atSquare();
     const pc = await characterOf(s);
-    expect(pc.abilities).toBeUndefined();
-    expect(pc.hp).toBeUndefined();
+    expect(pc).toMatchObject({ abilities: START, ...INITIAL });
     expect(pc.deck).toEqual([]);
-    expect(deriveArchetype(pc)).toBe('traveler');
 
     const guild = await card(/街の冒険者ギルドへ向かう/);
     await waitFor(() => expect(guild).toBeDisabled());
@@ -235,7 +255,9 @@ describe('村パート：依頼', () => {
 
     // 描写は解決方法の説明文と効果の文。移った先のシーン名だけの描写ではない
     expect(await screen.findByText(/柵で畑をぐるりと囲んだ/)).toBeInTheDocument();
-    expect(screen.getByText(/体が1上がった（体 2）/)).toBeInTheDocument();
+    expect(
+      screen.getByText(`体が1上がった（体 ${START.body + 1}）`, { exact: false }),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/村の広場へ進んだ/)).not.toBeInTheDocument();
 
     expect(screen.queryByRole('button', { name: /依頼「畑を荒らす猪」/ })).not.toBeInTheDocument();
@@ -243,10 +265,8 @@ describe('村パート：依頼', () => {
     expect(await card(/依頼「迷子の子ヤギ」/)).toBeInTheDocument();
 
     const pc = await characterOf(s);
-    expect(pc.abilities).toEqual({ body: 2, skill: 1, mind: 1 });
-    expect(pc.hp).toEqual({ current: 20, max: 20 });
-    expect(pc.baseActionValue).toBeUndefined();
-    expect(deriveArchetype(pc)).toBe('explorer');
+    expect(pc.abilities).toEqual({ ...START, body: START.body + 1 });
+    expect(pc).toMatchObject(INITIAL);
     expect(pc.deck.map((c) => c.name)).toEqual(['農家のおばさんからの報酬']);
 
     const after = await api.get<Session>(`/sessions/${s.id}`);
@@ -254,10 +274,10 @@ describe('村パート：依頼', () => {
     expect(after.feed.slice(0, 4).map((f) => f.text)).toEqual([
       '「村の広場」へ進んだ',
       '新人が「柵で畑を囲む」をプレイ',
-      '新人：体が1上がった（体 2）',
+      `新人：体が1上がった（体 ${START.body + 1}）`,
       '新人：『農家のおばさんからの報酬』を受け取った',
     ]);
-    expect(after.feed[4].text).toBe('新人：HPを得た（HP 20）');
+    expect(after.feed.some((f) => OLD_GROWTH_LINE.test(f.text))).toBe(false);
   });
 
   it('2件目の依頼では、選んだ能力値だけが上がり、ほかの2つは変わらない', async () => {
@@ -267,7 +287,30 @@ describe('村パート：依頼', () => {
     await play(user, /依頼「壊れた水車」/);
     await play(user, /歯車を組み直す/);
     await card(/お店へ行く/);
-    expect((await characterOf(s)).abilities).toEqual({ body: 2, skill: 2, mind: 1 });
+    expect((await characterOf(s)).abilities).toEqual({
+      ...START,
+      body: START.body + 1,
+      skill: START.skill + 1,
+    });
+  });
+
+  // ソロ開始の能力値を均等に配るようにして、依頼3件で上限に届くようになった（F2）
+  it('依頼3件をすべて体で解決すると体が上限になり、3件目の描写と feed は「これ以上上がらない」', async () => {
+    const { max } = characterCreation.abilities;
+    expect(START.body + 2).toBe(max);
+    const s = await start('sc-village-always-win');
+    const playCard = (cardId: string) => api.post<Session>(`/sessions/${s.id}/play`, { cardId });
+    await playCard('vs-to-square');
+    for (const n of [0, 1]) {
+      await playCard(`vs-to-quest-${n}`);
+      await playCard(`vs-quest-${n}-body`);
+    }
+    await playCard('vs-to-quest-2');
+    const third = await playCard('vs-quest-2-body');
+    const capped = `体はこれ以上上がらない（体 ${max}）`;
+    expect(third.flavor).toContain(capped);
+    expect(third.feed.map((f) => f.text)).toContain(`新人：${capped}`);
+    expect((await characterOf(s)).abilities.body).toBe(max);
   });
 
   it('達成カードは GM専用ゾーンにだけ置かれ、デッキ・画面・feed・描写には出ない', async () => {
@@ -305,7 +348,7 @@ describe('村パート：依頼', () => {
     await play(user, /広場へ戻る/);
     expect(await card(/依頼「畑を荒らす猪」/)).toBeInTheDocument();
     const pc = await characterOf(s);
-    expect(pc.abilities).toBeUndefined();
+    expect(pc.abilities).toEqual(START);
     expect(pc.deck).toEqual([]);
   });
 
@@ -386,27 +429,25 @@ describe('村パート：お店', () => {
     expect((await characterOf(s)).deck).toEqual([]);
   });
 
-  it('引換カード1枚で斬撃を習うと冒険者になり、斬撃のカードだけが消えてお店に留まる', async () => {
+  it('引換カード1枚で斬撃を習うと、斬撃のカードだけが消えてお店に留まる。行動値は変わらない', async () => {
     const { user, s } = await atSquare();
     await play(user, /依頼「畑を荒らす猪」/);
     await play(user, /柵で畑を囲む/);
     await play(user, /お店へ行く/);
-    expect(deriveArchetype(await characterOf(s))).toBe('explorer');
 
     await playWhenEnabled(user, /斬撃を習う/);
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: /斬撃を習う/ })).not.toBeInTheDocument(),
     );
     expect(await screen.findByText(/店主の手ほどきで「斬撃」を身につけた/)).toBeInTheDocument();
-    expect(screen.getByText(/行動値を得た（行動値 10）/)).toBeInTheDocument();
+    expect(screen.queryByText(OLD_GROWTH_LINE)).not.toBeInTheDocument();
     // 引換カードを使い切ったので、ほかの3枚は選べない
     for (const name of [/渾身の一撃を習う/, /素早い突きを習う/, /応急手当を習う/])
       await waitFor(async () => expect(await card(name)).toBeDisabled());
 
     const pc = await characterOf(s);
     expect(pc.deck.map((c) => c.name)).toEqual(['斬撃']);
-    expect(pc.baseActionValue).toBe(10);
-    expect(deriveArchetype(pc)).toBe('adventurer');
+    expect(pc.baseActionValue).toBe(INITIAL.baseActionValue);
     expect((await api.get<Session>(`/sessions/${s.id}`)).currentScene.name).toBe('村のお店');
   });
 

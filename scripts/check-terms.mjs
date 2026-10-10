@@ -10,7 +10,21 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-/** 旧称と、今の名前の案内 */
+/**
+ * 「旅人」「探索者」を正当に残してよい場所（冒険者だけにする C3。docs/plans/2026-10-10-冒険者だけにする.md C3-20）：
+ * 経緯を書いたノート、古い版を残す決まりのティザー（AGENTS.md）、このマイルストーンの説明、自動メモリの経緯、
+ * 表示が消えたことを確かめる否定のアサーション
+ */
+const ROLE_HISTORY = [
+  /^docs\/notes\//,
+  /^docs\/public\/teaser\/movie-v1\.html$/,
+  /^docs\/roadmap\.md$/,
+  /^docs\/backlog\/adventurer-only\.md$/,
+  /^\.claude\/memory\//,
+  /^apps\/web\/src\/test\//,
+];
+
+/** 旧称と、今の名前の案内と、その語だけを見ないパス（無ければどこでも見る） */
 export const TERMS = [
   ['共有ライブラリ', '「シナリオ集」（シナリオの公開先）か「共有設定」（格上げしたカード・設定）'],
   ['シナリオ作成者', '「シナリオ製作者」'],
@@ -19,8 +33,18 @@ export const TERMS = [
   ['行き先', '「移り先」（選択肢カードの nextNodeId）'],
   ['結末ノード', '「結末のノード」'],
   ['配る前提タグ', '「結末タグ」'],
-  ['探索者向けの判定ルール', '「判定ルール」（docs/cartagraph/check.md）'],
   ['PCのロールとシナリオタイプ', '「シナリオタイプ」（docs/cartagraph/scenario-type.md）'],
+  ['旅人', '「冒険者」（PC を役割で区切らない。docs/glossary.md）', ROLE_HISTORY],
+  [
+    '探索者',
+    '「冒険者」（PC を役割で区切らない。docs/glossary.md）。ページ名なら「判定ルール」（docs/cartagraph/check.md）',
+    ROLE_HISTORY,
+  ],
+  [
+    '参照するデータ種別のタグ',
+    '「シナリオタイプ」（docs/cartagraph/scenario-type.md）',
+    [/^docs\/notes\//, /^docs\/roadmap\.md$/],
+  ],
 ];
 
 const EXCLUDED = [
@@ -41,7 +65,10 @@ export function isChecked(path) {
 export function findOldTerms(files) {
   return files.flatMap(({ path, text }) =>
     text.split('\n').flatMap((lineText, i) =>
-      TERMS.filter(([term]) => lineText.includes(term)).map(([term, now]) => ({
+      TERMS.filter(
+        ([term, , excluded = []]) =>
+          lineText.includes(term) && !excluded.some((re) => re.test(path)),
+      ).map(([term, now]) => ({
         path,
         line: i + 1,
         term,

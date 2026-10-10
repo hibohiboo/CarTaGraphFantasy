@@ -37,6 +37,51 @@ describe('findOldTerms', () => {
   });
 });
 
+describe('findOldTerms：語ごとの除外', () => {
+  // 「旅人」「探索者」は、経緯を書いたノートなどには正当に残る（冒険者だけにする C3）
+  it('除外のパスではその語を見つけず、ほかのパスでは見つける', () => {
+    const text = '旅人・探索者・冒険者';
+    assert.deepEqual(findOldTerms([{ path: 'docs/notes/scenario-type.md', text }]), []);
+    assert.deepEqual(
+      findOldTerms([{ path: 'docs/cartagraph/check.md', text }]).map((f) => f.term),
+      ['旅人', '探索者'],
+    );
+  });
+
+  it('同じファイルでも、除外されていない別の語は見つける', () => {
+    const found = findOldTerms([
+      { path: 'docs/notes/a.md', text: '探索者は共有ライブラリから選ぶ' },
+    ]);
+    assert.deepEqual(
+      found.map((f) => f.term),
+      ['共有ライブラリ'],
+    );
+  });
+
+  it('除外を持たない語は、どのパスでも見つける', () => {
+    const found = findOldTerms([{ path: 'docs/notes/a.md', text: '結末ノード' }]);
+    assert.deepEqual(
+      found.map((f) => f.term),
+      ['結末ノード'],
+    );
+  });
+
+  it('「探索者向けの判定ルール」は「探索者」の1件だけで報告し、案内に「判定ルール」を含める', () => {
+    const found = findOldTerms([{ path: 'docs/a.md', text: '探索者向けの判定ルール' }]);
+    assert.deepEqual(
+      found.map((f) => f.term),
+      ['探索者'],
+    );
+    assert.match(found[0].message, /判定ルール/);
+  });
+
+  it('「参照するデータ種別のタグ」は、ノートでは見つけず、仕様では見つける', () => {
+    const text = '参照するデータ種別のタグ';
+    assert.deepEqual(findOldTerms([{ path: 'docs/notes/a.md', text }]), []);
+    assert.equal(findOldTerms([{ path: 'docs/cartagraph/a.md', text }]).length, 1);
+  });
+});
+
 describe('isChecked', () => {
   it('docs・apps・packages・scenarios と入口の文書を見る', () => {
     for (const p of [

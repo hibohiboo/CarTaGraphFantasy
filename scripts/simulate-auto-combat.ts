@@ -1,6 +1,6 @@
 // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）の数値バランスを確かめるシミュレーション。
-// 村スタートのシナリオ sc-village-start（scenarios/sc-village-start.json）で村パートを終えたときの HP・行動値（soloGrowth）、
-// お店で習える戦闘スキル（rules/cards.json から id で引く）、試験官を使い、
+// 村スタートのシナリオ sc-village-start（scenarios/sc-village-start.json）で戦う PC の HP・行動値（作成時の値。
+// rules/character-creation.json）、お店で習える戦闘スキル（rules/cards.json から id で引く）、試験官を使い、
 // 代表的な戦い方ごとに何千回も戦わせて、勝率と決着ラウンドを docs/cartagraph/auto-combat-simulation.md に書き出す。
 //
 // 実行は任意のタイミングで `pnpm sim:auto-combat`（CI・git フックでは回さない）。
@@ -15,8 +15,8 @@ import {
   type PriorityEntry,
 } from '../packages/domain/src/autoCombat/model';
 import { resolveAutoCombat } from '../packages/domain/src/autoCombat/resolve';
-import { parseSystemCards } from '../packages/domain/src/card/catalog';
 import type { CardDef } from '../packages/domain/src/card/model';
+import { loadRules } from '../packages/domain/src/character/creation';
 import { parseScenarioFile } from '../packages/domain/src/scenario/file';
 import { findDeckNode } from '../packages/domain/src/session/transition';
 import { resolveGainCards } from '../packages/domain/src/soloVillage/rules';
@@ -25,6 +25,7 @@ const SCENARIO_ID = 'sc-village-start';
 // import.meta.glob（apps/web の読み込み）は tsx で動かないので、ファイルを直接読んで同じ検査をかける
 const SCENARIO_PATH = resolve(`scenarios/${SCENARIO_ID}.json`);
 const CARDS_PATH = resolve('rules/cards.json');
+const CREATION_PATH = resolve('rules/character-creation.json');
 const EXAM_NODE_ID = 'vs-exam';
 const SHOP_NODE_ID = 'vs-shop';
 const OUTPUT = resolve('docs/cartagraph/auto-combat-simulation.md');
@@ -125,17 +126,22 @@ function main() {
     SCENARIO_PATH,
     JSON.parse(readFileSync(SCENARIO_PATH, 'utf8')),
   );
-  const growth = scenario?.soloGrowth;
   const combat = findDeckNode(scenario.deck, EXAM_NODE_ID)?.node.autoCombat;
   const shop = findDeckNode(scenario.deck, SHOP_NODE_ID)?.node;
-  if (!growth || !combat || !shop)
+  if (!combat || !shop)
     throw new Error(
-      `${SCENARIO_ID} に成長の値（soloGrowth）・試験（${EXAM_NODE_ID}）・お店（${SHOP_NODE_ID}）のどれかがありません`,
+      `${SCENARIO_ID} に試験（${EXAM_NODE_ID}）・お店（${SHOP_NODE_ID}）のどちらかがありません`,
     );
-  // 村パートを終えたPL：HP・行動値は soloGrowth、カードはお店で習える戦闘スキル（システムのカード一覧から引く）
-  const systemCards = parseSystemCards(CARDS_PATH, JSON.parse(readFileSync(CARDS_PATH, 'utf8')));
+  // 村パートを終えたPL：HP・行動値は作成時の値（rules/character-creation.json）、
+  // カードはお店で習える戦闘スキル（システムのカード一覧から引く）
+  const readJson = (path: string): unknown => JSON.parse(readFileSync(path, 'utf8'));
+  const { systemCards, characterCreation } = loadRules({
+    cards: [CARDS_PATH, readJson(CARDS_PATH)],
+    creation: [CREATION_PATH, readJson(CREATION_PATH)],
+  });
   const starter = {
-    ...growth,
+    hp: characterCreation.initialHp,
+    baseActionValue: characterCreation.initialBaseActionValue,
     cards: shop.cards.flatMap((c) => {
       if (!c.soloEffect) return [];
       const r = resolveGainCards(c.soloEffect, systemCards);
@@ -178,7 +184,7 @@ function main() {
 
 <!-- このページは scripts/simulate-auto-combat.ts が生成する。手で編集しない（pnpm sim:auto-combat で作り直す） -->
 
-[自動戦闘（仮ルール）](auto-combat.md)の数値バランスを確かめるため、シナリオ「${scenario.title}」で村パートを終えたとき（HP・行動値と、お店で習える戦闘スキル）と試験官で、代表的な戦い方ごとに${runs.toLocaleString('ja-JP')}回ずつ戦わせた結果。**仕様ではなく、数値を調整するときの参考資料**である。数値の相場観は[数値バランスの相場観](balance.md)を参照。
+[自動戦闘（仮ルール）](auto-combat.md)の数値バランスを確かめるため、シナリオ「${scenario.title}」で村パートを終えたとき（作成時の HP・行動値と、お店で習える戦闘スキル）と試験官で、代表的な戦い方ごとに${runs.toLocaleString('ja-JP')}回ずつ戦わせた結果。**仕様ではなく、数値を調整するときの参考資料**である。数値の相場観は[数値バランスの相場観](balance.md)を参照。
 
 - 生成日：${new Date().toISOString().slice(0, 10)}
 - 回数：戦い方ごとに${runs.toLocaleString('ja-JP')}回（乱数の種：${seed}。数値が同じなら何度回しても同じ結果になる）

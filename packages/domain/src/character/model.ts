@@ -1,28 +1,19 @@
-// キャラクター（docs/cartagraph/character-growth.md、典型ロールは scenario-type.md、称号は comparison-and-titles.md）。
+// キャラクター（docs/cartagraph/character-growth.md、称号は comparison-and-titles.md）。
 
 import { z } from 'zod';
 import { type CardDef, commentSchema, idSchema } from '../card/model';
 import type { Abilities } from '../check/model';
-
-/** 典型ロールの通称（PCが持つデータから導出する。固定属性ではない） */
-export type CharacterArchetype = 'traveler' | 'explorer' | 'adventurer';
-
-export const ARCHETYPE_LABEL: Record<CharacterArchetype, string> = {
-  traveler: '旅人',
-  explorer: '探索者',
-  adventurer: '冒険者',
-};
 
 export interface Character {
   id: string;
   name: string;
   ownerId: string;
   ownerName: string;
-  /** 能力値を持たなければ旅人 */
-  abilities?: Abilities;
-  hp?: { current: number; max: number };
-  /** 戦闘用の基本行動値（冒険者のみ） */
-  baseActionValue?: number;
+  /** 能力値・HP・基本行動値は、作成したときから持つ（character-growth.md「PCが持つデータ」） */
+  abilities: Abilities;
+  hp: { current: number; max: number };
+  /** 戦闘用の基本行動値 */
+  baseActionValue: number;
   /** キャラクターデッキ（所有・構成デッキ） */
   deck: CardDef[];
   /** 称号タグ（特徴カードの一種。所有者が反映を選んだもの） */
@@ -38,7 +29,8 @@ const positiveInt = z.number().int().min(1);
 /**
  * キャラクター作成のルール（rules/character-creation.json。システム製作者が JSON を直してコミットする）。
  * CP 予算はハードな制約（docs/cartagraph/character-growth.md）。
- * 能力値の配分（abilities）と作成時の HP（initialHp）は**仮ルール**：配分方法と作成時の HP は未解決論点
+ * 能力値の配分（abilities）と作成時の HP・行動値（initialHp・initialBaseActionValue）は**仮ルール**：
+ * 配分方法と作成時の HP・行動値は未解決論点
  * （docs/provisional/character-creation.md）。この形は「合計を範囲内で配る」
  * いまの仮ルールを表すだけで、論点が決まったら作り直す。
  * 関係の検査（min ≤ max、合計が3つの範囲で作れる）もここで行う。カード一覧との検査は creation.ts
@@ -61,8 +53,10 @@ export const characterCreationRulesSchema = z.strictObject({
           message: `total（${a.total}）は、体・技・心を ${a.min}〜${a.max} で配って作れない`,
         });
     }),
-  /** 能力値を持って作ったときの HP（仮ルール） */
+  /** 作成時の HP（仮ルール）。どの PC も持つ */
   initialHp: positiveInt,
+  /** 作成時の基本行動値（仮ルール）。どの PC も持つ */
+  initialBaseActionValue: positiveInt,
 });
 
 export type CharacterCreationRules = z.infer<typeof characterCreationRulesSchema>;

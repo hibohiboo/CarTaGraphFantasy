@@ -2,7 +2,6 @@
 // 勝敗を固定したい検証は、乱数の出目によらず結果が決まるテスト用シナリオ（mocks/fixtures.ts の
 // sc-exam-always-win / always-lose / always-timeout）で行う。
 
-import { deriveArchetype } from '@cartagraph/domain/character/archetype';
 import type { Character } from '@cartagraph/domain/character/model';
 import type { Session } from '@cartagraph/domain/session/model';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -12,6 +11,8 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routeObjects } from '@/app/router';
 import { api } from '@/shared/api/api';
+import { scenarios } from '../mocks/fixtures';
+import { characterCreation } from '../mocks/rulesFiles';
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -45,6 +46,32 @@ const runAutoCombat = (s: Session, cardIds: string[]) =>
   api.post<Session>(`/sessions/${s.id}/auto-combat`, {
     priority: cardIds.map((cardId) => ({ cardId, when: 'always' })),
   });
+
+// 「必ず勝つ／負ける」は、PL の HP・行動値（作成時の値。rules/character-creation.json）に頼っている。
+// ルールの値を変えて前提が崩れたら、勝敗が乱数次第になる前にここで気づく
+describe('テスト用の試験シナリオの前提', () => {
+  const enemyOf = (id: string) => {
+    const enemy = scenarios.find((x) => x.id === id)?.deck.find((n) => n.autoCombat)
+      ?.autoCombat?.enemy;
+    if (!enemy) throw new Error(`${id} に試験官がいません`);
+    return enemy;
+  };
+
+  it('必ず勝つ：試験官の行動値が PL より小さく、PL が先に動く', () => {
+    expect(enemyOf('sc-exam-always-win').baseActionValue).toBeLessThan(
+      characterCreation.initialBaseActionValue,
+    );
+  });
+
+  it('必ず負ける：試験官の行動値が PL より大きく、最小ダメージが PL の HP 以上', () => {
+    const enemy = enemyOf('sc-exam-always-lose');
+    expect(enemy.baseActionValue).toBeGreaterThan(characterCreation.initialBaseActionValue);
+    for (const { card } of enemy.priority) {
+      const dice = card.combatEffect?.dice;
+      expect(dice && dice.count + dice.bonus).toBeGreaterThanOrEqual(characterCreation.initialHp);
+    }
+  });
+});
 
 describe('試験シーンへの遷移（次のシーンへ進む）', () => {
   it('村はずれから「街の冒険者ギルドへ向かう」と、試験官が場に出て戦い方の設定画面になる', async () => {
@@ -217,7 +244,10 @@ describe('自動戦闘（敗北・時間切れ）', () => {
     // 内容を表すタグを付ける（ほかの特徴カードと同じ付け方。docs/plans/2026-09-27-村パート.md C3-12）
     expect(pc1.deck.find((c) => c.name === '再挑戦の記憶')?.tags).toEqual(['経験']);
     // 戦闘後もキャラクターのHPは変わらない
-    expect(pc1.hp).toEqual({ current: 20, max: 20 });
+    expect(pc1.hp).toEqual({
+      current: characterCreation.initialHp,
+      max: characterCreation.initialHp,
+    });
 
     // 設定画面に戻っていて、もう一度挑戦できる
     await user.click(within(panel).getByRole('button', { name: '戦闘を始める' }));
@@ -324,12 +354,19 @@ describe('自動戦闘の異常系', () => {
     ).rejects.toMatchObject({ status: 404 });
   });
 
-  it('戦えないキャラクター（HP・行動値・戦闘カードなし）は自動戦闘のシーンへ進めず、セッションは変わらない', async () => {
+  it('戦闘スキルを1枚も持たないキャラクターは自動戦闘のシーンへ進めず、セッションは変わらない', async () => {
     // 進めてしまうと、候補が0件で戦闘を始められず、手札も提案も無い行き止まりになる
     const s = await api.post<Session>('/scenarios/sc-exam-no-starter/start-solo', { name: '新人' });
+    // HP・行動値は持っている（HP の理由で止まる経路と区別する）
+    const pc = await characterOf(s);
+    expect(pc.hp.max).toBe(characterCreation.initialHp);
+    expect(pc.baseActionValue).toBe(characterCreation.initialBaseActionValue);
     await expect(
       api.post(`/sessions/${s.id}/play`, { cardId: 'ns-to-guild' }),
-    ).rejects.toMatchObject({ status: 422 });
+    ).rejects.toMatchObject({
+      status: 422,
+      message: '新人は自動戦闘に使えるカードを1枚も持っていないため戦えません',
+    });
     const after = await api.get<Session>(`/sessions/${s.id}`);
     expect(after.currentScene).toEqual(s.currentScene);
     expect(after.autoCombat).toBeUndefined();
@@ -363,21 +400,27 @@ describe('自動戦闘の異常系', () => {
 });
 
 describe('ソロ開始時の初期装備（仮ルール）', () => {
-  it('初期装備を持つシナリオで始めると、HP・行動値・戦闘スキルを持つ冒険者になる', async () => {
+  it('初期装備を持つシナリオで始めると、初期装備の戦闘スキルを持つ（HP・行動値は作成のルールから）', async () => {
     const s = await api.post<Session>('/scenarios/sc-exam-always-win/start-solo', { name: '新人' });
     const pc = await characterOf(s);
-    expect(pc.hp).toEqual({ current: 20, max: 20 });
-    expect(pc.baseActionValue).toBe(10);
-    expect(pc.deck.map((c) => c.name)).toEqual(['斬撃', '渾身の一撃', '応急手当', '短剣']);
-    expect(deriveArchetype(pc)).toBe('adventurer');
+    const starter = scenarios.find((x) => x.id === 'sc-exam-always-win')?.soloStarter;
+    expect(pc.deck.map((c) => c.id)).toEqual(starter?.cards.map((c) => c.id));
+    expect(pc.hp).toEqual({
+      current: characterCreation.initialHp,
+      max: characterCreation.initialHp,
+    });
+    expect(pc.baseActionValue).toBe(characterCreation.initialBaseActionValue);
   });
 
-  it('初期装備を持たないシナリオでは、従来どおり何も持たずに始まる', async () => {
+  it('初期装備を持たないシナリオでは、カードを持たずに始まる（HP・行動値は持つ）', async () => {
     const s = await api.post<Session>('/scenarios/sc-village-no-propose/start-solo', {
       name: '新人',
     });
     const pc = await characterOf(s);
     expect(pc.deck).toEqual([]);
-    expect(pc.hp).toBeUndefined();
+    expect(pc.hp).toEqual({
+      current: characterCreation.initialHp,
+      max: characterCreation.initialHp,
+    });
   });
 });

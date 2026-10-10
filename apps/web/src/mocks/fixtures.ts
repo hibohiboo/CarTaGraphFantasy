@@ -36,6 +36,7 @@ export const characters: Character[] = [
     ownerName: 'ユウ',
     abilities: { body: 3, skill: 4, mind: 2 },
     hp: { current: 16, max: 16 },
+    baseActionValue: 10,
     deck: [systemCard('c-lantern'), systemCard('c-night-eye'), systemCard('c-foresight')],
     titles: ['夜歩き'],
     endingTags: [],
@@ -47,6 +48,9 @@ export const characters: Character[] = [
     name: 'アカリ',
     ownerId: 'u-me',
     ownerName: 'ユウ',
+    abilities: { body: 2, skill: 3, mind: 4 },
+    hp: { current: 20, max: 20 },
+    baseActionValue: 10,
     deck: [systemCard('c-charm'), systemCard('c-rope')],
     titles: [],
     endingTags: ['灯りの回廊を経験'],
@@ -120,12 +124,10 @@ const goBack: CardDef = { id: 'ch-back', kind: 'choice', name: '戻る', tags: [
 // 素直な優先順位（斬撃のみ／渾身の一撃→斬撃）で勝率6〜7割、決着ラウンドの中央値4。
 
 /**
- * ソロ開始時の初期装備（仮ルール）。村スタートのシナリオは村パートで得るようになったため、
- * いまはテスト専用の試験シナリオ（sc-exam-*）だけが使う
+ * ソロ開始時の初期装備（仮ルール。戦闘スキルカードだけ。HP・行動値は作成のルールから来る）。
+ * 村スタートのシナリオは村パートで得るようになったため、いまはテスト専用の試験シナリオ（sc-exam-*）だけが使う
  */
 const soloStarter: NonNullable<Scenario['soloStarter']> = {
-  hp: 20,
-  baseActionValue: 10,
   cards: [systemCard('c-slash'), systemCard('c-heavy-blow'), systemCard('c-first-aid')],
 };
 
@@ -313,7 +315,8 @@ export const scenarios: Scenario[] = [
   // 試験官を sc-exam-always-win と同じく必ず倒せる数値にする（docs/plans/2026-10-03-シナリオのJSON管理.md D4）
   villageAlwaysWin(),
   // ---- 自動戦闘のテスト専用シナリオ。乱数の出目によらず結果が決まる数値にしてある ----
-  // 必ず勝つ：試験官の行動値9 < PLの10 なのでPLが先に動き、HP1は斬撃の最小ダメージ1で倒れる
+  // 必ず勝つ：試験官の行動値9 < PLの10（作成時の行動値。rules/character-creation.json）なのでPLが先に動き、
+  // HP1は斬撃の最小ダメージ1で倒れる
   examScenario({
     id: 'sc-exam-always-win',
     prefix: 'aw',
@@ -323,6 +326,7 @@ export const scenarios: Scenario[] = [
     starter: testStarter,
   }),
   // 必ず負ける：試験官の行動値11 > PLの10 なので試験官が先に動き、最小ダメージ20でPLのHP20が尽きる
+  // （PLの行動値・HPは作成時の値。rules/character-creation.json）
   examScenario({
     id: 'sc-exam-always-lose',
     prefix: 'al',
@@ -351,7 +355,7 @@ export const scenarios: Scenario[] = [
     maxRounds: 1,
     starter: testStarter,
   }),
-  // 初期装備なし：HP・行動値を持たないキャラクターで自動戦闘に入った場合の確認用。
+  // 初期装備なし：戦闘スキルを1枚も持たないキャラクターで自動戦闘に入った場合の確認用。
   // 導入には、シナリオに無いノードを指す選択肢カード（遷移失敗の確認用）も置く
   examScenario({
     id: 'sc-exam-no-starter',
@@ -539,7 +543,7 @@ export const recruitments: Recruitment[] = [
     capacity: 0,
     status: 'open',
     excludedNodeIds: [],
-    note: '誰でもどうぞ。旅人から冒険者へ',
+    note: '誰でもどうぞ。冒険者の最初の一歩に',
   },
 ];
 

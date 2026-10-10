@@ -17,11 +17,18 @@ const pool = () =>
     '/card-pool',
   );
 
-const create = (cardIds: string[], o: object = {}) =>
-  api.post<Character>('/characters', { name: '試し', cardIds, ...o });
-const idsCosting = (target: number) => cardsCosting(target).map((c) => c.id);
-
 const ABILITIES = defaultAbilities(characterCreation.abilities);
+
+/** 能力値は既定でルールどおりの配分を送る（能力値の誤りで止まり、ほかの検査が中身を失わないように） */
+const create = (cardIds: string[], o: object = {}) =>
+  api.post<Character>('/characters', { name: '試し', cardIds, abilities: ABILITIES, ...o });
+const idsCosting = (target: number) => cardsCosting(target).map((c) => c.id);
+const characterCount = async () => (await api.get<Character[]>('/characters')).length;
+/** 作成時の値（rules/character-creation.json。仮ルール） */
+const INITIAL = {
+  hp: { current: characterCreation.initialHp, max: characterCreation.initialHp },
+  baseActionValue: characterCreation.initialBaseActionValue,
+};
 
 describe('/api/card-pool', () => {
   it('基本カードプール・CP 予算・能力値のルールは rules/ の値', async () => {
@@ -29,7 +36,10 @@ describe('/api/card-pool', () => {
     expect(p.basic).toEqual(basicPool(characterCreation, systemCards));
     expect(p.budget).toBe(characterCreation.cpBudget);
     expect(p.abilities).toEqual(characterCreation.abilities);
-    expect(p).toMatchObject({ initialHp: characterCreation.initialHp });
+    expect(p).toMatchObject({
+      initialHp: characterCreation.initialHp,
+      initialBaseActionValue: characterCreation.initialBaseActionValue,
+    });
   });
 });
 
@@ -39,19 +49,50 @@ describe('POST /api/characters', () => {
     expect(ch.cp).toEqual({ total: characterCreation.cpBudget, spent: characterCreation.cpBudget });
   });
 
-  it('CP 予算を1超えると 422', async () => {
+  it('CP 予算を1超えると 422 で、理由は CP 予算', async () => {
     await expect(create(idsCosting(characterCreation.cpBudget + 1))).rejects.toMatchObject({
       status: 422,
+      message: expect.stringContaining('CP予算'),
     });
   });
 
-  it('能力値ありで作ると HP は initialHp、なしなら HP が無い', async () => {
-    const withAbilities = await create([], { abilities: ABILITIES });
-    expect(withAbilities.hp).toEqual({
-      current: characterCreation.initialHp,
-      max: characterCreation.initialHp,
+  it('作った PC は、作成のルールの HP・行動値と、送った能力値を持つ', async () => {
+    const ch = await create([]);
+    expect(ch).toMatchObject({ abilities: ABILITIES, ...INITIAL });
+  });
+
+  it('能力値に知らないキーを混ぜても、体・技・心だけを持つ', async () => {
+    const ch = await create([], { abilities: { ...ABILITIES, luck: 99 } });
+    expect(ch.abilities).toEqual(ABILITIES);
+  });
+
+  const { total, min, max } = characterCreation.abilities;
+  it.each<[string, unknown]>([
+    ['能力値が無い', undefined],
+    ['null', null],
+    ['文字列', '3,3,3'],
+    ['キーが欠ける', { body: total - min, skill: min }],
+    ['数でない値', { body: String(total - 2 * min), skill: min, mind: min }],
+    ['合計が1少ない', { body: total - 2 * min - 1, skill: min, mind: min }],
+    ['合計が1多い', { body: total - 2 * min + 1, skill: min, mind: min }],
+    ['max を1超える', { body: max + 1, skill: total - max - 1 - min, mind: min }],
+    ['min を1下回る', { body: min - 1, skill: total - min + 1 - max, mind: max }],
+    // 合計も範囲も合う小数
+    ['小数', { ...ABILITIES, body: ABILITIES.body + 0.5, skill: ABILITIES.skill - 0.5 }],
+  ])('能力値が %s なら 422 で、PC は増えない', async (_, abilities) => {
+    const before = await characterCount();
+    await expect(create([], { abilities })).rejects.toMatchObject({
+      status: 422,
+      message: expect.stringContaining('能力値'),
     });
-    expect((await create([])).hp).toBeUndefined();
+    expect(await characterCount()).toBe(before);
+  });
+
+  it.each<[string, object]>([
+    ['max と min を含む', { body: max, skill: total - max - min, mind: min }],
+    ['均等', ABILITIES],
+  ])('能力値が範囲の端（%s）でも作れる', async (_, abilities) => {
+    expect((await create([], { abilities })).abilities).toEqual(abilities);
   });
 
   // ハンドラがデッキへ複製を入れること（E8）は、メモリ上の DB を外から見られないので、ここでは確かめられない
@@ -73,13 +114,48 @@ describe('PATCH /api/characters/:id', () => {
     expect((await api.get<Character>(`/characters/${ch.id}`)).deck).toEqual([]);
   });
 
-  it('能力値を入れると HP は initialHp', async () => {
+  // 能力値・HP・行動値は作成したときに決まる（PATCH は旅立ちの酒場がカードを足すためだけの口）
+  it.each<[string, object]>([
+    ['abilities', { abilities: { body: 1, skill: 1, mind: 7 } }],
+    ['hp', { hp: { current: 1, max: 1 } }],
+    ['baseActionValue', { baseActionValue: 1 }],
+  ])('%s を送ると 422', async (_, body) => {
     const ch = await create([]);
-    const patched = await api.patch<Character>(`/characters/${ch.id}`, { abilities: ABILITIES });
-    expect(patched.hp).toEqual({
-      current: characterCreation.initialHp,
-      max: characterCreation.initialHp,
+    await expect(api.patch(`/characters/${ch.id}`, body)).rejects.toMatchObject({
+      status: 422,
     });
+  });
+
+  it('abilities と addCardIds を一緒に送っても 422 で、デッキも能力値も変わらない', async () => {
+    const ch = await create([]);
+    const [id] = idsCosting(1);
+    await expect(
+      api.patch(`/characters/${ch.id}`, {
+        abilities: { body: 1, skill: 1, mind: 7 },
+        addCardIds: [id],
+      }),
+    ).rejects.toMatchObject({ status: 422 });
+    const after = await api.get<Character>(`/characters/${ch.id}`);
+    expect(after.deck).toEqual([]);
+    expect(after.abilities).toEqual(ABILITIES);
+  });
+
+  it.each<[string, unknown]>([
+    ['数', 5],
+    ['文字列', 'x'],
+    ['false', false],
+  ])('本文がオブジェクトでない（%s）なら 500 にせず 422', async (_, body) => {
+    const ch = await create([]);
+    await expect(api.patch(`/characters/${ch.id}`, body)).rejects.toMatchObject({
+      status: 422,
+    });
+  });
+
+  it('addCardIds だけなら足せる（反対側）', async () => {
+    const ch = await create([]);
+    const [id] = idsCosting(1);
+    const patched = await api.patch<Character>(`/characters/${ch.id}`, { addCardIds: [id] });
+    expect(patched.deck.map((c) => c.id)).toEqual([id]);
   });
 });
 
@@ -89,6 +165,27 @@ describe('ソロ開始', () => {
     const driver = s.participants.find((p) => p.role === 'driver');
     const ch = await api.get<Character>(`/characters/${driver?.characterId}`);
     expect(ch.cp.total).toBe(characterCreation.cpBudget);
+  });
+
+  const soloCharacter = async (scenarioId: string) => {
+    const s = await api.post<Session>(`/scenarios/${scenarioId}/start-solo`, { name: '新人' });
+    const driver = s.participants.find((p) => p.role === 'driver');
+    return api.get<Character>(`/characters/${driver?.characterId}`);
+  };
+
+  it('能力値は合計を均等に配り（仮ルール）、HP・行動値は作成のルールから', async () => {
+    const ch = await soloCharacter('sc-village-start');
+    expect(ch).toMatchObject({ abilities: ABILITIES, ...INITIAL });
+    expect(ch.deck).toEqual([]);
+  });
+
+  it('初期装備のあるシナリオでは、そのカードを持ち、HP は初期装備ではなく作成のルールから', async () => {
+    const starter = byId('sc-exam-always-win').soloStarter;
+    const ch = await soloCharacter('sc-exam-always-win');
+    expect(ch.deck.map((c) => c.id)).toEqual(starter?.cards.map((c) => c.id));
+    expect(ch).toMatchObject({ abilities: ABILITIES, ...INITIAL });
+    // 初期装備は CP 予算の外の配布
+    expect(ch.cp).toEqual({ total: characterCreation.cpBudget, spent: 0 });
   });
 });
 

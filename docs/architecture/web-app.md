@@ -35,9 +35,9 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 システム製作者が作るルールは、リポジトリ直下の `rules/` に JSON で置く。local-flow では専用の画面は無く、JSON を直してコミットする（[ロードマップ](../roadmap.md#local-flow) local-flow の完成の条件1。`docs/plans/2026-10-10-ルールとカードプールのJSON管理.md`）。将来バックエンドができたら、同じ JSON を投入データとして使う。
 
 - **`rules/cards.json`** — システムのカード一覧。キャラクターが持つカード（[基本カードプール](../glossary.md#基本カードプール)のカード、村はずれの一歩のお店で習う戦闘スキル、仮に置いた報酬カード）を1か所で定義する。仕様の用語ではなく実装上のカタログで、基本カードプールより広い
-- **`rules/character-creation.json`** — 基本カードプール（カードの id の列）、CP 予算、能力値の配分（合計と範囲）、能力値を持って作ったときの HP。配分と HP は仮ルール（下の「仕様との関係」）。能力値の上限は、GM不在のソロの村の成長の上限（[GM不在のソロの進行](../cartagraph/solo-village.md)「能力値の上がり方」の「上限は5」）にも同じ値として使う。値は[数値バランスの相場観](../cartagraph/balance.md)の中で決める
+- **`rules/character-creation.json`** — 基本カードプール（カードの id の列）、CP 予算、能力値の配分（合計と範囲）、作成時の HP・基本行動値（どの PC も持つ）。配分と HP・行動値は仮ルール（下の「仕様との関係」）。能力値の上限は、GM不在のソロの村の成長の上限（[GM不在のソロの進行](../cartagraph/solo-village.md)「能力値の上がり方」の「上限は5」）にも同じ値として使う。値は[数値バランスの相場観](../cartagraph/balance.md)の中で決める
 - **読み込み** — `src/mocks/rulesFiles.ts` が2ファイルを直接 import し、`packages/domain` の `loadRules` で検査する。シード（`fixtures.ts`）のキャラクターのデッキ・手札は `systemCard(id)` で引く（深い複製を返す）
-- **検査** — 形（知らないキーは誤り。数値は整数で、CP 予算・HP・能力値の下限は1以上）、能力値の範囲と合計の関係、カード id の重複、基本カードプールの id の実在・重複・CP コスト。誤りがあれば、アプリ（MSW）の起動とテストがファイル名つきで止まる
+- **検査** — 形（知らないキーは誤り。数値は整数で、CP 予算・HP・行動値・能力値の下限は1以上）、能力値の範囲と合計の関係、カード id の重複、基本カードプールの id の実在・重複・CP コスト。誤りがあれば、アプリ（MSW）の起動とテストがファイル名つきで止まる
 - **シナリオからの参照** — シナリオの JSON は、システムのカードを `soloEffect.gainCardIds` に id だけで書く（お店で習う戦闘スキル）。シナリオ固有のカード（引換カード・達成カード）は今までどおり `gainCards`・`achievement` に中身ごと書く。読み込み時に、`gainCardIds` の実在と、シナリオ固有のカードの id がシステムのカードとぶつからないことを確かめる（`findSystemCardRefErrors`）
 - **注記・整形・直したら** — 「シナリオの JSON」と同じ（`$comment`、Biome、`pnpm web:test`）。中身だけを直す変更はライトルート（[開発プロセス](../process/index.md)）。画面で確かめるときは `pnpm web:check:character`（`apps/web/e2e/dev/character-rules.mjs`。値は `rules/` から読む）
 - **仕様のページから指さない** — 正式仕様のページ（`docs/cartagraph/`・`docs/concept/`・用語集）は `rules/` などの実装のパスを指さない。実装との対応はこのページに書く（`pnpm docs:build` の `scripts/check-spec-paths.mjs` が止める）
@@ -50,7 +50,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 
 - 仕様の正は引き続き `docs/` 配下。アプリ内のルールブック（`src/shared/content/rulebook.ts`）は docs の**要約**で、各節に出典リンクを持つ。docs 側と食い違ったら docs を正としてアプリ側を直す。
 - `packages/domain` の型は docs の用語（カード種別・ロール・ゾーン・提案の状態など）に対応する。用語の意味を変える場合は docs を先に更新する。
-- キャラクター作成の体・技・心の初期配分と作成時の HP は[未決](../provisional/character-creation.md)のため、アプリでは `rules/character-creation.json` の値（合計を範囲内で配分・能力値を持つときの HP）という**仮ルール**で動かしている（キャラクター作成の画面にもその旨を表示。上の「ルールの JSON」）。
+- キャラクター作成の体・技・心の初期配分と作成時の HP・基本行動値は[未決](../provisional/character-creation.md)のため、アプリでは `rules/character-creation.json` の値（合計を範囲内で配分・一定の HP と行動値）という**仮ルール**で動かしている（キャラクター作成の画面にもその旨を表示。上の「ルールの JSON」）。名前だけで始めるソロ開始の PC は、合計を体・技・心に均等に配る（`defaultAbilities`。村はずれの一歩の開始画面にもその旨を表示）。
 
 ## ルーティングと配信
 
@@ -73,11 +73,11 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 
 ## 自動戦闘の数値シミュレーション
 
-[自動戦闘（仮ルール）](../cartagraph/auto-combat.md)の数値バランスを確かめるスクリプト（`scripts/simulate-auto-combat.ts`）。村スタートのシナリオ `sc-village-start`（`scenarios/sc-village-start.json`）で村パートを終えたときの HP・行動値（`soloGrowth`）、お店で習える戦闘スキル（`rules/cards.json`）、試験官の数値のまま、代表的な戦い方ごとに5,000回ずつ戦わせ、勝率と決着ラウンドの表を [シミュレーション結果](../cartagraph/auto-combat-simulation.md) に書き出す。
+[自動戦闘（仮ルール）](../cartagraph/auto-combat.md)の数値バランスを確かめるスクリプト（`scripts/simulate-auto-combat.ts`）。村スタートのシナリオ `sc-village-start`（`scenarios/sc-village-start.json`）で戦う PC の HP・行動値（作成時の値。`rules/character-creation.json`）、お店で習える戦闘スキル（`rules/cards.json`）、試験官の数値のまま、代表的な戦い方ごとに5,000回ずつ戦わせ、勝率と決着ラウンドの表を [シミュレーション結果](../cartagraph/auto-combat-simulation.md) に書き出す。
 
 - **実行** — `pnpm sim:auto-combat`。回数・乱数の種は `pnpm sim:auto-combat -- --runs=10000 --seed=42` のように変えられる
 - **いつ回すか** — CI・git フックでは回さない。次のようなときに手で回し、書き出された `docs/cartagraph/auto-combat-simulation.md` も一緒にコミットする（結果が変わらなければファイルは書き直さない）
-  - 村パートで得る HP・行動値、試験官の数値を `scenarios/sc-village-start.json` で、お店で習う戦闘スキルのカードの数値（コスト・ダイス）を `rules/cards.json` で変えたとき
+  - 作成時の HP・行動値を `rules/character-creation.json` で、試験官の数値を `scenarios/sc-village-start.json` で、お店で習う戦闘スキルのカードの数値（コスト・ダイス）を `rules/cards.json` で変えたとき
   - 自動戦闘のエンジン（`packages/domain/src/autoCombat/resolve.ts`）の判定を変えたとき
   - 比べる戦い方を増やしたいとき（スクリプト内の `STRATEGIES` に足す）
 - **結果の読み方** — 乱数は種つきなので、数値が同じなら何度回しても同じ表になる。回し直して表に差分が出たら、数値かエンジンが変わったということ
