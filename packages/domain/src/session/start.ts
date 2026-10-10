@@ -109,8 +109,7 @@ export function checkResume(
     return { ok: false, status: 403, error: 'ドライバーだけが再開できます' };
   if (session.status !== 'suspended')
     return { ok: false, status: 422, error: '中断していないセッションは再開できません' };
-  // 無反応による中断は、仕様ではドライバーも GM もいつでも再開できる（party-and-session.md「再開」）。
-  // 無反応の中断そのものが未実装なので、まだ再開させない
+  // 無反応による中断は仕様から外した（party-and-session.md「中断」）。理由の型から消すまでは再開させない
   if (session.suspendedFor !== 'proposal')
     return { ok: false, status: 422, error: 'この中断の再開のしかたは、まだ決まっていません' };
   if (session.proposals.some((p) => p.status === 'pending'))
