@@ -1,5 +1,3 @@
-import { deriveArchetype } from '@cartagraph/domain/character/archetype';
-import { ARCHETYPE_LABEL } from '@cartagraph/domain/character/model';
 import type { Session } from '@cartagraph/domain/session/model';
 import { checkResume } from '@cartagraph/domain/session/start';
 import { Link } from 'react-router';
@@ -76,7 +74,6 @@ export function HomePage() {
                 <span key={c.id} className="u-row">
                   <span className="u-dim u-small">PC</span>
                   <Link to={`/pl/characters/${c.id}`}>{c.name}</Link>
-                  <span className="u-dim u-small">{ARCHETYPE_LABEL[deriveArchetype(c)]}</span>
                 </span>
               ))}
             </div>

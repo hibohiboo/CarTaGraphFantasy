@@ -169,8 +169,8 @@ function hps(s: Record<'pl' | 'enemy', { hp: number }>) {
 
 /** キャラクターが自動戦闘に臨めるか。臨めなければ理由を返す（戦闘のシーンへ入る前に確かめ、進めなくなる状態を防ぐ） */
 export function canFight(c: Pick<Character, 'hp' | 'baseActionValue' | 'deck'>): string | null {
-  if (!c.hp || !isPositiveInt(c.hp.max)) return 'HPを持たないため戦えません';
-  if (!isPositiveInt(c.baseActionValue)) return '行動値を持たないため戦えません';
+  if (!isPositiveInt(c.hp.max)) return 'HPが1以上の整数でないため戦えません';
+  if (!isPositiveInt(c.baseActionValue)) return '行動値が1以上の整数でないため戦えません';
   if (!c.deck.some((card) => validatePriority([{ card, when: 'always' }]) === null))
     return '自動戦闘に使えるカードを1枚も持っていないため戦えません';
   return null;

@@ -1,5 +1,4 @@
-import { deriveArchetype } from '@cartagraph/domain/character/archetype';
-import { ARCHETYPE_LABEL, type Character } from '@cartagraph/domain/character/model';
+import type { Character } from '@cartagraph/domain/character/model';
 import { replayBlockedBy } from '@cartagraph/domain/scenario/replay';
 import { scenarioTypeLabel } from '@cartagraph/domain/scenario/type';
 import type { Recruitment } from '@cartagraph/domain/session/model';
@@ -156,8 +155,8 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
             >
               {candidates.map((c) => (
                 <option key={c.id} value={c.id} disabled={blocked(c)}>
-                  {c.name}（{ARCHETYPE_LABEL[deriveArchetype(c)]}
-                  {c.ownerId !== myId ? `・${c.ownerName}から借用` : ''}）
+                  {c.name}
+                  {c.ownerId !== myId ? `（${c.ownerName}から借用）` : ''}
                   {blocked(c) ? '（このシナリオは再挑戦不可）' : ''}
                 </option>
               ))}

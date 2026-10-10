@@ -1,5 +1,5 @@
 {
-  "$comment": "キャラクター作成のルール。CP 予算はハードな制約（docs/cartagraph/character-growth.md）。abilities（体・技・心の配分）と initialHp（能力値を持って作ったときの HP）は仮ルールで、配分方法と作成時の HP は決まっていない（docs/provisional/character-creation.md）。abilities.max は村の成長（GM不在のソロ）の上限にも使う。値は docs/cartagraph/balance.md の相場観の中で決める",
+  "$comment": "キャラクター作成のルール。CP 予算はハードな制約（docs/cartagraph/character-growth.md）。abilities（体・技・心の配分）と initialHp・initialBaseActionValue（作成時の HP・基本行動値。どの PC も持つ）は仮ルールで、配分方法と作成時の HP・行動値は決まっていない（docs/provisional/character-creation.md）。abilities.max は村の成長（GM不在のソロ）の上限にも使う。値は docs/cartagraph/balance.md の相場観の中で決める",
   "basicPoolCardIds": [
     "c-lantern",
     "c-night-eye",
@@ -16,5 +16,6 @@
   ],
   "cpBudget": 5,
   "abilities": { "total": 9, "min": 1, "max": 5 },
-  "initialHp": 14
+  "initialHp": 20,
+  "initialBaseActionValue": 10
 }

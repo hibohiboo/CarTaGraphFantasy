@@ -4,10 +4,8 @@
 
 import { conditionFailure, hasTag } from '../card/condition';
 import type { CardDef, SoloEffect } from '../card/model';
-import { hasCombatSkill } from '../character/archetype';
 import type { Character } from '../character/model';
 import type { Abilities } from '../check/model';
-import type { Scenario } from '../scenario/model';
 import type { Session } from '../session/model';
 
 const ACHIEVEMENT_TAG = '達成';
@@ -73,11 +71,9 @@ export function resolveGainCards(
  * system はシステムのカード一覧（gainCardIds を引く）と能力値の上限（rules/character-creation.json の
  * abilities.max。solo-village.md「能力値の上がり方」）
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 export function applySoloEffect(
   character: Character,
   effect: SoloEffect,
-  growth: Scenario['soloGrowth'],
   system: { cards: CardDef[]; abilityMax: number },
 ): { ok: true; character: Character; lines: string[] } | { ok: false; error: string } {
   const gained = resolveGainCards(effect, system.cards);
@@ -93,12 +89,10 @@ export function applySoloEffect(
     deck = deck.filter((_, j) => j !== i);
   }
 
-  let abilities = character.abilities && { ...character.abilities };
+  const abilities = { ...character.abilities };
   if (effect.raiseAbility) {
     const key = effect.raiseAbility;
     const label = ABILITY_LABEL[key];
-    // 能力値を持たなければ各1から始める（体・技・心の初期配分は未解決論点。仮ルール）
-    abilities ??= { body: 1, skill: 1, mind: 1 };
     if (abilities[key] >= system.abilityMax) {
       lines.push(`${label}はこれ以上上がらない（${label} ${abilities[key]}）`);
     } else {
@@ -112,15 +106,6 @@ export function applySoloEffect(
     lines.push(`『${card.name}』を${card.kind === 'skill' ? '習った' : '受け取った'}`);
   }
 
-  const next: Character = { ...character, deck, ...(abilities && { abilities }) };
-  // 探索者（能力値）か冒険者（戦闘スキル）になったのに HP が無ければ持つ。行動値は冒険者だけ
-  if (growth && !next.hp && (next.abilities || hasCombatSkill(next))) {
-    next.hp = { current: growth.hp, max: growth.hp };
-    lines.push(`HPを得た（HP ${growth.hp}）`);
-  }
-  if (growth && next.baseActionValue === undefined && hasCombatSkill(next)) {
-    next.baseActionValue = growth.baseActionValue;
-    lines.push(`行動値を得た（行動値 ${growth.baseActionValue}）`);
-  }
-  return { ok: true, character: next, lines };
+  // HP・行動値は作成したときから持ち、成長の効果では変わらない（solo-village.md）
+  return { ok: true, character: { ...character, deck, abilities }, lines };
 }

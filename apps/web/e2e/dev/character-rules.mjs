@@ -86,8 +86,12 @@ try {
     '能力値の初期値の合計がルールの合計で、仮ルールと示す',
   );
   check(
-    await page.getByText(`HP ${creation.initialHp} で始める（仮ルール）`).isVisible(),
-    '作成時の HP をルールの値で、仮ルールと示す',
+    await page
+      .getByText(
+        `HP ${creation.initialHp}・行動値 ${creation.initialBaseActionValue} で始める（仮ルール）`,
+      )
+      .isVisible(),
+    '作成時の HP・行動値をルールの値で、仮ルールと示す',
   );
   check(
     (await ability('体').getAttribute('max')) === String(max) &&
@@ -111,6 +115,18 @@ try {
   );
   check(await create.isEnabled(), 'CP 予算をちょうど使い切っても作成できる');
   await shot('character-budget');
+  await create.click();
+  await page.getByRole('heading', { name: '確かめ' }).waitFor();
+  const created = await page.evaluate(async () => {
+    const r = await fetch('/api/characters');
+    return (await r.json()).find((c) => c.name === '確かめ');
+  });
+  check(
+    created?.hp?.max === creation.initialHp &&
+      created?.hp?.current === creation.initialHp &&
+      created?.baseActionValue === creation.initialBaseActionValue,
+    '作成した PC は、ルールの値の HP・行動値を持つ',
+  );
 
   // ---- 村はずれの一歩：お店で斬撃を習って試験まで ----
   const session = await page.evaluate(async () => {

@@ -1,6 +1,8 @@
+import { defaultAbilities } from '@cartagraph/domain/character/creation';
 import { useNavigate } from 'react-router';
 import { useScenario } from '@/entities/scenario/api/queries';
 import { useStartSoloSession } from '@/entities/session/api/mutations';
+import { useCardPool } from '@/entities/user/api/queries';
 import s from '@/shared/ui/page.module.css';
 import { ErrorNote, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 import { NameProposal } from '@/widgets/play-screen/ui/NameProposal';
@@ -13,9 +15,12 @@ const SCENARIO_ID = 'sc-village-start';
  * GMの情景描写の後、「＋名を名乗る」の提案カードで名乗ると、募集・応募を経由せず
  * 1リクエストでGMレスのセッションが始まる（旅立ちの酒場と同じ名乗りの流れ。
  * docs/plans/2026-09-23-自動戦闘エンジン.md 決定事項22）。
+ * 名前だけで作る PC の能力値（合計を均等に配る）と HP・行動値は仮ルールなので、その旨を出す
+ * （docs/provisional/character-creation.md。値は /api/card-pool が返す rules/character-creation.json）。
  */
 export function VillageStartPage() {
   const scenario = useScenario(SCENARIO_ID);
+  const pool = useCardPool();
   const start = useStartSoloSession();
   const navigate = useNavigate();
 
@@ -27,8 +32,10 @@ export function VillageStartPage() {
     );
   };
 
-  if (scenario.isPending) return <Loading />;
+  if (scenario.isPending || pool.isPending) return <Loading />;
   if (scenario.error) return <ErrorNote error={scenario.error} />;
+  if (pool.error) return <ErrorNote error={pool.error} />;
+  const initial = defaultAbilities(pool.data.abilities);
 
   return (
     <>
@@ -36,6 +43,10 @@ export function VillageStartPage() {
       <Panel>
         {/* 導入の情景描写はシナリオの概要（summary）から引き、名乗りを促す一言を添える */}
         <Table speaker="GM" flavor={`${scenario.data.summary}まずは名を聞かせてほしい。`} />
+        <p className="u-small u-dim">
+          体 {initial.body}・技 {initial.skill}・心 {initial.mind}、HP {pool.data.initialHp}・行動値{' '}
+          {pool.data.initialBaseActionValue} で始める（仮ルール）
+        </p>
         <div className={s.form}>
           <NameProposal busy={start.isPending} error={start.error} onSubmit={introduce} />
         </div>

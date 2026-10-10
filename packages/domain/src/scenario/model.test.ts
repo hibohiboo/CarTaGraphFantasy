@@ -40,8 +40,7 @@ type Json = any;
 const full = (): Json => ({
   ...minimal(),
   $comment: 'シナリオの注記',
-  soloStarter: { hp: 20, baseActionValue: 10, cards: [card({ id: 'c-start', kind: 'skill' })] },
-  soloGrowth: { hp: 20, baseActionValue: 10 },
+  soloStarter: { cards: [card({ id: 'c-start', kind: 'skill' })] },
   deck: [
     {
       id: 'n-intro',
@@ -194,7 +193,7 @@ describe('scenarioSchema', () => {
     expect(scenarioSchema.safeParse(without).success).toBe(false);
   });
 
-  it('以前の referenceTags（参照するデータ種別のタグ）が残っていると失敗する', () => {
+  it('以前の referenceTags（シナリオタイプに置き換えた項目）が残っていると失敗する', () => {
     expect(scenarioSchema.safeParse({ ...minimal(), referenceTags: [] }).success).toBe(false);
   });
 
@@ -205,7 +204,22 @@ describe('scenarioSchema', () => {
         Object.assign(s.deck[0].cards[0], { description: null });
       }),
     ).toBe(false);
-    expect(scenarioSchema.safeParse({ ...minimal(), soloGrowth: null }).success).toBe(false);
+    expect(scenarioSchema.safeParse({ ...minimal(), soloStarter: null }).success).toBe(false);
+  });
+
+  // HP・行動値は作成のルールから来る（docs/cartagraph/auto-combat.md「初期装備」。冒険者だけにする C3）
+  it('以前の soloGrowth（村の成長で与える HP・行動値）が残っていると失敗する', () => {
+    const g = { hp: 20, baseActionValue: 10 };
+    expect(scenarioSchema.safeParse({ ...minimal(), soloGrowth: g }).success).toBe(false);
+  });
+
+  it('初期装備（soloStarter）はカードだけ。HP・行動値を持つと失敗する', () => {
+    const cards = [card({ id: 'c-start', kind: 'skill' })];
+    const starter = (o: Record<string, unknown>) =>
+      scenarioSchema.safeParse({ ...minimal(), soloStarter: { cards, ...o } }).success;
+    expect(starter({})).toBe(true);
+    expect(starter({ hp: 20 })).toBe(false);
+    expect(starter({ baseActionValue: 10 })).toBe(false);
   });
 
   it('id と参照（nextNodeId・endingId）は空文字だと失敗する', () => {

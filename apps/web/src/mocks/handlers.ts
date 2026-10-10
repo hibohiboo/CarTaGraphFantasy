@@ -10,7 +10,13 @@ import {
   validatePriority,
 } from '@cartagraph/domain/autoCombat/resolve';
 import type { CardDef } from '@cartagraph/domain/card/model';
-import { basicPool, pickCards } from '@cartagraph/domain/character/creation';
+import {
+  abilitiesValid,
+  basicPool,
+  creationStats,
+  defaultAbilities,
+  pickCards,
+} from '@cartagraph/domain/character/creation';
 import type { Character } from '@cartagraph/domain/character/model';
 import { addEnding } from '@cartagraph/domain/scenario/edit';
 import { safeParseScenarioFile, toScenarioFile } from '@cartagraph/domain/scenario/file';
@@ -79,11 +85,12 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
  */
 const creationPool = () => [...basicPool(characterCreation, systemCards), ...fx.unlockedPool];
 
-/** 能力値を持って作ったときの HP（rules/character-creation.json の initialHp。仮ルール） */
-const initialHp = () => ({
-  current: characterCreation.initialHp,
-  max: characterCreation.initialHp,
-});
+/** 体・技・心の3つの数を持つオブジェクトか（abilitiesValid に渡す前に形を見る。null・文字列で例外にしない） */
+function isAbilitiesShape(v: unknown): v is Character['abilities'] {
+  if (typeof v !== 'object' || v === null) return false;
+  const o = v as Record<string, unknown>;
+  return (['body', 'skill', 'mind'] as const).every((k) => typeof o[k] === 'number');
+}
 
 let db: Db = createDb();
 
@@ -309,7 +316,9 @@ function autoApproveProposal(s: Session, p: Proposal) {
 }
 
 /**
- * starter はシナリオの「ソロ開始時の初期装備」（docs/cartagraph/auto-combat.md「初期装備」、仮ルール）。
+ * 名前だけで始めるソロ開始の PC。能力値は合計を体・技・心に均等に配り（defaultAbilities）、HP・行動値は作成の
+ * ルールから（どちらも仮ルール。docs/provisional/character-creation.md）。
+ * starter はシナリオの「ソロ開始時の初期装備」（docs/cartagraph/auto-combat.md「初期装備」、仮ルール。カードだけ）。
  * CP予算の外にある無償配布なので cp.spent は増やさない。
  */
 function buildSoloCharacter(name: string, starter?: Scenario['soloStarter']): Character | null {
@@ -320,10 +329,7 @@ function buildSoloCharacter(name: string, starter?: Scenario['soloStarter']): Ch
     name: trimmed,
     ownerId: fx.me.id,
     ownerName: fx.me.name,
-    ...(starter && {
-      hp: { current: starter.hp, max: starter.hp },
-      baseActionValue: starter.baseActionValue,
-    }),
+    ...creationStats(characterCreation, defaultAbilities(characterCreation.abilities)),
     deck: starter ? clone(starter.cards) : [],
     titles: [],
     endingTags: [],
@@ -653,13 +659,14 @@ export const handlers = [
       budget: characterCreation.cpBudget,
       abilities: characterCreation.abilities,
       initialHp: characterCreation.initialHp,
+      initialBaseActionValue: characterCreation.initialBaseActionValue,
     }),
   ),
 
   http.post('/api/characters', async ({ request }) => {
     const body = (await request.json()) as {
       name: string;
-      abilities?: Character['abilities'];
+      abilities?: unknown;
       cardIds: string[];
     };
     // カード一覧は resetDb() で戻らないので、デッキには複製を入れる（pickCards）
@@ -674,13 +681,22 @@ export const handlers = [
     }
     if (!body.name.trim())
       return HttpResponse.json({ message: '名前を入力してください' }, { status: 422 });
+    // どの PC も能力値を持つ（character-growth.md「PCが持つデータ」）。配分は仮ルール
+    const { abilities } = body;
+    if (!isAbilitiesShape(abilities))
+      return unprocessable('能力値（体・技・心）を数で送ってください');
+    if (!abilitiesValid(abilities, characterCreation.abilities)) {
+      const { total, min, max } = characterCreation.abilities;
+      return unprocessable(
+        `能力値の配分がルール（合計${total}・どれも${min}〜${max}の整数。仮ルール）に合いません`,
+      );
+    }
     const ch: Character = {
       id: nextId('pc'),
       name: body.name.trim(),
       ownerId: fx.me.id,
       ownerName: fx.me.name,
-      abilities: body.abilities,
-      hp: body.abilities ? initialHp() : undefined,
+      ...creationStats(characterCreation, abilities),
       deck,
       titles: [],
       endingTags: [],
@@ -691,20 +707,18 @@ export const handlers = [
     return HttpResponse.json(ch, { status: 201 });
   }),
 
-  // チュートリアル（docs/plans/2026-09-22-チュートリアル導線.md）が、Step0で作ったPCへ
-  // ステップごとに段階的に反映するためのPATCH。cp.spent はdeck全体から毎回再計算する
+  // チュートリアル（docs/plans/2026-09-22-チュートリアル導線.md）が、作ったPCへカードを
+  // ステップごとに足すためのPATCH。cp.spent はdeck全体から毎回再計算する
   // （POSTハンドラと同じ予算チェックを、複数回に分けて行う形）。
+  // 能力値・HP・行動値は作成したときに決まるので、受け付けない（何も書き換えずに 422）
   http.patch('/api/characters/:id', async ({ params, request }) => {
     const ch = db.characters.find((c) => c.id === params.id);
     if (!ch) return notFound('キャラクター');
-    const body = (await request.json()) as {
-      abilities?: Character['abilities'];
+    const body = ((await request.json()) ?? {}) as Record<string, unknown> & {
       addCardIds?: string[];
     };
-    if (body.abilities) {
-      ch.abilities = body.abilities;
-      ch.hp = initialHp();
-    }
+    if (['abilities', 'hp', 'baseActionValue'].some((k) => k in body))
+      return unprocessable('能力値・HP・行動値は、作成したあとで変えられません');
     if (body.addCardIds?.length) {
       const added = pickCards(creationPool(), body.addCardIds);
       if (added.length !== body.addCardIds.length) {
@@ -757,7 +771,7 @@ export const handlers = [
       if (reason) return unprocessable(reason);
       if (card.soloEffect) {
         if (!character) return notFound('キャラクター');
-        const r = applySoloEffect(character, card.soloEffect, scenario?.soloGrowth, {
+        const r = applySoloEffect(character, card.soloEffect, {
           cards: systemCards,
           abilityMax: characterCreation.abilities.max,
         });
@@ -1084,8 +1098,7 @@ export const handlers = [
     const character = db.characters.find((c) => c.id === driver?.characterId);
     if (!character) return notFound('キャラクター');
     const cannot = canFight(character);
-    if (cannot || !character.hp || !character.baseActionValue)
-      return unprocessable(`${character.name}は${cannot ?? '戦えません'}`);
+    if (cannot) return unprocessable(`${character.name}は${cannot}`);
 
     // 本文は優先順位の各行（カードIDと使う条件）。条件の検査はドメインの validatePriority に任せる
     const body = (await request.json()) as {

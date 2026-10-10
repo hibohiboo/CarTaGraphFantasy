@@ -1,5 +1,4 @@
-import { deriveArchetype } from '@cartagraph/domain/character/archetype';
-import { ARCHETYPE_LABEL, type Character } from '@cartagraph/domain/character/model';
+import type { Character } from '@cartagraph/domain/character/model';
 import { useNavigate } from 'react-router';
 import { CardGrid, GameCard } from '@/entities/card/ui/GameCard';
 import { useCharacters } from '@/entities/character/api/queries';
@@ -53,10 +52,9 @@ export function CharacterListPage() {
 
 function CharacterCard({ c }: { c: Character }) {
   const navigate = useNavigate();
-  const archetype = ARCHETYPE_LABEL[deriveArchetype(c)];
   return (
     <GameCard
-      card={{ kind: 'character', name: c.name, description: `${archetype}／${c.ownerName}` }}
+      card={{ kind: 'character', name: c.name, description: c.ownerName }}
       portrait
       showDescription
       fluid

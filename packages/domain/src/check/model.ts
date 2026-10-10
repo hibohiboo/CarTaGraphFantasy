@@ -3,10 +3,10 @@
 
 import { z } from 'zod';
 
-/** 探索者の能力値のキー（docs/cartagraph/check.md）。Abilities のキーと一致させる */
+/** 能力値のキー（docs/cartagraph/check.md）。Abilities のキーと一致させる */
 export const abilityKeySchema = z.enum(['body', 'skill', 'mind']);
 
-/** 探索者の能力値（docs/cartagraph/check.md） */
+/** 能力値（docs/cartagraph/check.md） */
 export interface Abilities {
   body: number; // 体
   skill: number; // 技

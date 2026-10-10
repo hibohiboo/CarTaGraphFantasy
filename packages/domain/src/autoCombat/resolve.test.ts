@@ -232,18 +232,39 @@ describe('resolveAutoCombat', () => {
       ).toBeNull();
     });
 
-    it('HPが無ければ理由を返す', () => {
-      expect(canFight({ baseActionValue: 5, deck: [fightable] })).toMatch(/HP/);
+    // HP・行動値はどの PC も持つ（docs/cartagraph/character-growth.md「PCが持つデータ」）。
+    // ここで見るのは、カウント制で使える値（1以上の整数）かどうか
+    const HP_REASON = 'HPが1以上の整数でないため戦えません';
+    const ACTION_REASON = '行動値が1以上の整数でないため戦えません';
+
+    it.each([0, 0.5])('HP の最大が %s なら戦えない', (max) => {
+      expect(canFight({ hp: { current: max, max }, baseActionValue: 5, deck: [fightable] })).toBe(
+        HP_REASON,
+      );
     });
 
-    it('行動値が無ければ理由を返す', () => {
-      expect(canFight({ hp: { current: 5, max: 5 }, deck: [fightable] })).toMatch(/行動値/);
+    it.each([0, 0.5])('行動値が %s なら戦えない', (baseActionValue) => {
+      expect(canFight({ hp: { current: 5, max: 5 }, baseActionValue, deck: [fightable] })).toBe(
+        ACTION_REASON,
+      );
+    });
+
+    it('HP の最大1・行動値1なら戦える', () => {
+      expect(
+        canFight({ hp: { current: 1, max: 1 }, baseActionValue: 1, deck: [fightable] }),
+      ).toBeNull();
+    });
+
+    it('現在の HP が0でも、最大が1以上なら戦える（戦闘は最大値から始める）', () => {
+      expect(
+        canFight({ hp: { current: 0, max: 5 }, baseActionValue: 5, deck: [fightable] }),
+      ).toBeNull();
     });
 
     it('自動戦闘の効果を持つカードが1枚も無ければ理由を返す', () => {
       expect(
         canFight({ hp: { current: 5, max: 5 }, baseActionValue: 5, deck: [card('剣', undefined)] }),
-      ).toMatch(/カード/);
+      ).toBe('自動戦闘に使えるカードを1枚も持っていないため戦えません');
     });
   });
 

@@ -1,7 +1,5 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
-import { deriveArchetype } from '@cartagraph/domain/character/archetype';
 import type { Character } from '@cartagraph/domain/character/model';
-import { ARCHETYPE_LABEL } from '@cartagraph/domain/character/model';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { CardGrid, GameCard } from '@/entities/card/ui/GameCard';
@@ -11,6 +9,7 @@ import s from '@/shared/ui/page.module.css';
 import { Button, ErrorNote, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 import { NameProposal } from '@/widgets/play-screen/ui/NameProposal';
 import { HandDock, Table } from '@/widgets/play-screen/ui/play';
+import { ABILITY_PRESETS } from '../model/presets';
 import { PlayMat, type PlayMatZone } from './PlayMat';
 
 type Step = 'name' | 'training' | 'ability' | 'gear' | 'resolve' | 'done';
@@ -23,25 +22,9 @@ type Line = {
   hint?: string;
 };
 
-/**
- * 体技心の配分方法は正式仕様として未決（docs/provisional/character-creation.md）。
- * ここでは3択の固定プリセットという、このチュートリアル固有の仮ルールで進める
- * （CharacterCreatePageの「合計を範囲内で自由配分」とは別の仮ルール。合計は rules/character-creation.json の
- * abilities.total（いまは9）に揃えている）。
- */
-const ABILITY_PRESETS: {
-  id: string;
-  name: string;
-  abilities: NonNullable<Character['abilities']>;
-}[] = [
-  { id: 'preset-body', name: '力自慢', abilities: { body: 5, skill: 2, mind: 2 } },
-  { id: 'preset-skill', name: '身軽さ', abilities: { body: 2, skill: 5, mind: 2 } },
-  { id: 'preset-mind', name: '知恵者', abilities: { body: 2, skill: 2, mind: 5 } },
-];
-
 /** 基本カードプールの既存カードから、旅装として渡す3枚（いずれもCP1） */
 const GEAR_CARD_IDS = ['c-lantern', 'c-lockpick', 'c-charm'];
-/** 「戦う覚悟」を選んだときに渡す戦闘スキルカード（このカードを持つとderiveArchetypeが'adventurer'を返す） */
+/** 冒険者として登録するときに、登録の記念に授かる最初の戦闘スキルカード */
 const COMBAT_CARD_ID = 'c-slash';
 
 const choiceCard = (id: string, name: string): CardDef => ({ id, kind: 'choice', name, tags: [] });
@@ -65,7 +48,7 @@ const SCENE_CARD: CardDef = {
   id: 'scene-departure',
   kind: 'scene',
   name: '旅立ちの夜',
-  description: '新しい旅人が名乗りを上げる、酒場の夜',
+  description: '新しい冒険者が名乗りを上げる、酒場の夜',
   tags: [],
 };
 const LOCATION_CARD: CardDef = {
@@ -102,7 +85,7 @@ const ABILITY_LINES: Line[] = [
   {
     speakerCard: NPC_CARD,
     flavor: 'なら、お前さんの得意はどれだ',
-    hint: '体技心の配分方法はここだけの仮ルール',
+    hint: '体技心の配分方法はここだけの仮ルール。HP・行動値も仮ルール',
   },
 ];
 const GEAR_LINES: Line[] = [{ speakerCard: NPC_CARD, flavor: '旅には何か持たせてやろう' }];
@@ -121,9 +104,10 @@ const RESOLVE_LINES: Line[] = [
  * 入口からのチュートリアル（docs/plans/2026-09-22-チュートリアル導線.md）。
  * NPCとの短い問答を進めるうちに実際のキャラクターができる。セッションモデルは使わず、
  * ここだけで完結するローカルなstateマシン。常に最後（冒険者登録）まで一本道で進む
- * （2026-09-22ユーザー指摘：離脱の選択肢は廃止した）。各選択はステップごとにサーバーへ
- * 保存するため、ブラウザを閉じる等で途中離脱した場合は、それまでの入力だけが反映された
- * 「旅人」または「探索者」のキャラクターが結果的に残る。
+ * （2026-09-22ユーザー指摘：離脱の選択肢は廃止した）。名乗った名前は画面の状態に持ち、
+ * 得意の3択で初めてキャラクターを保存する（どの PC も作成したときから能力値・HP・行動値を持つため。
+ * docs/plans/2026-10-10-冒険者だけにする.md E8）。以降の選択（旅装・登録の斬撃）はステップごとに
+ * カードを足して保存するので、途中で離脱すると、それまでのカードだけを持つキャラクターが残る。
  */
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 // biome-ignore lint/complexity/noExcessiveLinesPerFunction: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
@@ -147,8 +131,8 @@ export function TutorialPage() {
   const [log, setLog] = useState<Line[]>([]);
   const [loggedLineKey, setLoggedLineKey] = useState<string | null>(null);
   const [showLog, setShowLog] = useState(false);
-  // 完了時のロール（旅人／探索者／冒険者）は専用の状態フラグを持たず、サーバーが返した実際の
-  // Character（abilities・deck）から都度 deriveArchetype で導出する（docs/cartagraph/scenario-type.md）。
+  // 名乗った名前（得意の3択でキャラクターを作るまで保存しない）
+  const [pendingName, setPendingName] = useState('');
   const [character, setCharacter] = useState<Character | null>(null);
   // 選択のたびにサーバーへ保存するため、応答が返るまで次の選択を受け付けない
   // （connectedな連打でも二重に mutate が発火しないようにする、React の再描画を待たない同期ガード）。
@@ -225,26 +209,15 @@ export function TutorialPage() {
   ];
 
   const startJourney = (name: string) => {
-    if (busy) return;
-    setBusy(true);
-    create.mutate(
-      { name, abilities: undefined, cardIds: [] },
-      {
-        onSuccess: (ch) => {
-          setCharacter(ch);
-          setStep('training');
-          setBusy(false);
-        },
-        onError: () => setBusy(false),
-      },
-    );
+    setPendingName(name);
+    setStep('training');
   };
 
   const choosePreset = (preset: (typeof ABILITY_PRESETS)[number]) => {
-    if (!character || busy) return;
+    if (character || busy) return;
     setBusy(true);
-    update.mutate(
-      { id: character.id, patch: { abilities: preset.abilities } },
+    create.mutate(
+      { name: pendingName, abilities: preset.abilities, cardIds: [] },
       {
         onSuccess: (ch) => {
           setCharacter(ch);
@@ -360,7 +333,7 @@ export function TutorialPage() {
 
         {step === 'name' && atLastLine && (
           <div className={s.form}>
-            <NameProposal busy={busy} error={create.error} onSubmit={startJourney} />
+            <NameProposal busy={busy} onSubmit={startJourney} />
           </div>
         )}
 
@@ -378,7 +351,7 @@ export function TutorialPage() {
               }}
               disabled={busy}
             />
-            {update.error && <ErrorNote error={update.error} />}
+            {create.error && <ErrorNote error={create.error} />}
           </>
         )}
 
@@ -417,9 +390,7 @@ export function TutorialPage() {
 
         {step === 'done' && character && (
           <div className={s.form}>
-            <p>
-              あなたは<strong>{ARCHETYPE_LABEL[deriveArchetype(character)]}</strong>として旅立った。
-            </p>
+            <p>冒険者として旅立った。</p>
             <Button onClick={() => navigate(`/pl/characters/${character.id}`)}>
               キャラクターシートへ
             </Button>

@@ -6,6 +6,7 @@ import type { CardDef } from '../card/model';
 import {
   abilitiesValid,
   basicPool,
+  creationStats,
   defaultAbilities,
   loadRules,
   parseCharacterCreationRules,
@@ -30,7 +31,8 @@ const raw = (o: Record<string, unknown> = {}) => ({
   basicPoolCardIds: ['c-b', 'c-a'],
   cpBudget: 5,
   abilities: { total: 9, min: 1, max: 5 },
-  initialHp: 14,
+  initialHp: 20,
+  initialBaseActionValue: 10,
   ...o,
 });
 const parse = (o: Record<string, unknown> = {}) => parseCharacterCreationRules(PATH, raw(o), cards);
@@ -49,6 +51,7 @@ describe('parseCharacterCreationRules', () => {
     ['total == 3×max', abilities({ total: 15 })],
     ['cpBudget = 1', { cpBudget: 1 }],
     ['initialHp = 1', { initialHp: 1 }],
+    ['initialBaseActionValue = 1', { initialBaseActionValue: 1 }],
   ])('境界の内側は通る：%s', (_, o) => {
     expect(() => parse(o)).not.toThrow();
   });
@@ -65,13 +68,15 @@ describe('parseCharacterCreationRules', () => {
     ['max が整数でない', abilities({ max: 5.5 })],
     ['cpBudget: 0', { cpBudget: 0 }],
     ['initialHp: 0', { initialHp: 0 }],
+    ['initialBaseActionValue: 0', { initialBaseActionValue: 0 }],
+    ['initialBaseActionValue が整数でない', { initialBaseActionValue: 9.5 }],
     ['知らないキー', { initalHp: 14 }],
     ['abilities の知らないキー', abilities({ mx: 5 })],
   ])('止まる（パスつき）：%s', (_, o) => {
     expect(() => parse(o)).toThrow(/rules\/character-creation\.json/);
   });
 
-  it.each(['basicPoolCardIds', 'cpBudget', 'abilities', 'initialHp'])(
+  it.each(['basicPoolCardIds', 'cpBudget', 'abilities', 'initialHp', 'initialBaseActionValue'])(
     '必須キー %s が欠けたら止まる',
     (key) => {
       const r: Record<string, unknown> = raw();
@@ -138,6 +143,25 @@ describe('defaultAbilities', () => {
   ])('合計 %o を3つにできるだけ均等に配り、余りは体から', (a, expected) => {
     expect(defaultAbilities(a)).toEqual(expected);
     expect(abilitiesValid(expected, a)).toBe(true);
+  });
+});
+
+describe('creationStats（作成時の値。仮ルール）', () => {
+  // 20・10（いまの rules/）と区別するため、別の値のルールで確かめる
+  const rules = parse({ initialHp: 7, initialBaseActionValue: 3 });
+
+  it('HP は current = max = initialHp、行動値は initialBaseActionValue', () => {
+    const stats = creationStats(rules, { body: 5, skill: 3, mind: 1 });
+    expect(stats.hp).toEqual({ current: 7, max: 7 });
+    expect(stats.baseActionValue).toBe(3);
+  });
+
+  it('能力値は渡したものの複製（書き換えても元が変わらない）', () => {
+    const given = { body: 5, skill: 3, mind: 1 };
+    const stats = creationStats(rules, given);
+    expect(stats.abilities).toEqual(given);
+    stats.abilities.body = 1;
+    expect(given.body).toBe(5);
   });
 });
 

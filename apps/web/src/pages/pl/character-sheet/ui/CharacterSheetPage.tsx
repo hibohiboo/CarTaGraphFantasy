@@ -1,20 +1,9 @@
-import { deriveArchetype } from '@cartagraph/domain/character/archetype';
-import { ARCHETYPE_LABEL } from '@cartagraph/domain/character/model';
 import { Link, useParams } from 'react-router';
 import { CardGrid, GameCard } from '@/entities/card/ui/GameCard';
 import { useCharacter } from '@/entities/character/api/queries';
 import { useMe } from '@/entities/user/api/queries';
 import s from '@/shared/ui/page.module.css';
-import {
-  Chip,
-  ChipGroup,
-  ErrorNote,
-  Loading,
-  PageHeader,
-  Panel,
-  Pips,
-  RoleBadge,
-} from '@/shared/ui/ui';
+import { Chip, ChipGroup, ErrorNote, Loading, PageHeader, Panel, Pips } from '@/shared/ui/ui';
 
 export function CharacterSheetPage() {
   const { characterId = '' } = useParams();
@@ -24,7 +13,6 @@ export function CharacterSheetPage() {
   if (character.isPending) return <Loading />;
   if (character.error) return <ErrorNote error={character.error} />;
   const c = character.data;
-  const archetype = deriveArchetype(c);
   const isMine = c.ownerId === me.data?.id;
 
   return (
@@ -37,12 +25,11 @@ export function CharacterSheetPage() {
             <Link to="/pl/characters">キャラクター一覧へ戻る</Link>
           </>
         }
-        actions={<RoleBadge badgeRole="pl">{ARCHETYPE_LABEL[archetype]}</RoleBadge>}
       />
       <div className={s.twoCol}>
         <aside className="u-stack">
           <GameCard
-            card={{ kind: 'character', name: c.name, description: ARCHETYPE_LABEL[archetype] }}
+            card={{ kind: 'character', name: c.name, description: '冒険者' }}
             portrait
             showDescription
             width={180}
@@ -77,41 +64,24 @@ export function CharacterSheetPage() {
         <div className="u-stack">
           <Panel
             title="能力値"
-            sub={
-              c.abilities
-                ? archetype === 'adventurer'
-                  ? '体・技・心＋2d6で探索判定。戦闘スキルを持つため濃密モードの戦闘にも参加できる。'
-                  : '体・技・心＋2d6で判定する。戦闘スキルはまだ持たないため、濃密モードの戦闘には参加できない。'
-                : '能力値を持たない旅人。選択肢を選ぶだけで進むビジュアルノベル的なシナリオに参加できる。'
-            }
+            sub="体・技・心＋2d6で判定する。戦闘スキルを持てば濃密モードの戦闘で使える。"
           >
-            {c.abilities && (
-              <>
-                {(['body', 'skill', 'mind'] as const).map((k) => (
-                  <div key={k} className={s.abilityRow}>
-                    <span>{{ body: '体', skill: '技', mind: '心' }[k]}</span>
-                    <Pips
-                      value={c.abilities![k]}
-                      label={{ body: '体', skill: '技', mind: '心' }[k]}
-                    />
-                  </div>
-                ))}
-                {c.hp && (
-                  <div className={s.abilityRow}>
-                    <span>HP</span>
-                    <strong className="u-num">
-                      {c.hp.current} / {c.hp.max}
-                    </strong>
-                  </div>
-                )}
-                {c.baseActionValue !== undefined && (
-                  <div className={s.abilityRow}>
-                    <span>基本行動値</span>
-                    <strong className="u-num">{c.baseActionValue}</strong>
-                  </div>
-                )}
-              </>
-            )}
+            {(['body', 'skill', 'mind'] as const).map((k) => (
+              <div key={k} className={s.abilityRow}>
+                <span>{{ body: '体', skill: '技', mind: '心' }[k]}</span>
+                <Pips value={c.abilities[k]} label={{ body: '体', skill: '技', mind: '心' }[k]} />
+              </div>
+            ))}
+            <div className={s.abilityRow}>
+              <span>HP</span>
+              <strong className="u-num">
+                {c.hp.current} / {c.hp.max}
+              </strong>
+            </div>
+            <div className={s.abilityRow}>
+              <span>基本行動値</span>
+              <strong className="u-num">{c.baseActionValue}</strong>
+            </div>
           </Panel>
           <Panel
             title="所持デッキ"
