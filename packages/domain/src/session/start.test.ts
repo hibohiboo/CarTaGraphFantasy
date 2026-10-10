@@ -254,7 +254,7 @@ describe('checkResume（中断したセッションを再開できるか。docs/
       });
   });
 
-  it('無反応による中断は、再開のしかたが未決なので 422（open-questions「無反応による中断の再開」）', () => {
+  it('無反応による中断は、まだ実装していないので 422', () => {
     expect(checkResume(session({ suspendedFor: 'inactivity' }), 'u-me')).toEqual({
       ok: false,
       status: 422,

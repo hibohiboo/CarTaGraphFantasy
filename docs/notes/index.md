@@ -35,6 +35,7 @@
 | P. キャラクターの成長とキャラメイク（CP制） | [キャラクターの成長とキャラメイク（CP制）](../cartagraph/character-growth.md) | [ノート](character-growth.md) |
 | Q. 数値バランスの相場観 | [数値バランスの相場観](../cartagraph/balance.md) | [ノート](balance.md) |
 | R. 技術スタック | [技術スタック](../architecture/index.md) | （開発のページ。ゲームの仕様ではない） |
+| 無反応による中断の再開 | [非同期セッションの進行](../cartagraph/party-and-session.md#非同期セッションの進行) | [ノート](party-and-session.md#中断を終了から一時停止に変えた経緯) |
 
 ## ノートの一覧
 
