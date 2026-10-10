@@ -1,0 +1,748 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>カルタグラフ ティザー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* 単一の夜の世界（暗色で固定）。舞台は 16:9（スマホは 3:4）の映写幕、背景に「発見したつながり」の星図が育っていく */
+:root {
+  --night: #0a1316;
+  --night-2: #10201f;
+  --ivory: #ece3cc;
+  --ink: #231d16;
+  --brass: #c9a24f;
+  --brass-dim: #8a6a2c;
+  --verd: #63a091;
+  --ember: #d4643c;
+  --mist: #a9b9b4;
+  --f-display: "Shippori Mincho B1", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+  color-scheme: dark;
+}
+html, body { background: var(--night); color: var(--ivory); }
+body { font-family: var(--f-body); padding-inline: 16px; padding-block: 24px 40px; }
+.wrap { max-width: 1120px; margin-inline: auto; display: grid; gap: 14px; }
+
+/* ── 舞台 ── */
+.stage {
+  position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+  container-type: inline-size; border-radius: 6px; cursor: pointer;
+  background: radial-gradient(120% 90% at 50% 40%, var(--night-2), var(--night) 70%);
+  box-shadow: 0 0 0 1px rgba(201,162,79,.18), 0 30px 80px rgba(0,0,0,.5);
+  user-select: none;
+}
+.stage:focus-visible { outline: 2px solid var(--brass); outline-offset: 4px; }
+#sky { position: absolute; inset: 0; width: 100%; height: 100%; }
+.vignette { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(100% 80% at 50% 45%, transparent 55%, rgba(0,0,0,.55)); }
+.layer { position: absolute; inset: 0; --u: 1cqw; }
+@media (max-width: 680px) {
+  .stage { aspect-ratio: 3 / 4; }
+  .layer { --u: calc(100cqw / 56); }
+}
+
+.scene { position: absolute; inset: 0; opacity: 0; visibility: hidden;
+  transition: opacity .8s ease, visibility .8s; }
+.scene.on { opacity: 1; visibility: visible; }
+.stage.instant *, .stage.instant { transition: none !important; animation: none !important; }
+
+/* 段階で出入りする要素 */
+[data-at] { opacity: 0; transition: opacity .7s ease, transform .9s cubic-bezier(.2,.7,.2,1), left .9s cubic-bezier(.5,0,.2,1), top .9s cubic-bezier(.5,0,.2,1), filter .6s; }
+[data-at].vis { opacity: 1; }
+.rise { transform: translateY(calc(var(--u) * 2.5)); }
+.rise.vis { transform: none; }
+.pop { transform: scale(.86) rotate(-3deg); }
+.pop.vis { transform: none; }
+.stamp { transform: scale(1.7) rotate(-8deg); }
+.stamp.vis { transform: rotate(-4deg); transition-timing-function: ease, cubic-bezier(.3,1.6,.5,1); transition-duration: .35s, .45s; }
+.vis.dim { opacity: .28; filter: saturate(.3); }
+
+/* 位置決め：translate で中心合わせ（transform はアニメ用に空ける） */
+.p { position: absolute; left: var(--x, 50%); top: var(--y, 50%); translate: -50% -50%; }
+@media (max-width: 680px) { .p { left: var(--xn, var(--x, 50%)); top: var(--yn, var(--y, 50%)); } }
+.p.played { left: 50%; top: 33%; }
+.p.todeck { left: var(--dx, 64%); top: 46%; transform: rotate(6deg) scale(.92); opacity: 0; transition-delay: 0s, 0s, 0s, 0s; }
+@media (max-width: 680px) { .p.todeck { left: 70%; } }
+
+/* ── 字幕 ── */
+.cap { position: absolute; left: 6%; right: 6%; bottom: 7%; text-align: center;
+  font-family: var(--f-display); font-weight: 700; font-size: calc(var(--u) * 2.35);
+  line-height: 1.5; letter-spacing: .06em; text-wrap: balance;
+  text-shadow: 0 2px 18px rgba(0,0,0,.8); }
+.cap small { display: block; font-family: var(--f-body); font-weight: 400; font-size: .56em;
+  letter-spacing: .12em; color: var(--mist); margin-top: .4em; }
+.banner { text-align: center; white-space: nowrap; }
+.banner .kick { font-size: calc(var(--u) * 1.05); letter-spacing: .3em; color: var(--brass); }
+.banner .head { font-family: var(--f-display); font-weight: 800; font-size: calc(var(--u) * 2.6); letter-spacing: .08em; margin-top: .2em; }
+.banner .head.burn { color: var(--ember); }
+
+/* ── カード ── */
+.card { --w: 14; width: calc(var(--u) * var(--w)); aspect-ratio: 5 / 7;
+  font-size: calc(var(--u) * var(--w) * .075); perspective: 60em; }
+.inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
+  transition: transform 1s cubic-bezier(.4,.1,.2,1); }
+.card.flip .inner { transform: rotateY(180deg); }
+.side { position: absolute; inset: 0; border-radius: .7em; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+.face {
+  background: linear-gradient(170deg, #f3ebd6, var(--ivory) 55%, #ddd0b1);
+  color: var(--ink); padding: 1em 1em .9em; display: flex; flex-direction: column; gap: .45em;
+  box-shadow: inset 0 0 0 .22em var(--ivory), inset 0 0 0 .3em var(--brass-dim), 0 1.2em 2.4em rgba(0,0,0,.45);
+}
+.flipper .face { transform: rotateY(180deg); }
+.back {
+  background:
+    radial-gradient(circle, rgba(201,162,79,.55) 0 .14em, transparent .17em) 0 0 / 1.5em 1.5em,
+    linear-gradient(160deg, #1b4441, #0c2325);
+  box-shadow: inset 0 0 0 .4em #0c2325, inset 0 0 0 .5em var(--brass), 0 1.2em 2.4em rgba(0,0,0,.45);
+  display: grid; place-items: center;
+}
+.back::after { content: ""; width: 34%; aspect-ratio: 1; transform: rotate(45deg);
+  border: .18em solid var(--brass); box-shadow: 0 0 0 .5em rgba(201,162,79,.18), inset 0 0 1.4em rgba(201,162,79,.35);
+  background: #0c2325; }
+.back .q { position: absolute; font-family: var(--f-display); font-weight: 800; font-size: 3em; color: var(--brass); z-index: 1; }
+.kind { font-size: .68em; letter-spacing: .22em; color: var(--brass-dim); font-weight: 700; }
+.name { font-family: var(--f-display); font-weight: 800; font-size: 1.45em; line-height: 1.25; letter-spacing: .04em; text-wrap: balance; }
+.rule { height: .12em; background: linear-gradient(90deg, var(--brass-dim), transparent); }
+.txt { margin: 0; font-size: .92em; line-height: 1.6; }
+.tags { margin-top: auto; display: flex; flex-wrap: wrap; gap: .35em; }
+.tag { font-size: .68em; padding: .2em .6em; border-radius: 1em; background: rgba(35,29,22,.08); color: var(--brass-dim); border: 1px solid rgba(138,106,44,.4); white-space: nowrap; }
+.born .face { box-shadow: inset 0 0 0 .22em var(--ivory), inset 0 0 0 .3em var(--brass), 0 0 2.4em rgba(201,162,79,.65), 0 1.2em 2.4em rgba(0,0,0,.45); }
+.born .tag { background: var(--brass); color: var(--ink); border-color: var(--brass); }
+.vis.born { animation: shimmer 2.4s ease-in-out 1; }
+@keyframes shimmer { 0% { filter: brightness(2.2) blur(4px); } 40% { filter: brightness(1.3) blur(0); } 100% { filter: none; } }
+
+/* 吹き出し */
+.bubble { background: var(--ivory); color: var(--ink); font-family: var(--f-display); font-weight: 700;
+  font-size: calc(var(--u) * 1.8); padding: .5em 1em; border-radius: 1.2em; white-space: nowrap; position: absolute; }
+.bubble::after { content: ""; position: absolute; left: 30%; bottom: -.5em; border: .3em solid transparent; border-top: .45em solid var(--ivory); border-bottom: 0; }
+.bubble .who { display: block; font-family: var(--f-body); font-size: .5em; letter-spacing: .2em; color: var(--brass-dim); }
+
+.flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 33%, rgba(255,214,170,.95), rgba(212,100,60,.45) 35%, transparent 70%); pointer-events: none; }
+[data-at].flash { transition: opacity .25s ease; }
+.shake { animation: shake .5s linear 1; }
+@keyframes shake { 0%,100% { transform: none; } 20% { transform: translate(-1.2%, .6%); } 40% { transform: translate(1%, -.8%); } 60% { transform: translate(-.6%, .4%); } 80% { transform: translate(.4%, -.2%); } }
+
+/* 場（ゾーン） */
+.zone { width: calc(var(--u) * 26); height: calc(var(--u) * 30); border: 1px dashed rgba(201,162,79,.45); border-radius: calc(var(--u) * 1); }
+.zone span { position: absolute; top: calc(var(--u) * -1.1); left: 50%; translate: -50% 0; background: var(--night-2); padding: 0 .8em; font-size: calc(var(--u) * 1); letter-spacing: .3em; color: var(--brass); }
+
+/* キャラクターの育ち */
+.roles { position: relative; height: 1.5em; }
+.roles > span { position: absolute; inset: 0; font-family: var(--f-display); font-weight: 800; font-size: 1.1em; color: var(--verd); filter: brightness(.7); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .3em; text-align: center; }
+.stats div { background: rgba(35,29,22,.07); border-radius: .3em; padding: .25em 0; font-size: .82em; }
+.stats b { display: block; font-family: var(--f-display); font-size: 1.5em; line-height: 1.1; }
+.hp { font-size: .82em; display: flex; justify-content: space-between; border-top: 1px solid rgba(138,106,44,.35); padding-top: .3em; }
+.skills { display: flex; gap: .35em; flex-wrap: wrap; }
+.skills .tag { background: var(--ink); color: var(--brass); border-color: var(--ink); font-size: .72em; }
+
+/* 戦闘 */
+.count { text-align: center; }
+.count .lbl { font-size: calc(var(--u) * 1.1); letter-spacing: .35em; color: var(--brass); }
+.count .num { font-family: var(--f-display); font-weight: 800; font-size: calc(var(--u) * 13); line-height: 1; font-variant-numeric: tabular-nums; color: var(--ivory); text-shadow: 0 0 .3em rgba(201,162,79,.35); }
+.count .num.end { font-size: calc(var(--u) * 4); padding-block: .9em; color: var(--mist); }
+.fighters { display: grid; gap: calc(var(--u) * 1.2); width: calc(var(--u) * 30); }
+.fighter { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .3em 1em; padding: .7em 1em;
+  border: 1px solid rgba(201,162,79,.3); border-radius: .5em; font-size: calc(var(--u) * 1.35); background: rgba(10,19,22,.6);
+  transition: background .2s, border-color .2s, transform .2s; }
+.fighter .nm { font-family: var(--f-display); font-weight: 800; font-size: 1.25em; }
+.fighter .av { font-variant-numeric: tabular-nums; color: var(--mist); }
+.fighter .av b { font-family: var(--f-display); font-size: 1.5em; color: var(--ivory); }
+.fighter .tg { grid-column: 1 / -1; font-size: .72em; color: var(--mist); letter-spacing: .1em; }
+.fighter.act { background: rgba(201,162,79,.2); border-color: var(--brass); transform: scale(1.04); }
+.fighter.foe.act { background: rgba(212,100,60,.18); border-color: var(--ember); }
+.log { min-height: 1.6em; font-size: calc(var(--u) * 1.3); color: var(--brass); text-align: center; }
+
+/* タグのチップ */
+.chip { display: grid; gap: .2em; justify-items: center; }
+.chip .k { font-size: calc(var(--u) * .95); letter-spacing: .25em; color: var(--mist); white-space: nowrap; }
+.chip .v { font-family: var(--f-display); font-weight: 800; font-size: calc(var(--u) * 2); padding: .25em .8em; border-radius: 2em; white-space: nowrap;
+  border: 2px solid var(--verd); color: var(--verd); background: rgba(10,19,22,.7); }
+.chip.gold .v { border-color: var(--brass); color: var(--ink); background: var(--brass); font-size: calc(var(--u) * 2.3); box-shadow: 0 0 2em rgba(201,162,79,.45); }
+
+/* 冒険記の比較 */
+.routes { width: 76%; }
+@media (max-width: 680px) { .routes { width: 92%; } }
+.routes svg { width: 100%; height: auto; display: block; overflow: visible; }
+.routes .edge { fill: none; stroke: rgba(169,185,180,.25); stroke-width: .35; }
+.routes .node { fill: var(--night-2); stroke: rgba(169,185,180,.5); stroke-width: .3; }
+.routes text { font-family: var(--f-display); font-weight: 700; font-size: 2.3px; fill: var(--ivory); text-anchor: middle; }
+.routes text.sm { font-family: var(--f-body); font-weight: 400; font-size: 1.7px; fill: var(--mist); }
+.routes .path { fill: none; stroke-width: .8; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 160; stroke-dashoffset: 160; transition: stroke-dashoffset 2.2s ease, opacity .6s; }
+.routes .path.vis { stroke-dashoffset: 0; }
+.routes .you { stroke: var(--brass); }
+.routes .other { stroke: var(--verd); }
+.legend { display: flex; gap: 2.5em; justify-content: center; font-size: calc(var(--u) * 1.2); margin-top: calc(var(--u) * 1); }
+.legend span::before { content: ""; display: inline-block; width: 2em; height: .25em; border-radius: 1em; vertical-align: middle; margin-right: .6em; background: currentColor; }
+.legend .y { color: var(--brass); }
+.legend .o { color: var(--verd); }
+
+/* 進化：デッキと印 */
+.deck { width: calc(var(--u) * 13); aspect-ratio: 5 / 7; position: relative; font-size: calc(var(--u) * 13 * .075); }
+.deck .back { position: absolute; inset: 0; border-radius: .7em; }
+.deck .back:nth-child(1) { transform: translate(.5em, .5em); }
+.deck .back:nth-child(2) { transform: translate(.25em, .25em); }
+.deck .lbl { position: absolute; left: 50%; top: 104%; translate: -50% 0; white-space: nowrap; font-family: var(--f-display); font-weight: 700; font-size: 1.15em; color: var(--brass); }
+.deck .lbl small { display: block; font-family: var(--f-body); font-size: .62em; letter-spacing: .3em; color: var(--mist); text-align: center; }
+.deck.glow .back:nth-child(3) { box-shadow: inset 0 0 0 .4em #0c2325, inset 0 0 0 .5em var(--brass), 0 0 3em rgba(201,162,79,.7); transition: box-shadow .6s; }
+.seal { position: absolute; right: -8%; bottom: 14%; z-index: 2; font-family: var(--f-display); font-weight: 800; font-size: 1.05em;
+  color: var(--ember); border: .18em solid var(--ember); border-radius: .3em; padding: .2em .5em; background: rgba(236,227,204,.85); white-space: nowrap; }
+
+/* タイトル */
+.logo { font-family: var(--f-display); font-weight: 800; font-size: calc(var(--u) * 7.4); letter-spacing: .14em; line-height: 1.1; white-space: nowrap;
+  background: linear-gradient(180deg, #f6e7bf, var(--brass) 60%, #8a6a2c); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 .25em rgba(201,162,79,.35)); }
+.sub-en { font-size: calc(var(--u) * 1.3); letter-spacing: .6em; color: var(--mist); text-align: center; white-space: nowrap; }
+.kicker { font-size: calc(var(--u) * 1.4); letter-spacing: .5em; color: var(--verd); white-space: nowrap; }
+.tagline { font-family: var(--f-display); font-weight: 700; font-size: calc(var(--u) * 2.4); letter-spacing: .1em; white-space: nowrap; }
+.shelf { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(var(--u) * .9); width: calc(var(--u) * 52); }
+.shelf span { font-family: var(--f-display); font-weight: 700; font-size: calc(var(--u) * 1.15); padding: .45em .9em; border-radius: .3em;
+  background: var(--ivory); color: var(--ink); box-shadow: inset 0 0 0 .15em var(--ivory), inset 0 0 0 .22em var(--brass-dim); white-space: nowrap; }
+.again { font: inherit; font-size: calc(var(--u) * 1.2); letter-spacing: .2em; color: var(--brass); background: transparent; border: 1px solid var(--brass); border-radius: 2em; padding: .5em 1.4em; cursor: pointer; }
+.again:hover, .again:focus-visible { background: rgba(201,162,79,.15); outline: none; }
+
+/* ── ポスター（再生前） ── */
+.poster { position: absolute; inset: 0; z-index: 5; display: grid; place-content: center; justify-items: center; gap: calc(var(--u) * 1.6);
+  background: radial-gradient(80% 70% at 50% 50%, rgba(10,19,22,.35), rgba(10,19,22,.85)); }
+.poster .playbig { margin-top: calc(var(--u) * 1.4); font: inherit; font-size: calc(var(--u) * 1.5); letter-spacing: .2em; color: var(--ink); background: var(--brass);
+  border: 0; border-radius: 3em; padding: .7em 1.8em; cursor: pointer; box-shadow: 0 0 2.5em rgba(201,162,79,.4); }
+.poster .playbig:hover, .poster .playbig:focus-visible { background: #e0bb66; outline: none; }
+.poster .note { font-size: calc(var(--u) * 1); color: var(--mist); letter-spacing: .15em; }
+
+/* ── 操作バー ── */
+.bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.btn { font: inherit; font-size: 14px; color: var(--ivory); background: transparent; border: 1px solid rgba(201,162,79,.45); border-radius: 999px; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
+.btn:hover, .btn:focus-visible { border-color: var(--brass); color: var(--brass); outline: none; }
+.btn[aria-pressed="true"] { background: rgba(201,162,79,.18); color: var(--brass); }
+.track { position: relative; flex: 1 1 240px; min-width: 0; height: 22px; cursor: pointer; }
+.track:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; border-radius: 4px; }
+.track .rail { position: absolute; left: 0; right: 0; top: 50%; height: 3px; translate: 0 -50%; background: rgba(169,185,180,.22); border-radius: 3px; }
+.track .fill { position: absolute; left: 0; top: 50%; height: 3px; translate: 0 -50%; background: var(--brass); border-radius: 3px; width: 0; }
+.track .tick { position: absolute; top: 50%; width: 1px; height: 9px; translate: 0 -50%; background: rgba(169,185,180,.5); }
+.time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--mist); white-space: nowrap; }
+.chapters { display: flex; flex-wrap: wrap; gap: 6px; }
+.chapters button { font: inherit; font-size: 13px; color: var(--mist); background: transparent; border: 0; border-bottom: 1px solid transparent; padding: 4px 6px; cursor: pointer; }
+.chapters button:hover, .chapters button:focus-visible { color: var(--ivory); outline: none; border-bottom-color: rgba(201,162,79,.5); }
+.chapters button.cur { color: var(--brass); border-bottom-color: var(--brass); }
+
+@media (prefers-reduced-motion: reduce) {
+  .shake { animation: none; }
+  .vis.born { animation: none; }
+}
+</style>
+
+<div class="wrap">
+  <div class="stage" id="stage" tabindex="0" aria-label="カルタグラフのティザー映像。クリックかスペースキーで再生・一時停止">
+    <canvas id="sky" aria-hidden="true"></canvas>
+    <div class="vignette"></div>
+    <div class="layer" id="layer">
+
+      <!-- 1 世界はカードで出来ている -->
+      <section class="scene" id="s-world">
+        <div class="p card flipper pop" style="--w:18; --y:42%; --yn:40%" data-at="1-" data-add="3:flip">
+          <div class="inner">
+            <div class="side back"></div>
+            <div class="side face">
+              <div class="kind">ロケーション</div>
+              <div class="name">村はずれ</div>
+              <div class="rule"></div>
+              <p class="txt">朝もやの向こうに、畑仕事に出る村人たちと、街へ続く一本道が見える。道の先に冒険者ギルドがあるはずだ。</p>
+              <div class="tags"><span class="tag">村はずれの一歩</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="cap" data-at="2-3">世界は、カードで出来ている。</p>
+        <p class="cap" data-at="4-5">はじまりは、名もない村のはずれ。</p>
+        <p class="cap" data-at="5-">あなたは、まだ何も持たない旅人。<small>手にあるのは、選択肢だけ。</small></p>
+      </section>
+
+      <!-- 2 扉：選ぶ・提案する・世界が変わる -->
+      <section class="scene" id="s-door">
+        <div class="fx" data-at="0-" data-add="8:shake" style="position:absolute; inset:0">
+          <div class="p banner" style="--y:11%" data-at="1-8">
+            <div class="kick">灰色館の一夜 ─ 奥の扉</div>
+            <div class="head">古びた扉を見つけた</div>
+          </div>
+          <div class="p banner" style="--y:11%" data-at="8-">
+            <div class="kick">世界が変わった</div>
+            <div class="head burn">扉が砕け、奥への道がひらく</div>
+          </div>
+
+          <div class="p card rise" style="--w:12; --x:34%; --xn:26.8%; --y:66%; --yn:68%" data-at="2-" data-add="7:dim">
+            <div class="side face">
+              <div class="kind">選択肢</div>
+              <div class="name">扉を開ける</div>
+              <div class="rule"></div>
+              <p class="txt">力をこめて押し開ける。</p>
+              <div class="tags"><span class="tag">体で判定</span></div>
+            </div>
+          </div>
+          <div class="p card rise" style="--w:12; --x:50%; --y:66%; --yn:68%" data-at="3-" data-add="7:dim">
+            <div class="side face">
+              <div class="kind">選択肢</div>
+              <div class="name">扉を調べる</div>
+              <div class="rule"></div>
+              <p class="txt">継ぎ目や鍵穴を、よく確かめる。</p>
+              <div class="tags"><span class="tag">技で判定</span></div>
+            </div>
+          </div>
+
+          <div class="bubble p" style="--x:66%; --xn:70%; --y:44%; --yn:47%" data-at="5-7">
+            <span class="who">あなた</span>……壊してみたい
+          </div>
+
+          <div class="p card born rise" style="--w:12; --x:66%; --xn:73.2%; --y:66%; --yn:68%" data-at="6-" data-add="7:played">
+            <div class="side face">
+              <div class="kind">選択肢</div>
+              <div class="name">扉を壊す</div>
+              <div class="rule"></div>
+              <p class="txt">扉ごと叩き壊して、奥へ進む。</p>
+              <div class="tags"><span class="tag">提案から生まれた</span></div>
+            </div>
+          </div>
+          <div class="flash" data-at="8-9"></div>
+        </div>
+        <p class="cap" data-at="4-5">どう動くかは、手札のカードで決める。</p>
+        <p class="cap" data-at="6-7">選択肢になければ、提案すればいい。<small>その場で、新しいカードが生まれる。</small></p>
+        <p class="cap" data-at="9-">あなたの一手で、世界が変わる。</p>
+      </section>
+
+      <!-- 3 伏せられたカード -->
+      <section class="scene" id="s-secret">
+        <div class="p zone" style="--y:43%; --yn:41%" data-at="1-"><span>場</span></div>
+        <div class="p card flipper pop" style="--w:16; --y:43%; --yn:41%" data-at="1-" data-add="3:flip">
+          <div class="inner">
+            <div class="side back"><span class="q">？</span></div>
+            <div class="side face">
+              <div class="kind">NPC</div>
+              <div class="name">館の老従者</div>
+              <div class="rule"></div>
+              <p class="txt">嵐の夜、灰色館で一行を出迎えた老人。その穏やかな笑みは、何かを隠している。</p>
+              <div class="tags"><span class="tag">灰色館の一夜</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="cap" data-at="2-3">伏せられたカードは、まだ何も語らない。</p>
+        <p class="cap" data-at="4-">条件がそろったとき、カードは表を向く。</p>
+      </section>
+
+      <!-- 4 成長：旅人→探索者→冒険者 -->
+      <section class="scene" id="s-grow">
+        <div class="p card rise" style="--w:12; --x:34%; --xn:26.8%; --y:42%; --yn:40%" data-at="1-5">
+          <div class="side face">
+            <div class="kind">村の依頼</div>
+            <div class="name">畑を荒らす猪</div>
+            <div class="rule"></div>
+            <p class="txt">「夜ごと猪が出て、芋を掘り返していくんだよ」</p>
+          </div>
+        </div>
+        <div class="p card rise" style="--w:12; --x:50%; --y:42%; --yn:40%" data-at="2-5">
+          <div class="side face">
+            <div class="kind">村の依頼</div>
+            <div class="name">壊れた水車</div>
+            <div class="rule"></div>
+            <p class="txt">「軸がずれちまって、粉がひけねえ」</p>
+          </div>
+        </div>
+        <div class="p card rise" style="--w:12; --x:66%; --xn:73.2%; --y:42%; --yn:40%" data-at="3-5">
+          <div class="side face">
+            <div class="kind">村の依頼</div>
+            <div class="name">迷子の子ヤギ</div>
+            <div class="rule"></div>
+            <p class="txt">柵を抜けて丘へ行ったきり、戻らない。</p>
+          </div>
+        </div>
+        <p class="cap" data-at="4-5">村の困りごとを、力で、技で、真心で。</p>
+
+        <div class="p card pop" style="--w:17; --y:42%; --yn:40%" data-at="6-">
+          <div class="side face">
+            <div class="kind">キャラクター</div>
+            <div class="name">ジン</div>
+            <div class="roles">
+              <span data-at="6-7">旅人</span>
+              <span data-at="7-8">探索者</span>
+              <span data-at="8-">冒険者</span>
+            </div>
+            <div class="rule"></div>
+            <div class="stats rise" data-at="7-">
+              <div>体<b>3</b></div><div>技<b>2</b></div><div>心<b>2</b></div>
+            </div>
+            <div class="hp rise" data-at="7-"><span>HP 12</span><span>行動値 13</span></div>
+            <div class="skills rise" data-at="8-"><span class="tag">斬撃</span><span class="tag">素早い突き</span></div>
+          </div>
+        </div>
+        <p class="cap" data-at="6-9">旅人は探索者に、探索者は冒険者に。</p>
+        <p class="cap" data-at="9-">育つほど、行ける冒険が増えていく。</p>
+      </section>
+
+      <!-- 5 仲間 -->
+      <section class="scene" id="s-party">
+        <div class="p card rise" style="--w:11; --x:32%; --xn:16.5%; --y:42%; --yn:40%" data-at="1-">
+          <div class="side face"><div class="kind">キャラクター</div><div class="name">ジン</div><div class="rule"></div><p class="txt">冒険者</p>
+            <div class="tags"><span class="tag">あなたのPC</span></div></div>
+        </div>
+        <div class="p card rise" style="--w:11; --x:44%; --xn:38.8%; --y:42%; --yn:40%" data-at="2-">
+          <div class="side face"><div class="kind">キャラクター</div><div class="name">アカリ</div><div class="rule"></div><p class="txt">探索者</p>
+            <div class="tags"><span class="tag stamp" data-at="5-">友だちから借りた</span></div></div>
+        </div>
+        <div class="p card rise" style="--w:11; --x:56%; --xn:61.2%; --y:42%; --yn:40%" data-at="3-">
+          <div class="side face"><div class="kind">キャラクター</div><div class="name">アキラ</div><div class="rule"></div><p class="txt">冒険者</p>
+            <div class="tags"><span class="tag stamp" data-at="5-">友だちから借りた</span></div></div>
+        </div>
+        <div class="p card rise" style="--w:11; --x:68%; --xn:83.5%; --y:42%; --yn:40%" data-at="4-">
+          <div class="side face"><div class="kind">キャラクター</div><div class="name">ミオ</div><div class="rule"></div><p class="txt">旅人</p>
+            <div class="tags"><span class="tag">あなたのPC</span></div></div>
+        </div>
+        <p class="cap" data-at="5-6">自分のキャラクターも、友だちのキャラクターも連れて。</p>
+        <p class="cap" data-at="6-">集まれる時間がばらばらでも、冒険は一手ずつ進む。</p>
+      </section>
+
+      <!-- 6 戦闘：カウント制 -->
+      <section class="scene" id="s-fight">
+        <div class="p banner" style="--y:11%" data-at="1-">
+          <div class="kick">鉄鎖のガレオン船 ─ 甲板の戦い</div>
+        </div>
+        <div class="p count" style="--x:30%; --xn:50%; --y:45%; --yn:30%" data-at="2-">
+          <div class="lbl">カウント</div>
+          <div class="num" id="countNum">13</div>
+        </div>
+        <div class="p" style="--x:66%; --xn:50%; --y:45%; --yn:62%" data-at="3-">
+          <div class="fighters">
+            <div class="fighter" id="fJin"><span class="nm">ジン</span><span class="av">行動値 <b id="avJin">13</b></span><span class="tg">斬撃（コスト5）・素早い突き（コスト3）</span></div>
+            <div class="fighter foe" id="fFoe"><span class="nm">鎖の亡霊</span><span class="av">行動値 <b id="avFoe">10</b></span><span class="tg">弱点未判明</span></div>
+            <div class="log" id="fLog">&nbsp;</div>
+          </div>
+        </div>
+        <p class="cap" data-at="3-">行動値の高い者から動く。軽い技なら、同じ一巡りにもう一度。</p>
+      </section>
+
+      <!-- 7 結末と称号 -->
+      <section class="scene" id="s-end">
+        <div class="p card pop" style="--w:15; --y:41%; --yn:38%" data-at="1-">
+          <div class="side face">
+            <div class="kind">キャラクター</div>
+            <div class="name">ジン</div>
+            <div class="rule"></div>
+            <p class="txt">冒険者。鎖に繋がれた幽霊船から、生きて戻った。</p>
+            <div class="tags">
+              <span class="tag" data-at="2-">鎖を断った者</span>
+              <span class="tag" data-at="4-">一匹狼</span>
+              <span class="tag" data-at="5-">クール</span>
+              <span class="tag" data-at="6-">ドジっ子</span>
+            </div>
+          </div>
+        </div>
+        <div class="p chip gold stamp" style="--x:22%; --xn:24%; --y:30%; --yn:13%" data-at="2-">
+          <span class="k">結末タグ</span><span class="v">鎖を断った者</span>
+        </div>
+        <div class="p chip stamp" style="--x:78%; --xn:76%; --y:24%; --yn:68%" data-at="4-">
+          <span class="k">称号 ─ アカリより</span><span class="v">一匹狼</span>
+        </div>
+        <div class="p chip stamp" style="--x:80%; --xn:24%; --y:44%; --yn:68%" data-at="5-">
+          <span class="k">称号 ─ アキラより</span><span class="v">クール</span>
+        </div>
+        <div class="p chip stamp" style="--x:76%; --xn:76%; --y:64%; --yn:13%" data-at="6-">
+          <span class="k">称号 ─ ミオより</span><span class="v">ドジっ子</span>
+        </div>
+        <p class="cap" data-at="2-3">たどり着いた結末は、タグになって刻まれる。</p>
+        <p class="cap" data-at="3-">ともに旅した仲間が、称号を贈ってくれることも。</p>
+      </section>
+
+      <!-- 8 冒険記の比較 -->
+      <section class="scene" id="s-compare">
+        <div class="p routes" style="--y:42%; --yn:40%" data-at="1-">
+          <svg viewBox="0 0 100 46" role="img" aria-label="灰色館の一夜を、あなたとほかの誰かが別の道で進んだ図">
+            <path class="edge" d="M8 23 L30 23 L52 23 M52 23 L78 8 M52 23 L78 23 M52 23 L78 38"/>
+            <path class="path you" data-at="2-" d="M8 23 L30 23 L52 23 L78 8"/>
+            <path class="path other" data-at="3-" d="M8 24.2 L30 24.2 L52 24.2 L78 38"/>
+            <circle class="node" cx="8" cy="23" r="1.6"/><circle class="node" cx="30" cy="23" r="1.6"/><circle class="node" cx="52" cy="23" r="1.6"/>
+            <circle class="node" cx="78" cy="8" r="1.6"/><circle class="node" cx="78" cy="23" r="1.6"/><circle class="node" cx="78" cy="38" r="1.6"/>
+            <text x="8" y="19">館の正門</text><text x="30" y="19">地下回廊</text><text x="52" y="19">奥の扉</text>
+            <text x="78" y="4.2">扉を壊して真相へ</text><text class="sm" x="78" y="12.4">館の秘密を知る</text>
+            <text x="78" y="19.2">開けずに引き返す</text><text class="sm" x="78" y="27.4">館に未練を残す</text>
+            <text x="78" y="34.2">老従者と和解する</text><text class="sm" x="78" y="42.4">？？？</text>
+          </svg>
+          <div class="legend"><span class="y">あなたの冒険記</span><span class="o">ほかの誰かの冒険記</span></div>
+        </div>
+        <p class="cap" data-at="2-4">同じ物語を、ほかの誰かはどう歩いたのか。</p>
+        <p class="cap" data-at="4-">冒険記を見せ合えば、知らなかった結末に出会える。</p>
+      </section>
+
+      <!-- 9 あなたの一手が、正式な選択肢に -->
+      <section class="scene" id="s-evolve">
+        <div class="p deck" style="--x:64%; --xn:70%; --y:44%; --yn:42%" data-at="1-" data-add="4:glow">
+          <div class="side back"></div><div class="side back"></div><div class="side back"></div>
+          <div class="lbl"><small>シナリオ</small>灰色館の一夜</div>
+        </div>
+        <div class="p card born pop" style="--w:13; --x:38%; --xn:30%; --y:44%; --yn:42%" data-at="1-" data-add="3:todeck">
+          <div class="side face">
+            <div class="kind">選択肢</div>
+            <div class="name">扉を壊す</div>
+            <div class="rule"></div>
+            <p class="txt">扉ごと叩き壊して、奥へ進む。</p>
+            <div class="tags"><span class="tag">提案から生まれた</span></div>
+          </div>
+          <span class="seal stamp" data-at="2-">正式な選択肢</span>
+        </div>
+        <p class="cap" data-at="1-3">あの夜、あなたが思いついた一手。</p>
+        <p class="cap" data-at="3-">それがいつか、次の誰かの選択肢になる。</p>
+      </section>
+
+      <!-- 10 タイトル -->
+      <section class="scene" id="s-title">
+        <div class="p kicker" style="--y:22%; --yn:24%" data-at="2-">進化するカードTRPG</div>
+        <div class="p logo pop" style="--y:36%; --yn:36%" data-at="1-">カルタグラフ</div>
+        <div class="p sub-en" style="--y:47%; --yn:45%" data-at="3-">CARTAGRAPH FANTASY</div>
+        <div class="p tagline rise" style="--y:58%; --yn:55%" data-at="4-">遊ぶほどに、世界は増えていく。</div>
+        <div class="p shelf rise" style="--y:72%; --yn:70%" data-at="5-">
+          <span>村はずれの一歩</span><span>灰色館の一夜</span><span>鉄鎖のガレオン船</span><span>灯りの回廊・後日談</span>
+        </div>
+        <div class="p" style="--y:87%; --yn:86%" data-at="5-"><button class="again" id="again" type="button">もう一度見る</button></div>
+      </section>
+
+      <div class="poster" id="poster">
+        <div class="kicker">進化するカードTRPG</div>
+        <div class="logo">カルタグラフ</div>
+        <div class="sub-en">CARTAGRAPH FANTASY</div>
+        <button class="playbig" id="playBig" type="button">▶ ティザーを再生</button>
+        <div class="note">約1分40秒 ・ 音は下のボタンで出せます</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <button class="btn" id="playBtn" type="button" aria-label="再生">▶ 再生</button>
+    <div class="track" id="track" role="slider" tabindex="0" aria-label="再生位置" aria-valuemin="0" aria-valuemax="97" aria-valuenow="0">
+      <div class="rail"></div><div class="fill" id="fill"></div>
+    </div>
+    <span class="time" id="time">0:00 / 1:37</span>
+    <button class="btn" id="sndBtn" type="button" aria-pressed="false">音：オフ</button>
+  </div>
+  <nav class="chapters" id="chapters" aria-label="場面へ移動"></nav>
+</div>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const stage = $('#stage');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const TOTAL = 97;
+
+  /* ── 音（再生ボタンを押したあとだけ鳴る） ── */
+  let ac = null, soundOn = false, drone = null;
+  function audio() {
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } }
+    if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
+    return ac;
+  }
+  function chime(f, dur = 1.8, g = .07) {
+    if (!soundOn || !ac) return;
+    const t = ac.currentTime;
+    [[1, 'triangle', g], [2.005, 'sine', g / 3], [3.01, 'sine', g / 8]].forEach(([m, type, gg]) => {
+      const o = ac.createOscillator(), gn = ac.createGain();
+      o.type = type; o.frequency.value = f * m;
+      gn.gain.setValueAtTime(0, t); gn.gain.linearRampToValueAtTime(gg, t + .012);
+      gn.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(gn).connect(ac.destination); o.start(t); o.stop(t + dur + .05);
+    });
+  }
+  function chord(fs) { fs.forEach((f, i) => setTimeout(() => chime(f, 3, .05), i * 90)); }
+  function thud(g = .5) {
+    if (!soundOn || !ac) return;
+    const t = ac.currentTime, len = ac.sampleRate * .6;
+    const buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3;
+    const src = ac.createBufferSource(), lp = ac.createBiquadFilter(), gn = ac.createGain();
+    src.buffer = buf; lp.type = 'lowpass'; lp.frequency.value = 420; gn.gain.value = g;
+    src.connect(lp).connect(gn).connect(ac.destination); src.start(t);
+    const o = ac.createOscillator(), og = ac.createGain();
+    o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(38, t + .5);
+    og.gain.setValueAtTime(g * .8, t); og.gain.exponentialRampToValueAtTime(.0001, t + .6);
+    o.connect(og).connect(ac.destination); o.start(t); o.stop(t + .65);
+  }
+  function droneOn() {
+    if (!soundOn || !ac || drone) return;
+    const g = ac.createGain(); g.gain.value = 0; g.connect(ac.destination);
+    g.gain.linearRampToValueAtTime(.025, ac.currentTime + 2);
+    const os = [110, 164.81, 220.5].map(f => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.connect(g); o.start(); return o; });
+    drone = { g, os };
+  }
+  function droneOff() {
+    if (!drone || !ac) return;
+    const d = drone; drone = null;
+    d.g.gain.cancelScheduledValues(ac.currentTime);
+    d.g.gain.setValueAtTime(d.g.gain.value, ac.currentTime);
+    d.g.gain.linearRampToValueAtTime(0, ac.currentTime + .6);
+    d.os.forEach(o => o.stop(ac.currentTime + .7));
+  }
+
+  /* ── 場面の定義：[id, 開始, 終了, 段階の時刻(場面内), 章名, 段階ごとの音] ── */
+  const defs = [
+    ['s-world', 0, 12, [0.3, 1.0, 4.4, 5.4, 7.6], '世界', { 1: () => chime(392), 3: () => chime(523) }],
+    ['s-door', 12, 29, [0.3, 1.2, 1.6, 2.6, 5.6, 7.4, 10.8, 11.6, 12.4], '扉', { 2: () => chime(440, 1, .05), 3: () => chime(494, 1, .05), 6: () => chord([659, 784, 988]), 7: () => chime(587, 1), 8: () => thud() }],
+    ['s-secret', 29, 37, [0.3, 0.9, 3.6, 4.5], '伏せカード', { 3: () => chime(587) }],
+    ['s-grow', 37, 50, [0.3, 0.9, 1.5, 2.4, 5.0, 5.4, 7.0, 8.6, 10.2], '成長', { 1: () => chime(392, 1, .04), 2: () => chime(440, 1, .04), 3: () => chime(494, 1, .04), 6: () => chime(523), 7: () => chime(587), 8: () => chime(659) }],
+    ['s-party', 50, 58, [0.3, 0.6, 0.9, 1.2, 2.4, 4.4], '仲間', { 1: () => chime(392, 1, .04), 2: () => chime(494, 1, .04), 3: () => chime(587, 1, .04), 4: () => chime(784, 1, .04) }],
+    ['s-fight', 58, 67, [0.3, 0.8, 1.2], '戦闘', {}],
+    ['s-end', 67, 76, [0.3, 1.2, 3.4, 4.0, 4.6, 5.2], '結末', { 2: () => chord([523, 659, 784]), 4: () => chime(698, 1), 5: () => chime(784, 1), 6: () => chime(880, 1) }],
+    ['s-compare', 76, 84, [0.3, 1.0, 3.0, 4.6], '冒険記', { 2: () => chime(440), 3: () => chime(370) }],
+    ['s-evolve', 84, 91, [0.3, 1.2, 2.6, 3.8], '進化', { 2: () => thud(.3), 3: () => chime(659), 4: () => chime(880) }],
+    ['s-title', 91, Infinity, [0.3, 1.4, 2.6, 3.8, 5.0], 'タイトル', { 1: () => chord([392, 494, 587, 784]) }],
+  ];
+  const scenes = defs.map(([id, start, end, steps, label, sfx]) => {
+    const el = document.getElementById(id);
+    return { el, start, end, steps, label, sfx, k: -1,
+      items: [...el.querySelectorAll('[data-at]')].map(e => { const [a, b] = e.dataset.at.split('-'); return { e, a: +a, b: b === '' ? Infinity : +b }; }),
+      adds: [...el.querySelectorAll('[data-add]')].map(e => ({ e, rules: e.dataset.add.split(' ').map(p => { const [n, c] = p.split(':'); return { n: +n, c }; }) })) };
+  });
+
+  /* ── 戦闘のカウント（時刻から決まる） ── */
+  const F = { num: $('#countNum'), jin: $('#fJin'), foe: $('#fFoe'), avJin: $('#avJin'), avFoe: $('#avFoe'), log: $('#fLog'), last: null };
+  const EVENTS = { 13: ['jin', 'ジンの「斬撃」── 行動値 13 → 8'], 10: ['foe', '鎖の亡霊が鎖を振るう ── 行動値 10 → 6'], 8: ['jin', 'ジンの「素早い突き」── 行動値 8 → 5'], 6: ['foe', '鎖の亡霊が鎖を振るう ── 行動値 6 → 2'], 5: ['jin', 'ジンの「素早い突き」── もう一度動ける'] };
+  function fight(local, live) {
+    const started = local >= 1.6;
+    const c = started ? Math.max(0, 13 - Math.floor((local - 1.6) / 0.45)) : 13;
+    F.num.textContent = c === 0 ? 'ターン終了' : c;
+    F.num.classList.toggle('end', c === 0);
+    F.avJin.textContent = !started ? 13 : c > 8 ? 8 : c > 5 ? 5 : 2;
+    F.avFoe.textContent = !started || c > 10 ? 10 : c > 6 ? 6 : 2;
+    const ev = started ? EVENTS[c] : null;
+    F.jin.classList.toggle('act', !!ev && ev[0] === 'jin');
+    F.foe.classList.toggle('act', !!ev && ev[0] === 'foe');
+    let line = ' ';
+    if (started) for (const k of Object.keys(EVENTS).map(Number).sort((a, b) => a - b)) if (k >= c) { line = EVENTS[k][1]; break; }
+    F.log.textContent = line;
+    const key = started ? c : null;
+    if (live && key !== F.last && ev) ev[0] === 'jin' ? chime(330, .8, .06) : thud(.25);
+    F.last = key;
+  }
+
+  /* ── 背景の星図：見つけたつながりが育っていく ── */
+  const cv = $('#sky'), cx = cv.getContext('2d');
+  let W = 0, H = 0;
+  let seed = 11; const R = () => (seed = (seed * 16807) % 2147483647, (seed - 1) / 2147483646);
+  const N = 72;
+  const nodes = Array.from({ length: N }, () => ({ x: .04 + R() * .92, y: .05 + R() * .9, ph: R() * 6.28, s: .7 + R() * 1.3 }));
+  nodes.sort((a, b) => Math.hypot(a.x - .5, (a.y - .45) * 1.6) - Math.hypot(b.x - .5, (b.y - .45) * 1.6));
+  const edges = [];
+  nodes.forEach((n, i) => {
+    if (!i) return;
+    nodes.slice(0, i).map((m, j) => [j, Math.hypot(m.x - n.x, (m.y - n.y) * .6)]).sort((a, b) => a[1] - b[1]).slice(0, i > 8 ? 2 : 1)
+      .forEach(([j]) => edges.push([j, i]));
+  });
+  function resize() {
+    const r = stage.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d);
+    cx.setTransform(d, 0, 0, d, 0, 0);
+  }
+  function sky(t, now) {
+    cx.clearRect(0, 0, W, H);
+    const r = Math.min(1, t / 91);
+    const vis = 4 + (N - 4) * r ** .85;
+    const a = i => Math.max(0, Math.min(1, vis - i));
+    cx.lineWidth = 1;
+    for (const [i, j] of edges) {
+      const al = Math.min(a(i), a(j)); if (!al) continue;
+      cx.strokeStyle = `rgba(201,162,79,${.16 * al})`;
+      cx.beginPath(); cx.moveTo(nodes[i].x * W, nodes[i].y * H); cx.lineTo(nodes[j].x * W, nodes[j].y * H); cx.stroke();
+    }
+    nodes.forEach((n, i) => {
+      const al = a(i); if (!al) return;
+      const tw = reduce ? 1 : .65 + .35 * Math.sin(now / 900 + n.ph);
+      cx.fillStyle = `rgba(232,205,140,${.55 * al * tw})`;
+      cx.beginPath(); cx.arc(n.x * W, n.y * H, n.s * (W / 900 + .6), 0, 6.283); cx.fill();
+    });
+  }
+
+  /* ── 描画 ── */
+  const fill = $('#fill'), track = $('#track'), timeEl = $('#time'), playBtn = $('#playBtn');
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  const chapters = $('#chapters');
+  scenes.forEach(s => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = s.label;
+    b.addEventListener('click', () => { seek(s.start); play(); });
+    chapters.appendChild(b); s.btn = b;
+    if (s.start > 0) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s.start / TOTAL * 100) + '%'; track.appendChild(tk); }
+  });
+
+  function render(t, live) {
+    if (!live) stage.classList.add('instant');
+    for (const s of scenes) {
+      const on = t >= s.start && t < s.end;
+      s.el.classList.toggle('on', on);
+      const local = t - s.start;
+      let k = 0; if (local >= 0) for (const st of s.steps) if (local >= st) k++;
+      if (k !== s.k) {
+        if (live && on && k > s.k && s.k >= 0) for (let n = s.k + 1; n <= k; n++) s.sfx[n]?.();
+        s.k = k;
+        for (const it of s.items) it.e.classList.toggle('vis', k >= it.a && k < it.b);
+        for (const ad of s.adds) for (const r of ad.rules) ad.e.classList.toggle(r.c, k >= r.n);
+      }
+      s.btn.classList.toggle('cur', on);
+    }
+    fight(t - 58, live && t >= 58 && t < 67);
+    fill.style.width = (t / TOTAL * 100) + '%';
+    track.setAttribute('aria-valuenow', Math.round(t));
+    timeEl.textContent = `${fmt(t)} / ${fmt(TOTAL)}`;
+    if (!live) requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.remove('instant')));
+  }
+
+  let t = 0, t0 = 0, playing = false;
+  const poster = $('#poster');
+  function setBtn() { playBtn.textContent = playing ? '❚❚ 一時停止' : (t >= TOTAL ? '↺ もう一度' : '▶ 再生'); playBtn.setAttribute('aria-label', playing ? '一時停止' : '再生'); }
+  function play() {
+    if (t >= TOTAL) seek(0);
+    poster.hidden = true;
+    if (soundOn) { audio(); droneOn(); }
+    t0 = performance.now() - t * 1000; playing = true; setBtn();
+  }
+  function pause() { playing = false; droneOff(); setBtn(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(nt) {
+    t = Math.max(0, Math.min(TOTAL, nt)); t0 = performance.now() - t * 1000;
+    scenes.forEach(s => s.k = -1);
+    render(t, false);
+    if (!playing) setBtn();
+  }
+
+  function frame(now) {
+    if (playing) {
+      t = Math.min(TOTAL, (now - t0) / 1000);
+      render(t, true);
+      if (t >= TOTAL) pause();
+    }
+    sky(poster.hidden ? t : 70, now);
+    requestAnimationFrame(frame);
+  }
+
+  /* ── 操作 ── */
+  $('#playBig').addEventListener('click', e => { e.stopPropagation(); play(); });
+  $('#again').addEventListener('click', e => { e.stopPropagation(); seek(0); play(); });
+  playBtn.addEventListener('click', toggle);
+  stage.addEventListener('click', e => { if (!e.target.closest('button')) toggle(); });
+  stage.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
+  $('#sndBtn').addEventListener('click', e => {
+    soundOn = !soundOn;
+    e.currentTarget.setAttribute('aria-pressed', soundOn);
+    e.currentTarget.textContent = soundOn ? '音：オン' : '音：オフ';
+    if (soundOn) { audio(); if (playing) droneOn(); } else droneOff();
+  });
+  function seekFromPointer(e) { const r = track.getBoundingClientRect(); seek((e.clientX - r.left) / r.width * TOTAL); if (playing) t0 = performance.now() - t * 1000; }
+  let dragging = false;
+  track.addEventListener('pointerdown', e => { dragging = true; track.setPointerCapture(e.pointerId); poster.hidden = true; seekFromPointer(e); });
+  track.addEventListener('pointermove', e => { if (dragging) seekFromPointer(e); });
+  track.addEventListener('pointerup', () => { dragging = false; });
+  track.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); poster.hidden = true; seek(t + 5); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); poster.hidden = true; seek(t - 5); }
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && playing) pause(); });
+
+  new ResizeObserver(() => { resize(); sky(poster.hidden ? t : 70, performance.now()); }).observe(stage);
+  resize();
+  seek(0);
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>

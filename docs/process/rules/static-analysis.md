@@ -47,6 +47,15 @@ Biome の推奨ルール（`"preset": "recommended"`）に加えて、次のル�
 | `**/*.vue` | `correctness/noUnusedImports`・`noUnusedVariables` | Biome は Vue のテンプレート内での使用を解析できず、安全な自動修正（pre-commit）で必要な import を消してしまう |
 | `scripts/**` | `suspicious/noConsole` | Node.js の補助スクリプトで、出力が仕事 |
 
+## 検査の対象から外しているファイル
+
+`files.includes` の `!` で、Biome の検査（lint・整形）から丸ごと外している。ビルドの出力・依存・自動生成のファイルのほかに、次の2つを外している。
+
+| 対象 | 理由 |
+|---|---|
+| `docs/public/preview/` | HTML/CSS だけの使い捨ての UI 試作。React 化したら消すもので、コードとして保守しない |
+| `docs/public/teaser/` | ティザー映像の HTML 1枚で、版ごとに丸ごと作り直す（直さない）。インラインの script を検査すると、アプリのコード向けの上限（複雑さなど）に当たる |
+
 ## 入れていないもの
 
 - **重複コード（コピー＆ペースト）の検出** — SonarJS の「重複」の指標にあたるものは Biome に無い。入れるなら `jscpd` を CI に足す（候補）

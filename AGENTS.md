@@ -20,6 +20,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 - `docs/notes/` … デザイナーノート。ゲームの仕様のページと1対1で、決めた理由・経緯・将来の拡張候補を置く。正式仕様ではない。仕様のページには「いまのルール」だけを書き、理由や経緯はこちらへ書く（決まりは `docs/notes/index.md`）
 - `docs/interviews/` … 議論ログの一次資料。正式仕様ではない
 - `docs/process/` … 開発プロセス（開発サイクル・ルール・依頼文雛形・体制の進化ログ）。**正式仕様の一部**
+- `docs/public/teaser/` … プレイヤー向けのティザー映像（自動再生する HTML 1枚）。作り直すときは版ごとにファイルを分け（`movie-v1.html`・`movie-v2.html` …）、古い版も残す。GitHub Pages の `/CarTaGraphFantasy/teaser/<ファイル名>` で見られる
 - `docs/plans/` … プランドキュメント（作業単位の設計書。VitePress のビルド対象外）
 - `docs/provisional/` … 仮ルール（決着を待たずに仮に置いたルール）を1仮ルール1ファイルで置く。決めたら消す。トップページのダッシュボードが一覧にする（書き方は `docs/provisional/index.md`）
 - `docs/backlog/` … 要望（PBI）を1要望1ファイルで置く。先頭の状態・判断待ちから、トップページのダッシュボードをビルド時に組み立てる（`docs/.vitepress/*.data.ts`）
