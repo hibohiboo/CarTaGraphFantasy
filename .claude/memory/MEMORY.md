@@ -7,4 +7,5 @@
 - [村スタート冒険者キャンペーンの進み具合](village-campaign-progress.md) — 2026-09-27完了（C1〜C5）。残りは別PBI（酒場の扱い・結末タグのカード化）
 - [古い記述は気づいたらその場で直す](fix-stale-docs-immediately.md) — 理由が無ければ報告だけで止めず直す。理由があれば止めて伝える
 - [改善は仕組みで解決する](prefer-mechanisms.md) — 振り返りの改善案は、ルールより機械で止める・自動で組み立てる案を優先する
+- [ティザー映像](teaser-movie.md) — docs/public/teaser/movie-v1.html。M2完了後に v2 を作り直す予定
 - [複数ファイルの書き換えは全部検査してから書く](transactional-edit-scripts.md) — 途中で止まって半端に書き換えない
