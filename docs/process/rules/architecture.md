@@ -74,7 +74,7 @@ apps/web ──→ packages/domain ──→ zod
   - 公開 API の index.ts は作らない。スライスの外からもファイルを直接 import する（下の「境界」の barrel 禁止に従う。FSD も index を必須としていない）
   - `main.tsx`・`vite-env.d.ts`・`mocks/`・`test/` は層の外。層の外は層を import してよい（`@/` で）。層は層の外を import しない
   - packages/domain との違い：domain の中は決まった向きならディレクトリをまたげる（例：`scenario → card`）が、web の entities はエンティティどうしの import を禁止する（FSD）。複数のエンティティを組み合わせる UI は widgets か pages で組み合わせる。エンティティをまたぐキャッシュの無効化は、shared のクエリキーで行う
-  - 機械的な検査は Biome（`biome.json` の `apps/web/src/<層>/**` ごとの `style/noRestrictedImports`）。禁止パターンの正は `biome.json`、理由はここ。層を足す・向きを変えるときは両方を直す。経緯は `docs/plans/2026-10-03-webのFSD移行.md`
+  - 機械的な検査は Biome（`biome.json` の `apps/web/src/<層>/**` ごとの `style/noRestrictedImports`）。禁止パターンの正は `biome.json`、理由はここ。層を足す・向きを変えるときは両方を直す。後ろの override は前の override の禁止を置き換えるので、層の直下のファイル用の override にも同じ禁止を書く。層の順番・層の外・層を限って import させるパッケージの表（`scripts/check-biome-layers.mjs` の `LAYERS`・`PACKAGES`）と食い違えば `pnpm docs:build` が止める。経緯は `docs/plans/2026-10-03-webのFSD移行.md`
 
 ## packages/domain の中の置き場所
 
