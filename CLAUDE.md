@@ -1,12 +1,12 @@
 # CarTaGraphFantasy プロジェクトルール
 
-開発ルール・技術スタック・ディレクトリ構成・最重要ルールは、ツールに依存しない入口ファイル `AGENTS.md` に集約している（ここに重複して書かない）。
+開発ルール・技術スタック・ディレクトリ構成・最重要ルールは、ツールに依存しない入口ファイル `AGENTS.md` に集約している（ここに重複して書かない）。逆に、Claude Code だけの話（`.claude/` の中身と決まり、Claude Code のツールの使い方）はここだけに書き、`AGENTS.md` には書かない。`AGENTS.md` は下の `@` で読み込まれるので、両方に書くと Claude Code には同じ指示が2回届く。
 
 @AGENTS.md
 
 ## Claude Code 固有の補足
 
-- `.claude/agents/`（design-reviewer / edge-case-reviewer / spec-reviewer）と `.claude/skills/`（dev-cycle / grilling / tdd / eng-practices / create-pr / browser-check）は、`docs/process/` に書かれた手順の**呼び出し口**である。手順の本文を変えるときは `docs/process/` 側を直す。`.claude/rules/` も同じく呼び出し口で、`scripts/sync-claude-rules.mjs` がルールのページの frontmatter の `paths` から作る（手で書かない。AGENTS.md「開発ルールの適用」）。`.claude/skills/react-best-practices` だけは例外で、Vercel Labs の配布物をそのまま取り込んだ参照資料（手で直さない。使い方の正は `docs/process/rules/architecture.md`「React の書き方」）。
+- `.claude/agents/` と `.claude/skills/` は、`docs/process/` に書かれた手順の**呼び出し口**である（何があるかはディレクトリを見る。ここに名前を並べない）。手順の本文を変えるときは `docs/process/` 側を直す。`.claude/rules/` も同じく呼び出し口で、`scripts/sync-claude-rules.mjs` がルールのページの frontmatter の `paths` から作る（手で書かない。AGENTS.md「開発ルールの適用」）。`.claude/skills/react-best-practices` だけは例外で、Vercel Labs の配布物をそのまま取り込んだ参照資料（手で直さない。使い方の正は `docs/process/rules/architecture.md`「React の書き方」）。
 - サブエージェントの `model` は `inherit`（セッションのモデルを引き継ぐ）にし、特定モデルを固定しない。
 - プランドキュメントは `docs/plans/`（`settings.json` の `plansDirectory`）に置く。
 - 自動メモリ（`.claude/memory/`）は Claude 固有の記憶であり、他のエージェントからは見えない。プロジェクトとして残すべき知識（構成・運用上の注意・決定事項）は `docs/` に書き、メモリにはそこへのポインタと個人的な作業上の学びだけを残す。
