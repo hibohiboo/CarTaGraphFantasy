@@ -28,17 +28,37 @@ export function defineBody<S extends z.ZodType>(
   return { schema, messages };
 }
 
+type Parsed<S extends z.ZodType> = { ok: true; data: z.output<S> } | { ok: false; message: string };
+
 /** 本文（JSON として読んだ値）を検査する。誤りが複数あれば最初の1件の文を返す */
-export function safeParseBody<S extends z.ZodType>(
-  body: RequestBody<S>,
-  raw: unknown,
-): { ok: true; data: z.output<S> } | { ok: false; message: string } {
+export function safeParseBody<S extends z.ZodType>(body: RequestBody<S>, raw: unknown): Parsed<S> {
   const result = body.schema.safeParse(raw);
   if (result.success) return { ok: true, data: result.data };
-  const path = result.error.issues[0]?.path ?? [];
-  const first = path.length === 0 ? '' : String(path[0]);
-  const message =
-    body.messages[first] ??
-    (path.length === 0 ? SHAPE_ERROR : `${SHAPE_ERROR}（${path.join('.')}）`);
-  return { ok: false, message };
+  const path = (result.error.issues[0]?.path ?? []).map(String);
+  return { ok: false, message: messageAt(body, path) };
+}
+
+/**
+ * 本文の文字列を読んで検査する（受け取る側はこれを使う）。空・空白だけなら {} として扱う（本文を付けない呼び出し）。
+ * JSON として壊れていれば、スキーマに渡さず本文そのものの誤りにする
+ */
+export function safeParseBodyText<S extends z.ZodType>(
+  body: RequestBody<S>,
+  text: string,
+): Parsed<S> {
+  if (text.trim() === '') return safeParseBody(body, {});
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return { ok: false, message: messageAt(body, []) };
+  }
+  return safeParseBody(body, raw);
+}
+
+/** 誤りの場所の文。表は自分のキーだけを見る（constructor などの組み込みの名前を引かない） */
+function messageAt(body: AnyRequestBody, path: string[]): string {
+  const first = path[0] ?? '';
+  if (Object.hasOwn(body.messages, first)) return body.messages[first] as string;
+  return path.length === 0 ? SHAPE_ERROR : `${SHAPE_ERROR}（${path.join('.')}）`;
 }

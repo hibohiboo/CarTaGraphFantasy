@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { defineBody, safeParseBody } from './parse';
+import { defineBody, safeParseBody, safeParseBodyText } from './parse';
 
 const body = defineBody(
   z.object({
@@ -66,5 +66,43 @@ describe('safeParseBody', () => {
       ok: false,
       message: '本文の形が正しくありません（a）',
     });
+  });
+});
+
+describe('safeParseBody：表の引き当て', () => {
+  it('表に無いキーは、Object の組み込みの名前（constructor など）でも決まった文になる', () => {
+    const b = defineBody(z.object({ constructor: z.string() }));
+    expect(safeParseBody(b, { constructor: 1 })).toEqual({
+      ok: false,
+      message: '本文の形が正しくありません（constructor）',
+    });
+  });
+});
+
+describe('safeParseBodyText（本文の文字列から読む）', () => {
+  const optionalAll = defineBody(z.object({ a: z.string().optional() }));
+
+  it.each(['', ' ', '\n'])('空・空白だけ（%o）なら {} として検査する', (text) => {
+    expect(safeParseBodyText(optionalAll, text)).toEqual({ ok: true, data: {} });
+  });
+
+  it('JSON として壊れていれば、スキーマに渡さず本文そのものの誤り', () => {
+    const anything = defineBody(z.unknown().optional(), { '': '壊れた本文の文' });
+    expect(safeParseBodyText(anything, '{')).toEqual({ ok: false, message: '壊れた本文の文' });
+    expect(safeParseBodyText(optionalAll, '{')).toEqual({
+      ok: false,
+      message: '本文の形が正しくありません',
+    });
+  });
+
+  it("文字列の 'null' は JSON の null として検査する（本文そのものの誤り）", () => {
+    expect(safeParseBodyText(optionalAll, 'null')).toEqual({
+      ok: false,
+      message: '本文の形が正しくありません',
+    });
+  });
+
+  it('JSON なら読んで検査する', () => {
+    expect(safeParseBodyText(optionalAll, '{"a":"x"}')).toEqual({ ok: true, data: { a: 'x' } });
   });
 });

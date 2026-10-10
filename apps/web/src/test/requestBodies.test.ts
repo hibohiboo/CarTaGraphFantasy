@@ -24,9 +24,10 @@ async function send(method: 'POST' | 'PATCH', url: string, body: unknown) {
   return { status: res.status, message: ((await res.json()) as { message?: string }).message };
 }
 
-/** 状態の写し（キャラクター・セッション・受付中の募集・自分の下書き） */
+/** 状態の写し（キャラクター・セッション・受付中の募集・自分のシナリオの一覧と下書き） */
 const snapshot = async () => ({
   characters: await api.get<Character[]>('/characters'),
+  myScenarios: await api.get<Scenario[]>('/scenarios?mine=1'),
   sessions: await api.get<Session[]>('/sessions'),
   recruitments: await api.get<Recruitment[]>('/recruitments'),
   draft: await api.get<Scenario>('/scenarios/sc-mansion-mine'),
@@ -66,6 +67,8 @@ const rows: Row[] = [
       [null, SHAPE],
       [{ characterIds: ['pc-jin', 1] }, '参加させるPCの指定の形が正しくありません'],
       [{ characterIds: ['pc-jin'], driverCharacterId: 'pc-jin', partyName: 1 }, shape('partyName')],
+      // 以前は null を「選んでいない」に丸めていた（プランの表の「振る舞いの変化」）
+      [{ characterIds: ['pc-jin'], driverCharacterId: null }, shape('driverCharacterId')],
     ],
   },
   {
@@ -128,6 +131,8 @@ const rows: Row[] = [
     bodies: [
       [null, SHAPE],
       [{ reason: 5 }, shape('reason')],
+      // 以前は null を「理由未記入」に丸めていた
+      [{ reason: null }, shape('reason')],
     ],
   },
   {
@@ -187,6 +192,18 @@ const rows: Row[] = [
       [{ kind: 'whatever' }, '募集の種類は通常か GM 不在のどちらかで指定してください'],
       [{ capacity: '3' }, '募集人数は1以上の整数で指定してください'],
       [{ excludedNodeIds: ['x', 1] }, '外すシーンの指定の形が正しくありません'],
+      // 以前は null を「外さない」に丸め、数のメモはそのまま保存していた
+      [{ capacity: 2, excludedNodeIds: null }, '外すシーンの指定の形が正しくありません'],
+      [{ capacity: 2, note: 5 }, shape('note')],
+      // 以前は、GM 不在の募集の募集人数・通常の募集の提案の扱いは見ずに無視していた
+      [
+        { kind: 'gmless', proposalHandling: 'gm-required', capacity: 'x' },
+        '募集人数は1以上の整数で指定してください',
+      ],
+      [
+        { kind: 'normal', capacity: 3, proposalHandling: 'bogus' },
+        '提案の扱いは「GM が後から裁定」か「提案不可」で指定してください',
+      ],
       [
         { kind: 'gmless', proposalHandling: 'auto-resolve' },
         '提案の扱いは「GM が後から裁定」か「提案不可」で指定してください',
@@ -207,18 +224,37 @@ describe('形の崩れた本文は 500 にせず 422 で、何も変えない', 
 });
 
 describe('省ける項目を省いた本文は、今までどおり業務の検査まで届く（反対側）', () => {
-  it('2 募集から始める：本文なしなら、参加させる PC を選んでいない旨の 422', async () => {
-    await expect(api.post('/recruitments/rc-mine/start')).rejects.toMatchObject({
+  it.each<[string, unknown]>([
+    ['本文なし', undefined],
+    ['{}', {}],
+  ])('2 募集から始める：%s なら、参加させる PC を選んでいない旨の 422', async (_, body) => {
+    await expect(api.post('/recruitments/rc-mine/start', body)).rejects.toMatchObject({
       status: 422,
-      message: expect.not.stringContaining(SHAPE),
+      message: '参加させるPCを選んでください',
     });
   });
 
-  it('16 募集を出す：本文なしなら、募集人数の 422', async () => {
-    await expect(api.post('/scenarios/sc-gray-mansion/recruitments')).rejects.toMatchObject({
+  it.each<[string, unknown]>([
+    ['本文なし', undefined],
+    ['{}', {}],
+  ])('16 募集を出す：%s なら、募集人数の 422', async (_, body) => {
+    await expect(api.post('/scenarios/sc-gray-mansion/recruitments', body)).rejects.toMatchObject({
       status: 422,
       message: '募集人数は1以上の整数で指定してください',
     });
+  });
+
+  it('16 募集を出す：GM 不在の募集は募集人数を省ける。通常の募集は提案の扱いを省ける', async () => {
+    const gmless = await api.post<Recruitment>('/scenarios/sc-gray-mansion/recruitments', {
+      kind: 'gmless',
+      proposalHandling: 'gm-required',
+    });
+    expect(gmless).toMatchObject({ kind: 'gmless', capacity: 0 });
+    const normal = await api.post<Recruitment>('/scenarios/sc-gray-mansion/recruitments', {
+      kind: 'normal',
+      capacity: 1,
+    });
+    expect(normal).toMatchObject({ kind: 'normal', capacity: 1 });
   });
 
   it('12 自動戦闘：{} なら「1枚以上のカードが必要」', async () => {
@@ -292,6 +328,12 @@ describe('業務の検査のメッセージは変わらない（本文の形は�
       'カード名を入力してください',
     ],
     [
+      '4 キャラクターの名前が空',
+      async () => ({ url: '/characters' }),
+      { name: ' ', abilities: { body: 3, skill: 3, mind: 3 }, cardIds: [] },
+      '名前を入力してください',
+    ],
+    [
       '13 名前が空',
       async () => ({ url: '/scenarios/sc-village-start/start-solo' }),
       { name: ' ' },
@@ -324,9 +366,14 @@ describe('業務の検査のメッセージは変わらない（本文の形は�
   });
 });
 
+// 15 下書きの保存だけは、今までどおり本文の検査がシナリオの存在の確認より先（存在しない id に null を送ると 422）
 describe('検査の順序は変わらない', () => {
   it('存在しない募集に壊れた本文を送ると 404', async () => {
     expect((await send('POST', '/recruitments/rc-nowhere/apply', null)).status).toBe(404);
+  });
+
+  it('存在しないセッションに壊れた本文を送ると 404', async () => {
+    expect((await send('POST', '/sessions/ss-nowhere/play', null)).status).toBe(404);
   });
 
   it('他人が GM のセッションの描写に壊れた本文を送ると 403', async () => {

@@ -69,7 +69,7 @@ pnpm web:typecheck
 pnpm domain:test     # vitest（packages/domain の純粋関数。自動戦闘・シーン遷移など）
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
 pnpm schemas:test    # vitest（packages/schemas の API の本文のスキーマ）
-pnpm schemas:typecheck # tsc（packages/schemas）
+pnpm schemas:typecheck # tsc（packages/schemas。テストファイルも含む）
 pnpm build:pages     # docs + app を docs/.vitepress/dist にまとめてビルド（CI と同じ）
 pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実行。下記）
 ```

@@ -969,6 +969,19 @@
           "performance": {
             "noBarrelFile": "error",
             "noReExportAll": "error"
+          },
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../**", "./../**", "@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "表に無いディレクトリ（と src の直下）はほかのディレクトリを import しない（docs/process/rules/architecture.md「packages/schemas の中の置き場所」）"
+                  }
+                ]
+              }
+            }
           }
         }
       }

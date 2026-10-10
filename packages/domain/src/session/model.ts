@@ -5,12 +5,17 @@
 import { z } from 'zod';
 import type { AutoCombatState, CombatRecord } from '../autoCombat/model';
 import type { CardDef } from '../card/model';
-import type { ProposalHandling, ScenarioType, SpaceModel } from '../scenario/model';
+import {
+  type ProposalHandling,
+  proposalHandlingSchema,
+  type ScenarioType,
+  type SpaceModel,
+} from '../scenario/model';
 
 /** 募集の種類（Recruitment.kind）。API の本文の検査（packages/schemas）も使う */
 export const recruitmentKindSchema = z.enum(['normal', 'gmless']);
 /** GM 不在の募集の提案の扱い（Recruitment.proposalHandling） */
-export const recruitmentProposalHandlingSchema = z.enum(['gm-required', 'disabled']);
+export const recruitmentProposalHandlingSchema = proposalHandlingSchema.exclude(['auto-resolve']);
 /** 軽量モード・濃密モード（Session.mode。docs/cartagraph/party-and-session.md） */
 export const sessionModeSchema = z.enum(['light', 'dense']);
 

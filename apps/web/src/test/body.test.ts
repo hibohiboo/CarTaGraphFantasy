@@ -5,8 +5,8 @@ import { applyBody, startRecruitmentBody } from '@cartagraph/schemas/recruitment
 import { describe, expect, it } from 'vitest';
 import { readBody } from '../mocks/body';
 
-const request = (body?: string) =>
-  new Request('http://localhost/api/x', { method: 'POST', body, headers: {} });
+const request = (body?: string, headers: Record<string, string> = {}) =>
+  new Request('http://localhost/api/x', { method: 'POST', body, headers });
 
 describe('readBody', () => {
   it('本文の文字列が空なら {} として検査する（本文を付けない api.post(url) の呼び出し）', async () => {
@@ -27,6 +27,18 @@ describe('readBody', () => {
     expect(r.response.status).toBe(422);
     expect(await r.response.json()).toEqual({
       message: '本文の形が正しくありません（characterId）',
+    });
+  });
+
+  it('空白だけの本文も、空と同じく {} として検査する', async () => {
+    expect(await readBody(request(' \n'), startRecruitmentBody)).toEqual({ ok: true, data: {} });
+  });
+
+  it('Content-Type が text/plain でも、本文を JSON として読む', async () => {
+    const body = JSON.stringify({ characterId: 'pc-1' });
+    expect(await readBody(request(body, { 'Content-Type': 'text/plain' }), applyBody)).toEqual({
+      ok: true,
+      data: { characterId: 'pc-1' },
     });
   });
 

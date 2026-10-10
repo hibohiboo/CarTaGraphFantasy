@@ -147,10 +147,10 @@ React のコードは、Vercel Labs の [react-best-practices](https://github.co
 
 ## 境界
 
-- `packages/domain` は React・DOM・MSW に依存しない。`apps/web` から `packages/domain` を参照し、逆は禁止
+- `packages/domain`・`packages/schemas` は React・DOM・MSW に依存しない（将来のバックエンドも使うため）。`apps/web` から `packages/domain` を参照し、逆は禁止
 - `packages/domain` の型と用語は `docs/` の用語に対応させる。**用語の意味を変えるときは docs を先に更新する**（SSOT）
 - 未解決論点（`docs/open-questions.md`）に関わる仮ルールは、コードのコメントと画面表示の両方で「仮」と明示する（例：キャラクター作成の能力値配分）
-- barrel export（`index.ts` への集約・再エクスポート）は新規に作らない。実ファイルへ直接 import する（`packages/domain` と `apps/web/src` は Biome の `noBarrelFile`・`noReExportAll` で止める）
+- barrel export（`index.ts` への集約・再エクスポート）は新規に作らない。実ファイルへ直接 import する（`packages/domain`・`packages/schemas`・`apps/web/src` は Biome の `noBarrelFile`・`noReExportAll` で止める）
 - 業務コードに `console.*` を残さない（`biome.json`の`noConsole`がコミット前フックで機械的に検知して止める。`scripts/`配下のNode.jsビルドスクリプトは対象外）。構造化ログの方針はバックエンド着手時に定める
 
 ## 副作用の分離（Functional Core / Imperative Shell）

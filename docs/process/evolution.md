@@ -51,7 +51,7 @@
 
 - **内容** — API のリクエストの本文の形を新しいパッケージ `packages/schemas`（zod。モック・画面・将来のバックエンドで共用）に置き、MSW のハンドラは `apps/web/src/mocks/body.ts` の `readBody` で検査してから使う（形が崩れていれば 422）。ハンドラが `request.json()`・`request.text()` を直接呼ぶのを Biome の GritQL のプラグイン（`scripts/biome/no-request-body.grit`）で止め、`@cartagraph/schemas` を import してよい層を `noRestrictedImports` で entities・mocks・test に絞った。型検査とテストを pre-push・CI に足した
 - **理由** — 本文を型の付け替えだけで使い、形の崩れた本文で 500 になる穴を、実装の AI レビュー（異常系）が C2・C3 と続けて1か所ずつ見つけていた。1か所ずつ直すより、読む口を1つにして機械で止める（冒険者だけにする C3 の振り返りで採用。置き場所は人間の案）
-- **反映先** — `packages/schemas/`・`apps/web/src/mocks/body.ts`・`scripts/biome/no-request-body.grit`・`biome.json`・`package.json`・`.githooks/pre-push`・`.github/workflows/ci.yml`・`AGENTS.md`・`docs/process/rules/architecture.md`・`static-analysis.md`・`testing.md`（プラン `docs/plans/2026-10-10-APIスキーマの共用.md`）
+- **反映先** — `packages/schemas/`・`apps/web/src/mocks/body.ts`・`apps/web/package.json`・`packages/domain/src/session/model.ts`（列挙のスキーマ）・`scripts/biome/no-request-body.grit`・`biome.json`・`package.json`・`.githooks/pre-push`・`.github/workflows/ci.yml`・`AGENTS.md`・`README.md`・`.claude/rules/process/rules/static-analysis.md`・`docs/process/rules/architecture.md`・`static-analysis.md`・`testing.md`・`docs/architecture/web-app.md`・`known-issues.md`（プラン `docs/plans/2026-10-10-APIスキーマの共用.md`）
 - **きっかけ** — AI レビュー ／ **止め方** — 機械（lint）。置き場所（パッケージを新設する）
 
 ### 2026-10-10 冒険者だけにする C3 の振り返りから2件を採用（既知の問題の一覧の検査、git stash の禁止）
