@@ -5,14 +5,14 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 3e5f04df-9f84-4409-af85-7a72b948a1af
-  modified: 2026-09-15T23:00:34.816Z
+  modified: 2026-10-10T02:08:20.640Z
 ---
 
 2026-09-16に『プロフェッショナルAI駆動開発』のサンプル（`proffesional-ai/`、git管理外のローカル資料）を移植して、開発プロセスを文書化した。
 
 - **正（SSOT）は `docs/process/`**：`index.md`（開発サイクル8ステップ＋体制の進化＋モデル非依存の原則）、`rules/`（architecture / testing / review）、`prompt-sample.md`（依頼文雛形1〜9）、`evolution.md`（候補→採用／却下のログ）
 - **入口は `AGENTS.md`**。`CLAUDE.md` は `@AGENTS.md` で読み込むだけ。最重要ルール（矛盾で止める・SSOT・重複は見つけ次第直して報告・プラン外は実装しない・LF）はAGENTS.md側にある
-- **`.claude/` は薄い層**：agents（design / edge-case / spec-reviewer、`model: inherit`）、skills（dev-cycle / grilling / tdd / eng-practices / create-pr）。本文は docs/process を指す
+- **`.claude/` は薄い層**：agents（design / edge-case / spec-reviewer、`model: inherit`）、skills（dev-cycle / grilling / tdd / eng-practices / create-pr）、rules（2026-10-10〜。`scripts/sync-claude-rules.mjs` がルールのページの frontmatter の `paths` から生成する入口ファイル。手で書かない）。本文は docs/process を指す
 - プランは `docs/plans/<日付>-<機能>.md`（VitePress の `srcExclude` で公開サイトからは除外）
 - 基盤整備の計画は `docs/plans/2026-09-16-dev-process-foundation.md`（C1 CI → C2 Biome+githooks → C3 モデル切替で試走・メモリ知識をdocsへ → C4 シーン構築画面のReact化を新プロセスで完走 → C5 リファクタ → C6 PR運用）。**2026-09-16にユーザーが決定済み：基盤整備中はスピード重視で直push、PR運用は最後。lintはAIにトークンを使わせずコミット前フックで止める**
 
