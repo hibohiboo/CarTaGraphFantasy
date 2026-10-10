@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>カルタグラフ ティザー v2</title>
+<meta name="description" content="進化型カードTRPG「カルタグラフ」の30秒ティザー。映像で使った素材集つき。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Shippori+Mincho+B1:wght@700;800&display=swap" rel="stylesheet">
+<style id="css">
+/* ===== 色と書体 ===== */
+:root{
+  --mincho:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho","YuMincho","BIZ UDPMincho",serif;
+  --gothic:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic","Meiryo",sans-serif;
+  --roman:"Cinzel","Trajan Pro","Times New Roman",serif;
+  --ink:#2b1d0e;
+  --paper:#f3e7cb;
+  --gold:#e2b857;
+  --gold-hi:#fff0b8;
+  --cyan:#6fe3ff;
+  --navy:#0b1026;
+  --red:#c63a2b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#05070f;color:#e8e2d0;font-family:var(--gothic)}
+
+/* ===== 舞台（1280×720 を画面に合わせて縮める） ===== */
+#viewport{position:relative;width:min(100vw,calc((100vh - 64px) * 16 / 9));aspect-ratio:16/9;margin:0 auto;overflow:hidden;background:#000}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 42%,#1c2656 0%,#0b1026 55%,#04060f 100%);font-family:var(--mincho)}
+#bg{position:absolute;inset:0;pointer-events:none}
+.mote{position:absolute;border-radius:50%;background:var(--gold-hi);opacity:0;animation:mote var(--t,6s) ease-in-out var(--d,0s) infinite}
+@keyframes mote{0%{opacity:0;transform:translateY(0)}40%{opacity:var(--o,.5)}100%{opacity:0;transform:translateY(-60px)}}
+#bar{position:absolute;left:0;bottom:0;height:4px;width:0;background:linear-gradient(90deg,var(--gold),var(--gold-hi));z-index:50}
+
+.scene{position:absolute;inset:0;visibility:hidden}
+.scene.active{visibility:visible}
+.scene.paper{background:radial-gradient(ellipse at 50% 45%,#fbf3de 0%,#ead9b2 70%,#cdb27c 100%)}
+.abs{position:absolute}
+.ib{display:inline-block}
+.cap{position:absolute;left:0;right:0;text-align:center;font:800 46px/1.3 var(--mincho);color:#fbf3dc;letter-spacing:.08em;
+  text-shadow:0 2px 0 #000,0 0 26px rgba(226,184,87,.45)}
+.cap.ink{color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.cap.sm{font-size:22px;letter-spacing:.4em;color:#d9c48e;text-shadow:0 1px 0 #000}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:40}
+.glow{border-radius:50%;background:radial-gradient(circle,rgba(226,184,87,.55) 0%,rgba(226,184,87,.12) 40%,transparent 70%)}
+.burst{border-radius:50%;background:radial-gradient(circle,rgba(255,240,184,.9) 0%,rgba(226,184,87,.35) 30%,transparent 65%)}
+.rays{border-radius:50%;background:repeating-conic-gradient(rgba(255,240,184,.28) 0 6deg,transparent 6deg 18deg);
+  -webkit-mask:radial-gradient(circle,#000 20%,transparent 70%);mask:radial-gradient(circle,#000 20%,transparent 70%)}
+
+/* ===== 演出（場面が始まった瞬間から --d 秒後に動く） ===== */
+.scene.active .fx-up{animation:fxUp .7s cubic-bezier(.2,.9,.2,1) var(--d,0s) both}
+.scene.active .fx-in{animation:fxIn .4s ease var(--d,0s) both}
+.scene.active .fx-out{animation:fxOut .3s ease var(--d,0s) both}
+.scene.active .fx-pop{animation:fxPop .5s cubic-bezier(.3,1.6,.5,1) var(--d,0s) both}
+.scene.active .fx-deal{animation:fxDeal .6s cubic-bezier(.2,.9,.25,1.1) var(--d,0s) both}
+.scene.active .fx-slam{animation:fxSlam .3s cubic-bezier(.55,0,.75,1.3) var(--d,0s) both}
+.scene.active .fx-draw{animation:fxDraw .5s ease-out var(--d,0s) both}
+.scene.active .fx-type{animation:fxType var(--dur,.5s) steps(var(--n,14)) var(--d,0s) both}
+.scene.active .fx-mark{animation:fxMark .5s ease var(--d,0s) both}
+.scene.active .fx-flash{animation:fxFlash .6s ease-out var(--d,0s) both}
+.scene.active .fx-drop{animation:fxDrop .55s cubic-bezier(.2,1.4,.4,1) var(--d,0s) both}
+.scene.active .fx-flip .card-inner{animation:fxFlip .8s cubic-bezier(.3,1.3,.5,1) var(--d,0s) both}
+.scene.active .fx-lift{animation:fxLift .6s cubic-bezier(.2,1.2,.3,1) var(--d,0s) both}
+.scene.active .fx-dim{animation:fxDim .4s ease var(--d,0s) both}
+.scene.active .fx-burst{animation:fxBurst 1.1s ease-out var(--d,0s) both}
+.scene.active .fx-push{animation:fxPush 3.5s linear both}
+.scene.active .fx-write{animation:fxWrite .6s steps(8) var(--d,0s) both}
+.scene.active .fx-rays{animation:fxIn .4s ease var(--d,0s) both,spin 9s linear infinite}
+.scene.active .drift{animation:drift var(--t,7s) linear var(--d,0s) both}
+@keyframes fxUp{from{opacity:0;transform:translateY(24px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes fxIn{from{opacity:0}to{opacity:1}}
+@keyframes fxOut{from{opacity:1}to{opacity:0}}
+@keyframes fxPop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+@keyframes fxDeal{from{opacity:0;transform:translate(0,480px) rotate(0) scale(.5)}to{opacity:1;transform:var(--to)}}
+@keyframes fxSlam{0%{opacity:0;transform:scale(2.6) rotate(var(--r,0deg))}70%{opacity:1;transform:scale(.93) rotate(var(--r,0deg))}100%{opacity:1;transform:scale(1) rotate(var(--r,0deg))}}
+@keyframes fxDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes fxType{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes fxMark{from{background-size:0% 100%}to{background-size:100% 100%}}
+@keyframes fxFlash{0%{opacity:0}8%{opacity:.85}100%{opacity:0}}
+@keyframes fxDrop{from{opacity:0;transform:translateY(-80px) scale(1.4)}to{opacity:1;transform:none}}
+@keyframes fxFlip{from{transform:rotateY(180deg) scale(.8)}to{transform:rotateY(0) scale(1)}}
+@keyframes fxLift{from{transform:none}to{transform:translate(0,-200px) scale(1.2)}}
+@keyframes fxDim{from{opacity:1;filter:none}to{opacity:.3;filter:grayscale(.8)}}
+@keyframes fxBurst{0%{opacity:0;transform:scale(.1)}15%{opacity:1}100%{opacity:0;transform:scale(2.2)}}
+@keyframes fxPush{from{transform:scale(1)}to{transform:scale(1.06)}}
+@keyframes fxWrite{from{opacity:0;clip-path:inset(0 100% 0 0)}to{opacity:1;clip-path:inset(0 0 0 0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes drift{from{transform:translateY(0) rotate(var(--r0,0deg))}to{transform:translateY(-1100px) rotate(var(--r1,20deg))}}
+
+/* ===== 素材: カード ===== */
+.card{position:relative;width:180px;height:256px;perspective:900px;--tc:#7a5a2a;--frame:linear-gradient(135deg,#7a4a20,#d29a5a 45%,#8a5a2b 70%,#c58b4c)}
+.card.rar-silver{--frame:linear-gradient(135deg,#7d8796,#f1f4f8 40%,#9aa4b2 65%,#e3e8ef)}
+.card.rar-gold{--frame:linear-gradient(135deg,#a77b1c,#ffe9a0 30%,#c8961e 55%,#fff3c4 75%,#a77b1c)}
+.card-inner{position:absolute;inset:0;transform-style:preserve-3d}
+.card-face,.card-back{position:absolute;inset:0;border-radius:12px;-webkit-backface-visibility:hidden;backface-visibility:hidden;overflow:hidden}
+.card-face{border:5px solid transparent;
+  background:linear-gradient(170deg,#fbf3de,#ecdcb6) padding-box,var(--frame) border-box;
+  box-shadow:0 14px 30px rgba(0,0,0,.45);color:var(--ink);display:flex;flex-direction:column;align-items:center;padding:7px}
+.card-back{transform:rotateY(180deg);border:5px solid #c9a14a;box-shadow:0 14px 30px rgba(0,0,0,.45);
+  background:repeating-linear-gradient(45deg,#141c42 0 8px,#0e1533 8px 16px)}
+.card.show-back .card-inner{transform:rotateY(180deg)}
+.c-top{width:100%;display:flex;justify-content:space-between;align-items:center;height:22px}
+.c-type{font:700 11px/1 var(--gothic);color:#fff;background:var(--tc);padding:5px 9px;border-radius:999px;letter-spacing:.1em}
+.c-stars{font-size:12px;color:#b8862a;letter-spacing:1px}
+.c-art{width:154px;height:112px;margin-top:6px;border-radius:8px;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--tc) 22%,#fff8e6) 0%,#e6d3a8 100%);
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tc) 45%,transparent)}
+.c-art .ico{width:76px;height:76px;color:var(--tc)}
+.c-name{margin-top:9px;font:800 19px/1.25 var(--mincho);text-align:center;letter-spacing:.04em;position:relative}
+.c-tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:7px}
+.c-tags .tag{font-size:10.5px;padding:2px 7px;background:rgba(43,29,14,.82);color:#f3e7cb}
+.c-flavor{margin-top:6px;font:700 10px/1.3 var(--mincho);color:#7a5a2a;font-style:italic}
+.rar-gold .card-face::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.7) 48%,transparent 60%);background-size:260% 100%;
+  animation:shine 2.6s ease-in-out infinite}
+@keyframes shine{from{background-position:130% 0}to{background-position:-130% 0}}
+.cb-frame{position:absolute;inset:9px;border:1.5px solid rgba(226,184,87,.6);border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.cb-emb{width:96px;height:96px;color:var(--gold)}
+.cb-name{font:600 11px var(--roman);letter-spacing:.32em;color:var(--gold)}
+
+/* 提案カード */
+.card.proposal{--tc:#1d9cc0;--frame:linear-gradient(135deg,#bff6ff,#1f6fb5 45%,#6fe3ff 70%,#e3fbff)}
+.card.proposal .card-face{box-shadow:0 0 34px rgba(111,227,255,.65),0 14px 30px rgba(0,0,0,.45)}
+.card.proposal .c-art{background:repeating-linear-gradient(45deg,rgba(29,156,192,.08) 0 6px,transparent 6px 12px),#f4fbff;
+  box-shadow:inset 0 0 0 2px rgba(29,156,192,.6);outline:2px dashed rgba(29,156,192,.5);outline-offset:-8px}
+.card.proposal .c-name{height:48px;width:100%}
+.card.proposal .p1,.card.proposal .p2{position:absolute;left:0;right:0}
+.card.proposal .p2{opacity:0;color:#0f5f80}
+.card.proposal.written .p1{opacity:0}
+.card.proposal.written .p2{opacity:1}
+
+/* ===== 素材: タグ・判子・印 ===== */
+.tag{display:inline-block;font:700 13px/1.4 var(--gothic);padding:4px 11px;border-radius:999px;background:rgba(11,16,38,.9);
+  color:#e9f9ff;border:1px solid rgba(111,227,255,.55);white-space:nowrap}
+.tag.big{font-size:22px;padding:6px 18px;box-shadow:0 0 18px rgba(111,227,255,.45)}
+.stamp{width:170px;height:170px;border-radius:50%;border:8px double var(--red);color:var(--red);display:grid;place-items:center;
+  font:800 52px/1 var(--mincho);transform:rotate(var(--r,0deg));filter:url(#rough);opacity:.9;
+  background:radial-gradient(circle,transparent 58%,rgba(198,58,43,.1) 100%)}
+.stamp.long{font-size:40px}
+.seal{width:118px;height:118px;border:7px solid #d8402f;border-radius:12px;color:#d8402f;display:grid;place-items:center;
+  font:800 46px/1.05 var(--mincho);writing-mode:vertical-rl;letter-spacing:.06em;filter:url(#rough);transform:rotate(var(--r,-12deg));
+  background:rgba(255,236,226,.18);box-shadow:0 0 22px rgba(216,64,47,.35)}
+
+/* ===== 素材: ロゴ ===== */
+.logo{text-align:center}
+.logo-en{font:800 112px/1 var(--roman);letter-spacing:.1em;white-space:nowrap}
+.logo-en span{display:inline-block;background:linear-gradient(180deg,#fff6d0 0%,#e2b857 55%,#9a6b1c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 16px rgba(226,184,87,.45))}
+.logo-ja{margin-top:18px;font:800 40px/1 var(--mincho);letter-spacing:.6em;color:var(--paper);padding-left:.6em}
+.final{text-align:center}
+.final-kicker{font:800 26px/1 var(--mincho);letter-spacing:.5em;color:#d9c48e;padding-left:.5em}
+.final-ja{margin-top:28px;font:800 136px/1 var(--mincho);letter-spacing:.06em;white-space:nowrap;
+  background:linear-gradient(180deg,#fff6d0 0%,#e2b857 55%,#9a6b1c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 24px rgba(226,184,87,.5))}
+.final-en{margin-top:22px;font:600 24px/1 var(--roman);letter-spacing:1.1em;color:var(--gold);padding-left:1.1em}
+
+/* ===== 素材: ログ ===== */
+.log{width:820px;padding:38px 52px;border-radius:6px;color:var(--ink);font:700 27px/1.9 var(--mincho);
+  background:linear-gradient(175deg,#fbf3de,#ead8ae);box-shadow:0 20px 50px rgba(0,0,0,.55),inset 0 0 0 1px rgba(122,90,42,.35)}
+.log p{margin:0 0 6px;white-space:nowrap}
+.log b{display:inline-block;width:2.6em;font:800 20px var(--gothic);color:#8a4f1c}
+.log b.pl{color:#1f6f8f}
+.log .mark{background:linear-gradient(transparent 62%,rgba(255,206,72,.85) 62%) no-repeat 0 0/100% 100%}
+
+/* ===== 素材: 進化のループ ===== */
+.loop{position:relative;width:520px;height:520px}
+.loop-svg{position:absolute;inset:0;overflow:visible}
+.loop-track{fill:none;stroke:rgba(226,184,87,.25);stroke-width:14}
+.loop-dash{fill:none;stroke:var(--gold);stroke-width:3;stroke-dasharray:4 14;transform-origin:260px 260px}
+.orbit{position:absolute;left:260px;top:260px;width:0;height:0}
+.orbit i{position:absolute;left:-11px;top:-211px;width:22px;height:22px;border-radius:50%;background:var(--cyan);box-shadow:0 0 18px var(--cyan),0 0 40px var(--cyan)}
+.loop-label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:800 22px/1 var(--mincho);color:var(--paper);
+  padding:10px 16px;border-radius:999px;background:rgba(11,16,38,.92);border:1.5px solid rgba(226,184,87,.7)}
+.ver{position:absolute;left:185px;top:185px;width:150px;height:150px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle,#1c2656,#0b1026);border:3px solid var(--gold);box-shadow:0 0 30px rgba(226,184,87,.4)}
+.ver span{grid-area:1/1;font:800 46px/1 var(--roman);color:var(--gold-hi)}
+.ver .tick{opacity:0}
+.ver small{grid-area:1/1;align-self:end;margin-bottom:22px;font:700 12px var(--gothic);letter-spacing:.3em;color:#d9c48e}
+.scene.active .loop-dash{animation:spin 8s linear infinite reverse}
+.scene.active .orbit{animation:spin 1.5s linear infinite}
+.scene.active .loop-label{animation:lp 1.5s ease-in-out var(--d,0s) infinite}
+.scene.active .ver .tick{animation:tick .7s ease var(--d,0s) both}
+@keyframes lp{0%,30%,100%{border-color:rgba(226,184,87,.7);box-shadow:none;color:var(--paper)}8%{border-color:var(--cyan);box-shadow:0 0 22px var(--cyan);color:#fff}}
+@keyframes tick{0%{opacity:0;transform:scale(1.5)}15%{opacity:1;transform:scale(1)}85%{opacity:1}100%{opacity:0}}
+
+/* ===== アイコン ===== */
+.ico{fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ===== 操作と素材集 ===== */
+.controls{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;padding:12px 16px}
+.controls button,.g-item button,.gallery-head button{font:700 14px var(--gothic);color:var(--paper);background:#141c42;border:1px solid rgba(226,184,87,.6);
+  border-radius:999px;padding:8px 16px;cursor:pointer}
+.controls button:hover,.g-item button:hover,.gallery-head button:hover{background:#1f2a5e}
+.controls button.ended{box-shadow:0 0 0 3px rgba(226,184,87,.5)}
+.controls a{color:#d9c48e;font-size:14px}
+.gallery{max-width:1200px;margin:24px auto 64px;padding:0 16px}
+.gallery-head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;border-bottom:1px solid rgba(226,184,87,.35);padding-bottom:12px}
+.gallery h2{margin:0;font:800 30px var(--mincho);color:var(--gold-hi)}
+.gallery-head p{margin:6px 0 0;color:#b9b19a;font-size:14px;line-height:1.7}
+.gallery h3{margin:32px 0 12px;font:800 20px var(--mincho);color:#d9c48e}
+.g-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.g-item{margin:0;border:1px solid rgba(226,184,87,.25);border-radius:12px;overflow:hidden;background:#0a0f24}
+.g-item.wide{grid-column:1/-1}
+.g-prev{min-height:290px;display:grid;place-items:center;padding:16px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 40%,#1c2656 0%,#0b1026 70%)}
+.g-prev.paper{background:radial-gradient(ellipse at 50% 45%,#fbf3de 0%,#ead9b2 70%,#cdb27c 100%)}
+.g-prev > *{zoom:var(--gz,1)}
+.g-item figcaption{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;font-size:13px;color:#d8d0b8}
+.g-item figcaption span{line-height:1.4}
+.g-item button{padding:5px 10px;font-size:12px;flex-shrink:0}
+body.solo{min-height:100vh;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,#1c2656 0%,#0b1026 70%)}
+body.solo.paper{background:radial-gradient(ellipse at 50% 45%,#fbf3de 0%,#ead9b2 70%,#cdb27c 100%)}
+</style>
+</head>
+<body>
+<svg id="sprite" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4"/></filter>
+    <symbol id="i-person" viewBox="0 0 64 64"><circle cx="32" cy="19" r="9"/><path d="M13 57c1-14 9-22 19-22s18 8 19 22"/><path d="M45 8l8 30M49 30l6-2"/></symbol>
+    <symbol id="i-place" viewBox="0 0 64 64"><path d="M6 54h52"/><path d="M12 54V34l11-10 11 10v20"/><path d="M30 54V38l12-10 12 10v16"/><path d="M19 54v-9h7v9M38 44h8"/><path d="M42 18v-8"/></symbol>
+    <symbol id="i-item" viewBox="0 0 64 64"><path d="M32 6v6M25 12h14"/><rect x="21" y="16" width="22" height="30" rx="5"/><path d="M32 23c-5 6-3 13 0 15 3-2 5-9 0-15z"/><path d="M23 46h18v6H23z"/><path d="M14 30h-4M54 30h-4M17 18l-3-3M47 18l3-3"/></symbol>
+    <symbol id="i-event" viewBox="0 0 64 64"><ellipse cx="21" cy="45" rx="6.5" ry="9.5"/><ellipse cx="21" cy="29" rx="4.5" ry="3.5"/><ellipse cx="43" cy="31" rx="6.5" ry="9.5"/><ellipse cx="43" cy="15" rx="4.5" ry="3.5"/></symbol>
+    <symbol id="i-monster" viewBox="0 0 64 64"><path d="M17 22l4-14 8 11M47 22l-4-14-8 11"/><path d="M14 24q18-9 36 0q4 20-18 33Q10 44 14 24z"/><path d="M22 34l7 3M42 34l-7 3"/><path d="M27 47l2-3 3 3 3-3 2 3"/></symbol>
+    <symbol id="i-promise" viewBox="0 0 64 64"><circle cx="24" cy="32" r="13"/><circle cx="40" cy="32" r="13"/><path d="M32 10v-4M32 58v-4"/></symbol>
+    <symbol id="i-choice" viewBox="0 0 64 64"><path d="M32 8v50"/><path d="M32 14h18l6 6-6 6H32"/><path d="M32 32H14l-6 6 6 6h18"/><path d="M24 58h16"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 64 64"><path d="M32 6c2 15 8 21 23 26-15 5-21 11-23 26-2-15-8-21-23-26 15-5 21-11 23-26z"/><path d="M52 8v8M48 12h8M12 46v8M8 50h8"/></symbol>
+    <symbol id="i-emblem" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><circle cx="32" cy="32" r="22" stroke-dasharray="2 4"/><path d="M32 15L17 42h30z"/><path d="M32 15v18M17 42l15-9 15 9"/><circle cx="32" cy="15" r="4" fill="currentColor"/><circle cx="17" cy="42" r="4" fill="currentColor"/><circle cx="47" cy="42" r="4" fill="currentColor"/><circle cx="32" cy="33" r="2.6" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<div id="viewport">
+  <div id="stage">
+    <div id="bg"></div>
+
+    <!-- 1. 世界は、カードで出来ている（0.0〜3.0秒） -->
+    <section class="scene" id="s1">
+      <div class="abs glow fx-in" style="left:390px;top:50px;width:500px;height:500px;--d:.7s"></div>
+      <div class="abs" style="left:550px;top:172px;transform:scale(1.3)"><div class="fx-flip" style="--d:.4s" data-asset="card:village"></div></div>
+      <div class="cap" style="top:530px"><span class="ib fx-up" style="--d:1.2s">世界は、</span><span class="ib fx-up" style="--d:1.65s">カードで出来ている。</span></div>
+    </section>
+
+    <!-- 2. 人も、場所も、出来事も（3.0〜6.0秒） -->
+    <section class="scene" id="s2">
+      <div class="cap" style="top:70px"><span class="ib fx-up" style="--d:1.2s">人も、場所も、出来事も。</span></div>
+      <div class="abs fx-deal" style="left:550px;top:232px;--d:.05s;--to:translate(-475px,26px) rotate(-9deg)" data-asset="card:hero"></div>
+      <div class="abs fx-deal" style="left:550px;top:232px;--d:.2s;--to:translate(-285px,8px) rotate(-5deg)" data-asset="card:village"></div>
+      <div class="abs fx-deal" style="left:550px;top:232px;--d:.35s;--to:translate(-95px,0) rotate(-1.5deg)" data-asset="card:lantern"></div>
+      <div class="abs fx-deal" style="left:550px;top:232px;--d:.5s;--to:translate(95px,0) rotate(1.5deg)" data-asset="card:tracks"></div>
+      <div class="abs fx-deal" style="left:550px;top:232px;--d:.65s;--to:translate(285px,8px) rotate(5deg)" data-asset="card:beast"></div>
+      <div class="abs fx-deal" style="left:550px;top:232px;--d:.8s;--to:translate(475px,26px) rotate(9deg)" data-asset="card:oath"></div>
+      <div class="cap sm" style="top:610px"><span class="ib fx-up" style="--d:1.8s">世界を、カードに包む。</span></div>
+    </section>
+
+    <!-- 3. タグで結び、関係を辿る（6.0〜9.5秒） -->
+    <section class="scene" id="s3">
+      <div class="abs fx-push" style="inset:0">
+        <svg class="abs" width="1280" height="720" viewBox="0 0 1280 720" style="left:0;top:0">
+          <g fill="none" stroke="#6fe3ff" stroke-width="3" stroke-linecap="round" stroke-dasharray="1" style="filter:drop-shadow(0 0 6px #6fe3ff)">
+            <path class="fx-draw" pathLength="1" style="--d:.45s" d="M230 260L520 200"/>
+            <path class="fx-draw" pathLength="1" style="--d:.55s" d="M520 200L860 250"/>
+            <path class="fx-draw" pathLength="1" style="--d:.65s" d="M230 260L360 520"/>
+            <path class="fx-draw" pathLength="1" style="--d:.75s" d="M360 520L700 500"/>
+            <path class="fx-draw" pathLength="1" style="--d:.85s" d="M520 200L700 500"/>
+            <path class="fx-draw" pathLength="1" style="--d:.95s" d="M700 500L1050 480"/>
+            <path class="fx-draw" pathLength="1" style="--d:1.05s" d="M860 250L1050 480"/>
+            <path class="fx-draw" pathLength="1" style="--d:1.15s" d="M860 250L700 500"/>
+          </g>
+        </svg>
+        <div class="abs" style="left:140px;top:132px;transform:scale(.62)"><div class="fx-pop" style="--d:0s" data-asset="card:hero"></div></div>
+        <div class="abs" style="left:430px;top:72px;transform:scale(.62)"><div class="fx-pop" style="--d:.08s" data-asset="card:village"></div></div>
+        <div class="abs" style="left:770px;top:122px;transform:scale(.62)"><div class="fx-pop" style="--d:.16s" data-asset="card:lantern"></div></div>
+        <div class="abs" style="left:270px;top:392px;transform:scale(.62)"><div class="fx-pop" style="--d:.24s" data-asset="card:oath"></div></div>
+        <div class="abs" style="left:610px;top:372px;transform:scale(.62)"><div class="fx-pop" style="--d:.32s" data-asset="card:tracks"></div></div>
+        <div class="abs" style="left:960px;top:352px;transform:scale(.62)"><div class="fx-pop" style="--d:.4s" data-asset="card:beast"></div></div>
+        <div class="abs" style="left:375px;top:230px;transform:translate(-50%,-50%)"><div class="fx-pop" style="--d:1.25s" data-asset="tag:村"></div></div>
+        <div class="abs" style="left:295px;top:390px;transform:translate(-50%,-50%)"><div class="fx-pop" style="--d:1.4s" data-asset="tag:約束"></div></div>
+        <div class="abs" style="left:780px;top:375px;transform:translate(-50%,-50%)"><div class="fx-pop" style="--d:1.55s" data-asset="tag:古代"></div></div>
+        <div class="abs" style="left:875px;top:490px;transform:translate(-50%,-50%)"><div class="fx-pop" style="--d:1.7s" data-asset="tag:森"></div></div>
+        <div class="abs pulse"></div>
+      </div>
+      <div class="cap" style="top:22px"><span class="ib fx-up" style="--d:.9s">タグで結び、関係を辿る。</span></div>
+      <div class="cap sm" style="top:652px"><span class="ib fx-up" style="--d:1.9s">CARD × TAG × GRAPH</span></div>
+    </section>
+
+    <!-- 4. ロゴ（9.5〜11.5秒） -->
+    <section class="scene" id="s4">
+      <div class="abs burst fx-burst" style="left:340px;top:60px;width:600px;height:600px"></div>
+      <div class="flash fx-flash"></div>
+      <div class="abs" style="left:0;right:0;top:220px" data-asset="logo"></div>
+      <div class="cap sm" style="top:470px"><span class="ib fx-up" style="--d:1s">かるた ・ タグ ・ グラフ</span></div>
+    </section>
+
+    <!-- 5. シナリオの外へ、一歩（11.5〜15.0秒） -->
+    <section class="scene" id="s5">
+      <div class="cap" style="top:60px"><span class="ib fx-up" style="--d:.2s">シナリオの外へ、一歩。</span></div>
+      <div class="abs fx-deal" style="left:550px;top:440px;--d:0s;--to:translate(-230px,22px) rotate(-8deg)"><div class="fx-dim" style="--d:1s" data-asset="card:choiceVillage"></div></div>
+      <div class="abs fx-deal" style="left:550px;top:440px;--d:.2s;--to:translate(230px,22px) rotate(8deg)"><div class="fx-dim" style="--d:1s" data-asset="card:choiceInn"></div></div>
+      <div class="abs fx-deal" style="left:550px;top:440px;--d:.1s;--to:translate(0,0)"><div class="fx-lift" style="--d:.9s" data-asset="proposal"></div></div>
+      <div class="abs" style="left:790px;top:200px;transform:rotate(-10deg)"><div class="fx-pop" style="--d:2.1s;font:800 58px/1 var(--mincho);color:#6fe3ff;text-shadow:0 0 22px #6fe3ff,0 3px 0 #000">想定外！</div></div>
+    </section>
+
+    <!-- 6. その一手は、ログに残る（15.0〜18.0秒） -->
+    <section class="scene" id="s6">
+      <div class="cap" style="top:60px"><span class="ib fx-up" style="--d:.1s">その一手は、ログに残る。</span></div>
+      <div class="abs fx-up" style="left:230px;top:190px;--d:0s">
+        <div class="log">
+          <p class="fx-type" style="--d:.3s;--n:12"><b>GM</b>村の入口に到着した。</p>
+          <p class="fx-type" style="--d:.85s;--n:20;--dur:.6s"><b class="pl">PL</b>村には入らず、裏手の森を調べます。</p>
+          <p class="fx-type" style="--d:1.55s;--n:18;--dur:.55s"><b>GM</b><span class="mark fx-mark" style="--d:2.2s">森を調べると、古い足跡を発見した。</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. 問題だけじゃない（18.0〜21.0秒） -->
+    <section class="scene paper" id="s7">
+      <div class="abs" style="left:165px;top:145px"><div class="fx-slam" style="--d:.1s" data-asset="stamp:問題:-12"></div></div>
+      <div class="abs" style="left:555px;top:105px"><div class="fx-slam" style="--d:.48s" data-asset="stamp:発見:8"></div></div>
+      <div class="abs" style="left:945px;top:150px"><div class="fx-slam" style="--d:.86s" data-asset="stamp:創発:-6"></div></div>
+      <div class="abs" style="left:245px;top:425px"><div class="fx-slam" style="--d:1.24s" data-asset="stamp:逸脱:10"></div></div>
+      <div class="abs" style="left:635px;top:440px"><div class="fx-slam" style="--d:1.62s" data-asset="stamp:成功:-9"></div></div>
+      <div class="abs" style="left:1005px;top:415px"><div class="fx-slam" style="--d:2s" data-asset="stamp:再利用:6"></div></div>
+      <div class="cap ink" style="top:322px"><span class="ib fx-up" style="--d:2.25s">失敗だけじゃない。ぜんぶ、進化の種。</span></div>
+    </section>
+
+    <!-- 8. 採用を決めるのは、人間（21.0〜24.0秒） -->
+    <section class="scene" id="s8">
+      <div class="abs rays fx-rays" style="left:290px;top:-20px;width:700px;height:700px;--d:1.3s"></div>
+      <div class="abs" style="left:550px;top:202px;width:180px;height:256px;transform:scale(1.35)">
+        <div class="abs fx-out" style="left:0;top:0;--d:1.35s" data-asset="card:tracks"></div>
+        <div class="abs fx-in" style="left:0;top:0;--d:1.3s" data-asset="card:tracksGold"></div>
+      </div>
+      <div class="abs" style="left:772px;top:116px"><div class="fx-slam" style="--d:.75s" data-asset="seal"></div></div>
+      <div class="abs" style="left:0;right:0;top:518px;text-align:center"><div class="ib fx-pop" style="--d:1.7s"><span class="tag big">改訂　第2版</span></div></div>
+      <div class="flash fx-flash" style="--d:1.3s"></div>
+      <div class="cap" style="top:600px"><span class="ib fx-up" style="--d:.2s">採用を決めるのは、人間。</span></div>
+    </section>
+
+    <!-- 9. 遊ぶほど、TRPGそのものが進化する（24.0〜27.0秒） -->
+    <section class="scene" id="s9">
+      <div class="cap" style="top:28px"><span class="ib fx-up" style="--d:.1s">遊ぶほど、TRPGそのものが進化する。</span></div>
+      <div class="abs fx-pop" style="left:380px;top:108px;--d:0s" data-asset="loop"></div>
+      <div class="abs" style="left:0;right:0;top:648px;display:flex;justify-content:center;gap:12px">
+        <div class="fx-pop" style="--d:1.1s" data-asset="tag:システム"></div>
+        <div class="fx-pop" style="--d:1.22s" data-asset="tag:シナリオ"></div>
+        <div class="fx-pop" style="--d:1.34s" data-asset="tag:世界"></div>
+        <div class="fx-pop" style="--d:1.46s" data-asset="tag:GMガイド"></div>
+        <div class="fx-pop" style="--d:1.58s" data-asset="tag:プレイスタイル"></div>
+      </div>
+    </section>
+
+    <!-- 10. タイトル（27.0〜30.0秒） -->
+    <section class="scene" id="s10">
+      <div class="abs" style="left:90px;top:760px;transform:scale(.5);opacity:.28"><div class="drift" style="--d:0s;--t:7s;--r0:-14deg;--r1:20deg" data-asset="back"></div></div>
+      <div class="abs" style="left:300px;top:820px;transform:scale(.4);opacity:.22"><div class="drift" style="--d:.5s;--t:8s;--r0:10deg;--r1:-25deg" data-asset="back"></div></div>
+      <div class="abs" style="left:880px;top:780px;transform:scale(.55);opacity:.28"><div class="drift" style="--d:.2s;--t:7.5s;--r0:8deg;--r1:-18deg" data-asset="back"></div></div>
+      <div class="abs" style="left:1080px;top:860px;transform:scale(.42);opacity:.2"><div class="drift" style="--d:.8s;--t:8.5s;--r0:-6deg;--r1:24deg" data-asset="back"></div></div>
+      <div class="abs" style="left:640px;top:900px;transform:scale(.36);opacity:.18"><div class="drift" style="--d:1.1s;--t:9s;--r0:16deg;--r1:-10deg" data-asset="back"></div></div>
+      <div class="flash fx-flash"></div>
+      <div class="abs" style="left:0;right:0;top:150px" data-asset="final"></div>
+      <div class="cap" style="top:470px"><span class="ib fx-up" style="--d:1.2s">遊ぶたびに、世界が育つ。</span></div>
+      <div class="cap sm" style="top:600px;letter-spacing:.25em"><span class="ib fx-up" style="--d:1.9s">ブラウザで遊べる TRPG サービス、準備中。</span></div>
+    </section>
+
+    <div id="bar"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="replay" type="button">▶ もう一度</button>
+  <button id="sound" type="button">♪ 音ありで最初から</button>
+  <a href="#assets">素材集へ ↓</a>
+</div>
+
+<section class="gallery" id="assets">
+  <div class="gallery-head">
+    <div>
+      <h2>素材集</h2>
+      <p>この映像で使った素材です。画像ファイルは使わず、すべてこの HTML の中（CSS とインラインの SVG）で描いています。<br>
+      「HTMLで保存」は、その素材だけを1枚の HTML として書き出します（スタイルとアイコンを含むので、そのまま開けます）。</p>
+    </div>
+    <button id="save-all" type="button">素材集をまとめてHTMLで保存</button>
+  </div>
+  <div id="gallery"></div>
+</section>
+
+<style>
+/* 関係を辿る光（場面3）。offset-path は素材ではないのでここに置く */
+.pulse{left:0;top:0;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 0 14px #6fe3ff,0 0 34px #6fe3ff;opacity:0;
+  offset-path:path("M230 260L520 200L700 500L1050 480");offset-rotate:0deg}
+.scene.active .pulse{animation:travel 1.7s ease-in-out 1.3s both}
+@keyframes travel{0%{offset-distance:0%;opacity:0}6%{opacity:1}94%{opacity:1}100%{offset-distance:100%;opacity:0}}
+</style>
+
+<script>
+(() => {
+  // ===== 素材（舞台と素材集の両方がここから描く） =====
+  const STARS = { bronze: '★', silver: '★★', gold: '★★★' };
+  const CARDS = {
+    hero: { type: '人物', tc: '#3f6fb5', icon: 'person', name: '若き冒険者', tags: ['剣', '約束'], rar: 'silver' },
+    village: { type: '場所', tc: '#4f8a4a', icon: 'place', name: 'はじまりの村', tags: ['村', '入口'], rar: 'bronze' },
+    lantern: { type: '道具', tc: '#b7791f', icon: 'item', name: '古いランタン', tags: ['灯り', '古代'], rar: 'bronze' },
+    tracks: { type: '出来事', tc: '#8a4fb5', icon: 'event', name: '古い足跡', tags: ['森', '謎'], rar: 'bronze' },
+    beast: { type: '魔物', tc: '#b5413f', icon: 'monster', name: '森の主', tags: ['森', '獣'], rar: 'silver' },
+    oath: { type: '関係', tc: '#c2557a', icon: 'promise', name: '果たされぬ約束', tags: ['約束', '過去'], rar: 'bronze' },
+    tracksGold: { type: '出来事', tc: '#8a4fb5', icon: 'event', name: '古い足跡', tags: ['森', '謎', '伝承'], rar: 'gold', flavor: '— ある卓の寄り道から生まれた' },
+    choiceVillage: { type: '選択肢', tc: '#2f7f8f', icon: 'choice', name: '村へ入る', rar: 'bronze' },
+    choiceInn: { type: '選択肢', tc: '#2f7f8f', icon: 'choice', name: '宿で休む', rar: 'bronze' },
+  };
+  const ico = (name) => `<svg class="ico" viewBox="0 0 64 64"><use href="#i-${name}"/></svg>`;
+  const tag = (t, big) => `<span class="tag${big ? ' big' : ''}">#${t}</span>`;
+  const back = () =>
+    `<div class="card-back"><div class="cb-frame"><svg class="ico cb-emb" viewBox="0 0 64 64"><use href="#i-emblem"/></svg><div class="cb-name">CARTAGRAPH</div></div></div>`;
+  const card = (c) =>
+    `<div class="card rar-${c.rar}" style="--tc:${c.tc}"><div class="card-inner"><div class="card-face">` +
+    `<div class="c-top"><span class="c-type">${c.type}</span><span class="c-stars">${STARS[c.rar]}</span></div>` +
+    `<div class="c-art">${ico(c.icon)}</div><div class="c-name">${c.name}</div>` +
+    (c.tags ? `<div class="c-tags">${c.tags.map((t) => tag(t)).join('')}</div>` : '') +
+    (c.flavor ? `<div class="c-flavor">${c.flavor}</div>` : '') +
+    `</div>${back()}</div></div>`;
+  const proposal = (written) =>
+    `<div class="card proposal${written ? ' written' : ''}"><div class="card-inner"><div class="card-face">` +
+    `<div class="c-top"><span class="c-type">提案</span><span class="c-stars">✦</span></div>` +
+    `<div class="c-art">${ico('spark')}</div>` +
+    `<div class="c-name"><span class="p1 fx-out" style="--d:1.5s">新たな選択肢を<br>提案する</span><span class="p2 fx-write" style="--d:1.6s">裏手の森を<br>調べる</span></div>` +
+    `</div>${back()}</div></div>`;
+  const logo = () =>
+    `<div class="logo"><div class="logo-en">${[...'CARTAGRAPH'].map((ch, i) => `<span class="fx-drop" style="--d:${(0.15 + i * 0.05).toFixed(2)}s">${ch}</span>`).join('')}</div>` +
+    `<div class="logo-ja fx-up" style="--d:.75s">カルタグラフ</div></div>`;
+  const final = () =>
+    `<div class="final"><div class="final-kicker fx-up" style="--d:.2s">進化型カードTRPG</div>` +
+    `<div class="final-ja fx-drop" style="--d:.4s">カルタグラフ</div><div class="final-en fx-up" style="--d:.8s">CARTAGRAPH</div></div>`;
+  const LOOP = ['セッション', 'ログ', '発見', '進化候補', '採用', '改訂'];
+  const loop = () => {
+    const labels = LOOP.map((t, i) => {
+      const a = ((-90 + i * 60) * Math.PI) / 180;
+      const x = (260 + 200 * Math.cos(a)).toFixed(1);
+      const y = (260 + 200 * Math.sin(a)).toFixed(1);
+      return `<div class="loop-label" style="left:${x}px;top:${y}px;--d:${(i * 0.25).toFixed(2)}s">${t}</div>`;
+    }).join('');
+    return (
+      `<div class="loop"><svg class="loop-svg" viewBox="0 0 520 520"><circle class="loop-track" cx="260" cy="260" r="200"/><circle class="loop-dash" cx="260" cy="260" r="200"/></svg>` +
+      `<div class="orbit"><i></i></div>` +
+      `<div class="ver"><span class="tick" style="--d:.2s">v1</span><span class="tick" style="--d:.85s">v2</span><span class="tick" style="--d:1.5s">v3</span>` +
+      `<span class="fx-pop" style="--d:2.15s">v4</span><small>VERSION</small></div>${labels}</div>`
+    );
+  };
+  const stamp = (t, r) => `<div class="stamp${t.length > 2 ? ' long' : ''}" style="--r:${r || 0}deg"><span>${t}</span></div>`;
+
+  function render(key) {
+    const [kind, a, b] = key.split(':');
+    switch (kind) {
+      case 'card': return card(CARDS[a]);
+      case 'back': return card(CARDS.village).replace('class="card ', 'class="card show-back ');
+      case 'proposal': return proposal(a === 'after');
+      case 'tag': return tag(a, true);
+      case 'stamp': return stamp(a, b);
+      case 'seal': return '<div class="seal">採用</div>';
+      case 'logo': return logo();
+      case 'final': return final();
+      case 'loop': return loop();
+      case 'icon': return `<div style="width:120px;height:120px;color:var(--gold)">${ico(a)}</div>`;
+      default: throw new Error(`素材がありません: ${key}`);
+    }
+  }
+  for (const el of document.querySelectorAll('[data-asset]')) el.innerHTML = render(el.dataset.asset);
+
+  // ===== 背景の光の粒 =====
+  const bg = document.getElementById('bg');
+  for (let i = 0; i < 46; i++) {
+    const m = document.createElement('i');
+    const s = 1 + Math.random() * 2.6;
+    m.className = 'mote';
+    m.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 100}%;width:${s}px;height:${s}px;--t:${4 + Math.random() * 5}s;--d:${-Math.random() * 8}s;--o:${0.25 + Math.random() * 0.6}`;
+    bg.appendChild(m);
+  }
+
+  // ===== 舞台の大きさ =====
+  const viewport = document.getElementById('viewport');
+  const stage = document.getElementById('stage');
+  const fit = () => { stage.style.transform = `scale(${viewport.clientWidth / 1280})`; };
+  new ResizeObserver(fit).observe(viewport);
+  fit();
+
+  // ===== 時間割（秒） =====
+  const SCENES = [['s1', 0], ['s2', 3], ['s3', 6], ['s4', 9.5], ['s5', 11.5], ['s6', 15], ['s7', 18], ['s8', 21], ['s9', 24], ['s10', 27]];
+  const END = 30;
+  const bar = document.getElementById('bar');
+  const replayBtn = document.getElementById('replay');
+  let startAt = 0;
+  let shown = -1;
+  let raf = 0;
+
+  function tickFrame() {
+    const t = (performance.now() - startAt) / 1000;
+    let idx = 0;
+    for (let i = 0; i < SCENES.length; i++) if (t >= SCENES[i][1]) idx = i;
+    if (idx !== shown) {
+      if (shown >= 0) document.getElementById(SCENES[shown][0]).classList.remove('active');
+      document.getElementById(SCENES[idx][0]).classList.add('active');
+      shown = idx;
+    }
+    bar.style.width = `${Math.min(t / END, 1) * 100}%`;
+    if (t < END) raf = requestAnimationFrame(tickFrame);
+    else replayBtn.classList.add('ended');
+  }
+
+  function play(withSound) {
+    cancelAnimationFrame(raf);
+    for (const s of document.querySelectorAll('.scene')) s.classList.remove('active');
+    void stage.offsetWidth;
+    shown = -1;
+    replayBtn.classList.remove('ended');
+    const lead = withSound ? startMusic() : 0;
+    startAt = performance.now() + lead * 1000;
+    raf = requestAnimationFrame(tickFrame);
+  }
+
+  // ===== 音（WebAudio で合成する。音声ファイルは使わない） =====
+  let ac = null;
+  function startMusic() {
+    if (ac) ac.close();
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return 0;
+    ac = new AC();
+    const out = ac.createGain();
+    out.gain.value = 0.5;
+    out.connect(ac.destination);
+    const nb = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+    const ch = nb.getChannelData(0);
+    for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    const lead = 0.08;
+    const T = ac.currentTime + lead;
+
+    const kick = (t, v = 0.9) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.setValueAtTime(150, t);
+      o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+      g.gain.setValueAtTime(v, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+      o.connect(g).connect(out); o.start(t); o.stop(t + 0.34);
+    };
+    const noise = (t, dur, v, type, freq, toFreq) => {
+      const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+      s.buffer = nb; f.type = type; f.frequency.setValueAtTime(freq, t);
+      if (toFreq) f.frequency.exponentialRampToValueAtTime(toFreq, t + dur);
+      g.gain.setValueAtTime(v, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      s.connect(f).connect(g).connect(out); s.start(t); s.stop(t + dur + 0.02);
+    };
+    const tone = (t, freq, dur, v, type = 'triangle') => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(v, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(out); o.start(t); o.stop(t + dur + 0.02);
+    };
+    const bass = (t, freq, dur = 0.22) => {
+      const o = ac.createOscillator(), f = ac.createBiquadFilter(), g = ac.createGain();
+      o.type = 'sawtooth'; o.frequency.value = freq; f.type = 'lowpass'; f.frequency.value = 520;
+      g.gain.setValueAtTime(0.22, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.connect(f).connect(g).connect(out); o.start(t); o.stop(t + dur + 0.02);
+    };
+    const chord = (t, freqs, dur, v = 0.09) => { for (const fq of freqs) tone(t, fq, dur, v); };
+    const thud = (t) => { kick(t, 1); noise(t, 0.14, 0.5, 'lowpass', 1400); };
+    const crash = (t, v = 0.35) => noise(t, 1.4, v, 'highpass', 3500);
+
+    // 1: めくる音と、ひらめきの音
+    noise(T + 0.4, 0.5, 0.25, 'bandpass', 600, 3200);
+    chord(T + 1.2, [659.3, 987.8, 1318.5], 1.6, 0.06);
+    // 3〜27: 120BPM の拍（9.0〜9.5 は溜めのために抜く）
+    const prog = [110, 87.31, 130.81, 98];
+    for (let b = 3; b < 27; b += 0.5) {
+      if (b >= 9 && b < 9.5) continue;
+      kick(T + b, b < 6 ? 0.6 : 0.85);
+      const root = prog[Math.floor((b - 3) / 2) % 4];
+      bass(T + b, root);
+      if (b >= 6) noise(T + b + 0.25, 0.05, 0.18, 'highpass', 7000);
+      if (b >= 11.5) bass(T + b + 0.25, root * 2, 0.15);
+    }
+    // カードを配る音
+    for (let i = 0; i < 6; i++) noise(T + 3.05 + i * 0.15, 0.12, 0.2, 'bandpass', 2400);
+    // 4: ロゴ
+    noise(T + 8.8, 0.7, 0.2, 'bandpass', 300, 5000);
+    kick(T + 9.5, 1.1); crash(T + 9.5, 0.45); chord(T + 9.5, [220, 261.6, 329.6, 440], 1.8, 0.08);
+    // 5: 提案カードが浮く・想定外
+    noise(T + 12.4, 0.5, 0.22, 'bandpass', 500, 4000);
+    chord(T + 13.6, [880, 1174.7], 0.5, 0.07);
+    // 6: 文字を打つ音
+    for (const [s, n, d] of [[15.3, 12, 0.5], [15.85, 20, 0.6], [16.55, 18, 0.55]]) {
+      for (let i = 0; i < n; i++) noise(T + s + (i * d) / n, 0.02, 0.12, 'highpass', 5000);
+    }
+    // 7: 判子
+    for (let i = 0; i < 6; i++) thud(T + 18.1 + i * 0.38);
+    // 8: 採用の印と、金に変わる音
+    thud(T + 21.75); crash(T + 22.3, 0.3);
+    [1046.5, 1318.5, 1568, 2093].forEach((fq, i) => tone(T + 22.3 + i * 0.07, fq, 1.2, 0.06));
+    // 10: タイトル
+    kick(T + 27, 1.1); crash(T + 27, 0.45);
+    chord(T + 27, [130.81, 261.6, 329.6, 392, 587.3], 3.2, 0.08);
+    return lead;
+  }
+
+  // 指定した時刻（秒）の絵で止める（コマ送りの確認・静止画の書き出し用。例: cartagraphSeek(13.2)）
+  window.cartagraphSeek = (t) => {
+    cancelAnimationFrame(raf);
+    let idx = 0;
+    for (let i = 0; i < SCENES.length; i++) if (t >= SCENES[i][1]) idx = i;
+    for (const s of document.querySelectorAll('.scene')) s.classList.remove('active');
+    void stage.offsetWidth;
+    const scene = document.getElementById(SCENES[idx][0]);
+    scene.classList.add('active');
+    shown = idx;
+    for (const a of scene.getAnimations({ subtree: true })) {
+      a.pause();
+      a.currentTime = (t - SCENES[idx][1]) * 1000;
+    }
+    bar.style.width = `${Math.min(t / END, 1) * 100}%`;
+  };
+
+  replayBtn.addEventListener('click', () => play(!!ac));
+  document.getElementById('sound').addEventListener('click', () => play(true));
+
+  // ===== 素材集 =====
+  const GALLERY = [
+    ['カード', [
+      ['card:village', '場所カード「はじまりの村」'], ['card:hero', '人物カード「若き冒険者」'], ['card:lantern', '道具カード「古いランタン」'],
+      ['card:tracks', '出来事カード「古い足跡」'], ['card:beast', '魔物カード「森の主」'], ['card:oath', '関係カード「果たされぬ約束」'],
+      ['card:tracksGold', '採用されて育った「古い足跡」（金）'], ['back', 'カードの裏'],
+    ]],
+    ['選択肢と提案', [
+      ['card:choiceVillage', '選択肢カード「村へ入る」'], ['card:choiceInn', '選択肢カード「宿で休む」'],
+      ['proposal', '提案カード（書き込む前）'], ['proposal:after', '提案カード（書き込んだあと）'],
+    ]],
+    ['タグ', ['村', '約束', '古代', '森', 'システム', 'シナリオ', '世界', 'GMガイド', 'プレイスタイル'].map((t) => [`tag:${t}`, `タグ「#${t}」`])],
+    ['判子と印', [
+      ...['問題', '発見', '創発', '逸脱', '成功', '再利用'].map((t) => [`stamp:${t}`, `判子「${t}」`, 'paper']),
+      ['seal', '採用の印'],
+    ]],
+    ['ロゴと図', [
+      ['logo', 'ロゴ（英字＋かな）', 'wide', 0.6], ['final', 'タイトル', 'wide', 0.55], ['loop', '進化のループ', 'wide', 0.7],
+    ]],
+    ['アイコン（SVG）', [
+      ['person', '人物'], ['place', '場所'], ['item', '道具'], ['event', '出来事'], ['monster', '魔物'],
+      ['promise', '関係'], ['choice', '選択肢'], ['spark', '提案'], ['emblem', '紋章（カードの裏）'],
+    ].map(([n, label]) => [`icon:${n}`, `アイコン「${label}」`])],
+  ];
+
+  const css = document.getElementById('css').textContent;
+  const sprite = document.getElementById('sprite').outerHTML;
+  const standalone = (title, body, bodyClass = '') =>
+    `<!doctype html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>${title}</title>\n` +
+    `<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Shippori+Mincho+B1:wght@700;800&display=swap" rel="stylesheet">\n` +
+    `<style>${css}</style>\n</head>\n<body class="solo ${bodyClass}">\n${sprite}\n${body}\n</body>\n</html>\n`;
+  const download = (name, text, type) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type }));
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  const fileName = (key) => `cartagraph-${key.replace(/:/g, '-')}`;
+  const iconSvg = (name) => {
+    const sym = document.getElementById(`i-${name}`);
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256" fill="none" stroke="#e2b857" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${sym.innerHTML.replace(/currentColor/g, '#e2b857')}</svg>\n`;
+  };
+
+  const host = document.getElementById('gallery');
+  for (const [group, items] of GALLERY) {
+    const h = document.createElement('h3');
+    h.textContent = group;
+    const grid = document.createElement('div');
+    grid.className = 'g-grid';
+    for (const [key, label, opt, zoom] of items) {
+      const fig = document.createElement('figure');
+      fig.className = `g-item${opt === 'wide' ? ' wide' : ''}`;
+      const prev = document.createElement('div');
+      prev.className = `g-prev${opt === 'paper' ? ' paper' : ''}`;
+      if (zoom) prev.style.setProperty('--gz', zoom);
+      prev.innerHTML = render(key);
+      const cap = document.createElement('figcaption');
+      const span = document.createElement('span');
+      span.textContent = label;
+      cap.appendChild(span);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      if (key.startsWith('icon:')) {
+        btn.textContent = 'SVGで保存';
+        btn.addEventListener('click', () => download(`${fileName(key)}.svg`, iconSvg(key.slice(5)), 'image/svg+xml'));
+      } else {
+        btn.textContent = 'HTMLで保存';
+        btn.addEventListener('click', () =>
+          download(`${fileName(key)}.html`, standalone(label, render(key), opt === 'paper' ? 'paper' : ''), 'text/html'));
+      }
+      cap.appendChild(btn);
+      fig.append(prev, cap);
+      grid.appendChild(fig);
+    }
+    host.append(h, grid);
+  }
+  document.getElementById('save-all').addEventListener('click', () => {
+    const body = `<section class="gallery" style="display:block;width:100%">${host.innerHTML.replace(/<button[^>]*>.*?<\/button>/g, '')}</section>`;
+    download('cartagraph-assets.html', standalone('カルタグラフ 素材集', body).replace('class="solo ', 'class="'), 'text/html');
+  });
+
+  play(false);
+})();
+</script>
+</body>
+</html>
