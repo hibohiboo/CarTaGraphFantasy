@@ -1,10 +1,7 @@
 - [pushしたら確認不要、報告でよい](push-then-report.md) — mainへのpushは事前確認なしで実行し、完了後に報告する
-- [閲覧サイトフェーズの試作状況](cartagraph-viewer-site-phase.md) — docs/public/preview配下の試作ページ一覧とデザイントークン
 - [複数画面は着手前に一覧化する](list-screens-before-building.md) — UIモックアップを複数作る時は先に画面一覧を示してスコープ確認する
-- [React実装フェーズ（apps/web）の状況](web-app-react-phase.md) — 詳細はdocs/architecture/web-app.mdへ移した（2026-09-16）。ここは要点とポインタのみ
-- [開発プロセスの置き場所と2ルート運用](dev-process-structure.md) — docs/processがSSOT、AGENTS.mdが入口、.claudeは呼び出し口。基盤整備計画はdocs/plans/2026-09-16-dev-process-foundation.md（順序・方針はユーザー決定済み、C1〜C2完了）
+- [開発プロセスの置き場所と2ルート運用](dev-process-structure.md) — docs/processがSSOT、AGENTS.mdが入口、.claudeは呼び出し口（rulesは自動生成）
 - [lintは作業中に都度かけない](feedback-lint-cadence.md) — pre-commitフックに任せる。型検査・テストは節目で実行を継続
-- [村スタート冒険者キャンペーンの進み具合](village-campaign-progress.md) — 2026-09-27完了（C1〜C5）。残りは別PBI（酒場の扱い・結末タグのカード化）
 - [古い記述は気づいたらその場で直す](fix-stale-docs-immediately.md) — 理由が無ければ報告だけで止めず直す。理由があれば止めて伝える
 - [改善は仕組みで解決する](prefer-mechanisms.md) — 振り返りの改善案は、ルールより機械で止める・自動で組み立てる案を優先する
 - [ティザー映像](teaser-movie.md) — docs/public/teaser/movie-v1.html。M2完了後に v2 を作り直す予定

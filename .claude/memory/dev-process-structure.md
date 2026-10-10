@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 3e5f04df-9f84-4409-af85-7a72b948a1af
-  modified: 2026-10-10T02:08:20.640Z
+  modified: 2026-10-10T02:24:23.962Z
 ---
 
 2026-09-16に『プロフェッショナルAI駆動開発』のサンプル（`proffesional-ai/`、git管理外のローカル資料）を移植して、開発プロセスを文書化した。
@@ -16,4 +16,4 @@ metadata:
 - プランは `docs/plans/<日付>-<機能>.md`（VitePress の `srcExclude` で公開サイトからは除外）
 - 基盤整備の計画は `docs/plans/2026-09-16-dev-process-foundation.md`（C1 CI → C2 Biome+githooks → C3 モデル切替で試走・メモリ知識をdocsへ → C4 シーン構築画面のReact化を新プロセスで完走 → C5 リファクタ → C6 PR運用）。**2026-09-16にユーザーが決定済み：基盤整備中はスピード重視で直push、PR運用は最後。lintはAIにトークンを使わせずコミット前フックで止める**
 
-**How to apply:** `apps/`・`packages/` の振る舞いを変える依頼はフルルート（`/dev-cycle`：プランから）。docs のみ・試作・小修正はライトルートで、[[push-then-report]] の通り直 push でよい。プロセスに不満・不足を感じたら `docs/process/evolution.md` の候補に追記し、採用はユーザーが決める。運用知識をメモリにだけ残さず docs に書く（[[web-app-react-phase]] の内容は C3 で docs へ移す予定）。
+**How to apply:** `apps/`・`packages/` の振る舞いを変える依頼はフルルート（`/dev-cycle`：プランから）。docs のみ・試作・小修正はライトルートで、[[push-then-report]] の通り直 push でよい。プロセスに不満・不足を感じたら `docs/process/evolution.md` の候補に追記し、採用はユーザーが決める。運用知識をメモリにだけ残さず docs に書く（Webアプリの運用知識は docs/architecture/web-app.md、試作の引き継ぎは docs/architecture/prototype-handover.md）。

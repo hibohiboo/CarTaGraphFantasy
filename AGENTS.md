@@ -17,7 +17,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 ## ディレクトリ構成
 
 - `docs/concept/`, `docs/cartagraph/`, `docs/architecture/`, `docs/glossary.md`, `docs/open-questions.md` … 正式仕様（SSOT）
-- `docs/notes/` … デザイナーノート。ゲームの仕様のページと1対1で、決めた理由・経緯・将来の拡張候補を置く。正式仕様ではない。仕様のページには「いまのルール」だけを書き、理由や経緯はこちらへ書く（決まりは `docs/notes/index.md`）
+- `docs/notes/` … デザイナーノート。ゲームの仕様のページと1対1で、決めた理由・経緯・将来の拡張候補を置く。正式仕様ではない（仕様のページとの書き分けは `docs/notes/index.md`）
 - `docs/interviews/` … 議論ログの一次資料。正式仕様ではない
 - `docs/process/` … 開発プロセス（開発サイクル・ルール・依頼文雛形・体制の進化ログ）。**正式仕様の一部**
 - `docs/public/teaser/` … プレイヤー向けのティザー映像（自動再生する HTML 1枚）。作り直すときは版ごとにファイルを分け（`movie-v1.html`・`movie-v2.html` …）、古い版も残す。GitHub Pages の `/CarTaGraphFantasy/teaser/<ファイル名>` で見られる
