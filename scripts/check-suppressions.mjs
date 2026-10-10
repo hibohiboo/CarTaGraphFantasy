@@ -35,7 +35,7 @@ export function findSuppressions(files) {
 /** 一覧の項目（見出しから次の見出しまで）。見出しが無ければ null */
 export function listSection(md) {
   const lines = md.split('\n');
-  const start = lines.findIndex((l) => l === `### ${TITLE}`);
+  const start = lines.indexOf(`### ${TITLE}`);
   if (start < 0) return null;
   const end = lines.findIndex((l, i) => i > start && /^#{1,3} /.test(l));
   return lines.slice(start, end < 0 ? undefined : end).join('\n');
