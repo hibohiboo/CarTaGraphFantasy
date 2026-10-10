@@ -106,6 +106,25 @@ export const PROPOSAL_HANDLING_LABEL: Record<ProposalHandling, string> = {
   'auto-resolve': '自動解決',
 };
 
+/**
+ * シナリオタイプ（docs/cartagraph/scenario-type.md）。使わない仕組みを宣言する。どちらも false なら冒険、
+ * 両方 true なら読み物。GM・PL がシナリオを選ぶときの目印で、PC の参加資格にもデッキの絞り込みにも使わない
+ */
+export const scenarioTypeSchema = z.strictObject({
+  /** 戦闘なし：戦闘のシーン・空間モデルを持たない */
+  noCombat: z.boolean(),
+  /** 判定なし：判定を使わない */
+  noCheck: z.boolean(),
+});
+
+export type ScenarioType = z.infer<typeof scenarioTypeSchema>;
+
+/** 宣言1つずつの表示名（シナリオ編集のチェックボックス）。組み合わせの表示名は type.ts の scenarioTypeLabel */
+export const SCENARIO_TYPE_FLAG_LABEL: Record<keyof ScenarioType, string> = {
+  noCombat: '戦闘なし',
+  noCheck: '判定なし',
+};
+
 export const scenarioSchema = z.strictObject({
   $comment: commentSchema,
   id: idSchema,
@@ -113,8 +132,8 @@ export const scenarioSchema = z.strictObject({
   authorId: z.string(),
   authorName: z.string(),
   summary: z.string(),
-  /** 参照するデータ種別のタグ（体・技・心／HP／戦闘スキル） */
-  referenceTags: z.array(z.string()),
+  /** シナリオタイプ（docs/cartagraph/scenario-type.md）。使わない仕組みの宣言。宣言と中身の検査は type.ts */
+  scenarioType: scenarioTypeSchema,
   /** 前提スキル・前作の結末タグなど（ソフトガイド） */
   prerequisiteTags: z.array(z.string()),
   partySize: z.strictObject({ min: z.number(), max: z.number() }),

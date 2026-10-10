@@ -1,13 +1,14 @@
 ---
 title: 冒険者だけにする
 milestone: adventurer-only
-status: 検討中
+status: 進行中
 summary: 旅人・探索者・冒険者の区切りをなくし、すべての PC を冒険者にする。どの PC も作成したときから能力値・HP・＜行動値＞を持ち、戦闘スキルは習って増やす。どのシナリオにもキャラクターシート全体を持ち込む。
 plans:
   - 2026-10-10-冒険者だけにする.md
 cycles:
   - { name: C1 仕様, status: 完了 }
-  - { name: C2 実装, status: 未着手 }
+  - { name: C2 シナリオタイプ, status: 進行中, pr: 20 }
+  - { name: C3 作成時から冒険者, status: 未着手 }
 updated: 2026-10-10
 ---
 

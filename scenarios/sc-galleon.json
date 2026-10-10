@@ -3,8 +3,11 @@
   "title": "鉄鎖のガレオン船",
   "authorId": "u-me",
   "authorName": "ユウ",
-  "summary": "鎖で繋がれた幽霊船を舞台にした冒険者向けシナリオ。甲板での戦闘を含む。",
-  "referenceTags": ["体・技・心を参照", "HPを参照", "戦闘スキルを参照"],
+  "summary": "鎖で繋がれた幽霊船を舞台にしたシナリオ。甲板での戦闘を含む。",
+  "scenarioType": {
+    "noCombat": false,
+    "noCheck": false
+  },
   "prerequisiteTags": ["航海の心得", "戦闘スキル"],
   "partySize": {
     "min": 3,

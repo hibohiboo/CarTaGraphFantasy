@@ -1,3 +1,4 @@
+import { scenarioTypeLabel } from '@cartagraph/domain/scenario/type';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useScenario } from '@/entities/scenario/api/queries';
@@ -54,12 +55,11 @@ export function GmScenarioDetailPage() {
             sub="募集を出すときPLに明示される。前提タグはソフトガイドで、満たさない応募も止めない。"
           >
             <div className={s.metaRow}>
-              <div className={s.metaLabel}>参照するデータ種別</div>
+              <div className={s.metaLabel}>シナリオタイプ</div>
               <ChipGroup>
-                {sc.referenceTags.length === 0 && <Chip tone="off">なし（旅人向け）</Chip>}
-                {sc.referenceTags.map((t) => (
-                  <Chip key={t}>{t}</Chip>
-                ))}
+                <span data-testid="scenario-type">
+                  <Chip>{scenarioTypeLabel(sc.scenarioType)}</Chip>
+                </span>
               </ChipGroup>
             </div>
             <div className={s.metaRow}>
@@ -80,7 +80,7 @@ export function GmScenarioDetailPage() {
             <div className={s.metaRow}>
               <div className={s.metaLabel}>空間モデル</div>
               <div className={s.metaValue}>
-                {sc.spaceModel === '2d' ? '2次元' : sc.spaceModel === '1d' ? '1次元' : '戦闘なし'}
+                {sc.spaceModel === '2d' ? '2次元' : sc.spaceModel === '1d' ? '1次元' : '空間なし'}
               </div>
             </div>
             <div className={s.metaRow}>

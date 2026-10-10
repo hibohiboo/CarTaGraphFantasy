@@ -4,7 +4,10 @@
   "authorId": "u-kotone",
   "authorName": "琴音",
   "summary": "「灯りの回廊」を経験したPCだけが辿れる短い後日談。",
-  "referenceTags": [],
+  "scenarioType": {
+    "noCombat": true,
+    "noCheck": true
+  },
   "prerequisiteTags": ["灯りの回廊を経験"],
   "partySize": {
     "min": 1,

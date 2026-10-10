@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { AutoCombatEnemy } from '../autoCombat/model';
 import type { CardDef } from '../card/model';
-import { deadEndNodes, hasAutoCombat } from './deadEnd';
+import { deadEndNodes } from './deadEnd';
+import { hasAutoCombat } from './deck';
 import type { DeckNode } from './model';
 
 const go = (id: string, nextNodeId?: string): CardDef => ({

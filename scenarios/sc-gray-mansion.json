@@ -5,7 +5,10 @@
   "authorId": "u-kotone",
   "authorName": "琴音",
   "summary": "嵐の夜、灰色の館に迷い込んだ一行。地下回廊の奥の扉の向こうに、館の秘密が眠っている。",
-  "referenceTags": ["体・技・心を参照", "HPを参照"],
+  "scenarioType": {
+    "noCombat": true,
+    "noCheck": false
+  },
   "prerequisiteTags": [],
   "partySize": {
     "min": 2,

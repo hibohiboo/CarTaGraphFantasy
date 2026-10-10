@@ -1,6 +1,7 @@
 import { deriveArchetype } from '@cartagraph/domain/character/archetype';
 import { ARCHETYPE_LABEL, type Character } from '@cartagraph/domain/character/model';
 import { replayBlockedBy } from '@cartagraph/domain/scenario/replay';
+import { scenarioTypeLabel } from '@cartagraph/domain/scenario/type';
 import type { Recruitment } from '@cartagraph/domain/session/model';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -121,7 +122,7 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
         <span>
           空間モデル{' '}
           <strong>
-            {rc.spaceModel === '2d' ? '2次元' : rc.spaceModel === '1d' ? '1次元' : '戦闘なし'}
+            {rc.spaceModel === '2d' ? '2次元' : rc.spaceModel === '1d' ? '1次元' : '空間なし'}
           </strong>
         </span>
         <span>
@@ -130,13 +131,11 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
       </div>
       <div className="u-mt">
         <ChipGroup>
+          <span data-testid="scenario-type">
+            <Chip tone="ink">タイプ：{scenarioTypeLabel(rc.scenarioType)}</Chip>
+          </span>
           {rc.prerequisiteTags.length === 0 && <Chip tone="ink">前提タグなし</Chip>}
           {rc.prerequisiteTags.map((t) => (
-            <Chip key={t} tone="ink">
-              {t}
-            </Chip>
-          ))}
-          {rc.referenceTags.map((t) => (
             <Chip key={t} tone="ink">
               {t}
             </Chip>

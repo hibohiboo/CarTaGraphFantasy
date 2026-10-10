@@ -48,7 +48,7 @@ const scenario = (over: Partial<Scenario> = {}): Scenario => ({
   authorId: 'u-me',
   authorName: 'ユウ',
   summary: '',
-  referenceTags: [],
+  scenarioType: { noCombat: false, noCheck: false },
   prerequisiteTags: [],
   partySize: { min: 1, max: 4 },
   spaceModel: null,

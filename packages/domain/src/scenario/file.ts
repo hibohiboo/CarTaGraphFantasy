@@ -1,5 +1,6 @@
 // scenarios/<id>.json の1ファイルを読み、検査してシナリオにする（docs/plans/2026-10-03-シナリオのJSON管理.md）。
-// 形（scenarioSchema）・ファイル名と id の一致・参照の整合（findScenarioRefErrors）を確かめ、
+// 形（scenarioSchema）・ファイル名と id の一致・参照の整合（findScenarioRefErrors）・
+// シナリオタイプと中身の食い違い（findScenarioTypeErrors）を確かめ、
 // 誤りがあればファイルのパスを含めて例外を投げる。apps/web（MSW）とシミュレーションのスクリプトが使う。
 // 公開でファイルへ書き込む前にも、同じ検査を例外ではなく結果で返す safeParseScenarioFile を、
 // MSW と開発サーバーの口（apps/web/vite/）の両方が使う（docs/plans/2026-10-06-シナリオ公開のJSON書き込み.md）。
@@ -8,6 +9,7 @@ import { z } from 'zod';
 import type { Scenario } from './model';
 import { scenarioSchema } from './model';
 import { findScenarioRefErrors, findSystemCardRefErrors } from './refs';
+import { findScenarioTypeErrors } from './type';
 
 /** ファイルにできるシナリオの id（ファイル名になるので、リポジトリの外を指せない文字だけ） */
 export const scenarioFileIdPattern = /^[a-z0-9-]+$/;
@@ -33,13 +35,16 @@ export function safeParseScenarioFile(path: string, raw: unknown): ScenarioFileP
       message: `${path} の id「${scenario.id}」は、英小文字・数字・ハイフンだけにする`,
     };
   }
-  const errors = findScenarioRefErrors(scenario);
-  if (errors.length > 0) {
-    return {
-      ok: false,
-      message: `${path} の参照に誤りがある:\n${errors.map((e) => `- ${e}`).join('\n')}`,
-    };
-  }
+  // 参照の誤りとシナリオタイプの食い違いは、一度に報告する（直して出し直す二度手間を避ける）
+  const sections = [
+    ['参照に誤りがある', findScenarioRefErrors(scenario)],
+    ['シナリオタイプと中身が食い違っている', findScenarioTypeErrors(scenario)],
+  ] as const;
+  const message = sections
+    .filter(([, errors]) => errors.length > 0)
+    .map(([title, errors]) => `${path} の${title}:\n${errors.map((e) => `- ${e}`).join('\n')}`)
+    .join('\n');
+  if (message) return { ok: false, message };
   return { ok: true, scenario };
 }
 

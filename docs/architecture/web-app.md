@@ -23,8 +23,8 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 
 公開したことのあるシナリオ（村はずれの一歩・灰色館の一夜など）は、リポジトリ直下の `scenarios/<id>.json` に1シナリオ1ファイルで置く。非公開にしたシナリオも `libraryStatus: draft` のまま残る（消すかは人間が git で決める）。将来バックエンドができたら、同じ JSON を投入データとして使う。テスト専用のシナリオと下書きのデモデータは `src/mocks/fixtures.ts` に置く。
 
-- **読み込み** — `src/mocks/scenarioFiles.ts` が `import.meta.glob` で読み、`packages/domain` の `loadScenarioFiles` で検査（形・ファイル名と id・参照の整合に加え、システムのカード一覧への参照。下の「ルールの JSON」）してから `fixtures.ts` の `scenarios` に入れる。GitHub Pages のビルドにも入る。開発サーバーの起動中に手で新しいファイルを足したときは、再起動すると拾う（既存のファイルの編集はそのまま反映される）。画面から公開して書いたファイルは、次に手でリロードしたときに拾う（下の「画面から公開する」）
-- **検査** — 形（`scenarioSchema`。知らないキーは誤り、省略可能な項目に `null` は書けない）、ファイル名と `id` の一致、参照の整合（`findScenarioRefErrors`。`nextNodeId`・`endingId`・id の重複）。誤りがあれば、アプリ（MSW）の起動とテストがファイル名つきで止まる
+- **読み込み** — `src/mocks/scenarioFiles.ts` が `import.meta.glob` で読み、`packages/domain` の `loadScenarioFiles` で検査（形・ファイル名と id・参照の整合・シナリオタイプと中身の食い違いに加え、システムのカード一覧への参照。下の「ルールの JSON」）してから `fixtures.ts` の `scenarios` に入れる。GitHub Pages のビルドにも入る。開発サーバーの起動中に手で新しいファイルを足したときは、再起動すると拾う（既存のファイルの編集はそのまま反映される）。画面から公開して書いたファイルは、次に手でリロードしたときに拾う（下の「画面から公開する」）
+- **検査** — 形（`scenarioSchema`。知らないキーは誤り、省略可能な項目に `null` は書けない）、ファイル名と `id` の一致、参照の整合（`findScenarioRefErrors`。`nextNodeId`・`endingId`・id の重複）、シナリオタイプと中身の食い違い（`findScenarioTypeErrors`。「戦闘なし」なのに自動戦闘のシーンか空間モデルを持つ）。公開・公開中の保存・開発サーバーの書き込み口も同じ検査を通る。誤りがあれば、アプリ（MSW）の起動とテストがファイル名つきで止まる
 - **注記** — JSON にはコメントが書けないので、なぜそのデータかの注記は `"$comment"` に書く（シナリオ・ノード・カード・自動戦闘の敵）。画面には出さない
 - **整形** — Biome が正（コミット前フックが整形する）
 - **直したら** — `pnpm web:test` を通す（ライトルート。[開発プロセス](../process/index.md)）

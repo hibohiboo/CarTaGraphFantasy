@@ -5,7 +5,10 @@
   "authorId": "system",
   "authorName": "システム",
   "summary": "朝もやの中、村はずれの道が街へと続いている。",
-  "referenceTags": ["体・技・心を参照", "HPを参照", "戦闘スキルを参照"],
+  "scenarioType": {
+    "noCombat": false,
+    "noCheck": false
+  },
   "prerequisiteTags": [],
   "partySize": {
     "min": 1,

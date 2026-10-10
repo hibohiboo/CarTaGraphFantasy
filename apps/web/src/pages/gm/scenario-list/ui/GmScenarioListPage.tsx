@@ -1,3 +1,4 @@
+import { scenarioTypeLabel } from '@cartagraph/domain/scenario/type';
 import { Link } from 'react-router';
 import { useScenarios } from '@/entities/scenario/api/queries';
 import s from '@/shared/ui/page.module.css';
@@ -21,14 +22,14 @@ export function GmScenarioListPage() {
           <Panel
             key={sc.id}
             title={<Link to={`/gm/scenarios/${sc.id}`}>{sc.title}</Link>}
-            sub={`シナリオ製作者：${sc.authorName} ／ 想定人数 ${sc.partySize.min}〜${sc.partySize.max}人 ／ ${sc.spaceModel ? `${sc.spaceModel === '2d' ? '2次元' : '1次元'}戦闘あり` : '戦闘なし'} ／ 推奨CP ${sc.recommendedCp}枚分`}
+            sub={`シナリオ製作者：${sc.authorName} ／ 想定人数 ${sc.partySize.min}〜${sc.partySize.max}人 ／ ${sc.spaceModel ? `${sc.spaceModel === '2d' ? '2次元' : '1次元'}戦闘あり` : '空間なし'} ／ 推奨CP ${sc.recommendedCp}枚分`}
           >
             <p className="u-small">{sc.summary}</p>
             <div className="u-mt">
               <ChipGroup>
-                {sc.referenceTags.map((t) => (
-                  <Chip key={t}>{t}</Chip>
-                ))}
+                <span data-testid="scenario-type">
+                  <Chip>{scenarioTypeLabel(sc.scenarioType)}</Chip>
+                </span>
                 {sc.prerequisiteTags.map((t) => (
                   <Chip key={t} tone="off">
                     前提：{t}

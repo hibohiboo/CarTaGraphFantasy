@@ -198,8 +198,8 @@ export function ComponentCatalogPage() {
 
         <Section title="Chip / ZonePill / Avatar">
           <ChipGroup>
-            <Chip>体・技・心を参照</Chip>
-            <Chip tone="off">戦闘スキルは未使用</Chip>
+            <Chip>戦闘なし</Chip>
+            <Chip tone="off">前提タグなし</Chip>
             <Chip tone="ink">カード上のチップ</Chip>
           </ChipGroup>
           <ZonePill zone="gm" />
