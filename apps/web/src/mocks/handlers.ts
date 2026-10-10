@@ -33,8 +33,6 @@ import {
 import {
   buildDealtCard,
   checkNarration,
-  type DealtChoice,
-  type NarrationInput,
   narrateHand,
   narrationTargets,
   sessionNarrationTargets,
@@ -58,9 +56,31 @@ import {
   heldCards,
   unplayableReason,
 } from '@cartagraph/domain/soloVillage/rules';
+import { createCharacterBody, updateCharacterBody } from '@cartagraph/schemas/characters/request';
+import {
+  applyBody,
+  playFromRecruitmentBody,
+  startRecruitmentBody,
+} from '@cartagraph/schemas/recruitments/request';
+import {
+  createRecruitmentBody,
+  createScenarioBody,
+  startSoloBody,
+  updateScenarioBody,
+} from '@cartagraph/schemas/scenarios/request';
+import {
+  approveProposalBody,
+  autoCombatBody,
+  modeBody,
+  narrateBody,
+  playCardBody,
+  proposeBody,
+  rejectProposalBody,
+} from '@cartagraph/schemas/sessions/request';
 import { HttpResponse, http } from 'msw';
 import type { ScenarioFileResult, ScenarioSaveResult } from '@/entities/scenario/api/types';
 import { toDictionaryForm } from '@/shared/lib/japanese';
+import { readBody } from './body';
 import * as fx from './fixtures';
 import { characterCreation, systemCards } from './rulesFiles';
 import { scenarioFiles } from './scenarioFiles';
@@ -84,13 +104,6 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
  * （docs/cartagraph/character-growth.md「CPで選べるカードの範囲」）
  */
 const creationPool = () => [...basicPool(characterCreation, systemCards), ...fx.unlockedPool];
-
-/** 体・技・心の3つの数を持つオブジェクトか（abilitiesValid に渡す前に形を見る。null・文字列で例外にしない） */
-function isAbilitiesShape(v: unknown): v is Character['abilities'] {
-  if (typeof v !== 'object' || v === null) return false;
-  const o = v as Record<string, unknown>;
-  return (['body', 'skill', 'mind'] as const).every((k) => typeof o[k] === 'number');
-}
 
 let db: Db = createDb();
 
@@ -213,40 +226,6 @@ function setLibraryStatus(id: unknown, status: Scenario['libraryStatus']) {
     replaceScenario(next);
     return HttpResponse.json<ScenarioSaveResult>({ scenario: next, file: written.file });
   });
-}
-
-/** JSON の本文を読む。空・壊れた本文は null（MSW の未処理の例外にしない） */
-async function readJson(request: Request): Promise<unknown> {
-  try {
-    return await request.json();
-  } catch {
-    return null;
-  }
-}
-
-const isStringArray = (v: unknown): v is string[] =>
-  Array.isArray(v) && v.every((x) => typeof x === 'string');
-
-const isOptionalString = (v: unknown) => v === undefined || typeof v === 'string';
-
-/**
- * 描写 API の本文を読む。省いた項目は空として扱い、形の崩れたものは null を返す
- * （開始 API と同じく、黙って丸めず断る）
- */
-function parseNarration(body: unknown): NarrationInput | null {
-  if (typeof body !== 'object' || body === null) return null;
-  const { flavor, withdrawCardIds = [], choices = [] } = body as Record<string, unknown>;
-  if (!isOptionalString(flavor) || !isStringArray(withdrawCardIds) || !Array.isArray(choices))
-    return null;
-  const isChoice = (c: unknown): c is DealtChoice => {
-    if (typeof c !== 'object' || c === null) return false;
-    const { name, description, nextNodeId } = c as Record<string, unknown>;
-    return (
-      typeof name === 'string' && isOptionalString(description) && isOptionalString(nextNodeId)
-    );
-  };
-  if (!choices.every(isChoice)) return null;
-  return { flavor: typeof flavor === 'string' ? flavor : '', withdrawCardIds, choices };
 }
 
 const notFound = (what: string) =>
@@ -509,8 +488,9 @@ export const handlers = [
     if (rc.status !== 'open') return unprocessable('この募集はもう始まっています');
     if (rc.kind === 'gmless')
       return unprocessable('GM 不在の募集には応募できません。自分の PC ですぐに始められます');
-    const body = (await request.json()) as { characterId: string };
-    const ch = db.characters.find((c) => c.id === body.characterId);
+    const body = await readBody(request, applyBody);
+    if (!body.ok) return body.response;
+    const ch = db.characters.find((c) => c.id === body.data.characterId);
     if (!ch) return notFound('キャラクター');
     const blocked = blockedReason(rc, ch);
     if (blocked) return unprocessable(blocked);
@@ -536,18 +516,12 @@ export const handlers = [
       return HttpResponse.json({ message: '自分が出した募集だけを始められます' }, { status: 403 });
     if (rc.kind === 'gmless')
       return unprocessable('GM 不在の募集は、PL が自分の PC で始めます（GM は始められません）');
-    const body = (await readJson(request)) as {
-      characterIds?: unknown;
-      driverCharacterId?: unknown;
-      partyName?: unknown;
-    } | null;
     // 形の崩れた選択は黙って丸めず断る（不正な要素を捨てて開始してしまわないように）
-    if (body?.characterIds !== undefined && !isStringArray(body.characterIds))
-      return unprocessable('参加させるPCの指定の形が正しくありません');
+    const body = await readBody(request, startRecruitmentBody);
+    if (!body.ok) return body.response;
     const selection = {
-      characterIds: body?.characterIds ?? [],
-      driverCharacterId:
-        typeof body?.driverCharacterId === 'string' ? body.driverCharacterId : undefined,
+      characterIds: body.data.characterIds ?? [],
+      driverCharacterId: body.data.driverCharacterId,
     };
     const check = checkStart(rc, selection);
     if (!check.ok) return unprocessable(check.error);
@@ -565,7 +539,7 @@ export const handlers = [
     const driverApplicant = selected.find((a) => a.characterId === selection.driverCharacterId);
     const driver = db.characters.find((c) => c.id === selection.driverCharacterId);
     if (!driverApplicant || !driver) return notFound('キャラクター');
-    const partyName = typeof body?.partyName === 'string' ? body.partyName.trim() : '';
+    const partyName = body.data.partyName?.trim() ?? '';
     const session = buildSession(
       { ...base, deck: sessionDeck(base.deck, rc.excludedNodeIds) },
       {
@@ -601,8 +575,9 @@ export const handlers = [
   http.post('/api/recruitments/:id/play', async ({ params, request }) => {
     const rc = db.recruitments.find((r) => r.id === params.id);
     if (!rc) return notFound('募集');
-    const body = (await readJson(request)) as { characterId?: unknown } | null;
-    const ch = db.characters.find((c) => c.id === body?.characterId);
+    const body = await readBody(request, playFromRecruitmentBody);
+    if (!body.ok) return body.response;
+    const ch = db.characters.find((c) => c.id === body.data.characterId);
     if (!ch) return notFound('キャラクター');
     const base = db.scenarios.find((x) => x.id === rc.scenarioId);
     if (!base) return notFound('シナリオ');
@@ -664,11 +639,9 @@ export const handlers = [
   ),
 
   http.post('/api/characters', async ({ request }) => {
-    const body = (await request.json()) as {
-      name: string;
-      abilities?: unknown;
-      cardIds: string[];
-    };
+    const parsed = await readBody(request, createCharacterBody);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
     // カード一覧は resetDb() で戻らないので、デッキには複製を入れる（pickCards）
     const deck = pickCards(creationPool(), body.cardIds);
     const spent = deck.reduce((sum, c) => sum + (c.cpCost ?? 0), 0);
@@ -683,8 +656,6 @@ export const handlers = [
       return HttpResponse.json({ message: '名前を入力してください' }, { status: 422 });
     // どの PC も能力値を持つ（character-growth.md「PCが持つデータ」）。配分は仮ルール
     const { abilities } = body;
-    if (!isAbilitiesShape(abilities))
-      return unprocessable('能力値（体・技・心）を数で送ってください');
     if (!abilitiesValid(abilities, characterCreation.abilities)) {
       const { total, min, max } = characterCreation.abilities;
       return unprocessable(
@@ -714,12 +685,9 @@ export const handlers = [
   http.patch('/api/characters/:id', async ({ params, request }) => {
     const ch = db.characters.find((c) => c.id === params.id);
     if (!ch) return notFound('キャラクター');
-    const raw: unknown = await request.json();
-    if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
-      return unprocessable('変更の内容をオブジェクトで送ってください');
-    const body = raw as Record<string, unknown> & { addCardIds?: string[] };
-    if (['abilities', 'hp', 'baseActionValue'].some((k) => k in body))
-      return unprocessable('能力値・HP・行動値は、作成したあとで変えられません');
+    const parsed = await readBody(request, updateCharacterBody);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
     if (body.addCardIds?.length) {
       const added = pickCards(creationPool(), body.addCardIds);
       if (added.length !== body.addCardIds.length) {
@@ -757,7 +725,9 @@ export const handlers = [
     if (!s) return notFound('セッション');
     if (s.status !== 'playing') return notPlaying(s);
     if (inAutoCombat(s)) return autoCombatBusy();
-    const { cardId } = (await request.json()) as { cardId: string };
+    const body = await readBody(request, playCardBody);
+    if (!body.ok) return body.response;
+    const { cardId } = body.data;
     const card = s.hand.find((c) => c.id === cardId);
     if (!card) return notFound('手札のカード');
     const driver = s.participants.find((p) => p.role === 'driver');
@@ -897,8 +867,10 @@ export const handlers = [
         { message: 'このシナリオでは新たな選択肢を提案できません' },
         { status: 422 },
       );
-    const { text } = (await request.json()) as { text: string };
-    if (!text?.trim())
+    const body = await readBody(request, proposeBody);
+    if (!body.ok) return body.response;
+    const { text } = body.data;
+    if (!text.trim())
       return HttpResponse.json({ message: '提案内容を入力してください' }, { status: 422 });
     const driver = s.participants.find((p) => p.role === 'driver');
     const proposal: Proposal = {
@@ -956,18 +928,15 @@ export const handlers = [
     if (!p) return notFound('提案');
     const notRuleable = cannotRule(s, p);
     if (notRuleable) return notRuleable;
-    const { cardName, nextNodeId } = (await request.json()) as {
-      cardName: string;
-      nextNodeId?: unknown;
-    };
-    if (!cardName?.trim())
+    const body = await readBody(request, approveProposalBody);
+    if (!body.ok) return body.response;
+    const { cardName, nextNodeId } = body.data;
+    if (!cardName.trim())
       return HttpResponse.json({ message: 'カード名を入力してください' }, { status: 422 });
     // 採用で作るカードにも移り先を付けられる（docs/cartagraph/play-and-field.md「次のシーンへ進む」）。
     // 候補は描写の枠と同じ sessionNarrationTargets（外したシーン・NPC など・いま居るノードは除く。
     // 自動戦闘のノードは GM 不在のセッションでだけ含める）
     if (nextNodeId !== undefined && nextNodeId !== '') {
-      if (typeof nextNodeId !== 'string')
-        return unprocessable('移り先の指定の形が正しくありません');
       const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
       const targets = scenario ? sessionNarrationTargets(scenario, s) : [];
       if (!targets.some((t) => t.id === nextNodeId))
@@ -989,7 +958,9 @@ export const handlers = [
     if (!p) return notFound('提案');
     const notRuleable = cannotRule(s, p);
     if (notRuleable) return notRuleable;
-    const { reason } = (await request.json()) as { reason: string };
+    const body = await readBody(request, rejectProposalBody);
+    if (!body.ok) return body.response;
+    const { reason } = body.data;
     p.status = 'rejected';
     p.resolution = reason?.trim() || '（理由未記入）';
     s.feed.unshift({ id: nextId('f'), at: nowIso(), text: `${s.gmName}が提案「${p.text}」を却下` });
@@ -1009,8 +980,14 @@ export const handlers = [
       );
     // GM 不在のセッションの GM は、提案の裁定と終了だけを行う（docs/cartagraph/party-and-session.md）
     if (s.gmless) return unprocessable('GM 不在のセッションは、システムが進行します');
-    const input = parseNarration(await readJson(request));
-    if (!input) return unprocessable('描写・選択肢の指定の形が正しくありません');
+    const body = await readBody(request, narrateBody);
+    if (!body.ok) return body.response;
+    // 省いた項目は空として扱う
+    const input = {
+      flavor: body.data.flavor ?? '',
+      withdrawCardIds: body.data.withdrawCardIds ?? [],
+      choices: body.data.choices ?? [],
+    };
     const scenario = scenarioOf(s);
     if (!scenario) return notFound('シナリオ');
     const check = checkNarration(s, scenario.deck, input);
@@ -1051,7 +1028,9 @@ export const handlers = [
     // GM 不在のセッションの GM は、提案の裁定と終了だけを行う（docs/cartagraph/party-and-session.md）
     if (s.gmless) return unprocessable('GM 不在のセッションは、システムが進行します');
     if (s.status !== 'playing') return notPlaying(s);
-    const { mode } = (await request.json()) as { mode: Session['mode'] };
+    const body = await readBody(request, modeBody);
+    if (!body.ok) return body.response;
+    const { mode } = body.data;
     s.mode = mode;
     s.feed.unshift({
       id: nextId('f'),
@@ -1102,15 +1081,13 @@ export const handlers = [
     if (cannot) return unprocessable(`${character.name}は${cannot}`);
 
     // 本文は優先順位の各行（カードIDと使う条件）。条件の検査はドメインの validatePriority に任せる
-    const body = (await request.json()) as {
-      priority?: { cardId: string; when: HpCondition }[];
-    } | null;
-    const rows = Array.isArray(body?.priority) ? body.priority : [];
-    if (rows.some((r) => typeof r !== 'object' || r === null || typeof r.cardId !== 'string'))
-      return unprocessable('優先順位の行の形が正しくありません（各行はカードIDと使う条件の組）');
+    const body = await readBody(request, autoCombatBody);
+    if (!body.ok) return body.response;
+    const rows = body.data.priority ?? [];
     const chosen = rows.map((r) => {
       const card = character.deck.find((c) => c.id === r.cardId);
-      return card && { card, when: r.when };
+      // 使う条件が3種のどれかは、下の validatePriority が今のメッセージで検査する
+      return card && { card, when: r.when as HpCondition };
     });
     if (chosen.some((e) => !e))
       return unprocessable('キャラクターのデッキに無いカードが含まれています');
@@ -1200,8 +1177,9 @@ export const handlers = [
   http.post('/api/scenarios/:id/start-solo', async ({ params, request }) => {
     const scenario = db.scenarios.find((x) => x.id === params.id);
     if (!scenario) return notFound('シナリオ');
-    const { name } = (await request.json()) as { name: string };
-    const character = buildSoloCharacter(name, scenario.soloStarter);
+    const body = await readBody(request, startSoloBody);
+    if (!body.ok) return body.response;
+    const character = buildSoloCharacter(body.data.name, scenario.soloStarter);
     if (!character)
       return HttpResponse.json({ message: '名前を入力してください' }, { status: 422 });
     const session = buildSoloSession(scenario, character);
@@ -1231,8 +1209,10 @@ export const handlers = [
   }),
 
   http.post('/api/scenarios', async ({ request }) => {
-    const body = (await request.json()) as { title: string };
-    if (!body.title?.trim())
+    const parsed = await readBody(request, createScenarioBody);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
+    if (!body.title.trim())
       return HttpResponse.json({ message: 'タイトルを入力してください' }, { status: 422 });
     // 結末「結末」と、それを指す結末のノードを対で作る（結末タグは付けない。docs/plans/2026-10-07-選択肢の移り先と結末の編集.md D3）
     const draft: Scenario = {
@@ -1265,11 +1245,10 @@ export const handlers = [
   // 保存。公開・非公開は publish・unpublish だけで変えるので、本文の libraryStatus は無視する。
   // 公開中のシナリオはファイルにも書き直す。下書きは検査も書き込みもしない（書きかけの参照切れも保存できる）
   http.patch('/api/scenarios/:id', async ({ params, request }) => {
-    const body = await readJson(request);
-    if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-      return HttpResponse.json({ message: '本文はオブジェクトにしてください' }, { status: 400 });
-    }
-    const patch = body as Partial<Scenario>;
+    // 下書きは書きかけでも保存できるので、オブジェクトであることだけを見る（docs/plans/2026-10-10-APIスキーマの共用.md D5）
+    const body = await readBody(request, updateScenarioBody);
+    if (!body.ok) return body.response;
+    const patch = body.data as Partial<Scenario>;
     return inScenarioQueue(String(params.id), async () => {
       const found = editableScenario(params.id);
       if ('error' in found) return found.error;
@@ -1302,32 +1281,27 @@ export const handlers = [
   http.post('/api/scenarios/:id/recruitments', async ({ params, request }) => {
     const s = db.scenarios.find((x) => x.id === params.id);
     if (!s) return notFound('シナリオ');
-    const body = ((await readJson(request)) ?? {}) as {
-      kind?: unknown;
-      capacity: number;
-      note?: string;
-      excludedNodeIds?: unknown;
-      proposalHandling?: unknown;
-    };
+    const parsed = await readBody(request, createRecruitmentBody);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
     const kind = body.kind ?? 'normal';
-    if (kind !== 'normal' && kind !== 'gmless')
-      return unprocessable('募集の種類は通常か GM 不在のどちらかで指定してください');
     // GM 不在の募集は応募を持たないので、募集人数は使わない（docs/cartagraph/scenario-flow.md「募集とセッション」）
-    if (kind === 'normal' && (!Number.isInteger(body.capacity) || body.capacity < 1))
+    if (
+      kind === 'normal' &&
+      (body.capacity === undefined || !Number.isInteger(body.capacity) || body.capacity < 1)
+    )
       return unprocessable('募集人数は1以上の整数で指定してください');
     // GM 不在の募集の提案の扱いは「GM が後から裁定」か「提案不可」。シナリオが提案不可なら提案不可だけ
     // （docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
     let proposalHandling: Recruitment['proposalHandling'];
     if (kind === 'gmless') {
-      if (body.proposalHandling !== 'gm-required' && body.proposalHandling !== 'disabled')
+      if (body.proposalHandling === undefined)
         return unprocessable('提案の扱いは「GM が後から裁定」か「提案不可」で指定してください');
       if (s.proposalHandling === 'disabled' && body.proposalHandling !== 'disabled')
         return unprocessable('このシナリオは提案不可なので、GM 不在の募集でも提案不可になります');
       proposalHandling = body.proposalHandling;
     }
     const excludedNodeIds = body.excludedNodeIds ?? [];
-    if (!isStringArray(excludedNodeIds))
-      return unprocessable('外すシーンの指定の形が正しくありません');
     if (excludedNodeIds.some((id) => !findDeckNode(s.deck, id)))
       return unprocessable('シナリオに無いシーンは外せません');
     // 導入と結末は、子孫として巻き込む場合も含めて外せない（docs/cartagraph/scenario-flow.md「GMのカスタマイズ」）
@@ -1347,7 +1321,8 @@ export const handlers = [
       scenarioType: { ...s.scenarioType },
       prerequisiteTags: s.prerequisiteTags,
       applicants: [],
-      capacity: kind === 'gmless' ? 0 : body.capacity,
+      // 通常の募集の募集人数は、上で1以上の整数であることを確かめている
+      capacity: kind === 'gmless' ? 0 : (body.capacity ?? 0),
       status: 'open',
       excludedNodeIds,
       note: body.note,

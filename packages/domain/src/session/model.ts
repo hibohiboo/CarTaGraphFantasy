@@ -2,9 +2,17 @@
 // （docs/cartagraph/scenario-flow.md の募集→応募→確定。GM がシナリオからセッションを立てる手続きなのでここに置く。
 // docs/process/rules/architecture.md「packages/domain の中の置き場所」）。
 
+import { z } from 'zod';
 import type { AutoCombatState, CombatRecord } from '../autoCombat/model';
 import type { CardDef } from '../card/model';
 import type { ProposalHandling, ScenarioType, SpaceModel } from '../scenario/model';
+
+/** 募集の種類（Recruitment.kind）。API の本文の検査（packages/schemas）も使う */
+export const recruitmentKindSchema = z.enum(['normal', 'gmless']);
+/** GM 不在の募集の提案の扱い（Recruitment.proposalHandling） */
+export const recruitmentProposalHandlingSchema = z.enum(['gm-required', 'disabled']);
+/** 軽量モード・濃密モード（Session.mode。docs/cartagraph/party-and-session.md） */
+export const sessionModeSchema = z.enum(['light', 'dense']);
 
 /**
  * GMが出した募集。セッションとは別のもの（docs/cartagraph/scenario-flow.md「募集とセッション」）。
@@ -18,12 +26,12 @@ export interface Recruitment {
    * PC ですぐ始める。受付中のまま残り続け、募集1つからセッションが複数）か（docs/cartagraph/scenario-flow.md
    * 「募集とセッション」）。GM 不在の募集は applicants が空で、capacity は 0
    */
-  kind: 'normal' | 'gmless';
+  kind: z.infer<typeof recruitmentKindSchema>;
   /**
    * GM 不在の募集だけが持つ、提案の扱い（GM が後から裁定＝gm-required／提案不可＝disabled）。
    * 始めたセッションへコピーする（docs/cartagraph/play-and-field.md「GMレスセッションでの提案の扱い」）
    */
-  proposalHandling?: 'gm-required' | 'disabled';
+  proposalHandling?: z.infer<typeof recruitmentProposalHandlingSchema>;
   scenarioId: string;
   scenarioTitle: string;
   gmId: string;
@@ -83,7 +91,7 @@ export interface Proposal {
   createdAt: string;
 }
 
-export type SessionMode = 'light' | 'dense';
+export type SessionMode = z.infer<typeof sessionModeSchema>;
 
 export interface FeedItem {
   id: string;

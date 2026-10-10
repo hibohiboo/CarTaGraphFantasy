@@ -9,6 +9,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 
 - **バックエンドはまだ作らない。** `/api/*` はすべて [MSW](https://mswjs.io/)（Mock Service Worker）が横取りして応答する。状態はブラウザのメモリ上にあり、リロードで初期化される。本番ビルド（GitHub Pages）でもMSWを起動している。
 - 本物のAPIができたら、`apps/web/src/shared/api/api.ts` の接続先を差し替え、`src/mocks/` を開発時のみ有効にする想定。
+- **API の本文は検査してから使う。** リクエストの本文の形は `packages/schemas`（zod。将来のバックエンドと共用）が持ち、MSW のハンドラは `src/mocks/body.ts` の `readBody` で検査してから使う。形が崩れていれば 422（`{ message }`）で返し、何も変えない（500 にしない）。本文が空なら `{}` として読む。スキーマに書くのは形だけで、名前が空でない・能力値の配分・募集人数などの業務の検査はハンドラとドメインが今のメッセージで行う。下書きの保存（`PATCH /api/scenarios/:id`）は、書きかけでも保存できるよう、本文がオブジェクトかだけを見る。画面の mutation の本文の型も同じスキーマから引く。ハンドラが `request.json()`・`request.text()` を直接呼ぶのは lint が止める（`docs/process/rules/static-analysis.md`「GritQL のプラグイン」。`docs/plans/2026-10-10-APIスキーマの共用.md`）
 - TanStack Queryの `QueryClient`（`src/main.tsx`）は `retry: false, staleTime: 5_000` のみを設定している。実レイテンシ・更新頻度を測定できる材料がまだ無いため、データ種別ごとのキャッシュチューニングは実バックエンド接続後に実測してから見直す。
 - [フェーズ分け](index.md#開発フェーズの段階分け決着)（まず閲覧サイト→後にセッション管理）の方針は変えていない。セッション管理系の画面も含めて先に画面を作っているのは、モックで体験を検証するためであり、バックエンド実装の着手順は改めて判断する。
 
@@ -67,6 +68,8 @@ pnpm web:e2e         # Playwright（Chromium）。ビルド→vite previewに対
 pnpm web:typecheck
 pnpm domain:test     # vitest（packages/domain の純粋関数。自動戦闘・シーン遷移など）
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
+pnpm schemas:test    # vitest（packages/schemas の API の本文のスキーマ）
+pnpm schemas:typecheck # tsc（packages/schemas）
 pnpm build:pages     # docs + app を docs/.vitepress/dist にまとめてビルド（CI と同じ）
 pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実行。下記）
 ```

@@ -1,8 +1,23 @@
-// セッションと募集の変更。
+// セッションと募集の変更。本文の型は、モック・将来のバックエンドと共用するスキーマから引く
+// （packages/schemas。docs/plans/2026-10-10-APIスキーマの共用.md D3）。
 
-import type { HpCondition } from '@cartagraph/domain/autoCombat/model';
 import type { Recruitment, Session } from '@cartagraph/domain/session/model';
-import type { NarrationInput } from '@cartagraph/domain/session/narrate';
+import type { BodyInput } from '@cartagraph/schemas/body/parse';
+import type {
+  applyBody,
+  playFromRecruitmentBody,
+  startRecruitmentBody,
+} from '@cartagraph/schemas/recruitments/request';
+import type { createRecruitmentBody, startSoloBody } from '@cartagraph/schemas/scenarios/request';
+import type {
+  approveProposalBody,
+  autoCombatBody,
+  modeBody,
+  narrateBody,
+  playCardBody,
+  proposeBody,
+  rejectProposalBody,
+} from '@cartagraph/schemas/sessions/request';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/api/api';
 import { keys } from '@/shared/api/queryKeys';
@@ -11,7 +26,7 @@ import { keys } from '@/shared/api/queryKeys';
 export function useStartSoloSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { scenarioId: string; name: string }) =>
+    mutationFn: (v: { scenarioId: string } & BodyInput<typeof startSoloBody>) =>
       api.post<Session>(`/scenarios/${v.scenarioId}/start-solo`, { name: v.name }),
     onSuccess: (s) => {
       qc.setQueryData(keys.session(s.id), s);
@@ -25,17 +40,11 @@ export function useStartSoloSession() {
 export function useStartSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: {
-      recruitmentId: string;
-      characterIds: string[];
-      driverCharacterId: string;
-      partyName: string;
-    }) =>
-      api.post<Session>(`/recruitments/${v.recruitmentId}/start`, {
-        characterIds: v.characterIds,
-        driverCharacterId: v.driverCharacterId,
-        partyName: v.partyName,
-      }),
+    mutationFn: ({
+      recruitmentId,
+      ...body
+    }: { recruitmentId: string } & BodyInput<typeof startRecruitmentBody>) =>
+      api.post<Session>(`/recruitments/${recruitmentId}/start`, body),
     onSuccess: (s) => {
       qc.setQueryData(keys.session(s.id), s);
       void qc.invalidateQueries({ queryKey: keys.recruitments });
@@ -51,7 +60,7 @@ export function useStartSession() {
 export function usePlayFromRecruitment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { recruitmentId: string; characterId: string }) =>
+    mutationFn: (v: { recruitmentId: string } & BodyInput<typeof playFromRecruitmentBody>) =>
       api.post<Session>(`/recruitments/${v.recruitmentId}/play`, { characterId: v.characterId }),
     onSuccess: (s) => {
       qc.setQueryData(keys.session(s.id), s);
@@ -64,7 +73,7 @@ export function usePlayFromRecruitment() {
 export function useApply() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { recruitmentId: string; characterId: string }) =>
+    mutationFn: (v: { recruitmentId: string } & BodyInput<typeof applyBody>) =>
       api.post<Recruitment>(`/recruitments/${v.recruitmentId}/apply`, {
         characterId: v.characterId,
       }),
@@ -91,7 +100,7 @@ function useSessionMutation<V>(fn: (v: V) => Promise<Session>) {
 export function usePlayCard() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { sessionId: string; cardId: string }) =>
+    mutationFn: (v: { sessionId: string } & BodyInput<typeof playCardBody>) =>
       api.post<Session>(`/sessions/${v.sessionId}/play`, { cardId: v.cardId }),
     onSuccess: (s) => {
       qc.setQueryData(keys.session(s.id), s);
@@ -102,14 +111,14 @@ export function usePlayCard() {
 }
 
 export const usePropose = () =>
-  useSessionMutation((v: { sessionId: string; text: string }) =>
+  useSessionMutation((v: { sessionId: string } & BodyInput<typeof proposeBody>) =>
     api.post<Session>(`/sessions/${v.sessionId}/proposals`, { text: v.text }),
   );
 
 /** 移り先（nextNodeId）を付けると、作るカードでそのノードへ進める（docs/cartagraph/play-and-field.md「次のシーンへ進む」） */
 export const useApproveProposal = () =>
   useSessionMutation(
-    (v: { sessionId: string; proposalId: string; cardName: string; nextNodeId?: string }) =>
+    (v: { sessionId: string; proposalId: string } & BodyInput<typeof approveProposalBody>) =>
       api.post<Session>(`/sessions/${v.sessionId}/proposals/${v.proposalId}/approve`, {
         cardName: v.cardName,
         ...(v.nextNodeId && { nextNodeId: v.nextNodeId }),
@@ -123,24 +132,22 @@ export const useResume = () =>
   );
 
 export const useRejectProposal = () =>
-  useSessionMutation((v: { sessionId: string; proposalId: string; reason: string }) =>
-    api.post<Session>(`/sessions/${v.sessionId}/proposals/${v.proposalId}/reject`, {
-      reason: v.reason,
-    }),
+  useSessionMutation(
+    (v: { sessionId: string; proposalId: string } & BodyInput<typeof rejectProposalBody>) =>
+      api.post<Session>(`/sessions/${v.sessionId}/proposals/${v.proposalId}/reject`, {
+        reason: v.reason,
+      }),
   );
 
 /** 人間GMの進行：描写を書く・選択肢を配る・取り下げる（packages/domain の session/narrate.ts） */
 export const useNarrate = () =>
-  useSessionMutation((v: { sessionId: string } & NarrationInput) =>
-    api.post<Session>(`/sessions/${v.sessionId}/narrate`, {
-      flavor: v.flavor,
-      withdrawCardIds: v.withdrawCardIds,
-      choices: v.choices,
-    }),
+  useSessionMutation(
+    ({ sessionId, ...body }: { sessionId: string } & BodyInput<typeof narrateBody>) =>
+      api.post<Session>(`/sessions/${sessionId}/narrate`, body),
   );
 
 export const useSetMode = () =>
-  useSessionMutation((v: { sessionId: string; mode: Session['mode'] }) =>
+  useSessionMutation((v: { sessionId: string } & BodyInput<typeof modeBody>) =>
     api.post<Session>(`/sessions/${v.sessionId}/mode`, { mode: v.mode }),
   );
 
@@ -151,7 +158,7 @@ export const useSetMode = () =>
 export function useRunAutoCombat() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { sessionId: string; priority: { cardId: string; when: HpCondition }[] }) =>
+    mutationFn: (v: { sessionId: string } & BodyInput<typeof autoCombatBody>) =>
       api.post<Session>(`/sessions/${v.sessionId}/auto-combat`, { priority: v.priority }),
     onSuccess: (s) => {
       qc.setQueryData(keys.session(s.id), s);
@@ -169,14 +176,11 @@ export const useEndSession = () =>
 export function useCreateRecruitment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: {
-      scenarioId: string;
-      kind: Recruitment['kind'];
-      capacity?: number;
-      proposalHandling?: Recruitment['proposalHandling'];
-      note?: string;
-      excludedNodeIds?: string[];
-    }) => api.post<Recruitment>(`/scenarios/${v.scenarioId}/recruitments`, v),
+    mutationFn: ({
+      scenarioId,
+      ...body
+    }: { scenarioId: string } & BodyInput<typeof createRecruitmentBody>) =>
+      api.post<Recruitment>(`/scenarios/${scenarioId}/recruitments`, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.recruitments }),
   });
 }

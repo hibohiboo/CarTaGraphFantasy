@@ -1,0 +1,6 @@
+or {
+  `request.json()`,
+  `request.text()`
+} as $read where {
+  register_diagnostic(span=$read, message="MSW のハンドラは本文を request.json()・request.text() で直接読まない。mocks/body.ts の readBody とスキーマ（packages/schemas）で検査してから使う（docs/process/rules/static-analysis.md「GritQL のプラグイン」）")
+}

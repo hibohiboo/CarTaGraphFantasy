@@ -1,6 +1,11 @@
-// キャラクターの変更。
+// キャラクターの変更。本文の型は、モック・将来のバックエンドと共用するスキーマから引く（packages/schemas）。
 
 import type { Character } from '@cartagraph/domain/character/model';
+import type { BodyInput } from '@cartagraph/schemas/body/parse';
+import type {
+  createCharacterBody,
+  updateCharacterBody,
+} from '@cartagraph/schemas/characters/request';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/api/api';
 import { keys } from '@/shared/api/queryKeys';
@@ -8,8 +13,7 @@ import { keys } from '@/shared/api/queryKeys';
 export function useCreateCharacter() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { name: string; abilities: Character['abilities']; cardIds: string[] }) =>
-      api.post<Character>('/characters', v),
+    mutationFn: (v: BodyInput<typeof createCharacterBody>) => api.post<Character>('/characters', v),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.characters }),
   });
 }
@@ -21,7 +25,7 @@ export function useCreateCharacter() {
 export function useUpdateCharacter() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { id: string; patch: { addCardIds: string[] } }) =>
+    mutationFn: (v: { id: string; patch: BodyInput<typeof updateCharacterBody> }) =>
       api.patch<Character>(`/characters/${v.id}`, v.patch),
     onSuccess: (c) => {
       qc.setQueryData(keys.character(c.id), c);

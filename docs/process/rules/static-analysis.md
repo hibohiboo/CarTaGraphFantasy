@@ -1,6 +1,7 @@
 ---
 paths:
   - "biome.json"
+  - "scripts/biome/**"
 ---
 
 # 静的解析ルール（Biome で止めるもの）
@@ -43,6 +44,17 @@ Biome の推奨ルール（`"preset": "recommended"`）に加えて、次のル�
 | テスト（同上） | `complexity/noExcessiveLinesPerFunction` | `describe` の中に場面ごとの `it` を並べるので、`describe` の関数は長くなるのが自然。テストの読みやすさは場面の分け方で見る |
 | `**/*.vue` | `correctness/noUnusedImports`・`noUnusedVariables` | Biome は Vue のテンプレート内での使用を解析できず、安全な自動修正（pre-commit）で必要な import を消してしまう |
 | `scripts/**` | `suspicious/noConsole` | Node.js の補助スクリプトで、出力が仕事 |
+
+## GritQL のプラグイン
+
+Biome の組み込みのルールに無い検査を、GritQL のプラグイン（`scripts/biome/*.grit`。`biome.json` の `overrides[].plugins` でかける範囲を決める）で書く。正は `.grit` のファイルと `biome.json`、理由はここ。
+
+| プラグイン | かける範囲 | 止めるもの | 理由 |
+|---|---|---|---|
+| `no-request-body.grit` | `apps/web/src/mocks/**`（`mocks/body.ts` を除く） | `request.json()`・`request.text()` | MSW のハンドラが本文を型の付け替えだけで使い、形の崩れた本文で 500 になる穴が、実装の AI レビューで続けて見つかっていた。本文は `body.ts` の `readBody` と `packages/schemas` のスキーマで検査してから使う（`docs/plans/2026-10-10-APIスキーマの共用.md`）。`request` という名前の値だけを見るので、応答の `res.json()`（`devScenarioFileStore.ts` など）には当たらない。`request['json']()` や別名に入れてからの呼び出しはすり抜けるが、許す（書く理由が無く、レビューで見る） |
+
+- **nursery のルールを入れていないこととの違い** — nursery のルールは版の更新で名前や挙動が変わる。プラグインは自分で書いたパターンなので、Biome の版を上げてプラグインの読み込みが壊れれば `pnpm lint` が設定の誤りで止まり、気づける（黙って効かなくなるのではない）
+- **確かめ方** — 違反を一時的に入れて `pnpm lint` が止まることを手で確かめる（Biome の設定の固定のテストは書かない。`docs/process/evolution.md` の却下「Biome の設定に対する固定のテスト」）
 
 ## 検査の対象から外しているファイル
 

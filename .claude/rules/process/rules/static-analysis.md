@@ -1,6 +1,7 @@
 ---
 paths:
   - "biome.json"
+  - "scripts/biome/**"
 ---
 
 <!-- node scripts/sync-claude-rules.mjs が docs/process/rules/static-analysis.md の frontmatter から作る。手で直さない -->
