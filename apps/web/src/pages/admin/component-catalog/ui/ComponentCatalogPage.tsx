@@ -117,7 +117,7 @@ export function ComponentCatalogPage() {
           />
           <GameCard card={{ kind: 'info', name: '何かが書かれた紙', faceDown: true }} width={110} />
           <GameCard
-            card={{ kind: 'character', name: '迅', description: '探索者' }}
+            card={{ kind: 'character', name: 'ジン', description: '探索者' }}
             width={130}
             portrait
             showDescription
@@ -178,7 +178,7 @@ export function ComponentCatalogPage() {
           title="RoleBadge"
           note="役割は色で統一：ドライバー＝金／ナビゲーター＝スレート／GM＝朱"
         >
-          <RoleBadge badgeRole="driver">迅（ドライバー）</RoleBadge>
+          <RoleBadge badgeRole="driver">ジン（ドライバー）</RoleBadge>
           <RoleBadge badgeRole="navigator">カヤ（ナビゲーター）</RoleBadge>
           <RoleBadge badgeRole="gm">霧乃（GM）</RoleBadge>
           <RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>
@@ -204,7 +204,7 @@ export function ComponentCatalogPage() {
           </ChipGroup>
           <ZonePill zone="gm" />
           <ZonePill zone="pl" />
-          <Avatar name="迅" avatarRole="driver" />
+          <Avatar name="ジン" avatarRole="driver" />
           <Avatar name="カヤ" avatarRole="navigator" />
           <Avatar name="霧乃" avatarRole="gm" />
         </Section>

@@ -72,7 +72,7 @@ export function CharacterCreatePage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="例：迅"
+                  placeholder="例：ジン"
                 />
               </Field>
               <label className="u-row u-small">

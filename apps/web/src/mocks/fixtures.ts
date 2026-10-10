@@ -31,7 +31,7 @@ export const me: CurrentUser = {
 export const characters: Character[] = [
   {
     id: 'pc-jin',
-    name: '迅',
+    name: 'ジン',
     ownerId: 'u-me',
     ownerName: 'ユウ',
     abilities: { body: 3, skill: 4, mind: 2 },
@@ -44,7 +44,7 @@ export const characters: Character[] = [
   },
   {
     id: 'pc-akari',
-    name: '灯',
+    name: 'アカリ',
     ownerId: 'u-me',
     ownerName: 'ユウ',
     deck: [systemCard('c-charm'), systemCard('c-rope')],
@@ -55,7 +55,7 @@ export const characters: Character[] = [
   },
   {
     id: 'pc-akira',
-    name: '彰',
+    name: 'アキラ',
     ownerId: 'u-hiiragi',
     ownerName: '柊',
     abilities: { body: 4, skill: 2, mind: 3 },
@@ -74,7 +74,7 @@ export const characters: Character[] = [
   },
   {
     id: 'pc-mio',
-    name: '澪',
+    name: 'ミオ',
     ownerId: 'u-kaya',
     ownerName: 'カヤ',
     abilities: { body: 2, skill: 3, mind: 5 },
@@ -427,7 +427,7 @@ export const recruitments: Recruitment[] = [
     referenceTags: ['体・技・心'],
     prerequisiteTags: [],
     applicants: [
-      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
+      { characterId: 'pc-mio', characterName: 'ミオ', userId: 'u-kaya', playerName: 'カヤ' },
     ],
     capacity: 2,
     status: 'open',
@@ -446,8 +446,8 @@ export const recruitments: Recruitment[] = [
     referenceTags: ['戦闘スキル'],
     prerequisiteTags: ['航海の心得', '戦闘スキル'],
     applicants: [
-      { characterId: 'pc-akira', characterName: '彰', userId: 'u-hiiragi', playerName: '柊' },
-      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
+      { characterId: 'pc-akira', characterName: 'アキラ', userId: 'u-hiiragi', playerName: '柊' },
+      { characterId: 'pc-mio', characterName: 'ミオ', userId: 'u-kaya', playerName: 'カヤ' },
     ],
     capacity: 4,
     status: 'open',
@@ -484,7 +484,7 @@ export const recruitments: Recruitment[] = [
     referenceTags: [],
     prerequisiteTags: [],
     applicants: [
-      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
+      { characterId: 'pc-mio', characterName: 'ミオ', userId: 'u-kaya', playerName: 'カヤ' },
     ],
     capacity: 1,
     status: 'open',
@@ -504,8 +504,8 @@ export const recruitments: Recruitment[] = [
     referenceTags: ['体・技・心'],
     prerequisiteTags: [],
     applicants: [
-      { characterId: 'pc-jin', characterName: '迅', userId: 'u-me', playerName: 'ユウ' },
-      { characterId: 'pc-mio', characterName: '澪', userId: 'u-kaya', playerName: 'カヤ' },
+      { characterId: 'pc-jin', characterName: 'ジン', userId: 'u-me', playerName: 'ユウ' },
+      { characterId: 'pc-mio', characterName: 'ミオ', userId: 'u-kaya', playerName: 'カヤ' },
     ],
     capacity: 4,
     status: 'open',
@@ -565,7 +565,7 @@ export const sessions: Session[] = [
         name: 'ユウ',
         role: 'driver',
         characterId: 'pc-jin',
-        characterName: '迅',
+        characterName: 'ジン',
         lastSeenAt: ago(3),
       },
       {
@@ -573,7 +573,7 @@ export const sessions: Session[] = [
         name: 'カヤ',
         role: 'navigator',
         characterId: 'pc-mio',
-        characterName: '澪',
+        characterName: 'ミオ',
         lastSeenAt: ago(28),
       },
       { userId: 'u-ruu', name: 'ルウ', role: 'navigator', lastSeenAt: ago(24 * 3) },
@@ -611,7 +611,7 @@ export const sessions: Session[] = [
       {
         id: 'pr-1',
         sessionId: 'ss-mansion',
-        byName: '迅（ドライバー）',
+        byName: 'ジン（ドライバー）',
         sceneName: '3-2 奥の扉',
         text: '扉を壊してみたい',
         presentedChoices: ['開ける', '調べる', '戻る'],
@@ -633,7 +633,7 @@ export const sessions: Session[] = [
       {
         id: 'pr-3',
         sessionId: 'ss-mansion',
-        byName: '迅（ドライバー）',
+        byName: 'ジン（ドライバー）',
         sceneName: '3-1 地下回廊',
         text: '壁を叩いて音を確かめたい',
         presentedChoices: ['進む', '調べる'],
@@ -643,10 +643,15 @@ export const sessions: Session[] = [
       },
     ],
     feed: [
-      { id: 'f-1', at: ago(3), text: '迅が新たな選択肢を提案「扉を壊してみたい」' },
+      { id: 'f-1', at: ago(3), text: 'ジンが新たな選択肢を提案「扉を壊してみたい」' },
       { id: 'f-2', at: ago(20), text: '「奥の扉」が場に追加された', cardName: '奥の扉' },
       { id: 'f-3', at: ago(24), text: '霧乃が提案「壁を叩いて音を確かめたい」を却下' },
-      { id: 'f-4', at: ago(26), text: '迅が「進む」をプレイ — 地下回廊を進んだ', cardName: '進む' },
+      {
+        id: 'f-4',
+        at: ago(26),
+        text: 'ジンが「進む」をプレイ — 地下回廊を進んだ',
+        cardName: '進む',
+      },
     ],
     lastActivityAt: ago(3),
     suspendAt: later(21),
@@ -669,7 +674,7 @@ export const sessions: Session[] = [
         name: '柊',
         role: 'driver',
         characterId: 'pc-akira',
-        characterName: '彰',
+        characterName: 'アキラ',
         lastSeenAt: ago(6),
       },
       {
@@ -677,7 +682,7 @@ export const sessions: Session[] = [
         name: 'カヤ',
         role: 'navigator',
         characterId: 'pc-mio',
-        characterName: '澪',
+        characterName: 'ミオ',
         lastSeenAt: ago(7),
       },
       { userId: 'u-me', name: 'ユウ', role: 'gm', lastSeenAt: ago(0.5) },
@@ -690,12 +695,12 @@ export const sessions: Session[] = [
       ],
     },
     hand: [systemCard('c-slash'), systemCard('c-heavy-blow'), systemCard('c-step')],
-    flavor: '鎖の軋む音とともに、亡霊が甲板へ這い上がってくる。カウント13、彰の手番。',
+    flavor: '鎖の軋む音とともに、亡霊が甲板へ這い上がってくる。カウント13、アキラの手番。',
     proposals: [
       {
         id: 'pr-g1',
         sessionId: 'ss-galleon',
-        byName: '彰（ドライバー）',
+        byName: 'アキラ（ドライバー）',
         sceneName: '2 甲板の戦い',
         text: '鎖を切って亡霊を海に落としたい',
         presentedChoices: ['斬撃', '渾身の一撃', '踏み込み'],
@@ -704,7 +709,11 @@ export const sessions: Session[] = [
       },
     ],
     feed: [
-      { id: 'fg-1', at: ago(6), text: '彰が新たな選択肢を提案「鎖を切って亡霊を海に落としたい」' },
+      {
+        id: 'fg-1',
+        at: ago(6),
+        text: 'アキラが新たな選択肢を提案「鎖を切って亡霊を海に落としたい」',
+      },
       { id: 'fg-2', at: ago(7), text: '戦闘イベントにより濃密モードへ切り替わった' },
     ],
     lastActivityAt: ago(0.5),
@@ -728,7 +737,7 @@ export const sessions: Session[] = [
         name: 'ユウ',
         role: 'driver',
         characterId: 'pc-akari',
-        characterName: '灯',
+        characterName: 'アカリ',
         lastSeenAt: ago(24 * 12),
       },
       { userId: 'u-kirino', name: '霧乃', role: 'gm', lastSeenAt: ago(24 * 12) },
@@ -767,7 +776,7 @@ export const sessions: Session[] = [
         name: 'カヤ',
         role: 'driver',
         characterId: 'pc-mio',
-        characterName: '澪',
+        characterName: 'ミオ',
         lastSeenAt: ago(1),
       },
       { userId: 'u-kirino', name: '霧乃', role: 'gm', lastSeenAt: ago(1) },

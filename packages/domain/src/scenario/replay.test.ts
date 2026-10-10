@@ -26,8 +26,8 @@ describe('replayBlockedBy（再挑戦不可。docs/cartagraph/scenario-flow.md�
   });
 
   it('止める理由の文は、PC 名と結末の名前を含む', () => {
-    expect(replayBlockedMessage('迅', cleared)).toBe(
-      '迅はこのシナリオの結末「冒険者として旅立つ」に至っているため、もう一度は遊べません',
+    expect(replayBlockedMessage('ジン', cleared)).toBe(
+      'ジンはこのシナリオの結末「冒険者として旅立つ」に至っているため、もう一度は遊べません',
     );
   });
 });

@@ -68,7 +68,7 @@ export function NameProposal({
               <input
                 type="text"
                 aria-label="名前"
-                placeholder="例：迅"
+                placeholder="例：ジン"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && submit()}

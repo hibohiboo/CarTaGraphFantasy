@@ -132,8 +132,8 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     renderAt('/gm/sessions');
     const panel = (await screen.findByRole('heading', { name: '自分の募集' })).closest('section')!;
     const rc = await myRecruitment();
-    expect(within(rc).getByLabelText('迅（ユウ）を参加させる')).toBeInTheDocument();
-    expect(within(rc).getByLabelText('澪（カヤ）を参加させる')).toBeInTheDocument();
+    expect(within(rc).getByLabelText('ジン（ユウ）を参加させる')).toBeInTheDocument();
+    expect(within(rc).getByLabelText('ミオ（カヤ）を参加させる')).toBeInTheDocument();
     expect(within(panel).queryByText(/霧乃|柊/)).not.toBeInTheDocument();
   });
 
@@ -141,9 +141,9 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     const user = userEvent.setup();
     const router = renderAt('/gm/sessions');
     const rc = await myRecruitment();
-    await user.click(within(rc).getByLabelText('迅（ユウ）を参加させる'));
-    await user.click(within(rc).getByLabelText('澪（カヤ）を参加させる'));
-    await user.click(within(rc).getByLabelText('迅をドライバーにする'));
+    await user.click(within(rc).getByLabelText('ジン（ユウ）を参加させる'));
+    await user.click(within(rc).getByLabelText('ミオ（カヤ）を参加させる'));
+    await user.click(within(rc).getByLabelText('ジンをドライバーにする'));
     await user.type(within(rc).getByLabelText('パーティー名'), '夜更かし組');
     await user.click(within(rc).getByRole('button', { name: 'セッションを始める' }));
     // GM のセッション一覧にも同じパーティー名が出る。画面の切り替えは router の pathname より遅れることが
@@ -152,8 +152,10 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     expect(screen.getByText(/パーティー「夜更かし組」/)).toBeInTheDocument();
     expect(router.state.location.pathname).toMatch(/^\/gm\/sessions\/ss-/);
     const members = screen.getByRole('heading', { name: '参加者' }).closest('section')!;
-    expect(within(members).getByText('迅（ユウ）').closest('div')).toHaveTextContent('ドライバー');
-    expect(within(members).getByText('澪（カヤ）').closest('div')).toHaveTextContent(
+    expect(within(members).getByText('ジン（ユウ）').closest('div')).toHaveTextContent(
+      'ドライバー',
+    );
+    expect(within(members).getByText('ミオ（カヤ）').closest('div')).toHaveTextContent(
       'ナビゲーター',
     );
     await router.navigate('/gm/sessions');
@@ -168,11 +170,11 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     const user = userEvent.setup();
     renderAt('/gm/sessions');
     const rc = await myRecruitment();
-    await user.click(within(rc).getByLabelText('迅（ユウ）を参加させる'));
-    await user.click(within(rc).getByLabelText('迅をドライバーにする'));
+    await user.click(within(rc).getByLabelText('ジン（ユウ）を参加させる'));
+    await user.click(within(rc).getByLabelText('ジンをドライバーにする'));
     expect(within(rc).getByText('想定人数（2〜4人）に届いていません')).toBeInTheDocument();
     expect(within(rc).getByRole('button', { name: 'セッションを始める' })).toBeEnabled();
-    await user.click(within(rc).getByLabelText('澪（カヤ）を参加させる'));
+    await user.click(within(rc).getByLabelText('ミオ（カヤ）を参加させる'));
     expect(within(rc).queryByText(/届いていません|超えています/)).not.toBeInTheDocument();
   });
 
@@ -182,12 +184,12 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     const rc = await myRecruitment();
     const startButton = within(rc).getByRole('button', { name: 'セッションを始める' });
     expect(startButton).toBeDisabled();
-    await user.click(within(rc).getByLabelText('迅（ユウ）を参加させる'));
-    await user.click(within(rc).getByLabelText('澪（カヤ）を参加させる'));
-    await user.click(within(rc).getByLabelText('迅をドライバーにする'));
+    await user.click(within(rc).getByLabelText('ジン（ユウ）を参加させる'));
+    await user.click(within(rc).getByLabelText('ミオ（カヤ）を参加させる'));
+    await user.click(within(rc).getByLabelText('ジンをドライバーにする'));
     expect(startButton).toBeEnabled();
-    await user.click(within(rc).getByLabelText('迅（ユウ）を参加させる'));
-    expect(within(rc).getByLabelText('澪をドライバーにする')).not.toBeChecked();
+    await user.click(within(rc).getByLabelText('ジン（ユウ）を参加させる'));
+    expect(within(rc).getByLabelText('ミオをドライバーにする')).not.toBeChecked();
     expect(startButton).toBeDisabled();
     expect(within(rc).getByText('ドライバーのPCを選んでください')).toBeInTheDocument();
   });
@@ -215,8 +217,8 @@ describe('GMのセッション管理：自分の募集から始める', () => {
       driverCharacterId: 'pc-jin',
       partyName: '',
     });
-    await user.click(within(rc).getByLabelText('迅（ユウ）を参加させる'));
-    await user.click(within(rc).getByLabelText('迅をドライバーにする'));
+    await user.click(within(rc).getByLabelText('ジン（ユウ）を参加させる'));
+    await user.click(within(rc).getByLabelText('ジンをドライバーにする'));
     await user.click(within(rc).getByRole('button', { name: 'セッションを始める' }));
     expect(await within(rc).findByText('この募集はもう始まっています')).toBeInTheDocument();
     // 進行管理画面へは移らない
@@ -244,11 +246,11 @@ describe('GMのセッション管理：自分の募集から始める', () => {
     const fresh = (await screen.findAllByRole('heading', { name: '灰色館の一夜' }))
       .map((el) => el.closest('article')!)
       .find((a) => !within(a).queryByText(MY_NOTE))!;
-    await user.click(within(fresh).getByLabelText('迅（ユウ）を参加させる'));
-    await user.click(within(fresh).getByLabelText('迅をドライバーにする'));
+    await user.click(within(fresh).getByLabelText('ジン（ユウ）を参加させる'));
+    await user.click(within(fresh).getByLabelText('ジンをドライバーにする'));
     await user.click(within(fresh).getByRole('button', { name: 'セッションを始める' }));
     await screen.findByRole('heading', { name: '参加者' });
-    expect(screen.getByText(/パーティー「迅の一行」/)).toBeInTheDocument();
+    expect(screen.getByText(/パーティー「ジンの一行」/)).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`/ ${grayMansionScenes - 1}$`))).toBeInTheDocument();
   });
 });
@@ -382,8 +384,8 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     const router = renderAt('/gm/sessions');
     const rc = (await screen.findByText(MY_NOTE_OF_RC_MINE)).closest('article')!;
-    await user.click(within(rc).getByLabelText('迅（ユウ）を参加させる'));
-    await user.click(within(rc).getByLabelText('迅をドライバーにする'));
+    await user.click(within(rc).getByLabelText('ジン（ユウ）を参加させる'));
+    await user.click(within(rc).getByLabelText('ジンをドライバーにする'));
     await user.click(within(rc).getByRole('button', { name: 'セッションを始める' }));
 
     // GM：描写を書き、地下回廊へ移る選択肢を配る

@@ -56,7 +56,7 @@ describe('募集からセッションを始める', () => {
       driverCharacterId: 'pc-jin',
       partyName: '',
     });
-    expect(s.partyName).toBe('迅の一行');
+    expect(s.partyName).toBe('ジンの一行');
   });
 });
 

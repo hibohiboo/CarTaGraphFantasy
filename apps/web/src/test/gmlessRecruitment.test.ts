@@ -107,7 +107,7 @@ describe('GM 不在の募集から始める', () => {
       recruitmentId: rc.id,
       proposalHandling: 'gm-required',
       status: 'playing',
-      partyName: '迅',
+      partyName: 'ジン',
     });
     expect(s.participants.map((p) => [p.role, p.userId, p.characterId])).toEqual([
       ['gm', 'u-me', undefined],
@@ -172,7 +172,7 @@ describe('GM 不在の募集から始める', () => {
 describe('GM 不在のセッションの進行（gmless の判定。GM は自分なので gmId では区別できない）', () => {
   const startVillage = async () => playFrom((await gmless('sc-village-start')).id, 'pc-jin');
 
-  it('使える条件：攻撃カードの無い迅は、ギルドへ向かえない（422）', async () => {
+  it('使える条件：攻撃カードの無いジンは、ギルドへ向かえない（422）', async () => {
     const s = await startVillage();
     await play(s.id, 'vs-to-square');
     await expect(play(s.id, 'vs-to-guild')).rejects.toMatchObject({ status: 422 });
@@ -257,7 +257,7 @@ describe('提案で中断し、GM の裁定のあとドライバーが再開す�
     // 移り先の無い採用カードを選ぶと、決まった文の描写になり、同じシーンに留まる
     const after = await play(s.id, card?.id ?? '');
     expect(after.currentScene.nodeId).toBe(resumed.currentScene.nodeId);
-    expect(after.flavor).toBe('迅は「扉を叩く」を試みた。');
+    expect(after.flavor).toBe('ジンは「扉を叩く」を試みた。');
   });
 
   it('却下でも再開できる', async () => {
@@ -322,17 +322,18 @@ describe('提案で中断し、GM の裁定のあとドライバーが再開す�
 });
 
 describe('再挑戦不可', () => {
-  it('結末タグを得た迅は、村はずれの一歩の GM 不在の募集から始められない。灯は始められる', async () => {
+  it('結末タグを得たジンは、村はずれの一歩の GM 不在の募集から始められない。アカリは始められる', async () => {
     await clearVillageWith('pc-jin');
     const rc = await gmless('sc-village-start');
     await expect(playFrom(rc.id, 'pc-jin')).rejects.toMatchObject({
       status: 422,
-      message: '迅はこのシナリオの結末「冒険者として旅立つ」に至っているため、もう一度は遊べません',
+      message:
+        'ジンはこのシナリオの結末「冒険者として旅立つ」に至っているため、もう一度は遊べません',
     });
     expect((await playFrom(rc.id, 'pc-akari')).status).toBe('playing');
   });
 
-  it('通常の募集（村はずれの一歩）への迅の応募は 422。灰色館の一夜の募集には応募できる', async () => {
+  it('通常の募集（村はずれの一歩）へのジンの応募は 422。灰色館の一夜の募集には応募できる', async () => {
     await clearVillageWith('pc-jin');
     const village = await createRecruitment('sc-village-start', { capacity: 2 });
     await expect(
@@ -342,7 +343,7 @@ describe('再挑戦不可', () => {
     await api.post(`/recruitments/${mansion.id}/apply`, { characterId: 'pc-jin' });
   });
 
-  it('応募したあとで結末タグを得た迅を含めて GM が始めると 422 で、募集は受付中・セッションは増えない', async () => {
+  it('応募したあとで結末タグを得たジンを含めて GM が始めると 422 で、募集は受付中・セッションは増えない', async () => {
     const village = await createRecruitment('sc-village-start', { capacity: 2 });
     await api.post(`/recruitments/${village.id}/apply`, { characterId: 'pc-jin' });
     await clearVillageWith('pc-jin');

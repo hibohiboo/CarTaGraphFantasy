@@ -11,19 +11,19 @@ import {
 type Applicant = Recruitment['applicants'][number];
 const jin: Applicant = {
   characterId: 'pc-jin',
-  characterName: '迅',
+  characterName: 'ジン',
   userId: 'u-me',
   playerName: 'ユウ',
 };
 const mio: Applicant = {
   characterId: 'pc-mio',
-  characterName: '澪',
+  characterName: 'ミオ',
   userId: 'u-kaya',
   playerName: 'カヤ',
 };
 const akira: Applicant = {
   characterId: 'pc-akira',
-  characterName: '彰',
+  characterName: 'アキラ',
   userId: 'u-me',
   playerName: 'ユウ',
 };
@@ -123,7 +123,7 @@ describe('checkStart（募集からセッションを始められるか。docs/c
 
 describe('defaultPartyName', () => {
   it('ドライバーのキャラクター名から「〇〇の一行」を作る', () => {
-    expect(defaultPartyName('迅')).toBe('迅の一行');
+    expect(defaultPartyName('ジン')).toBe('ジンの一行');
   });
 });
 
@@ -141,7 +141,7 @@ describe('buildParticipants（docs/cartagraph/party-and-session.md「ドライ�
         name: 'ユウ',
         role: 'driver',
         characterId: 'pc-jin',
-        characterName: '迅',
+        characterName: 'ジン',
         lastSeenAt: at,
       },
       {
@@ -149,7 +149,7 @@ describe('buildParticipants（docs/cartagraph/party-and-session.md「ドライ�
         name: 'カヤ',
         role: 'navigator',
         characterId: 'pc-mio',
-        characterName: '澪',
+        characterName: 'ミオ',
         lastSeenAt: at,
       },
     ]);
@@ -174,7 +174,7 @@ describe('buildParticipants（docs/cartagraph/party-and-session.md「ドライ�
 
 describe('checkPlayFromRecruitment（GM 不在の募集から始められるか。docs/cartagraph/scenario-flow.md「募集とセッション」）', () => {
   const gmless = { kind: 'gmless' as const };
-  const mine = { name: '迅', ownerId: 'u-me' };
+  const mine = { name: 'ジン', ownerId: 'u-me' };
   const cleared = {
     id: 'e-ok',
     name: '冒険者として旅立つ',
@@ -195,18 +195,18 @@ describe('checkPlayFromRecruitment（GM 不在の募集から始められるか�
     expect(
       checkPlayFromRecruitment(
         gmless,
-        { name: '彰', ownerId: 'u-hiiragi' },
+        { name: 'アキラ', ownerId: 'u-hiiragi' },
         { meId: 'u-me', blockedBy: null },
       ),
     ).toEqual({ ok: false, error: 'GM 不在の募集では、自分が所有者の PC だけで遊べます' });
     expect(checkPlayFromRecruitment(gmless, mine, { meId: 'u-me', blockedBy: cleared })).toEqual({
       ok: false,
-      error: '迅はこのシナリオの結末「冒険者として旅立つ」に至っているため、もう一度は遊べません',
+      error: 'ジンはこのシナリオの結末「冒険者として旅立つ」に至っているため、もう一度は遊べません',
     });
   });
 
   it('判定の順：通常の募集かつ借りた PC なら「GM 不在の募集でない」、借りた PC かつ再挑戦不可なら「自分の PC だけ」', () => {
-    const borrowed = { name: '彰', ownerId: 'u-hiiragi' };
+    const borrowed = { name: 'アキラ', ownerId: 'u-hiiragi' };
     expect(
       checkPlayFromRecruitment({ kind: 'normal' }, borrowed, { meId: 'u-me', blockedBy: null }),
     ).toMatchObject({ error: 'この募集は GM 不在の募集ではありません' });
