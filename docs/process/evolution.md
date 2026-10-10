@@ -36,7 +36,7 @@
 
 - [ ] プランを触るときに読み込むルールを、開発プロセスのページ全体（約110行）から「プランドキュメントの8項目」だけに絞る（8項目を別のルールのページに分け、`docs/plans/**` の `paths` をそちらへ移す） — 2026-10-10、毎回読み込む指示を減らす検証（下記「採用済み」）で A・B と並べて提案し、人間が A・B だけを選んだ。プランは開発サイクルの中で書くので、どのみち開発プロセスのページを読んでいることが多く、効き目が小さい。プランだけを直す場面（古いプランの更新など）で重さが気になったら取り上げる。止め方の案：置き場所（ページを分ける）（2026-10-10）
 
-- [ ] MSW ハンドラの本文を、`(await request.json()) as {...}` で型を付け替えるだけでなく、zod で検査してから使う — 2026-10-10、冒険者だけにする C3 の実装レビュー（異常系）で、`PATCH /api/characters/:id` が数・文字列の本文で 500 になること、`POST /api/characters`・`start-solo` が `null` や `name` が文字列でない本文で 500 になることが見つかった。C2 のレビューでも `PATCH /api/scenarios/:id` の同じ種類の穴が出ている。handlers.ts には型の付け替えだけで本文を使う箇所が10か所あり、レビューのたびに1か所ずつ見つけている。きっかけ：AI レビュー（異常系、2サイクル続けて）。止め方の案：機械（lint）。Biome の GritQL プラグインで `(await request.json()) as` を禁止し、zod の `safeParse` を通させる（2026-10-10） **2026-10-10 採用。** 人間の案で、`packages/schemas` などにバックエンドと共用するリクエストとレスポンスのスキーマを置く形にし、要望 [API のリクエストとレスポンスのスキーマを、バックエンドと共用する](../backlog/api-schemas.md) で実施する
+- [x] MSW ハンドラの本文を、`(await request.json()) as {...}` で型を付け替えるだけでなく、zod で検査してから使う — 2026-10-10、冒険者だけにする C3 の実装レビュー（異常系）で、`PATCH /api/characters/:id` が数・文字列の本文で 500 になること、`POST /api/characters`・`start-solo` が `null` や `name` が文字列でない本文で 500 になることが見つかった。C2 のレビューでも `PATCH /api/scenarios/:id` の同じ種類の穴が出ている。handlers.ts には型の付け替えだけで本文を使う箇所が10か所あり、レビューのたびに1か所ずつ見つけている。きっかけ：AI レビュー（異常系、2サイクル続けて）。止め方の案：機械（lint）。Biome の GritQL プラグインで `(await request.json()) as` を禁止し、zod の `safeParse` を通させる（2026-10-10） **2026-10-10 採用。** 人間の案で、`packages/schemas` などにバックエンドと共用するリクエストとレスポンスのスキーマを置く形にし、要望 [API のリクエストのスキーマを、バックエンドと共用する](../backlog/api-schemas.md) で実施する。**2026-10-10 実施。** 下記「採用済み」参照
 
 ## 採用済み
 
@@ -46,6 +46,13 @@
 - **止め方** — 同じことをどう防ぐか：機械（CI・git フック・lint・Claude Code のフック・ビルド時の検査や自動生成）／レビュー観点／手順・ルール（文書に書く）／置き場所（ページ・ファイルを新設・移動する）。複数あれば並べる
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。[体制の進化のタイムライン](timeline.md)が、この節と「却下」からビルド時に年表と内訳を作る。きっかけ・止め方は、まとめの1行（`- **きっかけ** — … ／ **止め方** — …`）か、小項目ごとの1行（`- きっかけ：… ／ 止め方：…`）で書く。読めないとビルドが止まる。止め方は最初の「。」（括弧の外）までを読むので、まだやっていない案は「。」の後ろに書く
+
+### 2026-10-10 API のリクエストの本文をスキーマで検査し、直接の読み込みを lint で止めた
+
+- **内容** — API のリクエストの本文の形を新しいパッケージ `packages/schemas`（zod。モック・画面・将来のバックエンドで共用）に置き、MSW のハンドラは `apps/web/src/mocks/body.ts` の `readBody` で検査してから使う（形が崩れていれば 422）。ハンドラが `request.json()`・`request.text()` を直接呼ぶのを Biome の GritQL のプラグイン（`scripts/biome/no-request-body.grit`）で止め、`@cartagraph/schemas` を import してよい層を `noRestrictedImports` で entities・mocks・test に絞った。型検査とテストを pre-push・CI に足した
+- **理由** — 本文を型の付け替えだけで使い、形の崩れた本文で 500 になる穴を、実装の AI レビュー（異常系）が C2・C3 と続けて1か所ずつ見つけていた。1か所ずつ直すより、読む口を1つにして機械で止める（冒険者だけにする C3 の振り返りで採用。置き場所は人間の案）
+- **反映先** — `packages/schemas/`・`apps/web/src/mocks/body.ts`・`apps/web/package.json`・`packages/domain/src/session/model.ts`（列挙のスキーマ）・`scripts/biome/no-request-body.grit`・`biome.json`・`package.json`・`.githooks/pre-push`・`.github/workflows/ci.yml`・`AGENTS.md`・`README.md`・`.claude/rules/process/rules/static-analysis.md`・`docs/process/rules/architecture.md`・`static-analysis.md`・`testing.md`・`docs/architecture/web-app.md`・`known-issues.md`（プラン `docs/plans/2026-10-10-APIスキーマの共用.md`）
+- **きっかけ** — AI レビュー ／ **止め方** — 機械（lint）。置き場所（パッケージを新設する）
 
 ### 2026-10-10 冒険者だけにする C3 の振り返りから2件を採用（既知の問題の一覧の検査、git stash の禁止）
 

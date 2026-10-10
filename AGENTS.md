@@ -11,7 +11,8 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 - `apps/web/` … Vite + React 19 + react-router（Hashルーター）+ TanStack Query + MSW
   - **バックエンドは未実装。** `/api/*` は MSW（Mock Service Worker）が応答し、状態はメモリ上でリロードで消える
 - `packages/domain/` … ドメイン型。`docs/` の用語をそのまま型に落としたもの
-- テスト … Vitest（`apps/web/src/test/`、`packages/domain/src/**/*.test.ts`）。E2E は Playwright（`apps/web/e2e/`、CIのみ）
+- `packages/schemas/` … API のリクエストの本文のスキーマ（zod）。モック（MSW）・画面・将来のバックエンドが共用する
+- テスト … Vitest（`apps/web/src/test/`、`packages/domain/src/**/*.test.ts`、`packages/schemas/src/**/*.test.ts`）。E2E は Playwright（`apps/web/e2e/`、CIのみ）
 - 将来 … AWS + CDK（`infra/`）、Neon Postgres。方針は `docs/architecture/index.md`
 
 ## ディレクトリ構成
@@ -42,6 +43,8 @@ pnpm web:typecheck    # tsc
 pnpm domain:test      # Vitest（packages/domain の純粋関数）
 pnpm tools:test       # node --test（scripts/ と .claude/hooks/ の補助スクリプト）
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
+pnpm schemas:test     # Vitest（packages/schemas の API の本文のスキーマ）
+pnpm schemas:typecheck # tsc（packages/schemas。テストファイルも含む）
 pnpm sim:auto-combat  # 自動戦闘のシミュレーションを回し docs/cartagraph/auto-combat-simulation.md を作り直す（任意。CIでは回さない）
 pnpm docs:dev         # 仕様書サイトをローカルで確認
 pnpm docs:build       # 仕様書サイトのビルド（リンク切れ・見出しへのリンクの食い違い・用語の旧称（scripts/check-terms.mjs）・画面一覧とルート定義の食い違い（scripts/check-screens.mjs）・正式仕様のページにある実装のパス（scripts/check-spec-paths.mjs）・仮ルールの一覧と仕様ページの「仮」の印の食い違い（scripts/check-provisional.mjs）・既知の問題の複雑度の一覧と biome-ignore の食い違い（scripts/check-suppressions.mjs）・下の「開発ルールの適用」の表や .claude/rules/ とルールのページの paths の食い違い（scripts/sync-claude-rules.mjs --check）があると失敗する）
@@ -53,12 +56,12 @@ node scripts/mutate-check.mjs <spec.json>  # 守る条件を1つずつ外し、�
 node scripts/sync-claude-rules.mjs          # ルールのページの frontmatter の paths から .claude/rules/ の入口ファイルを作り直す
 ```
 
-コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`scripts/`・`.claude/hooks/` を触ったら `pnpm tools:test` も通す。`scenarios/`・`rules/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオ・ルールを使うテストが走る。pre-push でも走る）。
+コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`packages/schemas` を触ったら `pnpm schemas:typecheck && pnpm schemas:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`scripts/`・`.claude/hooks/` を触ったら `pnpm tools:test` も通す。`scenarios/`・`rules/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオ・ルールを使うテストが走る。pre-push でも走る）。
 
 lint・型検査・テスト・docsビルドは、AI にトークンを使わせず git フックで機械的に止める。
 - `.githooks/pre-commit` … ステージ済みファイルだけ `biome check --staged --write` を実行し、安全な指摘（フォーマット崩れ等）は自動修正して再ステージする。`--unsafe`が要る指摘（意図的に自動適用しない方針）だけコミットを止める
 - `.githooks/commit-msg` … 進め方に関わるファイル（ルール・`AGENTS.md`・`CLAUDE.md`・`.claude/`・git フック・CI・検査のスクリプトなど。範囲は `scripts/check-evolution-log.mjs`）を変えたのに、体制の進化ログ（`docs/process/evolution.md`）が変わっていないコミットを止める。記録が要らない変更は、コミットメッセージに `進化ログ不要: <理由>` の行を書く
-- `.githooks/pre-push` … push前に `pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm web:test && pnpm tools:test && pnpm docs:build`（CIと同じ）を実行する
+- `.githooks/pre-push` … push前に `pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm schemas:typecheck && pnpm schemas:test && pnpm web:test && pnpm tools:test && pnpm docs:build`（CIと同じ）を実行する
 
 `pnpm install` すると `prepare` スクリプトが `git config --local core.hooksPath .githooks` を自動で設定するので、通常は何もしなくてよい。設定されていない場合は手動で同じコマンドを実行する。CI（`.github/workflows/ci.yml`）にも同じチェック（lint・型検査・テスト・docsビルド）があり、フック未設定や `--no-verify` の取りこぼしを検出する。
 
@@ -72,7 +75,7 @@ lint・型検査・テスト・docsビルドは、AI にトークンを使わせ
 |---|---|
 | `apps/**`, `packages/**` | `docs/process/rules/architecture.md` |
 | `apps/**/*.test.*`, `packages/**/*.test.*`, `apps/web/src/test/**`, `apps/web/src/mocks/**`, `scenarios/**`, `rules/**`, `apps/web/vite.config.ts`, `apps/web/vite/**`, `apps/web/e2e/**`, `apps/web/playwright.config.ts`、テストの追加・変更 | `docs/process/rules/testing.md` |
-| `biome.json`、lint のルール・しきい値を変えるとき | `docs/process/rules/static-analysis.md` |
+| `biome.json`, `scripts/biome/**`、lint のルール・しきい値を変えるとき | `docs/process/rules/static-analysis.md` |
 | push・マージ前、レビュー実行時 | `docs/process/rules/review.md` |
 | `docs/plans/**`、機能追加・振る舞いの変更（プラン作成から） | `docs/process/index.md`（開発サイクル） |
 | `docs/cartagraph/**`, `docs/concept/**`, `docs/glossary.md` | `docs/process/rules/spec-writing.md`（仕様のページの書き方） |

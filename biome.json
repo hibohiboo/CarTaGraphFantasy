@@ -448,6 +448,10 @@
                       "@//**"
                     ],
                     "message": "app は層の外（mocks・test）を import しない。ほかの層は @/<層>/… で import する（docs/process/rules/architecture.md「依存の向き」）"
+                  },
+                  {
+                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -487,6 +491,10 @@
                       "@//**"
                     ],
                     "message": "pages が import してよいのは下の層（widgets・features・entities・shared）だけ。同じ層の別スライスは import しない。スライスの外は @/<層>/…、中は相対パス（docs/process/rules/architecture.md「依存の向き」）"
+                  },
+                  {
+                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -528,6 +536,10 @@
                       "@//**"
                     ],
                     "message": "widgets が import してよいのは下の層（features・entities・shared）だけ。同じ層の別スライスは import しない。スライスの外は @/<層>/…、中は相対パス（docs/process/rules/architecture.md「依存の向き」）"
+                  },
+                  {
+                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -571,6 +583,10 @@
                       "@//**"
                     ],
                     "message": "features が import してよいのは下の層（entities・shared）だけ。同じ層の別スライスは import しない。スライスの外は @/<層>/…、中は相対パス（docs/process/rules/architecture.md「依存の向き」）"
+                  },
+                  {
+                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -663,6 +679,10 @@
                       "@//**"
                     ],
                     "message": "shared はほかの層を import しない。shared の中は相対パスで import する（docs/process/rules/architecture.md「依存の向き」）"
+                  },
+                  {
+                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -712,6 +732,10 @@
                       "@//**"
                     ],
                     "message": "層・グループのフォルダ・スライスの直下のファイルから、../ で外へ出る import はしない。そもそも直下にファイルを置かず、セグメント（ui・api・lib・model など）に入れる（docs/process/rules/architecture.md「依存の向き」）"
+                  },
+                  {
+                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -812,6 +836,10 @@
                       "@//**"
                     ],
                     "message": "層・グループのフォルダ・スライスの直下のファイルから、../ で外へ出る import はしない。そもそも直下にファイルを置かず、セグメント（ui・api・lib・model など）に入れる（docs/process/rules/architecture.md「依存の向き」）"
+                  },
+                  {
+                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -862,6 +890,10 @@
                       "@//**"
                     ],
                     "message": "層・グループのフォルダ・スライスの直下のファイルから、../ で外へ出る import はしない。そもそも直下にファイルを置かず、セグメント（ui・api・lib・model など）に入れる（docs/process/rules/architecture.md「依存の向き」）"
+                  },
+                  {
+                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -918,6 +950,10 @@
                       "@//**"
                     ],
                     "message": "層・グループのフォルダ・スライスの直下のファイルから、../ で外へ出る import はしない。そもそも直下にファイルを置かず、セグメント（ui・api・lib・model など）に入れる（docs/process/rules/architecture.md「依存の向き」）"
+                  },
+                  {
+                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -925,6 +961,93 @@
           }
         }
       }
+    },
+    {
+      "includes": ["packages/schemas/src/**"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noBarrelFile": "error",
+            "noReExportAll": "error"
+          },
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../**", "./../**", "@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "表に無いディレクトリ（と src の直下）はほかのディレクトリを import しない（docs/process/rules/architecture.md「packages/schemas の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/schemas/src/characters/**",
+        "packages/schemas/src/recruitments/**",
+        "packages/schemas/src/sessions/**",
+        "packages/schemas/src/scenarios/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/schemas",
+                      "@cartagraph/schemas/**",
+                      "!../body/**",
+                      "!./../body/**"
+                    ],
+                    "message": "各ディレクトリが import してよい先は body/ と @cartagraph/domain・zod だけ（docs/process/rules/architecture.md「packages/schemas の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/schemas/src/body/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/schemas",
+                      "@cartagraph/schemas/**",
+                      "@cartagraph/domain",
+                      "@cartagraph/domain/**"
+                    ],
+                    "message": "body/ はほかのディレクトリも @cartagraph/domain も import しない（docs/process/rules/architecture.md「packages/schemas の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/mocks/**", "!apps/web/src/mocks/body.ts"],
+      "plugins": ["./scripts/biome/no-request-body.grit"]
     }
   ]
 }

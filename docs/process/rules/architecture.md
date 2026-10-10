@@ -28,18 +28,22 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
     main.tsx    エントリ（層の外）
     mocks/      層の外。fixtures.ts（モックデータのシード）、scenarioFiles.ts（scenarios/*.json の読み込み）、
                 rulesFiles.ts（rules/*.json の読み込み）、
-                handlers.ts（MSW ハンドラ）、browser.ts / node.ts
+                handlers.ts（MSW ハンドラ）、body.ts（API の本文を読んで packages/schemas で検査する口）、
+                browser.ts / node.ts
     test/       層の外。Vitest のテスト（docs/process/rules/testing.md）
   e2e/          Playwright のテスト（CI の E2E は *.test.ts。dev/ は開発サーバーで手で回す確かめのスクリプト）
   vite/         層の外。開発サーバーのプラグイン（scenarioFilePlugin.ts：公開したシナリオを scenarios/ に書く口）。
                 vite.config.ts から読むので、@cartagraph/domain も @/ も静的に import しない（Node が解決できず設定の読み込みで落ちる）
 packages/domain/src/      ドメイン型と、UIに依存しないゲームロジック（純粋関数）。
                           仕様ページに合わせたドメインごとのディレクトリ（下の「packages/domain の中の置き場所」）
+packages/schemas/src/     API のリクエストの本文のスキーマ（zod）。モック（MSW）・画面・将来のバックエンドが共用する
+                          （下の「packages/schemas の中の置き場所」）
 scenarios/                公開したことのあるシナリオの JSON（非公開にしたものは draft のまま残る。シードの一部。
                           読み込み・検査・画面からの公開は Webアプリの仕組み「シナリオの JSON」）
 rules/                    システム製作者のルールの JSON（システムのカード一覧・キャラクター作成のルール。シードの一部。
                           読み込み・検査は Webアプリの仕組み「ルールの JSON」）
-scripts/                  ビルド補助（GitHub Pages へのコピー、自動戦闘のシミュレーション）
+scripts/                  ビルド補助（GitHub Pages へのコピー、自動戦闘のシミュレーション）。biome/ は Biome の GritQL のプラグイン
+                          （docs/process/rules/static-analysis.md「GritQL のプラグイン」）
 ```
 
 迷ったらこの順で問う。
@@ -54,12 +58,15 @@ scripts/                  ビルド補助（GitHub Pages へのコピー、自�
 
 ```text
 apps/web ──→ packages/domain ──→ zod
+   │              ↑
+   ├──→ packages/schemas ─┘（packages/schemas も zod を使う。apps/web は zod を直接は使わない）
    │
    ├──→ scenarios/*.json（mocks/scenarioFiles.ts が読み、packages/domain の検査を通す）
    └──→ rules/*.json（mocks/rulesFiles.ts が読み、packages/domain の検査を通す。scripts/ のシミュレーションも読む）
 ```
 
-- **パッケージの間** — `apps/web` は `packages/domain` を参照してよい。逆は禁止。`packages/domain` は React・DOM・MSW に依存しない（下の「境界」）
+- **パッケージの間** — `apps/web` は `packages/domain` を参照してよい。逆は禁止。`packages/domain` は React・DOM・MSW に依存しない（下の「境界」）。`packages/schemas` は `packages/domain` を参照してよく、`apps/web` が参照する。`packages/domain` から `packages/schemas` は参照しない（domain は依存を宣言していないので、import すると解決に失敗して止まる）
+- **`@cartagraph/schemas` を import してよい層** — `entities`（mutation の本文の型）と、層の外の `mocks`（ハンドラの検査）・`test` だけ。ほかの層（app・pages・widgets・features・shared）からは Biome で止める（`biome.json` の層ごとの `noRestrictedImports`。後ろの override は前の override の禁止を置き換えるので、層の直下のファイル用の override にも書く）
 - **packages/domain の中** — 下の層だけを import してよい（下の「packages/domain の中の置き場所」の図と表。Biome で機械的に止める）
 - **apps/web の中** — FSD の層の順に、下の層だけを import してよい。同じ層の別スライスは import しない（`app → pages → widgets → features → entities → shared`）
   - スライスの外は `@/<層>/…` のエイリアス、スライスの中は相対パスで import する。エイリアスに `..`・`.` を入れない。相対パスは `./` か `../` を素直に重ねた形だけで書く（`../ui/../x`・`././x` のような形は検査をすり抜けるので書かない）
@@ -107,6 +114,15 @@ check ← card ← library        user（どこにも依存しない）
 3. **判定（`CheckSpec`）は `check/`** — カードの属性だが、持ち主は check.md なので、例外1より優先して `check/` に置く
 4. **募集は `session/`** — 募集→応募→確定は scenario-flow.md が書いているが、GM がシナリオからセッションを立てる手続きで、シナリオの定義そのものではないので `session/` に置く
 
+## packages/schemas の中の置き場所
+
+`packages/schemas/src/` は、API の URL の最初の区切りごとのディレクトリ（`characters/`・`recruitments/`・`sessions/`・`scenarios/`）と、共通の検査の `body/` に分ける。`/scenarios/:id/start-solo`・`/scenarios/:id/recruitments` は `scenarios/` に置く。
+
+- 各ディレクトリの `request.ts` に、エンドポイントごとの本文のスキーマを `defineBody(スキーマ, 個別のメッセージの表)` で置く。書くのは形だけ（型・必須か・配列の要素の形）で、業務の検査はハンドラ・ドメインに残す
+- 列挙などは `packages/domain` のスキーマから引き、書き写さない
+- 直下にファイルを置かない・`index.ts` を作らない・自分のパッケージ名で import しない（`packages/domain` と同じ決まり）
+- 依存の向き：各ディレクトリ → `body/` だけ（各ディレクトリは `@cartagraph/domain`・zod も使ってよい）。`body/` はどこにも依存しない（zod だけ）。機械的な検査は Biome（`biome.json` の `packages/schemas/src/**` の override）
+
 ## React の書き方
 
 React のコードは、Vercel Labs の [react-best-practices](https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices)（性能の70ルール・8カテゴリ。MIT）に沿って書き、レビューする。リポジトリには `.claude/skills/react-best-practices/` に取り込んである（取り込んだコミットは同じ場所の `VENDOR.md`。Claude Code 以外のツールでも、このファイル群か配布元を読めばよい）。
@@ -131,10 +147,10 @@ React のコードは、Vercel Labs の [react-best-practices](https://github.co
 
 ## 境界
 
-- `packages/domain` は React・DOM・MSW に依存しない。`apps/web` から `packages/domain` を参照し、逆は禁止
+- `packages/domain`・`packages/schemas` は React・DOM・MSW に依存しない（将来のバックエンドも使うため）。`apps/web` から `packages/domain` を参照し、逆は禁止
 - `packages/domain` の型と用語は `docs/` の用語に対応させる。**用語の意味を変えるときは docs を先に更新する**（SSOT）
 - 未解決論点（`docs/open-questions.md`）に関わる仮ルールは、コードのコメントと画面表示の両方で「仮」と明示する（例：キャラクター作成の能力値配分）
-- barrel export（`index.ts` への集約・再エクスポート）は新規に作らない。実ファイルへ直接 import する（`packages/domain` と `apps/web/src` は Biome の `noBarrelFile`・`noReExportAll` で止める）
+- barrel export（`index.ts` への集約・再エクスポート）は新規に作らない。実ファイルへ直接 import する（`packages/domain`・`packages/schemas`・`apps/web/src` は Biome の `noBarrelFile`・`noReExportAll` で止める）
 - 業務コードに `console.*` を残さない（`biome.json`の`noConsole`がコミット前フックで機械的に検知して止める。`scripts/`配下のNode.jsビルドスクリプトは対象外）。構造化ログの方針はバックエンド着手時に定める
 
 ## 副作用の分離（Functional Core / Imperative Shell）

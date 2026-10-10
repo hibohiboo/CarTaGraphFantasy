@@ -261,7 +261,7 @@ describe('同じシナリオへの操作が重なる（別のタブなど）', (
 
 describe('保存の本文', () => {
   it.each([['"ab"'], ['[1]'], ['null']])(
-    '本文 %s はオブジェクトでないので 400 で、何も変わらない',
+    '本文 %s はオブジェクトでないので 422 で、何も変わらない',
     async (body) => {
       const sc = await create();
       const res = await fetch(`/api/scenarios/${sc.id}`, {
@@ -269,7 +269,9 @@ describe('保存の本文', () => {
         headers: { 'Content-Type': 'application/json' },
         body,
       });
-      expect(res.status).toBe(400);
+      // ほかの API の本文の誤りと同じく 422（docs/plans/2026-10-10-APIスキーマの共用.md D5）
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({ message: '本文はオブジェクトにしてください' });
       expect(await get(sc.id)).toEqual(sc);
     },
   );

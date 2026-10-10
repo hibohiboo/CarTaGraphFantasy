@@ -40,6 +40,12 @@ jobs:
       - name: Test (packages/domain)
         run: pnpm domain:test
 
+      - name: Typecheck (packages/schemas)
+        run: pnpm schemas:typecheck
+
+      - name: Test (packages/schemas)
+        run: pnpm schemas:test
+
       - name: Test (apps/web)
         run: pnpm web:test
 
