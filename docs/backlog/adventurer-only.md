@@ -7,7 +7,7 @@ plans:
   - 2026-10-10-冒険者だけにする.md
 cycles:
   - { name: C1 仕様, status: 完了 }
-  - { name: C2 実装, status: 未着手 }
+  - { name: C2 実装, status: 検討中 }
 updated: 2026-10-10
 ---
 
