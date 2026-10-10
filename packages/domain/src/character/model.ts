@@ -1,4 +1,4 @@
-// キャラクター（docs/cartagraph/character-growth.md、典型ロールは role-and-scenario.md、称号は comparison-and-titles.md）。
+// キャラクター（docs/cartagraph/character-growth.md、典型ロールは scenario-type.md、称号は comparison-and-titles.md）。
 
 import { z } from 'zod';
 import { type CardDef, commentSchema, idSchema } from '../card/model';

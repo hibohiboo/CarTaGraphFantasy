@@ -30,9 +30,9 @@ paths:
 | F. カードをプレイした結果として何が変化するのか | [場・手札・プレイ](../cartagraph/play-and-field.md#カードをプレイした結果として何が変化するのか) | [ノート](play-and-field.md) |
 | G. 段階的な開示・習熟によるアンロック | [段階的な開示・習熟によるアンロック](../cartagraph/unlock.md) | [ノート](unlock.md) |
 | H. セッション参加モデル | [パーティー編成と非同期セッション参加](../cartagraph/party-and-session.md) | [ノート](party-and-session.md) |
-| I. PCのロールとシナリオタイプ | [PCのロールとシナリオタイプ](../cartagraph/role-and-scenario.md) | [ノート](role-and-scenario.md) |
+| I. シナリオタイプ | [シナリオタイプ](../cartagraph/scenario-type.md) | [ノート](scenario-type.md) |
 | J. 戦闘ルール | [戦闘ルール](../cartagraph/combat.md) | [ノート](combat.md) |
-| K. 探索者向けの判定ルール | [探索者向けの判定ルール](../cartagraph/exploration-check.md) | [ノート](exploration-check.md) |
+| K. 判定ルール | [判定ルール](../cartagraph/check.md) | [ノート](check.md) |
 | L. シナリオの構造とセッション開始までの流れ | [シナリオの構造とセッション開始までの流れ](../cartagraph/scenario-flow.md) | [ノート](scenario-flow.md) |
 | M. 提案カードの運用中の状態遷移 | [提案の裁定待ちの間の状態遷移](../cartagraph/play-and-field.md#提案の裁定待ちの間の状態遷移)・[GMレスセッションでの提案の扱い](../cartagraph/play-and-field.md#gmレスセッションでの提案の扱い) | [ノート](play-and-field.md) |
 | N. カード効果の「対象（Target）」指定方法 | [カード効果の「対象（Target）」指定方法](../cartagraph/play-and-field.md#カード効果の対象target指定方法) | [ノート](play-and-field.md) |
@@ -48,11 +48,11 @@ paths:
 - [カードの裏表](card-face-back.md)
 - [場・手札・プレイ](play-and-field.md)
 - [グラフの役割](graph.md)
-- [PCのロールとシナリオタイプ](role-and-scenario.md)
+- [シナリオタイプ](scenario-type.md)
 - [キャラクターの成長とキャラメイク（CP制）](character-growth.md)
 - [PC間の比較体験と称号タグ](comparison-and-titles.md)
 - [段階的な開示・習熟によるアンロック](unlock.md)
-- [探索者向けの判定ルール](exploration-check.md)
+- [判定ルール](check.md)
 - [戦闘ルール](combat.md)
 - [数値バランスの相場観](balance.md)
 - [シナリオの構造とセッション開始までの流れ](scenario-flow.md)

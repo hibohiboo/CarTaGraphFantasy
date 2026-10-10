@@ -88,7 +88,7 @@ export const rulebook: RuleSection[] = [
         paragraphs: [
           'ロールはPCに固定されません。能力値や戦闘スキルを得るたびに、参加できるシナリオが自然に広がります。シナリオ側は「参照するデータ種別のタグ」を持ち、PCの保有データと毎回突き合わせるだけです。',
         ],
-        source: 'cartagraph/role-and-scenario',
+        source: 'cartagraph/scenario-type',
       },
       {
         heading: '成長とキャラメイク（CP）',
@@ -124,7 +124,7 @@ export const rulebook: RuleSection[] = [
           '失敗しても物語は止まらない。代償（HPが減るなど）は伴うが、完全な手詰まりにはしない。',
           '判定は選択肢カードに書かれている（どの能力値で、目標値いくつで、成功時／失敗時に何が起きるか）。目標値はGMが状況に応じて上下させてよい。',
         ],
-        source: 'cartagraph/exploration-check',
+        source: 'cartagraph/check',
       },
       {
         heading: '数値の相場観',

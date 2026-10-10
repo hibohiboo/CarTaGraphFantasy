@@ -148,7 +148,7 @@ export function TutorialPage() {
   const [loggedLineKey, setLoggedLineKey] = useState<string | null>(null);
   const [showLog, setShowLog] = useState(false);
   // 完了時のロール（旅人／探索者／冒険者）は専用の状態フラグを持たず、サーバーが返した実際の
-  // Character（abilities・deck）から都度 deriveArchetype で導出する（docs/cartagraph/role-and-scenario.md）。
+  // Character（abilities・deck）から都度 deriveArchetype で導出する（docs/cartagraph/scenario-type.md）。
   const [character, setCharacter] = useState<Character | null>(null);
   // 選択のたびにサーバーへ保存するため、応答が返るまで次の選択を受け付けない
   // （connectedな連打でも二重に mutate が発火しないようにする、React の再描画を待たない同期ガード）。

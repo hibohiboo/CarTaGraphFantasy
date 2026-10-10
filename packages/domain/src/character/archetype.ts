@@ -1,4 +1,4 @@
-// 典型ロール（旅人・探索者・冒険者）を、PCが今持つデータから導く（docs/cartagraph/role-and-scenario.md）。
+// 典型ロール（旅人・探索者・冒険者）を、PCが今持つデータから導く（docs/cartagraph/scenario-type.md）。
 
 import type { Character, CharacterArchetype } from './model';
 

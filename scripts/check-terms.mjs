@@ -19,6 +19,8 @@ export const TERMS = [
   ['行き先', '「移り先」（選択肢カードの nextNodeId）'],
   ['結末ノード', '「結末のノード」'],
   ['配る前提タグ', '「結末タグ」'],
+  ['探索者向けの判定ルール', '「判定ルール」（docs/cartagraph/check.md）'],
+  ['PCのロールとシナリオタイプ', '「シナリオタイプ」（docs/cartagraph/scenario-type.md）'],
 ];
 
 const EXCLUDED = [

@@ -20,7 +20,7 @@ PR #11（[シナリオを JSON でリポジトリ管理する](scenario-json.md)
 最初の指針（2026-10-03）から、プランを作るときに次の3点を変えた（人間が確認）。
 
 - ファイル名：`scenario/schema` のような名前ではなく、型は `model.ts`、ロジックは役割の名前
-- 土台：`card/` の下に、能力値と判定の `check/`（exploration-check.md）を足した
+- 土台：`card/` の下に、能力値と判定の `check/`（check.md）を足した
 - 募集：`scenario/` ではなく `session/` に置く（GM がセッションを立てる手続きのため）
 
 ## 採らなかった案

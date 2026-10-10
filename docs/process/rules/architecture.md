@@ -88,11 +88,11 @@ check ← card ← library        user（どこにも依存しない）
 
 | ディレクトリ | 仕様ページ |
 |---|---|
-| `check/` | exploration-check.md（能力値・判定） |
+| `check/` | check.md（能力値・判定） |
 | `card/` | card-and-deck.md・card-face-back.md |
-| `character/` | character-growth.md・role-and-scenario.md（典型ロール）・comparison-and-titles.md（称号） |
+| `character/` | character-growth.md・comparison-and-titles.md（称号） |
 | `autoCombat/` | auto-combat.md |
-| `scenario/` | scenario-flow.md |
+| `scenario/` | scenario-flow.md・scenario-type.md |
 | `session/` | party-and-session.md・play-and-field.md・scenario-flow.md（募集） |
 | `soloVillage/` | solo-village.md |
 | `user/` | graph.md（ロール）・unlock.md・character-growth.md（解放済みカードプール） |
@@ -104,7 +104,7 @@ check ← card ← library        user（どこにも依存しない）
 
 1. **カードが持つ属性の型は `card/`** — 自動戦闘の効果（`CombatEffect`・`DiceExpr`）、配る条件（`CardCondition`）、成長の効果（`SoloEffect`）は、出典が auto-combat.md・solo-village.md でも `card/model.ts` に置く（`CardDef` とスキーマが互いを参照するため）。それを使うロジックは各ドメインに置く
 2. **カードの条件の判定も `card/`** — 配る条件・使える条件の判定（`card/condition.ts`）は、セッションの遷移と村のルールの両方が使うので、循環を避けてカードの側に置く
-3. **判定（`CheckSpec`）は `check/`** — カードの属性だが、持ち主は exploration-check.md なので、例外1より優先して `check/` に置く
+3. **判定（`CheckSpec`）は `check/`** — カードの属性だが、持ち主は check.md なので、例外1より優先して `check/` に置く
 4. **募集は `session/`** — 募集→応募→確定は scenario-flow.md が書いているが、GM がシナリオからセッションを立てる手続きで、シナリオの定義そのものではないので `session/` に置く
 
 ## React の書き方
