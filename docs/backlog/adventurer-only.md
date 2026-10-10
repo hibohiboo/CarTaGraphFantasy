@@ -8,7 +8,7 @@ plans:
 cycles:
   - { name: C1 仕様, status: 完了 }
   - { name: C2 シナリオタイプ, status: 完了, pr: 20 }
-  - { name: C3 作成時から冒険者, status: 進行中 }
+  - { name: C3 作成時から冒険者, status: 進行中, pr: 21 }
 updated: 2026-10-10
 ---
 
