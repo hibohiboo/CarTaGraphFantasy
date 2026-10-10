@@ -26,7 +26,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 - `docs/backlog/` … 要望（PBI）を1要望1ファイルで置く。先頭の状態・判断待ちから、トップページのダッシュボードをビルド時に組み立てる（`docs/.vitepress/*.data.ts`）
 - `docs/public/preview/` … HTML/CSS のみのUI試作。未React化の画面だけを残し、React 化したら削除する（`docs/architecture/web-app.md`「未React化の画面」）
 - `apps/`・`packages/`・`scenarios/`・`rules/`・`scripts/` … コード（`rules/` はシステム製作者のルールの JSON）。ディレクトリ構成と依存の向きは `docs/process/rules/architecture.md`「構造」「依存の向き」が正（ここには書き写さない）
-- `.claude/` … Claude Code 固有の設定（agents / skills / hooks / settings）。手順の本文は `docs/process/` が正
+- `.claude/` … Claude Code 固有の設定（agents / skills / rules / hooks / settings）。手順の本文は `docs/process/` が正。`rules/` は `scripts/sync-claude-rules.mjs` が作る入口ファイルだけを置く（手で書かない）
 
 ## コマンド
 
@@ -44,12 +44,13 @@ pnpm tools:test       # node --test（scripts/ と .claude/hooks/ の補助ス�
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
 pnpm sim:auto-combat  # 自動戦闘のシミュレーションを回し docs/cartagraph/auto-combat-simulation.md を作り直す（任意。CIでは回さない）
 pnpm docs:dev         # 仕様書サイトをローカルで確認
-pnpm docs:build       # 仕様書サイトのビルド（リンク切れ・見出しへのリンクの食い違い・用語の旧称（scripts/check-terms.mjs）・画面一覧とルート定義の食い違い（scripts/check-screens.mjs）・正式仕様のページにある実装のパス（scripts/check-spec-paths.mjs）・仮ルールの一覧と仕様ページの「仮」の印の食い違い（scripts/check-provisional.mjs）があると失敗する）
+pnpm docs:build       # 仕様書サイトのビルド（リンク切れ・見出しへのリンクの食い違い・用語の旧称（scripts/check-terms.mjs）・画面一覧とルート定義の食い違い（scripts/check-screens.mjs）・正式仕様のページにある実装のパス（scripts/check-spec-paths.mjs）・仮ルールの一覧と仕様ページの「仮」の印の食い違い（scripts/check-provisional.mjs）・下の「開発ルールの適用」の表や .claude/rules/ とルールのページの paths の食い違い（scripts/sync-claude-rules.mjs --check）があると失敗する）
 pnpm build:pages      # docs + app をまとめてビルド（CI と同じ）
 pnpm lint             # Biome（フォーマット・import整理・lintをまとめてチェック）
 pnpm lint:fix         # 同上、安全な修正を自動適用
 node scripts/replace-once.mjs <spec.json>  # ファイルの文字列を置き換える。件数（既定1件・count で指定）と二重の当たりを確かめてから書く
 node scripts/mutate-check.mjs <spec.json>  # 守る条件を1つずつ外し、テストが落ちることを確かめて元に戻す（testing.md「骨抜き禁止」）
+node scripts/sync-claude-rules.mjs          # ルールのページの frontmatter の paths から .claude/rules/ の入口ファイルを作り直す
 ```
 
 コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`scripts/`・`.claude/hooks/` を触ったら `pnpm tools:test` も通す。`scenarios/`・`rules/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオ・ルールを使うテストが走る。pre-push でも走る）。
@@ -64,13 +65,18 @@ lint・型検査・テスト・docsビルドは、AI にトークンを使わせ
 
 ファイルを読む・変更する・レビューするときは、対象パスに一致するルールを先に読む。複数一致した場合はすべて適用する。
 
+対象のパス（`…` で囲んだもの）の正は、各ルールのページの先頭（frontmatter）の `paths`。この表と Claude Code の `.claude/rules/`（そのパスのファイルを開くと自動で読み込まれる入口ファイル）は、それに合わせる。パスを変えるときは frontmatter を直し、`node scripts/sync-claude-rules.mjs` を流してこの表も直す（食い違いは `pnpm docs:build` が止める）。
+
 | 対象 | 必ず読むルール |
 |---|---|
 | `apps/**`, `packages/**` | `docs/process/rules/architecture.md` |
-| `apps/**/*.test.*`, `apps/web/src/test/**`, `apps/web/src/mocks/**`, `scenarios/**`, `rules/**`, テストの追加・変更 | `docs/process/rules/testing.md` |
-| `biome.json`、lint の指摘を抑える・しきい値を変えるとき | `docs/process/rules/static-analysis.md` |
+| `apps/**/*.test.*`, `packages/**/*.test.*`, `apps/web/src/test/**`, `apps/web/src/mocks/**`, `scenarios/**`, `rules/**`, `apps/web/vite.config.ts`, `apps/web/vite/**`, `apps/web/e2e/**`, `apps/web/playwright.config.ts`、テストの追加・変更 | `docs/process/rules/testing.md` |
+| `biome.json`, `apps/**`, `packages/**`、lint の指摘を抑える・しきい値を変えるとき | `docs/process/rules/static-analysis.md` |
 | push・マージ前、レビュー実行時 | `docs/process/rules/review.md` |
-| 機能追加・振る舞いの変更（プラン作成から） | `docs/process/index.md`（開発サイクル） |
+| `docs/plans/**`、機能追加・振る舞いの変更（プラン作成から） | `docs/process/index.md`（開発サイクル） |
+| `docs/cartagraph/**`, `docs/notes/**` | `docs/notes/index.md`（仕様のページとデザイナーノートの書き分け） |
+| `docs/cartagraph/**`, `docs/provisional/**` | `docs/provisional/index.md`（仮ルールの書き方） |
+| `docs/backlog/**` | `docs/backlog/index.md`（要望の書き方） |
 
 ## 最重要ルール
 

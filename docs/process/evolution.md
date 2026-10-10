@@ -43,6 +43,13 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。[体制の進化のタイムライン](timeline.md)が、この節と「却下」からビルド時に年表と内訳を作る。きっかけ・止め方は、まとめの1行（`- **きっかけ** — … ／ **止め方** — …`）か、小項目ごとの1行（`- きっかけ：… ／ 止め方：…`）で書く。読めないとビルドが止まる。止め方は最初の「。」（括弧の外）までを読むので、まだやっていない案は「。」の後ろに書く
 
+### 2026-10-10 ルールの対象のパスを frontmatter の1か所にし、Claude Code の .claude/rules/ を自動で作る
+
+- **内容** — ルールのページの先頭（frontmatter）の `paths` を、対象のパスの正にした。`scripts/sync-claude-rules.mjs` が、そこから Claude Code の path-scoped rule（`.claude/rules/`）の入口ファイルを作り（本文は書き写さず、ルールのページを指すだけ）、`--check` で入口ファイルの古さと `AGENTS.md`「開発ルールの適用」の表との食い違いを止める（`pnpm docs:build` の最後に流す。pre-push・CI でも止まる）。タイミングで読むルール（レビュー）の `paths: "*"` は外した。仕様書側の書き方（デザイナーノート・仮ルール・要望）とプランの8項目にも `paths` を付け、表に足した
+- **理由** — 人間から「`.claude/rules` が一つも無い。rules にしたほうがよいものが別のところに書かれていないか」と診断を頼まれた。サンプルの移植（2026-09-16）で `.claude/rules` 用の `paths` が `docs/process/rules/` に付いてきたが、読み込む仕組みが無く、AI が表を見て自分から読むことに頼っていた。表と frontmatter は testing・static-analysis・review の3件で食い違っていた。仕様書側の書き方は、それぞれの index を開かないと目に入らなかった。シンボリックリンクは、このリポジトリが `core.symlinks=false`（Windows）で実体化しないので使わない
+- **反映先** — `scripts/sync-claude-rules.mjs`（とテスト）、`.claude/rules/`、`package.json`、`AGENTS.md`、`CLAUDE.md`、`docs/process/index.md`、`docs/process/rules/review.md`、`docs/notes/index.md`、`docs/provisional/index.md`、`docs/backlog/index.md`
+- **きっかけ** — 人間の要望 ／ **止め方** — 機械（ビルド時の検査と自動生成）、置き場所（`.claude/rules/` を新設）
+
 ### 2026-10-10 進化のタイムラインを、ビルド時に自動で組み立ててサイトに出した
 
 - **内容** — [体制の進化のタイムライン](timeline.md)を新設した。この進化ログの「採用済み」「却下」の見出しと「きっかけ」「止め方」を、ビルド時に読み取り（`docs/.vitepress/evolution.data.ts`。読み取りと集計は `scripts/evolution-timeline.mjs` とテスト）、止め方・きっかけの内訳、月ごとの採用数と機械で止めた割合、年表を出す。きっかけ・止め方が読めない項目があるとビルドが止まる
