@@ -988,7 +988,10 @@
     },
     {
       "includes": [
+        "packages/schemas/src/card-pool/**",
         "packages/schemas/src/characters/**",
+        "packages/schemas/src/library/**",
+        "packages/schemas/src/me/**",
         "packages/schemas/src/recruitments/**",
         "packages/schemas/src/sessions/**",
         "packages/schemas/src/scenarios/**"
@@ -1006,10 +1009,61 @@
                       "./../**",
                       "@cartagraph/schemas",
                       "@cartagraph/schemas/**",
+                      "!../endpoint/**",
+                      "!./../endpoint/**",
                       "!../body/**",
                       "!./../body/**"
                     ],
-                    "message": "各ディレクトリが import してよい先は body/ と @cartagraph/domain・zod だけ（docs/process/rules/architecture.md「packages/schemas の中の置き場所」）"
+                    "message": "URL の区切りごとのディレクトリが import してよい先は endpoint/・body/ と @cartagraph/domain・zod だけ（docs/process/rules/architecture.md「packages/schemas の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/schemas/src/api/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
+                    "message": "api/ はほかのディレクトリのすべてを相対パスで import してよい。自分のパッケージ名では import しない（docs/process/rules/architecture.md「packages/schemas の中の置き場所」）"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/schemas/src/endpoint/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/schemas",
+                      "@cartagraph/schemas/**",
+                      "@cartagraph/domain",
+                      "@cartagraph/domain/**",
+                      "!../body/**",
+                      "!./../body/**"
+                    ],
+                    "message": "endpoint/ が import してよい先は body/ と zod だけ（docs/process/rules/architecture.md「packages/schemas の中の置き場所」）"
                   }
                 ]
               }

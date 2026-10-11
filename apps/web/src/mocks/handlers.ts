@@ -68,6 +68,10 @@ import {
   startSoloBody,
   updateScenarioBody,
 } from '@cartagraph/schemas/scenarios/request';
+import type {
+  ScenarioFileResult,
+  ScenarioSaveResult,
+} from '@cartagraph/schemas/scenarios/response';
 import {
   approveProposalBody,
   autoCombatBody,
@@ -78,7 +82,6 @@ import {
   rejectProposalBody,
 } from '@cartagraph/schemas/sessions/request';
 import { HttpResponse, http } from 'msw';
-import type { ScenarioFileResult, ScenarioSaveResult } from '@/entities/scenario/api/types';
 import { toDictionaryForm } from '@/shared/lib/japanese';
 import { readBody } from './body';
 import * as fx from './fixtures';

@@ -1,9 +1,8 @@
 // ログインユーザーと解放済みカードプール（プレイヤー単位。docs/glossary.md）の取得。
 // ページからは API のパスを直接触らず、ここを経由する。
 
-import type { CardDef } from '@cartagraph/domain/card/model';
-import type { CharacterCreationRules } from '@cartagraph/domain/character/model';
 import type { CurrentUser } from '@cartagraph/domain/user/model';
+import type { CardPool } from '@cartagraph/schemas/card-pool/response';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/shared/api/api';
 import { keys } from '@/shared/api/queryKeys';
@@ -16,13 +15,6 @@ export const useCardPool = () =>
     queryKey: keys.cardPool,
     // 能力値の配分のルール（abilities）と作成時の HP・行動値（initialHp・initialBaseActionValue）もここで返す
     // （キャラクター作成・村はずれの一歩の開始画面で使う。rules/character-creation.json。どれも仮ルール）
-    queryFn: () =>
-      api.get<{
-        basic: CardDef[];
-        unlocked: CardDef[];
-        budget: number;
-        abilities: CharacterCreationRules['abilities'];
-        initialHp: CharacterCreationRules['initialHp'];
-        initialBaseActionValue: CharacterCreationRules['initialBaseActionValue'];
-      }>('/card-pool'),
+    // 形の正は packages/schemas の card-pool/response.ts
+    queryFn: () => api.get<CardPool>('/card-pool'),
   });
