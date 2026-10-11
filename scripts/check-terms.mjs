@@ -51,7 +51,7 @@ const EXCLUDED = [
   /^docs\/plans\//,
   /^docs\/interviews\//,
   /^docs\/process\/evolution\.md$/,
-  /^docs\/process\/evolution-archive\//,
+  /^docs\/process\/evolution\//,
   /^scripts\/check-terms(\.test)?\.mjs$/,
   /\/dist\//,
 ];

@@ -98,7 +98,7 @@ describe('isChecked', () => {
       'docs/plans/2026-10-06-x.md',
       'docs/interviews/a.md',
       'docs/process/evolution.md',
-      'docs/process/evolution-archive/2026-09.md',
+      'docs/process/evolution/2026-09.md',
       'scripts/check-terms.mjs',
       'scripts/check-terms.test.mjs',
       'docs/.vitepress/dist/a.html',

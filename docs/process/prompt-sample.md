@@ -125,7 +125,7 @@ docs/process/rules/architecture.md との乖離（barrel export など）の解�
 docs/process/evolution.md の「候補」に追記する文案を提案すること。採用の判断は私がする。
 それぞれに、きっかけ（人間レビュー／AI レビュー／作業中の失敗など）と、止め方の案を添えること。
 1回目の失敗は記録だけを提案し、仕組みにするのは同じ種類の失敗が2回目に起きたときにする（戻せない失敗は1回目から。docs/process/index.md「体制の進化」）。
-提案ごとに、前にも同じ種類の失敗があったか（evolution.md の候補・却下）を添えること。
+提案ごとに、前にも同じ種類の失敗があったか（evolution.md の候補と、docs/process/evolution/ の月ごとのページの却下。全体を読まずに grep で探す）を添えること。
 止め方は、ルールを足すより先に、機械で止める・自動で組み立てる仕組みを考える（docs/process/index.md「体制の進化」）。
 docs/process/ の既存ルールと矛盾する提案は、矛盾として明示すること。
 ```

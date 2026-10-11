@@ -13,8 +13,11 @@ import { fileURLToPath } from 'node:url';
 
 export const EVOLUTION_LOG = 'docs/process/evolution.md';
 
-/** 前の月の項目を退避した進化ログ（docs/process/evolution-archive/<年-月>.md） */
-const EVOLUTION_ARCHIVE = /^docs\/process\/evolution-archive\//;
+/** 採用・却下を書く、進化ログの月ごとのページ（docs/process/evolution/<年-月>.md） */
+const EVOLUTION_MONTH = /^docs\/process\/evolution\/[^/]+\.md$/;
+
+/** そのパスが進化ログ（入口か月ごとのページ）か */
+export const isEvolutionLog = (path) => path === EVOLUTION_LOG || EVOLUTION_MONTH.test(path);
 
 /**
  * 進め方に関わるファイル。ルールの文書と、エージェントへの指示（入口・.claude/）だけを見る。自動メモリ（Claude 固有の記憶）は除く。
@@ -28,13 +31,9 @@ const PROCESS_FILES = [
   /^\.claude\/(?!memory\/)/,
 ];
 
-/** そのパスが進め方に関わるファイルか（進化ログそのものと、退避した進化ログは除く） */
+/** そのパスが進め方に関わるファイルか（進化ログそのものは除く） */
 export function isProcessFile(path) {
-  return (
-    path !== EVOLUTION_LOG &&
-    !EVOLUTION_ARCHIVE.test(path) &&
-    PROCESS_FILES.some((re) => re.test(path))
-  );
+  return !isEvolutionLog(path) && PROCESS_FILES.some((re) => re.test(path));
 }
 
 /** コミットメッセージの「進化ログ不要: <理由>」の理由。無ければ null（# で始まる行は git が消すので見ない） */
@@ -49,13 +48,13 @@ export function skipReason(message) {
 
 /** 止める理由（人が読むメッセージ）。通すなら null */
 export function checkEvolutionLog({ staged, message }) {
-  if (staged.includes(EVOLUTION_LOG) || skipReason(message)) return null;
+  if (staged.some(isEvolutionLog) || skipReason(message)) return null;
   const processFiles = staged.filter(isProcessFile);
   if (!processFiles.length) return null;
   return [
     `進め方に関わるファイルを変えたのに、体制の進化ログ（${EVOLUTION_LOG}）が変わっていません。`,
     ...processFiles.map((p) => `  - ${p}`),
-    'ログの「採用済み」（または「候補」）に記録して一緒にコミットしてください（書式は evolution.md の「採用済み」）。',
+    'その月のページ（docs/process/evolution/<年-月>.md）の「採用済み」か、evolution.md の「候補」に記録して一緒にコミットしてください（書き方は evolution.md の「書き方」）。',
     '記録が要らない変更（誤字の修正など）なら、コミットメッセージに「進化ログ不要: <理由>」の行を書いてください。',
   ].join('\n');
 }

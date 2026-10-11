@@ -23,10 +23,10 @@ describe('isProcessFile', () => {
       assert.equal(isProcessFile(p), true, p);
   });
 
-  it('進化ログそのもの・退避した進化ログ・自動メモリ・スクリプト・git フック・CI・biome.json・アプリと仕様は除く', () => {
+  it('進化ログそのもの（入口と月ごとのページ）・自動メモリ・スクリプト・git フック・CI・biome.json・アプリと仕様は除く', () => {
     for (const p of [
       EVOLUTION_LOG,
-      'docs/process/evolution-archive/2026-09.md',
+      'docs/process/evolution/2026-09.md',
       '.claude/memory/MEMORY.md',
       'scripts/check-terms.mjs',
       'scripts/simulate-auto-combat.ts',
@@ -69,6 +69,13 @@ describe('checkEvolutionLog', () => {
 
   it('ログも一緒に変えていれば通す', () => {
     assert.equal(checkEvolutionLog({ staged: ['AGENTS.md', EVOLUTION_LOG], message: 'x' }), null);
+    assert.equal(
+      checkEvolutionLog({
+        staged: ['AGENTS.md', 'docs/process/evolution/2026-10.md'],
+        message: 'x',
+      }),
+      null,
+    );
   });
 
   it('理由つきで「進化ログ不要」と書けば通す', () => {
