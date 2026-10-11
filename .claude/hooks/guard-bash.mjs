@@ -18,6 +18,9 @@
 //    → わざと崩した箇所を戻すつもりで、未コミットの変更ごと消える（2026-10-11、API ドキュメント。zod 化した
 //      session/model.ts が main の版に戻った）。node scripts/mutate-check.mjs か replace-once の逆向きの置換で戻す。
 //      ブランチの切り替え・作成（git checkout main・-b）は止めない
+// 7. heredoc でソースファイル（.ts・.tsx・.js・.mjs など）に書く（cat > a.ts <<'EOF'・cat >> a.test.mjs <<'EOF'）
+//    → バックスラッシュの解釈が崩れる（2026-10-11、シナリオの下書きの API の振り返り。stop-dev-agent.test.mjs の
+//      Windows のパスの \\ が崩れた）。Write でファイルに書くか、replace-once で足す。JSON・Markdown などは止めない
 //
 // 判定の前に、heredoc の本文と、クォートした引数の中身を取り除く。引数の文字列（Markdown の箇条書きの「\n- 」、コミットメッセージに
 // 書いた「--no-verify」など）を、コマンドとして読まないため（2026-10-04、PR #15 の振り返り）。
@@ -44,6 +47,11 @@ const GIT_STASH = /(?:^|[\s;&|(])git\s+stash\b(?!\s+(?:list|show)\b)/m;
 
 // git checkout・git restore と、同じコマンドの中の引数
 const GIT_CHECKOUT = /(?:^|[\s;&|(])git\s+checkout\b([^\n|;&]*)/gm;
+
+// 同じ行に heredoc（<<）と、ソースファイルへのリダイレクト（> か >>）がある
+const SOURCE_REDIRECT = />>?\s*[^\s;&|<>]+\.[cm]?[jt]sx?(?=$|[\s;&|<>])/;
+const heredocIntoSource = (bare) =>
+  bare.split('\n').some((line) => line.includes('<<') && SOURCE_REDIRECT.test(line));
 const GIT_RESTORE = /(?:^|[\s;&|(])git\s+restore\b([^\n|;&]*)/gm;
 
 const argsOf = (rest) => rest.trim().split(/\s+/).filter(Boolean);
@@ -89,6 +97,8 @@ export function checkCommand(command, { exists = (p) => existsSync(resolve(p)) }
     return 'sed -i でファイルを書き換えない（同じ語に2回当たって化けても気づけない）。node scripts/replace-once.mjs <spec.json>（件数を確かめ、二重の当たりを止める）か Edit を使う（CLAUDE.md「Claude Code 固有の補足」）。';
   if (GIT_STASH.test(bare))
     return 'git stash を使わない（stash → pop でステージした削除などが解ける）。main と比べるなら git grep <パターン> main -- <パス> か git show main:<パス> で読む（CLAUDE.md「Claude Code 固有の補足」）。';
+  if (heredocIntoSource(bare))
+    return 'heredoc でソースファイル（.ts・.tsx・.mjs など）に書かない（バックスラッシュの解釈が崩れる）。Write でファイルに書くか、node scripts/replace-once.mjs で足す（CLAUDE.md「Claude Code 固有の補足」）。';
   if (discardsFiles(bare, exists))
     return 'git checkout・git restore でファイルを戻さない（未コミットの変更ごと消える）。わざと崩した箇所は node scripts/mutate-check.mjs か replace-once の逆向きの置換で戻し、main の中身は git show main:<パス> で読む。本当に戻すなら人間に確認する（CLAUDE.md「Claude Code 固有の補足」）。';
   if (NO_VERIFY.test(bare))

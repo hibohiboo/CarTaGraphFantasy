@@ -13,7 +13,8 @@ describe('インタプリタへの heredoc', () => {
   });
 
   it('ファイル名の拡張子（.tsx・.py）をインタプリタと読まない（2026-10-05 の誤検知）', () => {
-    assert.ok(!blocked("cat >> HomePage.tsx <<'EOF'\nx\nEOF"));
+    // .tsx への heredoc は「ソースファイルへの heredoc」として止まるが、インタプリタへの heredoc とは読まない
+    assert.ok(!checkCommand("cat >> HomePage.tsx <<'EOF'\nx\nEOF").includes('インタプリタ'));
     assert.ok(!blocked("cat > tool.py <<'EOF'\nprint(1)\nEOF"));
   });
 
@@ -141,5 +142,24 @@ describe('git checkout・git restore でファイルを戻す', () => {
   it('heredoc の終わりより後ろのコマンドは読む', () => {
     const after = ["cat > a.txt <<'EOF'", 'x', 'EOF', 'git checkout -- a.ts'].join('\n');
     assert.ok(guarded(after));
+  });
+});
+
+describe('heredoc でソースファイルに書く', () => {
+  const heredoc = (head) => [head, "const s = 'D:\\\\p';", 'EOF'].join('\n');
+
+  it('止める（.ts・.tsx・.mjs・.js、> と >>、リダイレクトの前後どちらに << があっても）', () => {
+    assert.ok(blocked(heredoc("cat >> scripts/x.test.mjs <<'EOF'")));
+    assert.ok(blocked(heredoc("cat > apps/web/src/a.ts <<'EOF'")));
+    assert.ok(blocked(heredoc("cat <<'EOF' > apps/web/src/A.tsx")));
+    assert.ok(blocked(heredoc('cd x && cat >>b.js <<EOF')));
+  });
+
+  it('ソースでないファイル（JSON・Markdown・テキスト）への heredoc と、heredoc でない書き込みは止めない', () => {
+    assert.ok(!blocked(heredoc("cat > scratch/spec.json <<'EOF'")));
+    assert.ok(!blocked(heredoc("cat >> docs/plans/a.md <<'EOF'")));
+    assert.ok(!blocked(heredoc("cat > a.txt <<'EOF'")));
+    assert.ok(!blocked('cat a.ts > b.ts'));
+    assert.ok(!blocked('git commit -m "cat > a.ts <<EOF を止める"'));
   });
 });

@@ -10,9 +10,10 @@
 - サブエージェントの `model` は `inherit`（セッションのモデルを引き継ぐ）にし、特定モデルを固定しない。
 - プランドキュメントは `docs/plans/`（`settings.json` の `plansDirectory`）に置く。
 - 自動メモリ（`.claude/memory/`）は Claude 固有の記憶であり、他のエージェントからは見えない。プロジェクトとして残すべき知識（構成・運用上の注意・決定事項）は `docs/` に書き、メモリにはそこへのポインタと個人的な作業上の学びだけを残す。
-- Bash ツールで長い heredoc（`cat <<'EOF' ... EOF` 等）を使って大きなファイルを書くと、内容が途中で切れて壊れることがある。大きなファイルは Write ツールで書く（LF 改行で書かれることは確認済み）。
+- Bash ツールで長い heredoc（`cat <<'EOF' ... EOF` 等）を使って大きなファイルを書くと、内容が途中で切れて壊れることがある。大きなファイルは Write ツールで書く（LF 改行で書かれることは確認済み）。ソースファイル（`.ts`・`.tsx`・`.mjs` など）への heredoc での書き込みは、バックスラッシュが崩れるので `.claude/hooks/guard-bash.mjs` が止める（JSON・Markdown は止めない）。
 - 同じ理由で、複数のファイルを書き換えるスクリプト（Python など）も heredoc で渡さず、Write でスクラッチパッドにファイルとして書いてから実行する（インタプリタへの heredoc と、git フックの省略は `.claude/hooks/guard-bash.mjs` が止める）。heredoc ではバックスラッシュの解釈が崩れ、途中まで書き換えて止まることがある。日本語を出力するスクリプトは `PYTHONIOENCODING=utf-8` を付けて実行する（Windows のコンソールは cp932 で、出力の途中で例外になる）。
 - Bash ツールは Git Bash で動くので、`/` で始まる値（`WEB_BASE=/CarTaGraphFantasy/app/` など）を渡すと Windows のパスに書き換えられる。ビルドやサーバーを起動する前に `docs/architecture/web-app.md`「ローカル開発の注意」を読む。コマンドの引数に渡すコードの断片も同じで、`// コメント` で始まる文字列は `/ コメント` に化ける。ファイルの文字列を置き換えるときは、Edit ツールか `node scripts/replace-once.mjs <spec.json>`（置換前・置換後を JSON ファイルで渡す。件数（既定1件、用語の言い換えなどは `count` で件数を書く）と、前の置換の結果に二重に当たらないことを確かめてから書く）を使い、置換の文字列を引数で渡さない。`sed -i` は `.claude/hooks/guard-bash.mjs` が止める（2回当てて化けても気づけないため）。
 - main と比べるのに `git stash` を使わない（stash → pop でステージした削除などが解ける）。`git grep <パターン> main -- <パス>`・`git show main:<パス>` で読む（`.claude/hooks/guard-bash.mjs` が止める）。
 - わざと崩した箇所を `git checkout <パス>`・`git restore` で戻さない（未コミットの変更ごと消える）。`node scripts/mutate-check.mjs`（外して確かめて元に戻す）か、replace-once の逆向きの置換で戻す（`.claude/hooks/guard-bash.mjs` が止める。ブランチの切り替えは止めない）。
+- サブエージェントが利用上限（rate limit）などで途中で止まったら、作り直さず SendMessage でその agentId に続きを頼む（途中まで読んだ・確かめた内容が残る）。
 - ブラウザで確かめるときは `browser-check` スキルを使う（起動と後始末の正は `docs/architecture/web-app.md`「ローカル開発の注意」）。

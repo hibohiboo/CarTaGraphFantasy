@@ -1,4 +1,5 @@
-// 画面だけでシナリオを作り、GM 不在で結末まで遊べることを、ブラウザで通しで確かめる（CI では回さない）。
+// 画面だけでシナリオを作り、GM 不在で結末まで遊べることと、他人のシナリオを開いても読むだけで
+// コンソールに誤りが出ないことを、ブラウザで通しで確かめる（CI では回さない）。
 // 2026-10-07、シナリオの公開 C2 の振り返り：毎回使い捨てのスクリプトを書き直し、そのたびに止まっていた。
 //
 // 使い方（リポジトリ直下で）:
@@ -124,6 +125,21 @@ try {
     'GM 不在で結末まで進み、結末タグを得る',
   );
   await shot('authoring-ending');
+
+  // 他人のシナリオは、シナリオ編集・シーン編集とも公開版を読むだけ（コンソールに 403・404 を出さない。
+  // 2026-10-11、シナリオの下書きの API の振り返り：テストでは見つからず、手で画面を操作して見つかった）
+  await go('/creator/scenarios/sc-gray-mansion');
+  await page.getByText(/製作者でないため編集できません/).waitFor();
+  check(
+    (await page.getByRole('button', { name: '保存', exact: true }).count()) === 0,
+    '他人のシナリオのシナリオ編集は読むだけ（保存のボタンが無い）',
+  );
+  await go('/creator/scenarios/sc-gray-mansion/scenes/d-s2');
+  await page.getByText(/製作者でないため編集できません/).waitFor();
+  check(
+    (await page.getByRole('button', { name: '保存', exact: true }).count()) === 0,
+    '他人のシナリオのシーン編集も読むだけ',
+  );
   check(
     errors.length === 0,
     `コンソールにエラーが無い${errors.length ? `：${errors.join(' / ')}` : ''}`,
