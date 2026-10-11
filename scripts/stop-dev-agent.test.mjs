@@ -2,7 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { isAgentPreview, isAgentVite } from './stop-dev-agent.mjs';
+import { isAgentDocsPreview, isAgentPreview, isAgentVite } from './stop-dev-agent.mjs';
 
 describe('isAgentPreview', () => {
   it('vite preview を --port 4174 で起動したものは止めてよい', () => {
@@ -37,5 +37,22 @@ describe('isAgentVite', () => {
     assert.ok(!isAgentVite('node /p/node_modules/.bin/vite --port 51740'));
     assert.ok(!isAgentVite('node /p/node_modules/.bin/vite --port 5173'));
     assert.ok(!isAgentVite('node server.js --port 5174'));
+  });
+});
+
+describe('isAgentDocsPreview', () => {
+  it('vitepress preview を --port 4175 で起動したものは止めてよい（Windows・Unix の書き方）', () => {
+    assert.ok(
+      isAgentDocsPreview(
+        'node   "D:\\p\\node_modules\\.bin\\\\..\\vitepress\\bin\\vitepress.js" preview docs "--port" "4175" "--strictPort"',
+      ),
+    );
+    assert.ok(isAgentDocsPreview('node /p/node_modules/.bin/vitepress preview docs --port 4175'));
+  });
+
+  it('vitepress の dev・ポート指定なし（4173）・vite の preview は止めない', () => {
+    assert.ok(!isAgentDocsPreview('node /p/node_modules/.bin/vitepress dev docs --port 4175'));
+    assert.ok(!isAgentDocsPreview('node /p/node_modules/.bin/vitepress preview docs'));
+    assert.ok(!isAgentDocsPreview('node /p/node_modules/.bin/vite preview --port 4175'));
   });
 });

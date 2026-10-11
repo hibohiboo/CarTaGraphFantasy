@@ -47,6 +47,16 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。[体制の進化のタイムライン](timeline.md)が、この節と「却下」からビルド時に年表と内訳を作る。きっかけ・止め方は、まとめの1行（`- **きっかけ** — … ／ **止め方** — …`）か、小項目ごとの1行（`- きっかけ：… ／ 止め方：…`）で書く。読めないとビルドが止まる。止め方は最初の「。」（括弧の外）までを読むので、まだやっていない案は「。」の後ろに書く
 
+### 2026-10-11 API ドキュメントの振り返りから3件を採用（ファイルを戻す git の止め、docs の preview の停止、測る前の確かめ）
+
+- **わざと崩した箇所を git checkout・git restore で戻さない** — テストが効くかを試すためにわざと崩した箇所を `git checkout <パス>` で戻し、zod 化を済ませた未コミットの `session/model.ts` まで main の版に戻した（書いた内容が手元にあったので書き直せた）。`--` 付き・作業ツリーにあるパスの `git checkout` と、ステージを外すだけでない `git restore` を、Claude Code のフックで止める。ブランチの切り替え・作成は止めない。入れた直後、heredoc で渡したコミットメッセージの本文（「git restore をフックで止める」）を止めたので、判定の前に heredoc の本文を取り除くようにした（stash・`--no-verify` の判定も同じ誤検知を持っていた）。反映先：`.claude/hooks/guard-bash.mjs`（と `guard-bash.test.mjs`）・`CLAUDE.md`
+  - きっかけ：作業中の失敗 ／ 止め方：機械（Claude Code のフック）
+- **docs の preview（vitepress、4175 番）も停止のスクリプトで止める** — API ドキュメントを確かめる `vitepress preview` をバックグラウンドのタスクで止めても、Windows では子の node が残ってポートを使い続け、起動し直しが strictPort で失敗した。`pnpm web:dev:agent:stop` が 4175 番の vitepress preview も止める（それ以外のプロセスには触らない）。反映先：`scripts/stop-dev-agent.mjs`（と `stop-dev-agent.test.mjs`）・`AGENTS.md`・`docs/architecture/web-app.md`・`.claude/skills/browser-check/SKILL.md`
+  - きっかけ：作業中の失敗 ／ 止め方：機械（停止のスクリプト）
+- **ブラウザで測る前に、ページが本当に返っているかを確かめる** — Redoc のハイドレーションの誤りを切り分けるとき、起動した後に dist に足したディレクトリを preview が把握しておらず、404 のページを測って「誤り0件」と見誤った。測る前に状態コードとタイトルを確かめ、dist を作り直したら preview を起動し直す、を手順に書いた。反映先：`docs/architecture/web-app.md`「ローカル開発の注意」
+  - きっかけ：作業中の失敗 ／ 止め方：手順・ルール（ブラウザで確かめるときの手順に書く）
+- **理由** — 人間が振り返りで3件とも採用した
+
 ### 2026-10-11 API の一覧を zod で置き、モックの応答が一覧どおりかをテストで止め、OpenAPI を Redoc で公開する
 
 - **内容** — API の一覧（メソッド・パス・本文・クエリ・状態コードごとの応答）を `packages/schemas` に置いた。応答の形は `packages/domain` の interface を zod に変えて1か所にした。web のテストの中で、MSW のハンドラと一覧が1対1か、MSW が返した状態コードと本文が一覧どおりかを確かめ、ずれたらテストを落とす。一覧から OpenAPI の文書を作って `redocly lint` を通し、Redoc の HTML を `/api-docs/` に公開する。文書の生成と lint は CI と pre-push でも流す（`docs/plans/2026-10-11-APIドキュメント.md`）

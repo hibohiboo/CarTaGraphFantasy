@@ -34,7 +34,7 @@ Claude Code は `CLAUDE.md` からこのファイルを読み込む。
 ```sh
 pnpm web:dev          # http://localhost:5173（MSW 有効）。人間が手で起動する用
 pnpm web:dev:agent    # http://localhost:5174。エージェントがブラウザで確かめる用（人間の開発サーバーと取り合わない。公開したシナリオを scenarios/ に書かない）
-pnpm web:dev:agent:stop # 上の開発サーバーと、エージェントの preview（4174 番の vite preview）を止める。ほかのプロセスには触らない
+pnpm web:dev:agent:stop # 上の開発サーバーと、エージェントの preview（4174 番の vite preview、4175 番の docs の vitepress preview）を止める。ほかのプロセスには触らない
 pnpm web:check:publish # 開発サーバーでのシナリオの公開をブラウザで通しで確かめる（書き込みを開いた web:dev:agent が要る。CIでは回さない）
 pnpm web:check:authoring # 画面だけでシナリオを作り GM 不在で結末まで遊べるかをブラウザで通しで確かめる（web:dev:agent が要る。CIでは回さない）
 pnpm web:check:character # キャラクター作成と村はずれの一歩のお店が rules/ のルールどおりかをブラウザで通しで確かめる（web:dev:agent が要る。CIでは回さない）

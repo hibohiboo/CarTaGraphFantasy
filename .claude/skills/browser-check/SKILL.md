@@ -1,6 +1,6 @@
 ---
 name: browser-check
-description: 変更した画面を、エージェント用の開発サーバー（pnpm web:dev:agent、5174 番）や preview（4174 番）を起動してブラウザで確かめ、終わったら止める。画面をブラウザで操作して確かめるとき、スクリーンショットを撮るとき、web:check:* のスクリプトを流すとき、dev-cycle の「7. 人間レビュー」の前に使う。
+description: 変更した画面を、エージェント用の開発サーバー（pnpm web:dev:agent、5174 番）や preview（vite の 4174 番、docs の vitepress の 4175 番）を起動してブラウザで確かめ、終わったら止める。画面をブラウザで操作して確かめるとき、スクリーンショットを撮るとき、web:check:* のスクリプトを流すとき、dev-cycle の「7. 人間レビュー」の前に使う。
 ---
 
 # browser-check（ブラウザで確かめるときの呼び出し口）

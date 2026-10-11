@@ -1,4 +1,5 @@
-// エージェント用の開発サーバー（pnpm web:dev:agent、5174 番）と、エージェントが確かめに使う preview（4174 番）を止める。バックグラウンドのタスクを止めても
+// エージェント用の開発サーバー（pnpm web:dev:agent、5174 番）と、エージェントが確かめに使う preview（vite の 4174 番、
+// docs の vitepress の 4175 番。2026-10-11、API ドキュメントの振り返りで足した）を止める。バックグラウンドのタスクを止めても
 // （時間切れも含む）、Windows では vite の子プロセスが残り 5174 番を使い続けるため（2026-10-05、PR #16 の振り返り）。
 // 5174 番を待ち受けるプロセスが vite で --port 5174 のときだけ止め、ほかのプロセスには触らない。
 //
@@ -12,6 +13,9 @@ export const AGENT_PORT = 5174;
 /** エージェントが build の確かめに使う vite preview のポート（E2E の 4173 とは分ける） */
 export const AGENT_PREVIEW_PORT = 4174;
 
+/** エージェントが docs（API ドキュメントなど）の build を確かめる vitepress preview のポート */
+export const AGENT_DOCS_PREVIEW_PORT = 4175;
+
 /** そのコマンドラインが、エージェント用の開発サーバー（vite を --port 5174 で起動したもの）か */
 export function isAgentVite(commandLine, port = AGENT_PORT) {
   return (
@@ -22,6 +26,15 @@ export function isAgentVite(commandLine, port = AGENT_PORT) {
 /** そのコマンドラインが、エージェントの preview（vite preview を --port 4174 で起動したもの）か */
 export function isAgentPreview(commandLine, port = AGENT_PREVIEW_PORT) {
   return /\bpreview\b/.test(commandLine) && isAgentVite(commandLine, port);
+}
+
+/** そのコマンドラインが、エージェントの docs の preview（vitepress preview を --port 4175 で起動したもの）か */
+export function isAgentDocsPreview(commandLine, port = AGENT_DOCS_PREVIEW_PORT) {
+  return (
+    /vitepress(\.js)?\b/.test(commandLine) &&
+    /\bpreview\b/.test(commandLine) &&
+    new RegExp(`--port[\\s"'=]+${port}\\b`).test(commandLine)
+  );
 }
 
 /** ポートを待ち受けるプロセスの PID とコマンドライン（無ければ null） */
@@ -61,5 +74,10 @@ function stop(port, isOurs, label) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const dev = stop(AGENT_PORT, (c) => isAgentVite(c), 'エージェント用の開発サーバー');
   const preview = stop(AGENT_PREVIEW_PORT, (c) => isAgentPreview(c), 'エージェント用の preview');
-  if (!dev || !preview) process.exit(1);
+  const docs = stop(
+    AGENT_DOCS_PREVIEW_PORT,
+    (c) => isAgentDocsPreview(c),
+    'エージェント用の docs の preview',
+  );
+  if (!dev || !preview || !docs) process.exit(1);
 }

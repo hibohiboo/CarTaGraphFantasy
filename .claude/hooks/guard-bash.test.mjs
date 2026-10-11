@@ -95,3 +95,51 @@ describe('git stash', () => {
     assert.ok(!blocked('git commit -m "git stash を止めるフックを足す"'));
   });
 });
+
+describe('git checkout・git restore でファイルを戻す', () => {
+  // 作業ツリーにあるパスだけをあることにする（テストの結果を、手元のファイルの有無に頼らせない）
+  const files = new Set(['.', 'a.ts', 'packages/domain/src/session/model.ts']);
+  const exists = (p) => files.has(p);
+  const guarded = (command) => checkCommand(command, { exists }) !== '';
+
+  it('止める（-- 付き・ファイルのパス・. ・git restore）', () => {
+    assert.ok(guarded('git checkout -- a.ts'));
+    assert.ok(guarded('git checkout main -- a.ts'));
+    assert.ok(guarded('git checkout packages/domain/src/session/model.ts 2>/dev/null; true'));
+    assert.ok(guarded('git checkout .'));
+    assert.ok(guarded('cd x && git checkout a.ts'));
+    assert.ok(guarded('git restore a.ts'));
+    assert.ok(guarded('git restore --staged --worktree a.ts'));
+    assert.ok(guarded('git restore -W a.ts'));
+    assert.ok(guarded('git restore --source=main a.ts'));
+  });
+
+  it('ブランチの切り替え・作成、ステージを外すだけの restore、クォートの中は止めない', () => {
+    assert.ok(!guarded('git checkout main'));
+    assert.ok(!guarded('git checkout -q main && git pull'));
+    assert.ok(!guarded('git checkout feat/api-docs'));
+    assert.ok(!guarded('git checkout -b feat/x'));
+    assert.ok(!guarded('git checkout -B a.ts'));
+    assert.ok(!guarded('git restore --staged a.ts'));
+    assert.ok(!guarded('git commit -m "git checkout -- a.ts を止める"'));
+    assert.ok(!guarded('git show main:a.ts'));
+  });
+
+  it('heredoc の本文（コミットメッセージなど）はコマンドとして読まない（2026-10-11 の誤検知）', () => {
+    const commit = [
+      "git commit -q -F - <<'EOF'",
+      'chore: ファイルを戻す git checkout・git restore をフックで止める',
+      '',
+      'git checkout -- a.ts と git stash と sed -i と --no-verify を止める',
+      'EOF',
+      'git push -q',
+    ].join('\n');
+    assert.ok(!guarded(commit));
+    assert.ok(!guarded(commit.replace("<<'EOF'", '<<EOF')));
+  });
+
+  it('heredoc の終わりより後ろのコマンドは読む', () => {
+    const after = ["cat > a.txt <<'EOF'", 'x', 'EOF', 'git checkout -- a.ts'].join('\n');
+    assert.ok(guarded(after));
+  });
+});
