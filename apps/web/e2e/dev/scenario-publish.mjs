@@ -7,6 +7,7 @@
 //   2. pnpm -w web:check:publish
 //   3. pnpm -w web:dev:agent:stop
 // 確かめること：公開でファイルができ Biome の整形どおり／画面はリロードされない／リロード後に GM の一覧に出る／
+// 公開中に保存しただけではファイルは変わらず、リロードで公開していない編集が消える／公開し直すと書き直す／
 // 非公開で draft に書き直す（既にあるファイルの書き直しでもリロードされない）／コンソールにエラーが無い。
 // 作ったファイルは最後に必ず消し、scenarios/ の git の状態が始める前と同じであることを確かめる。
 // MODE=demo にすると、書き込みを閉じた開発サーバーや preview で「保存されません」とファイルができないことを確かめる。
@@ -74,7 +75,32 @@ try {
     await page.getByRole('link', { name: title }).waitFor();
     check(true, 'リロード後に GM のシナリオ一覧に出る');
 
+    // 保存は下書きだけ。ファイルは変わらず、リロードすると公開していない編集は消える
+    // （docs/plans/2026-10-11-シナリオの下書きのAPI.md D5・G7）
+    const titleInFile = () => JSON.parse(readFileSync(file, 'utf8')).title;
     await page.goto(`${BASE}#/creator/scenarios/${id}`);
+    await page.getByLabel('タイトル').fill(`${title}（直しかけ）`);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await page.getByText('下書きを保存しました。').waitFor();
+    await page.getByText('公開版と違う変更あり').waitFor();
+    check(titleInFile() === title, '公開中に保存しただけではファイルは変わらない');
+    await page.reload();
+    await page.getByRole('heading', { level: 1, name: title }).waitFor();
+    check(
+      (await page.getByText('公開版と違う変更あり').count()) === 0,
+      'リロードすると公開していない編集は消え、下書きが公開版から作り直される',
+    );
+
+    await page.getByLabel('タイトル').fill(`${title}（改）`);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await page.getByText('下書きを保存しました。').waitFor();
+    await markReload(3);
+    await page.getByRole('button', { name: '公開し直す' }).click();
+    await page.getByText(`scenarios/${id}.json に保存しました`).waitFor();
+    await page.waitForTimeout(2500);
+    check(titleInFile() === `${title}（改）`, '公開し直すとファイルを書き直す');
+    check(await notReloaded(3), '公開し直しで書き直しても画面はリロードされない');
+
     await page.getByRole('button', { name: '非公開にする' }).waitFor();
     await markReload(2);
     await page.getByRole('button', { name: '非公開にする' }).click();
@@ -82,7 +108,7 @@ try {
     await page.waitForTimeout(2500);
     check(
       JSON.parse(readFileSync(file, 'utf8')).libraryStatus === 'draft',
-      '非公開で draft に書き直す',
+      '非公開でシナリオ集から外した状態（draft）に書き直す',
     );
     check(await notReloaded(2), '既にあるファイルを書き直しても画面はリロードされない');
   }
