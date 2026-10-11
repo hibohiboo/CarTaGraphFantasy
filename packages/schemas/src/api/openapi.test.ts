@@ -119,6 +119,15 @@ describe('OpenAPI の文書', () => {
     expect(schemas[name]?.description).toMatch(/仮ルール.*docs\/provisional\//);
   });
 
+  it('仮ルール・仕様とのずれを書いた型は、文書の冒頭の一覧にも並ぶ（Redoc は応答の型の説明を出さないため）', () => {
+    const info = (doc.info as { description: string }).description;
+    expect(info).toContain('## 仮ルールと仕様とのずれ');
+    for (const name of ['AutoCombatState', 'CardPool', 'CardDef', 'DeckNode', 'Session']) {
+      expect(info).toContain(`- **${name}** — ${schemas[name]?.description}`);
+    }
+    expect(info).not.toContain('- **Error**');
+  });
+
   it('仕様とずれたモックの振る舞いは、説明にそう書き、直す要望を示す', () => {
     expect(schemas.Session?.description).toMatch(/仕様とずれている.*gm-resume-suspended/);
     expect(op('post', '/sessions/{id}/resume').description).toMatch(

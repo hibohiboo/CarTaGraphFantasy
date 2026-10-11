@@ -183,6 +183,17 @@ function operation(e: Endpoint, components: Json): Json {
   };
 }
 
+/**
+ * 文書の冒頭に出す「仮ルールと仕様とのずれ」の一覧。Redoc は応答の一番外側の型の説明を表示しないので、
+ * 型の説明のうち仮ルール・仕様とのずれを書いたものを、ここにも並べる（説明の正は上の named）
+ */
+function notesSection(): string {
+  const lines = named
+    .filter(([, , d]) => d && /仮ルール|仕様とずれ/.test(d))
+    .map(([, id, d]) => `- **${id}** — ${d}`);
+  return `\n\n## 仮ルールと仕様とのずれ\n\n型ごとの説明から並べた（各型の説明にも同じことを書いている）。\n\n${lines.join('\n')}`;
+}
+
 /** OpenAPI 3.1 の文書 */
 export function buildOpenApiDocument(list: readonly Endpoint[] = endpoints): Json {
   const components: Json = {};
@@ -197,8 +208,7 @@ export function buildOpenApiDocument(list: readonly Endpoint[] = endpoints): Jso
     info: {
       title: 'カルタグラフ API',
       version: '0.0.0',
-      description:
-        'カルタグラフの Web アプリが使う API。バックエンドはまだ無く、モック（MSW）がこの一覧どおりに応答する（テストで確かめている）。一覧の正は packages/schemas。',
+      description: `カルタグラフの Web アプリが使う API。バックエンドはまだ無く、モック（MSW）がこの一覧どおりに応答する（テストで確かめている）。一覧の正は packages/schemas。${notesSection()}`,
     },
     servers: [{ url: '/api', description: 'モック（MSW）。バックエンドは未実装' }],
     tags: usedTags.map((name) => ({ name, description: TAGS[name] ?? name })),

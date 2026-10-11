@@ -85,9 +85,9 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 - **作る** — `pnpm api:docs`（`scripts/build-api-docs.ts`）。文書の組み立ては `packages/schemas/src/api/openapi.ts`（zod 4 の `z.toJSONSchema`。名前の付いた型は `components.schemas` に1回だけ出す）。`docs/.vitepress/dist/api-docs/` に `openapi.json` と `index.html` を書く。dist は `pnpm docs:build` が作り直すので、その後に流す
 - **検査** — `redocly lint` を通してから HTML にする。設定はルートの `redocly.yaml`：警告も誤りにする `recommended-strict` を基に、`security-defined`（認証はまだ無い）・`info-license`（公開の API ではない）・`operation-4xx-response`（`GET /me` などは失敗を返さない）だけを止めた。CI（`ci.yml`）・pre-push・デプロイ（`build:pages`）で流れ、誤りが1件でもあれば止まる
 - **手元で見る** — `pnpm docs:build && pnpm api:docs && pnpm docs:preview --port 4175 --strictPort` で `http://localhost:4175/CarTaGraphFantasy/api-docs/`（4173 は E2E、4174 はエージェントの preview が使う。`pnpm web:dev:agent:stop` では止まらないので、起動したターミナルで止める）。`pnpm docs:dev` には無い（サイドバーのリンクは 404 になる）
-- **外部への依存** — Redoc の本体は `cdn.redocly.com` から読む（`@redocly/cli` の `build-docs` は同梱できない。2026-10-11、人間が受け入れた）。Google Fonts は読まない（`--disableGoogleFont`）。`@redocly/cli` のテレメトリと更新の確認は、スクリプトが環境変数で止める
+- **外部への依存** — Redoc の本体は `cdn.redocly.com` から読む（`@redocly/cli` の `build-docs` は同梱できない。2026-10-11、人間が受け入れた）。開くとブラウザのコンソールに React のハイドレーションの誤り（#418・#423）が出るが、`@redocly/cli` 2.62.1 が作る HTML と CDN の Redoc の組み合わせで、最小の文書でも出る（2026-10-11 に確かめた）。React がブラウザ側で描き直すので、表示と操作に影響は無い。Google Fonts は読まない（`--disableGoogleFont`）。`@redocly/cli` のテレメトリと更新の確認は、スクリプトが環境変数で止める
 - **下書きのシナリオ** — 下書きを返しうる API（`GET /scenarios`・`GET /scenarios/:id`・`POST /scenarios`・`PATCH /scenarios/:id`）の応答は、業務の検査（再挑戦不可の結末には結末タグが要る、など）を外した形（`ScenarioDraft`）で書く。下書きは書きかけでも保存できるため。下書きの API を分けたら直す（[要望](../backlog/scenario-draft-api.md)）
-- **項目ごとの説明** — まだ出していない（domain の JSDoc は OpenAPI に載らない）。仮ルールの項目を持つ型（`CardDef`・`DeckNode`・`Scenario`・`ScenarioDraft`・`Session`・`AutoCombatState`・`CombatRecord`・`CardPool`）は、型ごとの説明に「仮ルール」と、どの項目がどの仮ルールかを書く（`packages/schemas/src/api/openapi.ts`）。モックの振る舞いが仕様とずれている所（`Session` の無反応の中断、再開の権限）も説明に書き、直す要望を示す
+- **項目ごとの説明** — まだ出していない（domain の JSDoc は OpenAPI に載らない）。仮ルールの項目を持つ型（`CardDef`・`DeckNode`・`Scenario`・`ScenarioDraft`・`Session`・`AutoCombatState`・`CombatRecord`・`CardPool`）は、型ごとの説明に「仮ルール」と、どの項目がどの仮ルールかを書く（`packages/schemas/src/api/openapi.ts`）。Redoc は応答の一番外側の型の説明を表示しないので、同じものを文書の冒頭の「仮ルールと仕様とのずれ」にも並べる。モックの振る舞いが仕様とずれている所（`Session` の無反応の中断、再開の権限）も説明に書き、直す要望を示す
 
 ## 自動戦闘の数値シミュレーション
 
