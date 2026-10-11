@@ -10,30 +10,29 @@ import {
 } from './check-evolution-log.mjs';
 
 describe('isProcessFile', () => {
-  it('ルール・入口・.claude・git フック・CI・検査のスクリプトは、進め方に関わる', () => {
+  it('ルール・入口・.claude は、進め方に関わる', () => {
     for (const p of [
       'AGENTS.md',
       'CLAUDE.md',
-      'biome.json',
       'docs/process/rules/testing.md',
       'docs/process/index.md',
       '.claude/skills/tdd/SKILL.md',
       '.claude/rules/process/rules/testing.md',
       '.claude/settings.json',
-      '.githooks/pre-push',
-      '.github/workflows/ci.yml',
-      'scripts/check-terms.mjs',
-      'scripts/check-terms.test.mjs',
     ])
       assert.equal(isProcessFile(p), true, p);
   });
 
-  it('進化ログそのもの・自動メモリ・ゲームのシミュレーション・ビルドの出力のコピー・アプリと仕様は除く', () => {
+  it('進化ログそのもの・退避した進化ログ・自動メモリ・スクリプト・git フック・CI・biome.json・アプリと仕様は除く', () => {
     for (const p of [
       EVOLUTION_LOG,
+      'docs/process/evolution-archive/2026-09.md',
       '.claude/memory/MEMORY.md',
+      'scripts/check-terms.mjs',
       'scripts/simulate-auto-combat.ts',
-      'scripts/copy-web-to-pages.mjs',
+      '.githooks/pre-push',
+      '.github/workflows/ci.yml',
+      'biome.json',
       'apps/web/src/main.tsx',
       'docs/cartagraph/combat.md',
       'docs/processing.md',

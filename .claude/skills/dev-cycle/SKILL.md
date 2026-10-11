@@ -22,7 +22,7 @@ description: 機能追加・振る舞いの変更を「プラン作成→AIレ�
 
 ## 2〜3. プランのレビュー
 
-別セッション（または別のサブエージェント）で依頼文「2」「3」を実行し、P0 を直してから次へ進む。
+別セッション（または別のサブエージェント）で依頼文「2」「3」を実行し、P0 を直してから次へ進む。依頼文「2」の観点は、プランの中身で絞る（設計整合は必ず。仕様整合・運用は当てはまるときだけ。`docs/process/index.md` の手順2）。
 
 ## 4〜5. 実装とテスト
 
@@ -32,7 +32,7 @@ description: 機能追加・振る舞いの変更を「プラン作成→AIレ�
 
 ## 6. AIレビュー（並列）
 
-`design-reviewer`・`edge-case-reviewer`・`spec-reviewer` を並列で起動し、P0〜P2 に整理する。P0・P1 は直して、指摘を出した観点のサブエージェントだけで再レビューする（`docs/process/rules/review.md`「終わりの条件」）。3ラウンドを超えたら人間に裁定を求める。
+`design-reviewer`・`edge-case-reviewer`・`spec-reviewer` を並列で起動し、P0〜P2 に整理する。P2 は直さず `docs/architecture/known-issues.md` に1行で記録する。P0・P1 は直して、指摘を出した観点のサブエージェントだけで再レビューする（`docs/process/rules/review.md`「終わりの条件」）。3ラウンドを超えたら人間に裁定を求める。
 
 起動するときは Agent ツールの `model` で段を指定する（定義の `inherit` は変えない）。既定は `design-reviewer` が `opus`、`edge-case-reviewer`・`spec-reviewer` が `sonnet`（`docs/process/rules/review.md`「レビュー観点」）。
 

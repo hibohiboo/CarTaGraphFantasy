@@ -1,4 +1,4 @@
-// 進め方に関わるファイル（ルール・AGENTS.md・CLAUDE.md・.claude/・git フック・CI・検査のスクリプトなど）を変えたのに、
+// 進め方に関わるファイル（docs/process/ のルール・AGENTS.md・CLAUDE.md・.claude/）を変えたのに、
 // 体制の進化ログ（docs/process/evolution.md）が変わっていないコミットを止める（.githooks/commit-msg から呼ばれる）。
 // どう進化してきたかを後から辿れるように、記録を漏らさないため（2026-10-10、AGENTS.md と CLAUDE.md の重複を
 // 直したコミットで、ログへの記録を漏らした）。
@@ -13,21 +13,28 @@ import { fileURLToPath } from 'node:url';
 
 export const EVOLUTION_LOG = 'docs/process/evolution.md';
 
-/** 進め方に関わるファイル。自動メモリ（Claude 固有の記憶）・ゲームのシミュレーション・ビルドの出力のコピーは除く */
+/** 前の月の項目を退避した進化ログ（docs/process/evolution-archive/<年-月>.md） */
+const EVOLUTION_ARCHIVE = /^docs\/process\/evolution-archive\//;
+
+/**
+ * 進め方に関わるファイル。ルールの文書と、エージェントへの指示（入口・.claude/）だけを見る。自動メモリ（Claude 固有の記憶）は除く。
+ * 検査のスクリプト・git フック・CI・biome.json は見ない（2026-10-11 に絞った。直すたびに記録を求めると、
+ * 記録の手間が変更そのものより重くなる。仕組みを足したときの記録は、ルールの文書の変更と一緒に残る）
+ */
 const PROCESS_FILES = [
   /^AGENTS\.md$/,
   /^CLAUDE\.md$/,
-  /^biome\.json$/,
   /^docs\/process\//,
   /^\.claude\/(?!memory\/)/,
-  /^\.githooks\//,
-  /^\.github\/workflows\//,
-  /^scripts\/(?!simulate-auto-combat\.ts$|copy-)/,
 ];
 
-/** そのパスが進め方に関わるファイルか（進化ログそのものは除く） */
+/** そのパスが進め方に関わるファイルか（進化ログそのものと、退避した進化ログは除く） */
 export function isProcessFile(path) {
-  return path !== EVOLUTION_LOG && PROCESS_FILES.some((re) => re.test(path));
+  return (
+    path !== EVOLUTION_LOG &&
+    !EVOLUTION_ARCHIVE.test(path) &&
+    PROCESS_FILES.some((re) => re.test(path))
+  );
 }
 
 /** コミットメッセージの「進化ログ不要: <理由>」の理由。無ければ null（# で始まる行は git が消すので見ない） */
