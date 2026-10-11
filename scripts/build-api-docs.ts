@@ -8,9 +8,12 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { buildOpenApiDocument } from '../packages/schemas/src/api/openapi';
 
-const OUT_DIR = join('docs', '.vitepress', 'dist', 'api-docs');
+// どこから流しても、リポジトリの docs/.vitepress/dist/api-docs/ に書く
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const OUT_DIR = join(ROOT, 'docs', '.vitepress', 'dist', 'api-docs');
 const SPEC = join(OUT_DIR, 'openapi.json');
 
 mkdirSync(OUT_DIR, { recursive: true });
@@ -23,16 +26,25 @@ const env = { ...process.env, REDOCLY_TELEMETRY: 'off', REDOCLY_SUPPRESS_UPDATE_
 
 function redocly(args: string[]): void {
   const r = spawnSync(process.execPath, [cli, ...args], { stdio: 'inherit', env });
+  if (r.error) {
+    console.error(`redocly ${args[0]} を起動できませんでした：${r.error.message}`);
+    process.exit(1);
+  }
   if (r.status !== 0) {
     console.error(`redocly ${args[0]} が失敗しました（終了コード ${r.status ?? r.signal}）`);
     process.exit(1);
   }
 }
 
-redocly(['lint', SPEC]);
+// 設定は今いるディレクトリから探されるので、明示する
+const CONFIG = join(ROOT, 'redocly.yaml');
+
+redocly(['lint', SPEC, '--config', CONFIG]);
 redocly([
   'build-docs',
   SPEC,
+  '--config',
+  CONFIG,
   '--output',
   join(OUT_DIR, 'index.html'),
   '--title',

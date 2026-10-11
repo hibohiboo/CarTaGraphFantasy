@@ -2,7 +2,7 @@
 // 照合（どの一覧の項目に当たるか）と、貯めた誤りの取り出しを確かめる。形の検査そのものは packages/schemas の
 // checkResponse（schemas:test）。
 
-import { HttpResponse, http } from 'msw';
+import { delay, HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { api } from '@/shared/api/api';
 import { server } from '../mocks/node';
@@ -111,5 +111,19 @@ describe('テストの中の応答の検査（setup.ts が組み込む）', () =
     await expect(api.get('/me')).rejects.toMatchObject({ status: 404 });
     await settleResponseChecks();
     expect(takeResponseErrors()[0]).toMatch(/^GET \/me → 404：一覧に無い状態コード/);
+  });
+
+  it('応答を待たずに投げっぱなしにしたリクエストも、応答が届くまで待ってこのテストの分にする', async () => {
+    server.use(
+      http.get('/api/me', async () => {
+        await delay(30);
+        return HttpResponse.json({ id: 'u', bogus: 1 });
+      }),
+    );
+    void fetch('/api/me');
+    await settleResponseChecks();
+    const errors = takeResponseErrors();
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.every((e) => e.includes('投げっぱなしにしたリクエスト'))).toBe(true);
   });
 });

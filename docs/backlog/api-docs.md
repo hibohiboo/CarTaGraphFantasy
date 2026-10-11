@@ -1,7 +1,7 @@
 ---
 title: API ドキュメントを、応答のスキーマから作って公開する
 milestone: backend-1on1
-status: 検討中
+status: 進行中
 summary: API の一覧（本文と応答の形・状態コード）を zod で1か所に置き、そこから作った OpenAPI を Redoc でサイトに公開する。モック（MSW）の応答が一覧どおりかはテストで止める。
 plans:
   - 2026-10-11-APIドキュメント.md

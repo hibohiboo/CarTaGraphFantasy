@@ -53,7 +53,7 @@ paths:
 - 各テストの後に `resetDb()` で状態を戻す（`src/test/setup.ts`）。テストは実行順に依存しない
 - 変更を伴うテストは、既存のシードを書き換えるのではなく、テストの中で操作して結果を確認し、`resetDb()` に後始末を任せる
 - 未処理のリクエストはエラーにする（`onUnhandledRequest: 'error'`）。新しい API を呼ぶなら先に `handlers.ts` へ追加する
-- MSW の応答は、すべてのテストで API の一覧（`packages/schemas` の `api/endpoints.ts`）と照らす（`src/test/setup.ts` が `src/test/responseCheck.ts` を組み込む）。一覧に無い API・状態コード、形の違う本文が返ると、そのテストが落ちる（誤りの文にリクエストを出したテストの名前が付く）。ハンドラと一覧の1対1は `src/test/apiEndpoints.test.ts`。ハンドラを足す・応答を変えるときは、一覧（各ディレクトリの `endpoints.ts`）も直す。テストの中で `server.use` で差し替える応答も、一覧どおりの形にする
+- MSW の応答は、すべてのテストで API の一覧（`packages/schemas` の `api/endpoints.ts`）と照らす（`src/test/setup.ts` が `src/test/responseCheck.ts` を組み込む）。一覧に無い API・状態コード、形の違う本文が返ると、そのテストが落ちる（誤りの文にリクエストを出したテストの名前が付く）。ハンドラと一覧の1対1は `src/test/apiEndpoints.test.ts`。ハンドラを足す・応答を変えるときは、一覧（各ディレクトリの `endpoints.ts`）も直す。テストの中で `server.use` で差し替える応答も、一覧どおりの形にする。一覧に無い失敗（例：`GET /characters` の 500）を画面がどう見せるかを試したいときは、その API が本当に返しうるなら一覧に足し、返さないなら `HttpResponse.error()`（通信の失敗。検査されない）で試す。テストの本体が応答を待たずに終わっても、後片付けの前に応答が届くまで待つ（上限2秒。届かなければ誤り）
 - 公開したシナリオの保存先（`setScenarioFileStore`）は、テストでは既定で無し（デモと同じ。`setup.ts` が毎回戻す）。ファイルへの書き込みを確かめるテストだけ、渡されたシナリオを記録する偽の保存先を差し込む。開発サーバーの書き込みの口（`apps/web/vite/`）のテストは、`mkdtemp` の一時ディレクトリに書き、リポジトリの `scenarios/` には書かない
 
 ## 骨抜き禁止

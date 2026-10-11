@@ -77,6 +77,8 @@ export const sessionEndpoints = [
     method: 'post',
     path: '/sessions/:id/resume',
     summary: '中断したセッションを再開する',
+    description:
+      '仕様とずれている所：仕様（docs/cartagraph/party-and-session.md「中断」）はドライバーも GM も再開できるが、モックはドライバーだけを通す。要望 docs/backlog/gm-resume-suspended.md で直す',
     responses: {
       200: ok,
       403: failure('ドライバーでない'),

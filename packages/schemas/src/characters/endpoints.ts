@@ -28,7 +28,7 @@ export const characterEndpoints = [
     body: createCharacterBody,
     responses: {
       201: success('作成したキャラクター', characterSchema),
-      422: failure('本文の形の誤り、名前が空、能力値の配分・CP 予算・カードがルールに合わない'),
+      422: failure('本文の形の誤り、名前が空、能力値の配分・CP予算・カードがルールに合わない'),
     },
   }),
   defineEndpoint({

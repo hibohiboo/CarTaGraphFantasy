@@ -106,10 +106,24 @@ describe('OpenAPI の文書', () => {
     expect(schemas.Error).toMatchObject({ required: ['message'], additionalProperties: false });
   });
 
-  it('仮ルールの型は説明に「仮ルール」と書く', () => {
-    expect(schemas.AutoCombatState?.description).toMatch(/仮ルール/);
-    expect(schemas.CombatRecord?.description).toMatch(/仮ルール/);
-    expect(schemas.CardPool?.description).toMatch(/仮ルール/);
+  it.each([
+    'AutoCombatState',
+    'CombatRecord',
+    'CardPool',
+    'CardDef',
+    'DeckNode',
+    'Scenario',
+    'ScenarioDraft',
+    'Session',
+  ])('仮ルールの項目を持つ型（%s）は、説明に「仮ルール」と仮ルールのページを書く', (name) => {
+    expect(schemas[name]?.description).toMatch(/仮ルール.*docs\/provisional\//);
+  });
+
+  it('仕様とずれたモックの振る舞いは、説明にそう書き、直す要望を示す', () => {
+    expect(schemas.Session?.description).toMatch(/仕様とずれている.*gm-resume-suspended/);
+    expect(op('post', '/sessions/{id}/resume').description).toMatch(
+      /仕様とずれている.*gm-resume-suspended/,
+    );
   });
 
   it('operationId は重複しない', () => {

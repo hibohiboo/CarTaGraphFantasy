@@ -75,7 +75,7 @@ export const scenarioEndpoints = [
     method: 'patch',
     path: '/scenarios/:id',
     summary: 'シナリオを保存する',
-    description: `本文の項目でシナリオを上書きする。下書きは中身を検査しない。公開中のシナリオは公開のファイルの検査を通してからファイルにも書く。${DRAFT_NOTE}`,
+    description: `本文の項目でシナリオを上書きする。下書きは中身を検査しない。公開中のシナリオは公開のファイルの検査を通してからファイルにも書く。${DRAFT_NOTE}。下書きの保存は本文の形も検査しないので、形の崩れた本文（知らないキー・型違い）を送ると、200 の応答とその後の取得もこの形にならない（docs/architecture/known-issues.md。下書きの API を分けるときに直す）`,
     body: updateScenarioBody,
     responses: {
       200: success('保存したシナリオと、ファイルへの書き込みの結果', scenarioDraftSaveResultSchema),

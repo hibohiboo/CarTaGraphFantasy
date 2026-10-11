@@ -7,7 +7,7 @@ import { z } from 'zod';
 const rules = characterCreationRulesSchema.shape;
 
 /**
- * 基本カードプールと解放済みカードプール、CP 予算。能力値の配分（abilities）と作成時の HP・基本行動値
+ * 基本カードプールと解放済みカードプール、CP予算。能力値の配分（abilities）と作成時の HP・基本行動値
  * （initialHp・initialBaseActionValue）は仮ルール（docs/provisional/character-creation.md。rules/character-creation.json）
  */
 export const cardPoolSchema = z.strictObject({

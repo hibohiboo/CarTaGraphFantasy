@@ -1,4 +1,6 @@
 // 応答が一覧どおりかの検査（docs/plans/2026-10-11-APIドキュメント.md T4）。値は一覧の本物の項目で確かめる。
+// 対象は endpoint/check.ts だが、本物の一覧（api/endpoints.ts）を使うので、endpoint/ からは import できず api/ に置く
+// （endpoint/ → api/ は依存の向きの逆。docs/process/rules/architecture.md「packages/schemas の中の置き場所」）。
 
 import { describe, expect, it } from 'vitest';
 import { checkResponse } from '../endpoint/check';
@@ -77,6 +79,20 @@ describe('checkResponse', () => {
       hp: { current: 1, max: 1, temp: 1 },
     });
     expect(nested).toMatch(/^POST \/characters → 201：hp が一覧の形と違う/);
+  });
+
+  it('誤りは5件まで並べ、それより多ければ「ほか N 件」を足す（境界の5件と6件）', () => {
+    const e = find('get', '/me');
+    const five = { id: 1, name: 1, roles: 1, readRules: 1, unlockedCardIds: 1 };
+    expect(checkResponse(e, 200, five)).toHaveLength(5);
+    const six = checkResponse(e, 200, { ...five, extra: 1 });
+    expect(six).toHaveLength(6);
+    expect(six[5]).toBe('GET /me → 200：ほか 1 件');
+  });
+
+  it('本文が無い（undefined）応答は、本文そのものの誤り', () => {
+    const [error] = checkResponse(find('get', '/me'), 200, undefined);
+    expect(error).toMatch(/^GET \/me → 200：本文 が一覧の形と違う/);
   });
 
   it('失敗の応答は { message } で通り、message が無い・文字列でないと誤り', () => {

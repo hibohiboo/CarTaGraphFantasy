@@ -18,8 +18,11 @@ export function checkResponse(endpoint: Endpoint, status: number, body: unknown)
   }
   const parsed = expected.schema.safeParse(body);
   if (parsed.success) return [];
-  return parsed.error.issues.slice(0, MAX_ISSUES).map((issue) => {
+  const { issues } = parsed.error;
+  const shown = issues.slice(0, MAX_ISSUES).map((issue) => {
     const where = issue.path.length === 0 ? '本文' : issue.path.map(String).join('.');
     return `${label}：${where} が一覧の形と違う（${issue.message}）`;
   });
+  const rest = issues.length - shown.length;
+  return rest > 0 ? [...shown, `${label}：ほか ${rest} 件`] : shown;
 }

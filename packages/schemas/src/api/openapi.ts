@@ -1,6 +1,6 @@
 // API の一覧（endpoints.ts）から OpenAPI 3.1 の文書を作る（docs/plans/2026-10-11-APIドキュメント.md G3）。
 // zod 4 の z.toJSONSchema で各スキーマを JSON Schema（2020-12。OpenAPI 3.1 と同じ）にし、名前の付いた型は
-// components.schemas に1回だけ出して $ref で参照する。scripts/build-api-docs.mjs が JSON に書き、Redoc の HTML にする。
+// components.schemas に1回だけ出して $ref で参照する。scripts/build-api-docs.ts が JSON に書き、Redoc の HTML にする。
 
 import { autoCombatStateSchema, combatRecordSchema } from '@cartagraph/domain/autoCombat/model';
 import { cardDefSchema } from '@cartagraph/domain/card/model';
@@ -33,19 +33,31 @@ type Json = Record<string, unknown>;
  */
 const named: [z.ZodType, string, string?][] = [
   [currentUserSchema, 'CurrentUser'],
-  [cardDefSchema, 'CardDef'],
+  [
+    cardDefSchema,
+    'CardDef',
+    '仮ルールを含む：自動戦闘の効果（combatEffect。docs/provisional/auto-combat.md）、配る条件・使える条件・成長の効果（dealWhen・playWhen・soloEffect。docs/provisional/solo-village.md）',
+  ],
   [
     cardPoolSchema,
     'CardPool',
     '仮ルールを含む：能力値の配分（abilities）と作成時の HP・基本行動値（docs/provisional/character-creation.md）',
   ],
   [characterSchema, 'Character'],
-  [deckNodeSchema, 'DeckNode'],
-  [scenarioSchema, 'Scenario', '公開のファイルの検査（業務の検査を含む）を通ったシナリオ'],
+  [
+    deckNodeSchema,
+    'DeckNode',
+    '仮ルールを含む：シーンの目的・終了条件（objective・endCondition。docs/provisional/scene-objective.md）、自動戦闘のシーン（autoCombat。docs/provisional/auto-combat.md）',
+  ],
+  [
+    scenarioSchema,
+    'Scenario',
+    '公開のファイルの検査（業務の検査を含む）を通ったシナリオ。仮ルールを含む：ソロ開始の初期装備（soloStarter。docs/provisional/auto-combat.md）',
+  ],
   [
     scenarioDraftSchema,
     'ScenarioDraft',
-    '下書きを含みうるシナリオ。業務の検査を外した形（下書きの API を分けたら直す）',
+    '下書きを含みうるシナリオ。業務の検査を外した形（下書きの API を分けたら直す）。仮ルールを含む：ソロ開始の初期装備（soloStarter。docs/provisional/auto-combat.md）',
   ],
   [scenarioSaveResultSchema, 'ScenarioSaveResult'],
   [scenarioDraftSaveResultSchema, 'ScenarioDraftSaveResult'],
@@ -59,7 +71,11 @@ const named: [z.ZodType, string, string?][] = [
     '仮ルール：自動戦闘（docs/provisional/auto-combat.md）',
   ],
   [combatRecordSchema, 'CombatRecord', '仮ルール：自動戦闘（docs/provisional/auto-combat.md）'],
-  [sessionSchema, 'Session'],
+  [
+    sessionSchema,
+    'Session',
+    '仕様とずれている所：無反応で中断になる期限（suspendAt）と中断の理由の inactivity は、仕様（docs/cartagraph/party-and-session.md「中断」：反応が無い期間で自動的に中断しない）から外れたモックの振る舞いで、要望 docs/backlog/gm-resume-suspended.md で消す。仮ルールを含む：自動戦闘（autoCombat・combatHistory。docs/provisional/auto-combat.md）',
+  ],
   [libraryEntrySchema, 'LibraryEntry'],
   [errorBodySchema, 'Error', '失敗の応答の本文。どの API も同じ形'],
 ];

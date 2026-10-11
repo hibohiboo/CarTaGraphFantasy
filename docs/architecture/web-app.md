@@ -87,7 +87,7 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 - **手元で見る** — `pnpm docs:build && pnpm api:docs && pnpm docs:preview --port 4175 --strictPort` で `http://localhost:4175/CarTaGraphFantasy/api-docs/`（4173 は E2E、4174 はエージェントの preview が使う。`pnpm web:dev:agent:stop` では止まらないので、起動したターミナルで止める）。`pnpm docs:dev` には無い（サイドバーのリンクは 404 になる）
 - **外部への依存** — Redoc の本体は `cdn.redocly.com` から読む（`@redocly/cli` の `build-docs` は同梱できない。2026-10-11、人間が受け入れた）。Google Fonts は読まない（`--disableGoogleFont`）。`@redocly/cli` のテレメトリと更新の確認は、スクリプトが環境変数で止める
 - **下書きのシナリオ** — 下書きを返しうる API（`GET /scenarios`・`GET /scenarios/:id`・`POST /scenarios`・`PATCH /scenarios/:id`）の応答は、業務の検査（再挑戦不可の結末には結末タグが要る、など）を外した形（`ScenarioDraft`）で書く。下書きは書きかけでも保存できるため。下書きの API を分けたら直す（[要望](../backlog/scenario-draft-api.md)）
-- **項目ごとの説明** — まだ出していない（domain の JSDoc は OpenAPI に載らない）。仮ルールの型（`AutoCombatState`・`CombatRecord`・`CardPool`）は、型ごとの説明に「仮ルール」と書く
+- **項目ごとの説明** — まだ出していない（domain の JSDoc は OpenAPI に載らない）。仮ルールの項目を持つ型（`CardDef`・`DeckNode`・`Scenario`・`ScenarioDraft`・`Session`・`AutoCombatState`・`CombatRecord`・`CardPool`）は、型ごとの説明に「仮ルール」と、どの項目がどの仮ルールかを書く（`packages/schemas/src/api/openapi.ts`）。モックの振る舞いが仕様とずれている所（`Session` の無反応の中断、再開の権限）も説明に書き、直す要望を示す
 
 ## 自動戦闘の数値シミュレーション
 

@@ -1033,8 +1033,31 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
-                    "message": "api/ はほかのディレクトリのすべてを相対パスで import してよい。自分のパッケージ名では import しない（docs/process/rules/architecture.md「packages/schemas の中の置き場所」）"
+                    "group": [
+                      "../**",
+                      "./../**",
+                      "@cartagraph/schemas",
+                      "@cartagraph/schemas/**",
+                      "!../body/**",
+                      "!./../body/**",
+                      "!../endpoint/**",
+                      "!./../endpoint/**",
+                      "!../card-pool/**",
+                      "!./../card-pool/**",
+                      "!../characters/**",
+                      "!./../characters/**",
+                      "!../library/**",
+                      "!./../library/**",
+                      "!../me/**",
+                      "!./../me/**",
+                      "!../recruitments/**",
+                      "!./../recruitments/**",
+                      "!../sessions/**",
+                      "!./../sessions/**",
+                      "!../scenarios/**",
+                      "!./../scenarios/**"
+                    ],
+                    "message": "api/ が import してよい先は、URL の区切りごとのディレクトリ・endpoint/・body/ と @cartagraph/domain・zod だけ（docs/process/rules/architecture.md「packages/schemas の中の置き場所」）"
                   }
                 ]
               }

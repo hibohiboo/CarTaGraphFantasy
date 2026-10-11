@@ -9,7 +9,7 @@ export const cardPoolEndpoints = [
     path: '/card-pool',
     summary: 'キャラクター作成のカードプールとルールを取得する',
     description:
-      '基本カードプール・解放済みカードプール・CP 予算と、能力値の配分・作成時の HP と基本行動値（仮ルール）',
+      '基本カードプール・解放済みカードプール・CP予算と、能力値の配分・作成時の HP と基本行動値（仮ルール）',
     responses: { 200: success('カードプールとキャラクター作成のルール', cardPoolSchema) },
   }),
 ];

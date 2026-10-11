@@ -37,26 +37,43 @@ export async function checkMockedResponse(request: Request, response: Response):
     body = JSON.parse(text);
   } catch {
     const label = `${endpoint.method.toUpperCase()} ${endpoint.path} → ${response.status}`;
-    return [`${label}：本文が JSON でない（${text.slice(0, 40)}）`];
+    return [`${label}：本文が JSON でない（${text === '' ? '空' : text.slice(0, 40)}）`];
   }
   return checkResponse(endpoint, response.status, body);
 }
 
 const errors: string[] = [];
+/** 応答の検査のうち、まだ終わっていないもの */
 const pending = new Set<Promise<void>>();
-/** requestId → リクエストを出したときのテストの名前（応答が次のテストの間に届いても、出したテストの分にする） */
-const testOfRequest = new Map<string, string>();
+/**
+ * 応答がまだ届いていないリクエスト。requestId → リクエストを出したときのテストの名前（応答が次のテストの間に
+ * 届いても、出したテストの分にする。テストの本体が応答を待たずに終わっても、後片付けの前に届くまで待つ）
+ */
+const inFlight = new Map<string, string>();
+
+/** テストの終わりに、応答が届くのを待つ上限 */
+const SETTLE_TIMEOUT_MS = 2000;
 
 const currentTest = () => expect.getState().currentTestName ?? '（テストの外）';
 
 /** server の応答をすべて検査し、誤りを貯める。検査の中の例外も誤りとして貯める（未処理の reject にしない） */
 export function watchResponses(server: SetupServer): void {
   server.events.on('request:start', ({ requestId }) => {
-    testOfRequest.set(requestId, currentTest());
+    inFlight.set(requestId, currentTest());
+  });
+  // 応答を返さずに終わったリクエスト（一覧の外で onUnhandledRequest が止めたもの・HttpResponse.error() など）は、
+  // response:mocked が来ないので、ここで外す。response:mocked より先に来ても検査を取りこぼさないよう、次の周回で外す
+  server.events.on('request:end', ({ requestId }) => {
+    setTimeout(() => inFlight.delete(requestId), 0);
+  });
+  server.events.on('unhandledException', ({ request, requestId, error }) => {
+    const test = inFlight.get(requestId) ?? currentTest();
+    errors.push(
+      `${request.method} ${new URL(request.url).pathname}：ハンドラが例外を投げた（${String(error)}）（テスト：${test}）`,
+    );
   });
   server.events.on('response:mocked', ({ request, response, requestId }) => {
-    const test = testOfRequest.get(requestId) ?? currentTest();
-    testOfRequest.delete(requestId);
+    const test = inFlight.get(requestId) ?? currentTest();
     const label = `${request.method} ${new URL(request.url).pathname}`;
     const check: Promise<void> = checkMockedResponse(request, response)
       .then(
@@ -71,12 +88,31 @@ export function watchResponses(server: SetupServer): void {
         pending.delete(check);
       });
     pending.add(check);
+    inFlight.delete(requestId);
   });
 }
 
-/** 処理中の検査がすべて終わるのを待つ（待つ間に始まった検査も待つ） */
+const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
+
+/**
+ * 応答がまだ届いていないリクエストと、処理中の検査がすべて終わるのを待つ（待つ間に始まったものも待つ）。
+ * 上限までに応答が届かなければ、そのリクエストを誤りにして待つのをやめる
+ */
 export async function settleResponseChecks(): Promise<void> {
-  while (pending.size > 0) await Promise.all([...pending]);
+  const deadline = Date.now() + SETTLE_TIMEOUT_MS;
+  while (pending.size > 0 || inFlight.size > 0) {
+    if (Date.now() > deadline) {
+      for (const test of inFlight.values()) {
+        errors.push(
+          `${SETTLE_TIMEOUT_MS}ms 待っても応答が届かないリクエストがある（テスト：${test}）`,
+        );
+      }
+      inFlight.clear();
+      return;
+    }
+    if (pending.size > 0) await Promise.race([Promise.all([...pending]), tick()]);
+    else await tick();
+  }
 }
 
 /** 貯まった誤りを取り出して空にする */
