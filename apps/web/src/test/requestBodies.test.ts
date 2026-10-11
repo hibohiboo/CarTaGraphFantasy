@@ -4,9 +4,9 @@
 // （422 だけを見ると、前提の検査の 422 でも通ってしまうため）。
 
 import type { Character } from '@cartagraph/domain/character/model';
-import type { Scenario } from '@cartagraph/domain/scenario/model';
 import type { Recruitment, Session } from '@cartagraph/domain/session/model';
 import { describe, expect, it } from 'vitest';
+import type { ScenarioDraftView } from '@/entities/scenario/api/types';
 import { api } from '@/shared/api/api';
 
 const SHAPE = '本文の形が正しくありません';
@@ -24,13 +24,16 @@ async function send(method: 'POST' | 'PATCH', url: string, body: unknown) {
   return { status: res.status, message: ((await res.json()) as { message?: string }).message };
 }
 
-/** 状態の写し（キャラクター・セッション・受付中の募集・自分のシナリオの一覧と下書き） */
+/**
+ * 状態の写し（キャラクター・セッション・受付中の募集・自分の下書きの一覧と下書き）。下書きの保存は公開版を変えないので、
+ * 下書きの側を写す（公開版を写すと、下書きを崩す実装でも「変わらない」が通る）
+ */
 const snapshot = async () => ({
   characters: await api.get<Character[]>('/characters'),
-  myScenarios: await api.get<Scenario[]>('/scenarios?mine=1'),
+  myDrafts: await api.get<ScenarioDraftView[]>('/scenario-drafts'),
   sessions: await api.get<Session[]>('/sessions'),
   recruitments: await api.get<Recruitment[]>('/recruitments'),
-  draft: await api.get<Scenario>('/scenarios/sc-mansion-mine'),
+  draft: await api.get<ScenarioDraftView>('/scenarios/sc-mansion-mine/draft'),
 });
 
 /** 自分がドライバーの、プレイ中の GM 不在のセッション（ソロ開始） */
@@ -177,7 +180,7 @@ const rows: Row[] = [
   },
   {
     name: '15 下書きの保存',
-    setup: async () => ({ url: '/scenarios/sc-mansion-mine', method: 'PATCH' }),
+    setup: async () => ({ url: '/scenarios/sc-mansion-mine/draft', method: 'PATCH' }),
     bodies: [
       [null, '本文はオブジェクトにしてください'],
       [5, '本文はオブジェクトにしてください'],
@@ -296,7 +299,7 @@ describe('省ける項目を省いた本文は、今までどおり業務の検�
   });
 
   it('15 下書きの保存：参照の切れた下書きも、今までどおり保存できる', async () => {
-    const draft = await api.get<Scenario>('/scenarios/sc-mansion-mine');
+    const { draft } = await api.get<ScenarioDraftView>('/scenarios/sc-mansion-mine/draft');
     const [first] = draft.deck;
     if (!first) throw new Error('下書きにノードがありません');
     const broken = {
@@ -308,8 +311,8 @@ describe('省ける項目を省いた本文は、今までどおり業務の検�
         ...draft.deck.slice(1),
       ],
     };
-    const saved = await api.patch<{ scenario: Scenario }>('/scenarios/sc-mansion-mine', broken);
-    expect(saved.scenario.deck[0]?.cards[0]?.nextNodeId).toBe('n-nowhere');
+    const saved = await api.patch<ScenarioDraftView>('/scenarios/sc-mansion-mine/draft', broken);
+    expect(saved.draft.deck[0]?.cards[0]?.nextNodeId).toBe('n-nowhere');
   });
 });
 

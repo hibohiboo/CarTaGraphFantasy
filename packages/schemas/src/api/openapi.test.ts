@@ -41,10 +41,17 @@ describe('OpenAPI の文書', () => {
     expect(Object.keys(paths).some((p) => p.includes(':'))).toBe(false);
   });
 
-  it('クエリ（/scenarios の mine）が query の引数に出る', () => {
-    expect(op('get', '/scenarios').parameters).toEqual([
-      expect.objectContaining({ name: 'mine', in: 'query', required: false }),
-    ]);
+  it('下書きの API（/scenario-drafts・/scenarios/{id}/draft）は scenarios のタグに入り、ScenarioDraftView を返す', () => {
+    expect(op('get', '/scenario-drafts').tags).toEqual(['scenarios']);
+    expect(op('patch', '/scenarios/{id}/draft').tags).toEqual(['scenarios']);
+    expect(responseSchema(op('get', '/scenarios/{id}/draft'), '200')).toEqual({
+      $ref: '#/components/schemas/ScenarioDraftView',
+    });
+    expect(schemas.ScenarioDraftSaveResult).toBeUndefined();
+    expect(Object.keys(op('patch', '/scenarios/{id}/draft').responses as Json)).not.toContain(
+      '500',
+    );
+    expect(paths['/scenarios/{id}']?.patch).toBeUndefined();
   });
 
   it('本文を読む API にだけ requestBody が出る。{} が通る本文は省いてよい', () => {

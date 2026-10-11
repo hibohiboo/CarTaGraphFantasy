@@ -6,7 +6,7 @@ import { Chip, ChipGroup, ErrorNote, Loading, PageHeader, Panel } from '@/shared
 
 /** GMのシナリオ管理：シナリオ集から選ぶ（GM＝シナリオを選んで運営する人） */
 export function GmScenarioListPage() {
-  const scenarios = useScenarios(false);
+  const scenarios = useScenarios();
   if (scenarios.isPending) return <Loading />;
   if (scenarios.error) return <ErrorNote error={scenarios.error} />;
 

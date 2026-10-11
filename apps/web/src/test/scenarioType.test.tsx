@@ -7,7 +7,7 @@ import type { Recruitment } from '@cartagraph/domain/session/model';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import type { ScenarioSaveResult } from '@/entities/scenario/api/types';
+import type { ScenarioDraftView, ScenarioSaveResult } from '@/entities/scenario/api/types';
 import { api } from '@/shared/api/api';
 import { recruitments, scenarios } from '../mocks/fixtures';
 import { setScenarioFileStore } from '../mocks/handlers';
@@ -44,11 +44,15 @@ function examNode(): Scenario['deck'][number] {
   };
 }
 
-const create = (title: string) => api.post<Scenario>('/scenarios', { title });
+const create = async (title: string) =>
+  (await api.post<ScenarioDraftView>('/scenarios', { title })).draft;
 const publish = (id: string) => api.post<ScenarioSaveResult>(`/scenarios/${id}/publish`);
+/** 下書きの保存（形だけを見る。公開版は変わらない） */
 const patch = (id: string, body: Partial<Scenario>) =>
-  api.patch<ScenarioSaveResult>(`/scenarios/${id}`, body);
+  api.patch<ScenarioDraftView>(`/scenarios/${id}/draft`, body);
 const get = (id: string) => api.get<Scenario>(`/scenarios/${id}`);
+const getDraft = async (id: string) =>
+  (await api.get<ScenarioDraftView>(`/scenarios/${id}/draft`)).draft;
 
 describe('シードのシナリオタイプ', () => {
   it('scenarios/*.json の4本は、決めたタイプを持つ', () => {
@@ -78,8 +82,8 @@ describe('シードのシナリオタイプ', () => {
   });
 });
 
-describe('公開・公開中の保存でのシナリオタイプの検査', () => {
-  it('戦闘なしで自動戦闘のシーンを持つ下書きは、保存できるが公開は 422 で、保存先に渡らず下書きのまま', async () => {
+describe('公開・公開し直すときのシナリオタイプの検査（下書きの保存は形だけを見る）', () => {
+  it('戦闘なしで自動戦闘のシーンを持つ下書きは、保存できるが公開は 422 で、保存先に渡らず公開版もできない', async () => {
     const sc = await create('戦闘なしの公開テスト');
     await patch(sc.id, { scenarioType: NO_COMBAT, deck: [...sc.deck, examNode()] });
     const written = fakeStore();
@@ -88,7 +92,7 @@ describe('公開・公開中の保存でのシナリオタイプの検査', () =
       message: expect.stringContaining('戦闘なし'),
     });
     expect(written).toEqual([]);
-    expect((await get(sc.id)).libraryStatus).toBe('draft');
+    await expect(get(sc.id)).rejects.toMatchObject({ status: 404 });
   });
 
   it('同じデッキでも冒険なら公開できる（反対側）', async () => {
@@ -97,9 +101,10 @@ describe('公開・公開中の保存でのシナリオタイプの検査', () =
     expect((await publish(sc.id)).scenario.libraryStatus).toBe('published');
   });
 
-  it('公開中のガレオンを、空間モデルを持ったまま戦闘なしにする保存は 422 で、メモリも変わらない', async () => {
+  it('公開中のガレオンの下書きを、空間モデルを持ったまま戦闘なしにして保存はできるが、公開し直すと 422 で、公開版は変わらない', async () => {
     const written = fakeStore();
-    await expect(patch('sc-galleon', { scenarioType: NO_COMBAT })).rejects.toMatchObject({
+    expect((await patch('sc-galleon', { scenarioType: NO_COMBAT })).changed).toBe(true);
+    await expect(publish('sc-galleon')).rejects.toMatchObject({
       status: 422,
       message: expect.stringContaining('空間モデル'),
     });
@@ -107,25 +112,26 @@ describe('公開・公開中の保存でのシナリオタイプの検査', () =
     expect((await get('sc-galleon')).scenarioType).toEqual(ADVENTURE);
   });
 
-  it('公開中のガレオンを、空間モデルを外して戦闘なしにしても、自動戦闘のシーンを足す保存は 422 で、メモリも変わらない', async () => {
+  it('空間モデルを外して戦闘なしにしても、自動戦闘のシーンを足した下書きの公開し直しは 422 で、公開版は変わらない', async () => {
     const written = fakeStore();
     const before = await get('sc-galleon');
-    await expect(
-      patch('sc-galleon', {
-        scenarioType: NO_COMBAT,
-        spaceModel: null,
-        deck: [...before.deck, examNode()],
-      }),
-    ).rejects.toMatchObject({ status: 422, message: expect.stringContaining('exam') });
+    await patch('sc-galleon', {
+      scenarioType: NO_COMBAT,
+      spaceModel: null,
+      deck: [...before.deck, examNode()],
+    });
+    await expect(publish('sc-galleon')).rejects.toMatchObject({
+      status: 422,
+      message: expect.stringContaining('exam'),
+    });
     expect(written).toEqual([]);
-    const after = await get('sc-galleon');
-    expect(after.scenarioType).toEqual(ADVENTURE);
-    expect(after.deck).toEqual(before.deck);
+    expect(await get('sc-galleon')).toEqual(before);
   });
 
-  it('公開中のガレオンでも、空間モデルを外して戦闘なしにする保存は通る（反対側）', async () => {
+  it('空間モデルを外して戦闘なしにした下書きは、公開し直せる（反対側）', async () => {
     const written = fakeStore();
-    const res = await patch('sc-galleon', { scenarioType: NO_COMBAT, spaceModel: null });
+    await patch('sc-galleon', { scenarioType: NO_COMBAT, spaceModel: null });
+    const res = await publish('sc-galleon');
     expect(res.scenario.scenarioType).toEqual(NO_COMBAT);
     expect(written.map((s) => s.scenarioType)).toEqual([NO_COMBAT]);
   });
@@ -196,15 +202,17 @@ describe('シナリオタイプの表示', () => {
     await user.click(screen.getByLabelText('戦闘なし'));
     await user.click(screen.getByRole('button', { name: '保存' }));
     await waitFor(async () => {
-      const saved = await get('sc-galleon');
+      const saved = await getDraft('sc-galleon');
       expect(saved.scenarioType).toEqual(NO_COMBAT);
       expect(saved.spaceModel).toBeNull();
     });
+    // 保存は下書きだけ。公開版は公開し直すまで冒険のまま
+    expect((await get('sc-galleon')).scenarioType).toEqual(ADVENTURE);
   });
 
   it('シナリオ編集：戦闘なしの下書きが空間モデルを持っていたら、選べるままにして外せる', async () => {
     const user = userEvent.setup();
-    // 下書きの保存は検査しないので、食い違った下書きを作れる
+    // 下書きの保存は形だけを見るので、シナリオタイプと食い違った下書きを作れる
     await patch('sc-draft-well', { spaceModel: '2d' });
     renderAt('/creator/scenarios/sc-draft-well');
     await screen.findByRole('heading', { level: 1, name: '涸れ井戸の底（下書き）' });

@@ -19,12 +19,17 @@ import { Link, useParams } from 'react-router';
 import {
   usePublishScenario,
   useUnpublishScenario,
-  useUpdateScenario,
+  useUpdateScenarioDraft,
 } from '@/entities/scenario/api/mutations';
-import { useScenario } from '@/entities/scenario/api/queries';
-import type { ScenarioFileResult, ScenarioSaveResult } from '@/entities/scenario/api/types';
+import { isNotAuthorError, useScenario, useScenarioDraft } from '@/entities/scenario/api/queries';
+import type {
+  ScenarioFileResult,
+  ScenarioPublication,
+  ScenarioSaveResult,
+} from '@/entities/scenario/api/types';
 import { DeckTree } from '@/entities/scenario/ui/DeckTree';
 import { ScenarioFileNote } from '@/entities/scenario/ui/ScenarioFileNote';
+import { ScenarioPublicationPill } from '@/entities/scenario/ui/ScenarioPublicationPill';
 import s from '@/shared/ui/page.module.css';
 import {
   Button,
@@ -35,53 +40,91 @@ import {
   PageHeader,
   Panel,
   RoleBadge,
-  StatusPill,
 } from '@/shared/ui/ui';
 
 const SCENARIO_TYPE_FLAGS = ['noCombat', 'noCheck'] as const;
 
-/** シナリオ編集：メタデータ・デッキ構造・結末タグ（scenario-manage.html を編集可能にしたもの） */
+/** 保存・公開・非公開の後の知らせ（保存は下書きだけなのでファイルの結果を持たない） */
+type Outcome = { scenarioId: string; saved?: true; file?: ScenarioFileResult; error?: unknown };
+
+/**
+ * シナリオ編集：メタデータ・デッキ構造・結末タグ（scenario-manage.html を編集可能にしたもの）。
+ * 製作者は下書きを読み書きし、公開・公開し直す・非公開で公開版を変える。製作者でない人には公開版を読み取り専用で見せる
+ * （docs/cartagraph/scenario-flow.md「シナリオの公開」、docs/plans/2026-10-11-シナリオの下書きのAPI.md G4）
+ */
 export function CreatorScenarioEditPage() {
   const { scenarioId = '' } = useParams();
-  const scenario = useScenario(scenarioId);
-  const update = useUpdateScenario();
+  const draft = useScenarioDraft(scenarioId);
+  const notAuthor = isNotAuthorError(draft.error);
+  // 製作者でないときだけ公開版を読む（製作者の画面は、公開版の無い下書きで 404 を出さないよう公開版を引かない）
+  const published = useScenario(scenarioId, notAuthor);
+  const update = useUpdateScenarioDraft();
   const publish = usePublishScenario();
   const unpublish = useUnpublishScenario();
   // 知らせと誤りはページ側に持つ（Editor は保存のたびに key={updatedAt} で作り直されるので、中に置くと消える）
   // 操作を始めたら前の知らせを消す。別のシナリオへ移ったら出さない（ページのコンポーネントは使い回される）
-  const [outcome, setOutcome] = useState<{
-    scenarioId: string;
-    file?: ScenarioFileResult;
-    error?: unknown;
-  } | null>(null);
-  const run = (
-    mutate: (callbacks: {
-      onSuccess: (r: ScenarioSaveResult) => void;
-      onError: (error: unknown) => void;
-    }) => void,
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const run = <R,>(
+    mutate: (callbacks: { onSuccess: (r: R) => void; onError: (error: unknown) => void }) => void,
+    done: (r: R) => Outcome,
   ) => {
     setOutcome(null);
     mutate({
-      onSuccess: (r) => setOutcome({ scenarioId, file: r.file }),
+      onSuccess: (r) => setOutcome(done(r)),
       onError: (error) => setOutcome({ scenarioId, error }),
     });
   };
   const shown = outcome?.scenarioId === scenarioId ? outcome : null;
 
-  if (scenario.isPending) return <Loading />;
-  if (scenario.error) return <ErrorNote error={scenario.error} />;
+  if (draft.isPending) return <Loading />;
+  if (notAuthor) {
+    if (published.isPending) return <Loading />;
+    if (published.error) return <ErrorNote error={published.error} />;
+    const sc = published.data;
+    return (
+      <Editor
+        key={sc.updatedAt}
+        sc={sc}
+        readOnly
+        publication={sc.libraryStatus === 'published' ? 'listed' : 'unlisted'}
+        changed={false}
+        save={() => undefined}
+        setPublished={() => undefined}
+        saving={false}
+        note={
+          <EmptyNote>
+            製作者でないため編集できません（シナリオ集に公開された版を表示しています）。
+          </EmptyNote>
+        }
+      />
+    );
+  }
+  if (draft.error) return <ErrorNote error={draft.error} />;
+  const view = draft.data;
   return (
     <Editor
-      key={scenario.data.updatedAt}
-      sc={scenario.data}
-      save={(patch) => run((cb) => update.mutate({ id: scenarioId, patch }, cb))}
-      setPublished={(published) =>
-        run((cb) => (published ? publish : unpublish).mutate(scenarioId, cb))
+      key={view.draft.updatedAt}
+      sc={view.draft}
+      readOnly={false}
+      publication={view.publication}
+      changed={view.changed}
+      save={(patch) =>
+        run(
+          (cb) => update.mutate({ id: scenarioId, patch }, cb),
+          () => ({ scenarioId, saved: true }),
+        )
+      }
+      setPublished={(toPublish) =>
+        run<ScenarioSaveResult>(
+          (cb) => (toPublish ? publish : unpublish).mutate(scenarioId, cb),
+          (r) => ({ scenarioId, file: r.file }),
+        )
       }
       saving={update.isPending || publish.isPending || unpublish.isPending}
       note={
         <>
           {shown?.error ? <ErrorNote error={shown.error} /> : null}
+          {shown?.saved ? <EmptyNote>下書きを保存しました。</EmptyNote> : null}
           <ScenarioFileNote file={shown?.file} />
         </>
       }
@@ -89,14 +132,73 @@ export function CreatorScenarioEditPage() {
   );
 }
 
+/** 保存と、公開の状態に合わせた公開・公開し直す・非公開のボタン。編集中に押すと保存前の内容で公開されるので、保存してからにする */
+function PublishActions({
+  publication,
+  changed,
+  dirty,
+  saving,
+  save,
+  setPublished,
+}: {
+  publication: ScenarioPublication;
+  changed: boolean;
+  dirty: boolean;
+  saving: boolean;
+  save: () => void;
+  setPublished: (published: boolean) => void;
+}) {
+  const listed = publication === 'listed';
+  const action = (label: string, published: boolean) => (
+    <Button variant="ghost" disabled={dirty || saving} onClick={() => setPublished(published)}>
+      {label}
+    </Button>
+  );
+  return (
+    <>
+      <Button disabled={!dirty || saving} onClick={save}>
+        {saving ? '保存中…' : '保存'}
+      </Button>
+      {listed ? null : action('シナリオ集へ公開', true)}
+      {listed && changed ? action('公開し直す', true) : null}
+      {listed ? action('非公開にする', false) : null}
+    </>
+  );
+}
+
+/** 下書きが公開版に届いていないことの注意（下書きはファイルに書かないので、リロードで消える。D5） */
+function DraftNotes({
+  publication,
+  changed,
+}: {
+  publication: ScenarioPublication;
+  changed: boolean;
+}) {
+  return (
+    <>
+      {changed ? <EmptyNote>保存した変更は、公開し直すまで GM・PL に届きません。</EmptyNote> : null}
+      {publication === 'none' || changed ? (
+        <EmptyNote>公開していない編集は、リロードで消えます。</EmptyNote>
+      ) : null}
+    </>
+  );
+}
+
 function Editor({
   sc,
+  readOnly,
+  publication,
+  changed,
   save,
   setPublished,
   saving,
   note,
 }: {
   sc: Scenario;
+  /** 製作者でない人に公開版を見せるとき。入力と操作を押せなくする */
+  readOnly: boolean;
+  publication: ScenarioPublication;
+  changed: boolean;
   save: (p: Partial<Scenario>) => void;
   setPublished: (published: boolean) => void;
   saving: boolean;
@@ -200,199 +302,205 @@ function Editor({
         actions={
           <>
             <RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>
-            <StatusPill status={sc.libraryStatus === 'published' ? 'approved' : 'neutral'}>
-              {sc.libraryStatus === 'published' ? 'シナリオ集に公開中' : '下書き'}
-            </StatusPill>
-            <Button disabled={!dirty || saving} onClick={() => save(draft)}>
-              {saving ? '保存中…' : '保存'}
-            </Button>
-            {/* 編集中に押すと保存前の内容で公開されるので、保存してからにする */}
-            <Button
-              variant="ghost"
-              disabled={dirty || saving}
-              onClick={() => setPublished(sc.libraryStatus !== 'published')}
-            >
-              {sc.libraryStatus === 'published' ? '非公開にする' : 'シナリオ集へ公開'}
-            </Button>
+            <ScenarioPublicationPill publication={publication} changed={changed} />
+            {readOnly ? null : (
+              <PublishActions
+                publication={publication}
+                changed={changed}
+                dirty={dirty}
+                saving={saving}
+                save={() => save(draft)}
+                setPublished={setPublished}
+              />
+            )}
           </>
         }
       />
       {dirty ? <EmptyNote>保存してから公開・非公開にできます。</EmptyNote> : null}
+      {readOnly ? null : <DraftNotes publication={publication} changed={changed} />}
       {note}
-      <div className={s.twoCol}>
-        <aside className="u-stack">
-          <Panel
-            title="メタデータ"
-            sub="GMがシナリオを選ぶ際の判断材料。前提タグを満たさなくても応募自体は止めない。"
-          >
-            <div className={s.form}>
-              <Field label="タイトル">
-                <input
-                  type="text"
-                  value={draft.title}
-                  onChange={(e) => set('title', e.target.value)}
-                />
-              </Field>
-              <Field label="概要">
-                <textarea value={draft.summary} onChange={(e) => set('summary', e.target.value)} />
-              </Field>
-              <div>
-                <div className={s.metaLabel}>
-                  使わない仕組み（シナリオタイプ：
-                  <span data-testid="scenario-type">{scenarioTypeLabel(draft.scenarioType)}</span>）
+      <fieldset disabled={readOnly} className={s.plainFieldset}>
+        <div className={s.twoCol}>
+          <aside className="u-stack">
+            <Panel
+              title="メタデータ"
+              sub="GMがシナリオを選ぶ際の判断材料。前提タグを満たさなくても応募自体は止めない。"
+            >
+              <div className={s.form}>
+                <Field label="タイトル">
+                  <input
+                    type="text"
+                    value={draft.title}
+                    onChange={(e) => set('title', e.target.value)}
+                  />
+                </Field>
+                <Field label="概要">
+                  <textarea
+                    value={draft.summary}
+                    onChange={(e) => set('summary', e.target.value)}
+                  />
+                </Field>
+                <div>
+                  <div className={s.metaLabel}>
+                    使わない仕組み（シナリオタイプ：
+                    <span data-testid="scenario-type">{scenarioTypeLabel(draft.scenarioType)}</span>
+                    ）
+                  </div>
+                  {SCENARIO_TYPE_FLAGS.map((flag) => (
+                    <label key={flag} className="u-row u-small" style={{ marginTop: 4 }}>
+                      <input
+                        type="checkbox"
+                        style={{ width: 'auto' }}
+                        checked={draft.scenarioType[flag]}
+                        onChange={() => toggleType(flag)}
+                      />
+                      {SCENARIO_TYPE_FLAG_LABEL[flag]}
+                    </label>
+                  ))}
                 </div>
-                {SCENARIO_TYPE_FLAGS.map((flag) => (
-                  <label key={flag} className="u-row u-small" style={{ marginTop: 4 }}>
+                <Field label="前提タグ（カンマ区切り。前作の結末タグも同じ仕組み）">
+                  <input
+                    type="text"
+                    value={draft.prerequisiteTags.join(', ')}
+                    onChange={(e) =>
+                      set(
+                        'prerequisiteTags',
+                        e.target.value
+                          .split(/[,、]/)
+                          .map((x) => x.trim())
+                          .filter(Boolean),
+                      )
+                    }
+                  />
+                </Field>
+                <div className={s.formRow}>
+                  <Field label="想定人数（最小）">
                     <input
-                      type="checkbox"
-                      style={{ width: 'auto' }}
-                      checked={draft.scenarioType[flag]}
-                      onChange={() => toggleType(flag)}
+                      type="number"
+                      min={1}
+                      value={draft.partySize.min}
+                      onChange={(e) =>
+                        set('partySize', { ...draft.partySize, min: Number(e.target.value) })
+                      }
                     />
-                    {SCENARIO_TYPE_FLAG_LABEL[flag]}
-                  </label>
-                ))}
-              </div>
-              <Field label="前提タグ（カンマ区切り。前作の結末タグも同じ仕組み）">
-                <input
-                  type="text"
-                  value={draft.prerequisiteTags.join(', ')}
-                  onChange={(e) =>
-                    set(
-                      'prerequisiteTags',
-                      e.target.value
-                        .split(/[,、]/)
-                        .map((x) => x.trim())
-                        .filter(Boolean),
-                    )
-                  }
-                />
-              </Field>
-              <div className={s.formRow}>
-                <Field label="想定人数（最小）">
-                  <input
-                    type="number"
-                    min={1}
-                    value={draft.partySize.min}
+                  </Field>
+                  <Field label="想定人数（最大）">
+                    <input
+                      type="number"
+                      min={1}
+                      value={draft.partySize.max}
+                      onChange={(e) =>
+                        set('partySize', { ...draft.partySize, max: Number(e.target.value) })
+                      }
+                    />
+                  </Field>
+                </div>
+                <Field label="空間モデル（戦闘がある場合）">
+                  <select
+                    value={draft.spaceModel ?? ''}
+                    // 戦闘なしなら選べない。読み込んだ時点で空間モデルを持っていたら、外せるように選べるままにする
+                    disabled={draft.scenarioType.noCombat && draft.spaceModel === null}
                     onChange={(e) =>
-                      set('partySize', { ...draft.partySize, min: Number(e.target.value) })
+                      set('spaceModel', (e.target.value || null) as Scenario['spaceModel'])
                     }
-                  />
+                  >
+                    <option value="">空間なし</option>
+                    <option value="1d">1次元（敵後衛／敵前衛／味方前衛／味方後衛）</option>
+                    <option value="2d">2次元（1マス1キャラクター）</option>
+                  </select>
                 </Field>
-                <Field label="想定人数（最大）">
-                  <input
-                    type="number"
-                    min={1}
-                    value={draft.partySize.max}
-                    onChange={(e) =>
-                      set('partySize', { ...draft.partySize, max: Number(e.target.value) })
-                    }
-                  />
-                </Field>
+                <div className={s.formRow}>
+                  <Field label="推奨CP（ソフトガイド）">
+                    <input
+                      type="number"
+                      min={0}
+                      value={draft.recommendedCp}
+                      onChange={(e) => set('recommendedCp', Number(e.target.value))}
+                    />
+                  </Field>
+                  <Field label="クリア時の基本CP">
+                    <input
+                      type="number"
+                      min={0}
+                      value={draft.baseCp}
+                      onChange={(e) => set('baseCp', Number(e.target.value))}
+                    />
+                  </Field>
+                </div>
               </div>
-              <Field label="空間モデル（戦闘がある場合）">
-                <select
-                  value={draft.spaceModel ?? ''}
-                  // 戦闘なしなら選べない。読み込んだ時点で空間モデルを持っていたら、外せるように選べるままにする
-                  disabled={draft.scenarioType.noCombat && draft.spaceModel === null}
-                  onChange={(e) =>
-                    set('spaceModel', (e.target.value || null) as Scenario['spaceModel'])
-                  }
-                >
-                  <option value="">空間なし</option>
-                  <option value="1d">1次元（敵後衛／敵前衛／味方前衛／味方後衛）</option>
-                  <option value="2d">2次元（1マス1キャラクター）</option>
-                </select>
-              </Field>
-              <div className={s.formRow}>
-                <Field label="推奨CP（ソフトガイド）">
-                  <input
-                    type="number"
-                    min={0}
-                    value={draft.recommendedCp}
-                    onChange={(e) => set('recommendedCp', Number(e.target.value))}
-                  />
-                </Field>
-                <Field label="クリア時の基本CP">
-                  <input
-                    type="number"
-                    min={0}
-                    value={draft.baseCp}
-                    onChange={(e) => set('baseCp', Number(e.target.value))}
-                  />
-                </Field>
-              </div>
-            </div>
-          </Panel>
-        </aside>
-        <div className="u-stack">
-          <Panel
-            title="シナリオデッキの構造"
-            sub="導入→シーン→結末の入れ子。カスタマイズはGMの仕事だが、土台となる構造・取捨選択肢はここで用意する。"
-            actions={
-              <Button size="sm" variant="ghost" onClick={addScene}>
-                シーンを追加
-              </Button>
-            }
-          >
-            {deckBlocked ? <ErrorNote error={new Error(deckBlocked)} /> : null}
-            <DeckTree
-              nodes={draft.deck}
-              renderActions={(n) =>
-                n.kind === 'scene' ? (
-                  <>
-                    {editLink(n)}
-                    <Button size="sm" variant="ghost" onClick={() => toggleDense(n.id)}>
-                      {n.dense ? '軽量に' : '濃密に'}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => removeNode(n.id)}>
+            </Panel>
+          </aside>
+          <div className="u-stack">
+            <Panel
+              title="シナリオデッキの構造"
+              sub="導入→シーン→結末の入れ子。カスタマイズはGMの仕事だが、土台となる構造・取捨選択肢はここで用意する。"
+              actions={
+                <Button size="sm" variant="ghost" onClick={addScene}>
+                  シーンを追加
+                </Button>
+              }
+            >
+              {deckBlocked ? <ErrorNote error={new Error(deckBlocked)} /> : null}
+              <DeckTree
+                nodes={draft.deck}
+                renderActions={(n) =>
+                  n.kind === 'scene' ? (
+                    <>
+                      {editLink(n)}
+                      <Button size="sm" variant="ghost" onClick={() => toggleDense(n.id)}>
+                        {n.dense ? '軽量に' : '濃密に'}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => removeNode(n.id)}>
+                        削除
+                      </Button>
+                    </>
+                  ) : n.kind === 'intro' || n.kind === 'ending' ? (
+                    // 導入・結末も同じ画面で編集する（D4）。消すのは結末の枠の「削除」から
+                    editLink(n)
+                  ) : null
+                }
+              />
+            </Panel>
+            <Panel
+              title="結末"
+              sub="結末は成功／失敗の2値に限らず、任意の数を定義できる。結末を追加すると、それを指す結末のノードもデッキにできる。結末タグは後続シナリオの前提タグと同じ仕組みで突き合わされる。"
+              actions={
+                <Button size="sm" variant="ghost" onClick={addEnding}>
+                  結末を追加
+                </Button>
+              }
+            >
+              {endingBlocked ? <ErrorNote error={new Error(endingBlocked)} /> : null}
+              <div className={s.list}>
+                {draft.endings.map((e) => (
+                  <div key={e.id} className={s.listItem}>
+                    <input
+                      type="text"
+                      style={{ flex: 2, minWidth: 160, width: 'auto' }}
+                      value={e.name}
+                      onChange={(ev) => setEnding(e.id, { name: ev.target.value })}
+                      aria-label="結末の名前"
+                    />
+                    <input
+                      type="text"
+                      style={{ flex: 1, minWidth: 140, width: 'auto' }}
+                      value={e.grantsTag ?? ''}
+                      placeholder="結末タグ（空なら単発）"
+                      onChange={(ev) =>
+                        setEnding(e.id, { grantsTag: ev.target.value || undefined })
+                      }
+                      aria-label="結末タグ"
+                    />
+                    <Button size="sm" variant="ghost" onClick={() => removeEnding(e.id)}>
                       削除
                     </Button>
-                  </>
-                ) : n.kind === 'intro' || n.kind === 'ending' ? (
-                  // 導入・結末も同じ画面で編集する（D4）。消すのは結末の枠の「削除」から
-                  editLink(n)
-                ) : null
-              }
-            />
-          </Panel>
-          <Panel
-            title="結末"
-            sub="結末は成功／失敗の2値に限らず、任意の数を定義できる。結末を追加すると、それを指す結末のノードもデッキにできる。結末タグは後続シナリオの前提タグと同じ仕組みで突き合わされる。"
-            actions={
-              <Button size="sm" variant="ghost" onClick={addEnding}>
-                結末を追加
-              </Button>
-            }
-          >
-            {endingBlocked ? <ErrorNote error={new Error(endingBlocked)} /> : null}
-            <div className={s.list}>
-              {draft.endings.map((e) => (
-                <div key={e.id} className={s.listItem}>
-                  <input
-                    type="text"
-                    style={{ flex: 2, minWidth: 160, width: 'auto' }}
-                    value={e.name}
-                    onChange={(ev) => setEnding(e.id, { name: ev.target.value })}
-                    aria-label="結末の名前"
-                  />
-                  <input
-                    type="text"
-                    style={{ flex: 1, minWidth: 140, width: 'auto' }}
-                    value={e.grantsTag ?? ''}
-                    placeholder="結末タグ（空なら単発）"
-                    onChange={(ev) => setEnding(e.id, { grantsTag: ev.target.value || undefined })}
-                    aria-label="結末タグ"
-                  />
-                  <Button size="sm" variant="ghost" onClick={() => removeEnding(e.id)}>
-                    削除
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </Panel>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          </div>
         </div>
-      </div>
+      </fieldset>
     </>
   );
 }

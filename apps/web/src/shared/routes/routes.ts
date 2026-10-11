@@ -131,7 +131,8 @@ export const routes: RouteMeta[] = [
     path: '/creator/scenarios/:scenarioId',
     title: 'シナリオ編集',
     group: 'creator',
-    description: 'メタデータ・シナリオデッキの構造・結末タグを編集し、シナリオ集へ公開する',
+    description:
+      'メタデータ・シナリオデッキの構造・結末タグの下書きを編集し、シナリオ集へ公開・公開し直す（製作者でなければ公開版を読むだけ）',
     example: '/creator/scenarios/sc-galleon',
   },
   {
@@ -140,7 +141,8 @@ export const routes: RouteMeta[] = [
     group: 'creator',
     description:
       'ロケーション・NPC・情報・選択肢・エネミーのカードの配置と選択肢の移り先、目的・終了条件（仮）の編集。導入・結末のノードも開ける',
-    example: '/creator/scenarios/sc-gray-mansion/scenes/d-s2',
+    // 自分のシナリオ（テスト専用の灰色館の写し）。他人のシナリオは読み取り専用になる
+    example: '/creator/scenarios/sc-mansion-mine/scenes/d-s2',
   },
 
   {

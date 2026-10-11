@@ -102,16 +102,22 @@ describe('checkResponse', () => {
     expect(checkResponse(e, 404, { message: 404 })).toHaveLength(1);
   });
 
-  it('下書きを返しうる API は業務の検査に通らないシナリオも通し、公開の応答では誤り（G10）', () => {
-    expect(checkResponse(find('get', '/scenarios/:id'), 200, scenario(noReplayWithoutTag))).toEqual(
-      [],
-    );
+  const view = (draft: unknown, publication = 'listed', changed = false) => ({
+    draft,
+    publication,
+    changed,
+  });
+
+  it('下書きの API は業務の検査に通らない下書きも通し、公開版の API では誤り', () => {
     expect(
-      checkResponse(find('patch', '/scenarios/:id'), 200, {
-        scenario: scenario(noReplayWithoutTag),
-        file: null,
-      }),
+      checkResponse(find('get', '/scenarios/:id/draft'), 200, view(scenario(noReplayWithoutTag))),
     ).toEqual([]);
+    expect(
+      checkResponse(find('patch', '/scenarios/:id/draft'), 200, view(scenario(noReplayWithoutTag))),
+    ).toEqual([]);
+    expect(
+      checkResponse(find('get', '/scenarios/:id'), 200, scenario(noReplayWithoutTag)),
+    ).not.toEqual([]);
     expect(
       checkResponse(find('post', '/scenarios/:id/publish'), 200, {
         scenario: scenario(noReplayWithoutTag),
@@ -120,16 +126,26 @@ describe('checkResponse', () => {
     ).not.toEqual([]);
   });
 
-  it('下書きの形でも、形の誤り（知らないキー）は誤り', () => {
+  it('下書きでも、形の誤り（知らないキー）と列挙の外の公開の状態は誤り', () => {
     expect(
-      checkResponse(find('get', '/scenarios/:id'), 200, { ...scenario(), extra: 1 }),
+      checkResponse(find('get', '/scenarios/:id/draft'), 200, view({ ...scenario(), extra: 1 })),
+    ).not.toEqual([]);
+    expect(
+      checkResponse(find('get', '/scenarios/:id/draft'), 200, view(scenario(), 'published')),
     ).not.toEqual([]);
   });
 
-  it('同じパスでメソッドが違う項目の形を返したら誤り（GET はシナリオ、PATCH は { scenario, file }）', () => {
+  it('公開・非公開の応答のファイルの結果に null は書けない（下書きの保存はファイルを返さない）', () => {
     expect(
-      checkResponse(find('get', '/scenarios/:id'), 200, { scenario: scenario(), file: null }),
+      checkResponse(find('post', '/scenarios/:id/publish'), 200, {
+        scenario: scenario(),
+        file: null,
+      }),
     ).not.toEqual([]);
-    expect(checkResponse(find('patch', '/scenarios/:id'), 200, scenario())).not.toEqual([]);
+  });
+
+  it('同じパスの公開版と下書きを取り違えたら誤り（GET /scenarios/:id と GET /scenarios/:id/draft）', () => {
+    expect(checkResponse(find('get', '/scenarios/:id'), 200, view(scenario()))).not.toEqual([]);
+    expect(checkResponse(find('get', '/scenarios/:id/draft'), 200, scenario())).not.toEqual([]);
   });
 });

@@ -1,22 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useCreateScenario } from '@/entities/scenario/api/mutations';
-import { useScenarios } from '@/entities/scenario/api/queries';
+import { useScenarioDrafts } from '@/entities/scenario/api/queries';
+import { ScenarioPublicationPill } from '@/entities/scenario/ui/ScenarioPublicationPill';
 import { relativeTime } from '@/shared/lib/format';
 import s from '@/shared/ui/page.module.css';
-import {
-  Button,
-  ErrorNote,
-  Loading,
-  PageHeader,
-  Panel,
-  RoleBadge,
-  StatusPill,
-} from '@/shared/ui/ui';
+import { Button, ErrorNote, Loading, PageHeader, Panel, RoleBadge } from '@/shared/ui/ui';
 
-/** シナリオ製作者のシナリオ管理：自分が作ったシナリオの一覧と新規作成 */
+/** シナリオ製作者のシナリオ管理：自分が作ったシナリオ（下書き）の一覧と新規作成 */
 export function CreatorScenarioListPage() {
-  const scenarios = useScenarios(true);
+  const scenarios = useScenarioDrafts();
   const create = useCreateScenario();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
@@ -49,7 +42,7 @@ export function CreatorScenarioListPage() {
               onClick={() =>
                 create.mutate(
                   { title },
-                  { onSuccess: (sc) => navigate(`/creator/scenarios/${sc.id}`) },
+                  { onSuccess: (v) => navigate(`/creator/scenarios/${v.draft.id}`) },
                 )
               }
             >
@@ -64,8 +57,8 @@ export function CreatorScenarioListPage() {
         </Panel>
         <Panel title="シナリオ一覧">
           <div className={s.list}>
-            {scenarios.data.map((sc) => (
-              <div key={sc.id} className={s.listItem}>
+            {scenarios.data.map(({ draft: sc, publication, changed }) => (
+              <div key={sc.id} className={s.listItem} data-scenario-row>
                 <div className={s.itemLeft}>
                   <span>
                     <Link to={`/creator/scenarios/${sc.id}`}>{sc.title}</Link>
@@ -76,9 +69,7 @@ export function CreatorScenarioListPage() {
                     </span>
                   </span>
                 </div>
-                <StatusPill status={sc.libraryStatus === 'published' ? 'approved' : 'neutral'}>
-                  {sc.libraryStatus === 'published' ? 'シナリオ集に公開中' : '下書き'}
-                </StatusPill>
+                <ScenarioPublicationPill publication={publication} changed={changed} />
               </div>
             ))}
           </div>

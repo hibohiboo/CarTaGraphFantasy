@@ -25,9 +25,11 @@ describe('findEndpoint（どの一覧の項目に当たるか）', () => {
     ['POST', '/sessions/s-1/proposals', 'POST /sessions/:id/proposals'],
     ['POST', '/sessions/s-1/proposals/p-1/approve', 'POST /sessions/:id/proposals/:pid/approve'],
     ['GET', '/scenarios', 'GET /scenarios'],
-    ['GET', '/scenarios?mine=1', 'GET /scenarios'],
+    ['GET', '/scenarios?x=1', 'GET /scenarios'],
     ['GET', '/scenarios/sc-1', 'GET /scenarios/:id'],
-    ['PATCH', '/scenarios/sc-1', 'PATCH /scenarios/:id'],
+    ['GET', '/scenarios/sc-1/draft', 'GET /scenarios/:id/draft'],
+    ['PATCH', '/scenarios/sc-1/draft', 'PATCH /scenarios/:id/draft'],
+    ['GET', '/scenario-drafts', 'GET /scenario-drafts'],
   ])('%s %s は %s', (method, path, expected) => {
     const e = findEndpoint(request(method, path));
     expect(e && `${e.method.toUpperCase()} ${e.path}`).toBe(expected);
@@ -36,6 +38,7 @@ describe('findEndpoint（どの一覧の項目に当たるか）', () => {
   it('一覧に無いパス・メソッドは見つからない', () => {
     expect(findEndpoint(request('GET', '/nowhere'))).toBeUndefined();
     expect(findEndpoint(request('PATCH', '/sessions/s-1'))).toBeUndefined();
+    expect(findEndpoint(request('PATCH', '/scenarios/sc-1'))).toBeUndefined();
     expect(findEndpoint(request('GET', '/sessions/s-1/extra/more'))).toBeUndefined();
   });
 });

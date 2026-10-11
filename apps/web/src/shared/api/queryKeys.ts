@@ -9,7 +9,10 @@ export const keys = {
   cardPool: ['card-pool'] as const,
   sessions: ['sessions'] as const,
   session: (id: string) => ['sessions', id] as const,
-  scenarios: (mine: boolean) => ['scenarios', { mine }] as const,
-  scenario: (id: string) => ['scenarios', id] as const,
+  // シナリオの公開版・下書きは、どれも ['scenarios'] で始める（保存・公開の後にまとめて作り直すため）
+  scenarios: ['scenarios', 'library'] as const,
+  scenario: (id: string) => ['scenarios', 'published', id] as const,
+  scenarioDrafts: ['scenarios', 'drafts'] as const,
+  scenarioDraft: (id: string) => ['scenarios', 'draft', id] as const,
   library: ['library'] as const,
 };

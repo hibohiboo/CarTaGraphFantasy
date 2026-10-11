@@ -28,8 +28,6 @@ export interface Endpoint {
   description?: string;
   /** リクエストの本文（本文を読む API だけ）。受け取る側の検査と同じもの */
   body?: AnyRequestBody;
-  /** クエリ文字列 */
-  query?: z.ZodObject;
   responses: EndpointResponses;
 }
 

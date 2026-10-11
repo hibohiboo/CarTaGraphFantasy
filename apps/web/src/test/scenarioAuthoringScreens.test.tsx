@@ -8,12 +8,18 @@ import { findScenarioRefErrors } from '@cartagraph/domain/scenario/refs';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import type { ScenarioDraftView } from '@/entities/scenario/api/types';
 import { api } from '@/shared/api/api';
 import { setScenarioFileStore } from '../mocks/handlers';
 import { DEAD_END, recruitCard, recruitPanel } from './gmlessHelpers';
 import { renderAt } from './renderAt';
 
-const get = (id: string) => api.get<Scenario>(`/scenarios/${id}`);
+/** 製作者の下書き（保存の結果はここに入る。公開版は公開し直すまで変わらない） */
+const get = async (id: string) =>
+  (await api.get<ScenarioDraftView>(`/scenarios/${id}/draft`)).draft;
+/** 下書きを作る（公開版は作らない） */
+const createDraft = async (title: string) =>
+  (await api.post<ScenarioDraftView>('/scenarios', { title })).draft;
 const nodeOf = (s: Scenario, id: string) => s.deck.find((n) => n.id === id) as DeckNode;
 const button = (name: string | RegExp) => screen.getByRole('button', { name });
 
@@ -89,21 +95,33 @@ describe('シーン編集：選択肢の移り先', () => {
 
   it('デッキに無い移り先は「（見つからない：〈id〉）」と出て、選び直せる。ほかのカードには出ない', async () => {
     const user = userEvent.setup();
-    renderAt('/creator/scenarios/sc-village-always-win/scenes/vs-square');
-    const select = within(await cardRow('（テスト用）迷い道')).getByLabelText('移り先');
-    expect(select).toHaveValue('vw-nowhere');
-    expect(optionLabels(select)).toContain('（見つからない：vw-nowhere）');
+    // 自分のシナリオの下書きに、デッキに無いノードを指す選択肢を置く（他人のシナリオは読み取り専用）
+    const s = await get('sc-mansion-mine');
+    const lost: CardDef = {
+      id: 'c-lost',
+      kind: 'choice',
+      name: '迷い道',
+      tags: [],
+      nextNodeId: 'd-nowhere',
+    };
+    await api.patch('/scenarios/sc-mansion-mine/draft', {
+      deck: s.deck.map((n) => (n.id === 'd-s2' ? { ...n, cards: [...n.cards, lost] } : n)),
+    });
+    renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-s2');
+    const select = within(await cardRow('迷い道')).getByLabelText('移り先');
+    expect(select).toHaveValue('d-nowhere');
+    expect(optionLabels(select)).toContain('（見つからない：d-nowhere）');
     expect(
-      within(await cardRow('お店へ行く')).queryByRole('option', { name: /見つからない/ }),
+      within(await cardRow('調べる')).queryByRole('option', { name: /見つからない/ }),
     ).not.toBeInTheDocument();
-    await user.selectOptions(select, 'vs-shop');
-    expect(select).toHaveValue('vs-shop');
+    await user.selectOptions(select, 'd-s3');
+    expect(select).toHaveValue('d-s3');
   });
 
   it('候補外の移り先（導入を指す）は「（候補外：〈名前〉）」と出て、選び直さずに保存しても残る', async () => {
     const user = userEvent.setup();
     const s = await get('sc-mansion-mine');
-    await api.patch(`/scenarios/sc-mansion-mine`, {
+    await api.patch(`/scenarios/sc-mansion-mine/draft`, {
       deck: s.deck.map((n) =>
         n.id === 'd-s2'
           ? {
@@ -136,7 +154,7 @@ describe('シーン編集：選択肢の移り先', () => {
       soloEffect: { raiseAbility: 'mind' },
     };
     const s = await get('sc-mansion-mine');
-    await api.patch(`/scenarios/sc-mansion-mine`, {
+    await api.patch(`/scenarios/sc-mansion-mine/draft`, {
       deck: s.deck.map((n) => (n.id === 'd-s2' ? { ...n, cards: [...n.cards, rich] } : n)),
     });
     renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-s2');
@@ -199,7 +217,7 @@ describe('シーン編集：導入と結末', () => {
     const user = userEvent.setup();
     const s = await get('sc-mansion-mine');
     const epilogue: CardDef = { id: 'c-epilogue', kind: 'info', name: '後日談', tags: [] };
-    await api.patch(`/scenarios/sc-mansion-mine`, {
+    await api.patch(`/scenarios/sc-mansion-mine/draft`, {
       deck: s.deck.map((n) => (n.id === 'd-end' ? { ...n, cards: [epilogue] } : n)),
     });
     renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-end');
@@ -211,7 +229,7 @@ describe('シーン編集：導入と結末', () => {
   it('結末に無い結末を指す結末のノードは「（見つからない：〈id〉）」と出て、選び直さずに保存しても残る', async () => {
     const user = userEvent.setup();
     const s = await get('sc-mansion-mine');
-    await api.patch(`/scenarios/sc-mansion-mine`, {
+    await api.patch(`/scenarios/sc-mansion-mine/draft`, {
       deck: s.deck.map((n) => (n.id === 'd-end' ? { ...n, endingId: 'e-gone' } : n)),
     });
     renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-end');
@@ -225,7 +243,7 @@ describe('シーン編集：導入と結末', () => {
 
   it('自分自身を指す選択肢（JSON で書いたもの）は「（候補外：〈名前〉）」と出る', async () => {
     const s = await get('sc-mansion-mine');
-    await api.patch(`/scenarios/sc-mansion-mine`, {
+    await api.patch(`/scenarios/sc-mansion-mine/draft`, {
       deck: s.deck.map((n) =>
         n.id === 'd-s2'
           ? {
@@ -244,7 +262,7 @@ describe('シーン編集：導入と結末', () => {
 
 describe('シナリオ編集：削除と結末', () => {
   const open = async (title = '編集のテスト') => {
-    const sc = await api.post<Scenario>('/scenarios', { title });
+    const sc = await createDraft(title);
     const router = renderAt(`/creator/scenarios/${sc.id}`);
     await screen.findByRole('heading', { level: 1, name: title });
     return { sc, router };
@@ -281,7 +299,7 @@ describe('シナリオ編集：削除と結末', () => {
   it('移り先になっているシーンは削除できず理由が出る。指されていないシーンは消える', async () => {
     const user = userEvent.setup();
     const s = await get('sc-mansion-mine');
-    await api.patch('/scenarios/sc-mansion-mine', {
+    await api.patch('/scenarios/sc-mansion-mine/draft', {
       deck: s.deck.map((n) =>
         n.id === 'd-intro'
           ? {
@@ -306,7 +324,7 @@ describe('シナリオ編集：削除と結末', () => {
   it('下書きの中で、指している側のシーンを先に消すと、指されていたシーンも消せる', async () => {
     const user = userEvent.setup();
     const s = await get('sc-mansion-mine');
-    await api.patch('/scenarios/sc-mansion-mine', {
+    await api.patch('/scenarios/sc-mansion-mine/draft', {
       deck: s.deck.map((n) =>
         n.id === 'd-s1'
           ? {
@@ -362,9 +380,9 @@ describe('シナリオ編集：削除と結末', () => {
 
   it('移り先になっている結末のノードの結末は消せず、理由が出る', async () => {
     const user = userEvent.setup();
-    const sc = await api.post<Scenario>('/scenarios', { title: '結末を指す' });
+    const sc = await createDraft('結末を指す');
     const endNode = sc.deck.find((n) => n.kind === 'ending') as DeckNode;
-    await api.patch(`/scenarios/${sc.id}`, {
+    await api.patch(`/scenarios/${sc.id}/draft`, {
       deck: sc.deck.map((n) =>
         n.kind === 'intro'
           ? {
