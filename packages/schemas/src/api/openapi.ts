@@ -123,6 +123,9 @@ function convert(schema: z.ZodType, io: 'input' | 'output', components: Json): J
   return rewriteRefs(rest) as Json;
 }
 
+/** タグは URL の最初の区切り（`/sessions/:id/play` → `sessions`） */
+const tagOf = (e: Endpoint): string => e.path.split('/')[1] ?? '';
+
 const pathParams = (path: string): string[] =>
   [...path.matchAll(/:([^/]+)/g)].map((m) => m[1] as string);
 
@@ -166,7 +169,7 @@ function operation(e: Endpoint, components: Json): Json {
     operationId: operationId(e),
     summary: e.summary,
     ...(e.description ? { description: e.description } : {}),
-    tags: [e.path.split('/')[1]],
+    tags: [tagOf(e)],
     ...(parameters.length > 0 ? { parameters } : {}),
     ...(e.body
       ? {
@@ -195,14 +198,14 @@ function notesSection(): string {
 }
 
 /** OpenAPI 3.1 の文書 */
-export function buildOpenApiDocument(list: readonly Endpoint[] = endpoints): Json {
+export function buildOpenApiDocument(): Json {
   const components: Json = {};
   const paths: Record<string, Json> = {};
-  for (const e of list) {
+  for (const e of endpoints) {
     const p = openApiPath(e.path);
     paths[p] = { ...paths[p], [e.method]: operation(e, components) };
   }
-  const usedTags = [...new Set(list.map((e) => e.path.split('/')[1] as string))];
+  const usedTags = [...new Set(endpoints.map(tagOf))];
   return {
     openapi: '3.1.0',
     info: {
