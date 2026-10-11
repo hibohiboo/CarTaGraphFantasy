@@ -32,7 +32,19 @@ description: 機能追加・振る舞いの変更を「プラン作成→AIレ�
 
 ## 6. AIレビュー（並列）
 
-`design-reviewer`・`edge-case-reviewer`・`spec-reviewer` を並列で起動し、P0〜P2 に整理する。P0・P1 は直して再レビュー。3ラウンドを超えたら人間に裁定を求める。
+`design-reviewer`・`edge-case-reviewer`・`spec-reviewer` を並列で起動し、P0〜P2 に整理する。P0・P1 は直して、指摘を出した観点のサブエージェントだけで再レビューする（`docs/process/rules/review.md`「終わりの条件」）。3ラウンドを超えたら人間に裁定を求める。
+
+起動するときは Agent ツールの `model` で段を指定する（定義の `inherit` は変えない）。既定は `design-reviewer` が `opus`、`edge-case-reviewer`・`spec-reviewer` が `sonnet`（`docs/process/rules/review.md`「レビュー観点」）。
+
+## モデルの段の割り当て（Claude Code）
+
+プランの「実装順」の段は、Claude Code では次のモデルにする。
+
+- 強い … `opus`
+- 標準 … `sonnet`
+- 軽い … `haiku`（Explore など調査のサブエージェントは、`model: haiku` を指定して起動する）
+
+メインのセッションのモデルは、段が変わるところで人間に `/model` での切り替えを頼む（自分では切り替えられない）。プランの作成・見直し（1〜3）は強い、実装とテスト（4〜5）は標準が既定。
 
 ## 7. 人間レビュー
 
