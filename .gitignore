@@ -4,6 +4,8 @@ docs/.vitepress/dist/
 apps/*/dist/
 apps/web/playwright-report/
 apps/web/test-results/
+# Vitest の HTML レポート（pnpm test:report。deploy.yml が Pages に載せる）
+*/*/vitest-report/
 *.log
 # 開発サーバーの書き込みの口が書いている途中の一時ファイル（apps/web/vite/scenarioFilePlugin.ts）
 scenarios/.*.tmp

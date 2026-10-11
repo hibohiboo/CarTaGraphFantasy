@@ -118,6 +118,7 @@ export default withMermaid(
             { text: '依頼文サンプル', link: '/process/prompt-sample' },
             { text: '体制の進化ログ', link: '/process/evolution' },
             { text: '体制の進化のタイムライン', link: '/process/timeline' },
+            { text: 'テストレポート', link: '/architecture/test-report' },
           ],
         },
         {

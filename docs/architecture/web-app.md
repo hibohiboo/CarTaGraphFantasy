@@ -3,7 +3,7 @@
 [技術スタック](index.md)のモノレポ方針に沿って追加した、React製フロントエンドの構成をまとめる。[試作フェーズの引き継ぎ](prototype-handover.md)で決めたデザイントークン・コンポーネント境界を、そのままReactに移植したもの。
 
 公開先：`https://hibohiboo.github.io/CarTaGraphFantasy/app/`（このdocsサイトと同じGitHub Pagesの `app/` 配下）
-E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（Playwrightのスクリーンショット付きHTMLレポート。mainへのpushごとに更新）
+テストレポート（E2E・Vitest）：[テストレポート](test-report.md)の一覧から開く（mainへのpushごとに更新）
 
 ## 位置づけ
 
@@ -18,7 +18,7 @@ E2Eレポート：`https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/`（
 コードのディレクトリ構成と依存の向きは、[アーキテクチャルール](../process/rules/architecture.md)の「構造」「依存の向き」が正。ここでは、そこに書いていない GitHub Pages 用のスクリプトだけを挙げる。
 
 - `scripts/copy-web-to-pages.mjs` … ビルド成果物を docs の dist 配下 `app/` へコピー
-- `scripts/copy-e2e-report-to-pages.mjs` … Playwright の HTML レポートを docs の dist 配下 `e2e-report/` へコピー
+- `scripts/copy-test-reports-to-pages.mjs` … Playwright・Vitest の HTML レポートを docs の dist 配下 `e2e-report/`・`vitest-report/` へコピー
 
 ## シナリオの JSON
 

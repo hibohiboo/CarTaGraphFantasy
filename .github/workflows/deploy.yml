@@ -64,9 +64,14 @@ jobs:
         run: pnpm web:e2e
         continue-on-error: true
 
-      - name: Copy E2E report into Pages dist
+      - name: Vitest (report only, does not block deploy)
         if: always()
-        run: node scripts/copy-e2e-report-to-pages.mjs
+        run: pnpm test:report
+        continue-on-error: true
+
+      - name: Copy test reports into Pages dist
+        if: always()
+        run: node scripts/copy-test-reports-to-pages.mjs
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5

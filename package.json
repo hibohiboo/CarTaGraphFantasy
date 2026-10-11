@@ -21,6 +21,7 @@
     "domain:typecheck": "pnpm --filter @cartagraph/domain typecheck",
     "schemas:test": "pnpm --filter @cartagraph/schemas test",
     "schemas:typecheck": "pnpm --filter @cartagraph/schemas typecheck",
+    "test:report": "pnpm -r --no-bail run test:report",
     "tools:test": "node --test \"scripts/*.test.mjs\" \".claude/hooks/*.test.mjs\"",
     "sim:auto-combat": "tsx scripts/simulate-auto-combat.ts",
     "build:pages": "pnpm run docs:build && pnpm run web:build && node scripts/copy-web-to-pages.mjs",

@@ -9,9 +9,11 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:report": "vitest run --reporter=default --reporter=html --outputFile.html=vitest-report/index.html"
   },
   "devDependencies": {
+    "@vitest/ui": "^4.1.11",
     "typescript": "~5.9.0",
     "vitest": "^4.1.11"
   },

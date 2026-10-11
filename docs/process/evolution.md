@@ -47,6 +47,12 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。[体制の進化のタイムライン](timeline.md)が、この節と「却下」からビルド時に年表と内訳を作る。きっかけ・止め方は、まとめの1行（`- **きっかけ** — … ／ **止め方** — …`）か、小項目ごとの1行（`- きっかけ：… ／ 止め方：…`）で書く。読めないとビルドが止まる。止め方は最初の「。」（括弧の外）までを読むので、まだやっていない案は「。」の後ろに書く
 
+### 2026-10-11 Vitest の HTML レポートも Pages に載せ、テストレポートのページから開けるようにした
+
+- **内容** — デプロイ（`deploy.yml`）で E2E に続けて `pnpm test:report`（`apps/web`・`packages/domain`・`packages/schemas` の Vitest を HTML レポート付きで流す。要る `@vitest/ui` を3パッケージに足した）を流し、`vitest-report/web`・`domain`・`schemas` に載せる。E2E と同じく、落ちてもデプロイは止めない。写すスクリプトは `copy-e2e-report-to-pages.mjs` を `copy-test-reports-to-pages.mjs` に改名して4つのレポートをまとめて扱う。一覧のページ（`docs/architecture/test-report.md`）を作り、サイドバーの「開発」の末尾から開けるようにした（E2E レポートの URL は `web-app.md` に書いてあるだけで、サイトから辿れなかった）
+- **反映先** — `.github/workflows/deploy.yml`、`scripts/copy-test-reports-to-pages.mjs`（改名）、`package.json`・`apps/web/package.json`・`packages/domain/package.json`・`packages/schemas/package.json`、`.gitignore`、`AGENTS.md`、`docs/architecture/test-report.md`（新設）・`web-app.md`、`docs/.vitepress/config.mts`
+- **きっかけ** — 人間の要望 ／ **止め方** — 置き場所（テストレポートのページを新設する）
+
 ### 2026-10-10 API のスキーマの共用の振り返りから2件を採用（人間に確かめる時点、層ごとの import の禁止の検査）
 
 - **人間に確かめるのは、プランの AI レビューの後** — プランの「人間に確かめること」は、プランの AI レビューの後に確かめ、案を推すときは前提をコードで確かめた事実を添える、を足した。API のスキーマの共用で、人間への確認（下書きの保存の検査）とプランのレビューを同時に走らせ、推した案（`scenarioSchema.partial()`）の前提がレビューで崩れて（知らないキーを断り、業務の検査も含む作り）、推奨を取り下げた。反映先：`docs/process/index.md`（プランドキュメントの8項目）
