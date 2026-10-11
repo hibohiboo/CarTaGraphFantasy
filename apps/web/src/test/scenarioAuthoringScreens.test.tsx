@@ -428,8 +428,12 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     setScenarioFileStore({ write: async (s) => void written.push(structuredClone(s)) });
     const title = '村はずれの小道';
 
+    // GM の一覧を先に読み込んでおく（公開で作り直されることも確かめる）
+    const router = renderAt('/gm/scenarios');
+    await screen.findByRole('heading', { level: 1, name: 'シナリオを選ぶ' });
+
     // 製作者：作る
-    const router = renderAt('/creator/scenarios');
+    await router.navigate('/creator/scenarios');
     await user.type(await screen.findByPlaceholderText('シナリオのタイトル'), title);
     await user.click(button('下書きを作成'));
     await screen.findByRole('heading', { level: 1, name: title });
@@ -460,8 +464,20 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     await screen.findByRole('heading', { level: 1, name: title });
     await user.type(screen.getByLabelText('結末タグ'), '村を見た');
     await save(user);
-    await user.click(button('シナリオ集へ公開'));
+    // 保存は下書きだけ。ファイルに書かず、公開する前は GM の一覧に無く、詳細も開けない（D2・D5）
+    expect(written).toEqual([]);
+    expect(within(screen.getByRole('banner')).getByText('下書きのみ')).toBeInTheDocument();
+    await router.navigate('/gm/scenarios');
+    await screen.findByText('村はずれの一歩');
+    expect(screen.queryByRole('link', { name: title })).not.toBeInTheDocument();
+    await router.navigate(`/gm/scenarios/${id}`);
+    expect(await screen.findByRole('alert')).toHaveTextContent('シナリオ が見つかりません');
+
+    await router.navigate(`/creator/scenarios/${id}`);
+    await user.click(await screen.findByRole('button', { name: 'シナリオ集へ公開' }));
     await screen.findByText(`scenarios/${id}.json に保存しました`);
+    expect(written).toHaveLength(1);
+    expect(within(screen.getByRole('banner')).getByText('シナリオ集に公開中')).toBeInTheDocument();
 
     // 書かれた JSON が、遊べる形になっている
     const file = written.at(-1) as Scenario;
@@ -474,8 +490,9 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     expect(file.endings[0]?.grantsTag).toBe('村を見た');
     expect(safeParseScenarioFile(`scenarios/${id}.json`, toScenarioFile(file)).ok).toBe(true);
 
-    // GM：GM 不在・提案不可で募集する
-    await router.navigate(`/gm/scenarios/${id}`);
+    // GM：シナリオ集の一覧から選び、GM 不在・提案不可で募集する
+    await router.navigate('/gm/scenarios');
+    await user.click(await screen.findByRole('link', { name: title }));
     const p = await recruitPanel();
     await user.click(within(p).getByLabelText('GM 不在（PL が自由に始める）'));
     await user.selectOptions(within(p).getByLabelText('提案の扱い'), 'disabled');
@@ -484,23 +501,62 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     await screen.findByRole('heading', { name: '自分の募集' });
 
     // PL：絞り込んで自分の PC で始め、結末まで
-    await router.navigate('/pl/sessions');
-    await screen.findByRole('heading', { name: '参加できるセッション' });
-    await user.click(screen.getByLabelText('GM 不在の募集だけ'));
-    const card = await recruitCard(title, 'ユウ');
-    await user.selectOptions(within(card).getByLabelText('始める PC'), 'pc-jin');
-    await user.click(within(card).getByRole('button', { name: 'この PC で始める' }));
-    await user.click(await screen.findByRole('button', { name: /村へ/ }));
-    // 移ると、手札は移り先のノードの選択肢で配り直される（play-and-field.md「次のシーンへ進む」）
-    await screen.findByRole('button', { name: /帰る/ });
-    expect(screen.queryByRole('button', { name: /村へ/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /新たな選択肢を提案/ })).not.toBeInTheDocument();
-    await user.click(await screen.findByRole('button', { name: /帰る/ }));
-    expect(await screen.findByText('このセッションは終了しています。')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '結末「結末」' })).toBeInTheDocument();
+    const playThrough = async (pc: string) => {
+      await router.navigate('/pl/sessions');
+      await screen.findByRole('heading', { name: '参加できるセッション' });
+      await user.click(screen.getByLabelText('GM 不在の募集だけ'));
+      const card = await recruitCard(title, 'ユウ');
+      await user.selectOptions(within(card).getByLabelText('始める PC'), pc);
+      await user.click(within(card).getByRole('button', { name: 'この PC で始める' }));
+      await user.click(await screen.findByRole('button', { name: /村へ/ }));
+      // 移ると、手札は移り先のノードの選択肢で配り直される（play-and-field.md「次のシーンへ進む」）
+      await screen.findByRole('button', { name: /帰る/ });
+      expect(screen.queryByRole('button', { name: /村へ/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /新たな選択肢を提案/ })).not.toBeInTheDocument();
+      await user.click(await screen.findByRole('button', { name: /帰る/ }));
+      expect(await screen.findByText('このセッションは終了しています。')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: '結末「結末」' })).toBeInTheDocument();
+    };
+    await playThrough('pc-jin');
     expect(screen.getAllByText(/結末タグ『村を見た』を得た。/).length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole('link', { name: 'キャラクターシート' }));
     expect(await screen.findByText('村を見た')).toBeInTheDocument();
+
+    // 製作者：下書きの結末タグを変えて保存する。公開し直すまで届かない（D1）
+    await router.navigate(`/creator/scenarios/${id}`);
+    const tag = await screen.findByLabelText('結末タグ');
+    await user.clear(tag);
+    await user.type(tag, '村を出た');
+    await save(user);
+    expect(
+      await within(screen.getByRole('banner')).findByText('公開版と違う変更あり'),
+    ).toBeInTheDocument();
+    await router.navigate('/creator/scenarios');
+    // 一覧は保存で作り直される（前の一覧が先に出るので、出るまで待つ）
+    await waitFor(() => {
+      const row = screen
+        .getByRole('link', { name: title })
+        .closest('[data-scenario-row]') as HTMLElement;
+      expect(within(row).getByText('公開版と違う変更あり')).toBeInTheDocument();
+    });
+
+    // 新しく始めたセッションは公開版のまま（別の PC で）
+    await playThrough('pc-akari');
+    expect(screen.getAllByText(/結末タグ『村を見た』を得た。/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/結末タグ『村を出た』を得た。/)).not.toBeInTheDocument();
+
+    // 公開し直すと、変更ありの表示が消え、新しく始めたセッションは新しい結末タグになる
+    await router.navigate(`/creator/scenarios/${id}`);
+    await user.click(await screen.findByRole('button', { name: '公開し直す' }));
+    await screen.findByText(`scenarios/${id}.json に保存しました`);
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('banner')).queryByText('公開版と違う変更あり'),
+      ).not.toBeInTheDocument(),
+    );
+    expect(written).toHaveLength(2);
+    await playThrough('pc-jin');
+    expect(screen.getAllByText(/結末タグ『村を出た』を得た。/).length).toBeGreaterThan(0);
   });
 });
