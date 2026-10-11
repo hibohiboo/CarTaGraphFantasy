@@ -47,6 +47,14 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。[体制の進化のタイムライン](timeline.md)が、この節と「却下」からビルド時に年表と内訳を作る。きっかけ・止め方は、まとめの1行（`- **きっかけ** — … ／ **止め方** — …`）か、小項目ごとの1行（`- きっかけ：… ／ 止め方：…`）で書く。読めないとビルドが止まる。止め方は最初の「。」（括弧の外）までを読むので、まだやっていない案は「。」の後ろに書く
 
+### 2026-10-11 API の一覧を zod で置き、モックの応答が一覧どおりかをテストで止め、OpenAPI を Redoc で公開する
+
+- **内容** — API の一覧（メソッド・パス・本文・クエリ・状態コードごとの応答）を `packages/schemas` に置いた。応答の形は `packages/domain` の interface を zod に変えて1か所にした。web のテストの中で、MSW のハンドラと一覧が1対1か、MSW が返した状態コードと本文が一覧どおりかを確かめ、ずれたらテストを落とす。一覧から OpenAPI の文書を作って `redocly lint` を通し、Redoc の HTML を `/api-docs/` に公開する。文書の生成と lint は CI と pre-push でも流す（`docs/plans/2026-10-11-APIドキュメント.md`）
+- **理由** — 本文と応答の形がハンドラのコードの中にしか無く、API ドキュメントを作れなかった。一覧を書いても、モックの振る舞いとずれれば嘘のドキュメントになるので、ずれを機械で止める
+- **実装レビューで足したこと** — テストの本体が応答を待たずに終わっても、後片付けの前に応答が届くまで待つ（上限2秒。遅れた誤りが次のテストに付く・消えるのを防ぐ）。一覧に無い失敗を試すときの決まり（一覧に足すか `HttpResponse.error()`）を testing.md に、API ドキュメントでの仮ルールの印を architecture.md「境界」に書いた（「境界」の仮ルールの参照先が `docs/open-questions.md` のままだったのも `docs/provisional/` に直した）
+- **反映先** — `packages/domain/src/*/model.ts`、`packages/schemas/src/`（`endpoint/`・`api/`・各ディレクトリの `endpoints.ts`・`response.ts`）、`biome.json`（schemas の中のディレクトリの向き）、`apps/web/src/test/setup.ts`・`responseCheck.ts`・`apiEndpoints.test.ts`、`scripts/build-api-docs.ts`、`redocly.yaml`、`package.json`、`.githooks/pre-push`、`.github/workflows/ci.yml`、`docs/process/rules/architecture.md`・`testing.md`、`docs/architecture/web-app.md`・`known-issues.md`、`AGENTS.md`、`README.md`、`docs/.vitepress/config.mts`
+- **きっかけ** — 人間の要望 ／ **止め方** — 機械（モックの応答の検査と一覧の1対1をテストで、OpenAPI の正しさを CI と pre-push の lint で止める）
+
 ### 2026-10-11 Vitest の HTML レポートも Pages に載せ、テストレポートのページから開けるようにした
 
 - **内容** — デプロイ（`deploy.yml`）で E2E に続けて `pnpm test:report`（`apps/web`・`packages/domain`・`packages/schemas` の Vitest を HTML レポート付きで流す。要る `@vitest/ui` を3パッケージに足した）を流し、`vitest-report/web`・`domain`・`schemas` に載せる。E2E と同じく、落ちてもデプロイは止めない。写すスクリプトは `copy-e2e-report-to-pages.mjs` を `copy-test-reports-to-pages.mjs` に改名して4つのレポートをまとめて扱う。一覧のページ（`docs/architecture/test-report.md`）を作り、サイドバーの「開発」の末尾から開けるようにした（E2E レポートの URL は `web-app.md` に書いてあるだけで、サイトから辿れなかった）

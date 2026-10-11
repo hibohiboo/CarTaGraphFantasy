@@ -24,13 +24,15 @@
     "test:report": "pnpm -r --no-bail run test:report",
     "tools:test": "node --test \"scripts/*.test.mjs\" \".claude/hooks/*.test.mjs\"",
     "sim:auto-combat": "tsx scripts/simulate-auto-combat.ts",
-    "build:pages": "pnpm run docs:build && pnpm run web:build && node scripts/copy-web-to-pages.mjs",
+    "build:pages": "pnpm run docs:build && pnpm run web:build && node scripts/copy-web-to-pages.mjs && pnpm run api:docs",
+    "api:docs": "tsx scripts/build-api-docs.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "prepare": "node scripts/setup-git-hooks.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.13",
+    "@redocly/cli": "^2.62.1",
     "mermaid": "^11.17.2",
     "tsx": "^4.23.15",
     "vitepress": "^1.6.4",

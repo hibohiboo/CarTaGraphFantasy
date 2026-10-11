@@ -72,3 +72,7 @@ jobs:
 
       - name: Build docs (link check)
         run: pnpm docs:build
+
+      # docs:build が dist を作り直すので、その後に流す。壊れた文書が main に入ってデプロイだけが落ちるのを防ぐ
+      - name: Build API docs (redocly lint)
+        run: pnpm api:docs

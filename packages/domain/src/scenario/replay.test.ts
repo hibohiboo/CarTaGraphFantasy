@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EndingDef } from './model';
-import { endingDefSchema } from './model';
+import { endingDefSchema, endingDefShapeSchema } from './model';
 import { replayBlockedBy, replayBlockedMessage } from './replay';
 
 const cleared: EndingDef = {
@@ -49,5 +49,20 @@ describe('endingDefSchema の noReplay', () => {
     expect(
       endingDefSchema.safeParse({ id: 'e', name: '結末', grantsTag: 't', noReplay: 'yes' }).success,
     ).toBe(false);
+  });
+});
+
+describe('endingDefShapeSchema（下書きの応答の形。docs/plans/2026-10-11-APIドキュメント.md G10）', () => {
+  it('業務の検査を外すので、noReplay: true で grantsTag の無い結末も通す', () => {
+    expect(endingDefShapeSchema.safeParse({ id: 'e', name: '結末', noReplay: true }).success).toBe(
+      true,
+    );
+  });
+
+  it('形の誤り（真偽値でない noReplay・知らないキー）は断る', () => {
+    expect(endingDefShapeSchema.safeParse({ id: 'e', name: '結末', noReplay: 'yes' }).success).toBe(
+      false,
+    );
+    expect(endingDefShapeSchema.safeParse({ id: 'e', name: '結末', x: 1 }).success).toBe(false);
   });
 });

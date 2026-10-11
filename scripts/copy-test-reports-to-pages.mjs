@@ -1,6 +1,6 @@
 // GitHub Pages 用に、テストの HTML レポートを VitePress の dist 配下へコピーする。
 // Pages は 1 サイト 1 アーティファクトなので、docs と app と同じ dist に同居させる。
-// 一覧のページは docs/process/test-report.md（ここで置く先を変えたら、そのページのリンクも直す）。
+// 一覧のページは docs/architecture/test-report.md（ここで置く先を変えたら、そのページのリンクも直す）。
 //
 // copy-web-to-pages.mjs と異なり、ソースが無くてもデプロイ全体を失敗させない（exit 0 で正常終了する）。
 // このスクリプトは deploy.yml で `if: always()` 実行される（テストが失敗してもデプロイは止めない方針のため）。

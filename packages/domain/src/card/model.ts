@@ -4,6 +4,8 @@
 //
 // シナリオとそれが含む型（scenarios/*.json に書くもの）は zod スキーマが正で、型は z.infer で導く
 // （docs/plans/2026-10-03-シナリオのJSON管理.md D2）。check/・autoCombat/・scenario/ の model.ts も同じ方針。
+// API の応答の型（セッション・募集・キャラクター・ログインユーザー・共有設定）も zod スキーマが正で、
+// packages/schemas が API の一覧と OpenAPI に使う（docs/plans/2026-10-11-APIドキュメント.md D2）。
 // 知らないキー（書き間違い）を黙って捨てないよう、オブジェクトはすべて strictObject にする。
 // 省略可能な項目に null は書けない（キーごと省く）。
 

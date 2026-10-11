@@ -4,6 +4,7 @@
 
 - 仕様書サイト（GitHub Pages）：https://hibohiboo.github.io/CarTaGraphFantasy/
 - Web アプリ（モックAPIで動く試作版）：https://hibohiboo.github.io/CarTaGraphFantasy/app/
+- API ドキュメント（モック API の一覧。Redoc）：https://hibohiboo.github.io/CarTaGraphFantasy/api-docs/
 
 ## ローカルで動かす
 

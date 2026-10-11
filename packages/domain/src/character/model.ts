@@ -1,28 +1,31 @@
 // キャラクター（docs/cartagraph/character-growth.md、称号は comparison-and-titles.md）。
+// Character は API の応答の型なので zod スキーマが正（方針は card/model.ts の冒頭）。
 
 import { z } from 'zod';
-import { type CardDef, commentSchema, idSchema } from '../card/model';
-import type { Abilities } from '../check/model';
+import { cardDefSchema, commentSchema, idSchema } from '../card/model';
+import { abilitiesSchema } from '../check/model';
 
-export interface Character {
-  id: string;
-  name: string;
-  ownerId: string;
-  ownerName: string;
+export const characterSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  ownerId: z.string(),
+  ownerName: z.string(),
   /** 能力値・HP・基本行動値は、作成したときから持つ（character-growth.md「PCが持つデータ」） */
-  abilities: Abilities;
-  hp: { current: number; max: number };
+  abilities: abilitiesSchema,
+  hp: z.strictObject({ current: z.number(), max: z.number() }),
   /** 戦闘用の基本行動値 */
-  baseActionValue: number;
+  baseActionValue: z.number(),
   /** キャラクターデッキ（所有・構成デッキ） */
-  deck: CardDef[];
+  deck: z.array(cardDefSchema),
   /** 称号タグ（特徴カードの一種。所有者が反映を選んだもの） */
-  titles: string[];
+  titles: z.array(z.string()),
   /** 結末タグ（後続シナリオの前提タグと突き合わせる） */
-  endingTags: string[];
-  cp: { total: number; spent: number };
-  createdAt: string;
-}
+  endingTags: z.array(z.string()),
+  cp: z.strictObject({ total: z.number(), spent: z.number() }),
+  createdAt: z.string(),
+});
+
+export type Character = z.infer<typeof characterSchema>;
 
 const positiveInt = z.number().int().min(1);
 

@@ -7,11 +7,14 @@ import { z } from 'zod';
 export const abilityKeySchema = z.enum(['body', 'skill', 'mind']);
 
 /** 能力値（docs/cartagraph/check.md） */
-export interface Abilities {
-  body: number; // 体
-  skill: number; // 技
-  mind: number; // 心
-}
+export const abilitiesSchema = z.strictObject({
+  body: z.number(), // 体
+  skill: z.number(), // 技
+  mind: z.number(), // 心
+});
+
+/** 能力値（docs/cartagraph/check.md） */
+export type Abilities = z.infer<typeof abilitiesSchema>;
 
 /** 選択肢カードに紐づく判定（能力値＋2d6 vs 目標値） */
 export const checkSpecSchema = z.strictObject({
