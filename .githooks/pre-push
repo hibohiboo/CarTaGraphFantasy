@@ -5,6 +5,9 @@
 # 有効化: git config --local core.hooksPath .githooks
 # （`pnpm install` の prepare スクリプトが自動で設定する。scripts/setup-git-hooks.mjs 参照）
 #
+# 成功したときは1行だけを出し、失敗したときだけ、落ちたコマンドの出力を全部出す（2026-10-12）。
+# 成功しても約340行を出していて、AI が push すると、その全部が会話に入ってトークンを使っていたため。
+#
 # 一時的に無効化したい場合は `git push --no-verify`。ただし CI 側で同じチェックが
 # 走るので、無効化して push しても取りこぼしはそこで検出される。
 
@@ -13,13 +16,17 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit 0
 fi
 
-echo "[pre-push] pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm schemas:typecheck && pnpm schemas:test && pnpm web:test && pnpm tools:test && pnpm docs:build && pnpm api:docs"
-pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm schemas:typecheck && pnpm schemas:test && pnpm web:test && pnpm tools:test && pnpm docs:build && pnpm api:docs
-status=$?
+steps="web:typecheck domain:typecheck domain:test schemas:typecheck schemas:test web:test tools:test docs:build api:docs"
+log=$(mktemp)
+trap 'rm -f "$log"' EXIT
 
-if [ $status -ne 0 ]; then
-  echo "[pre-push] チェックに失敗したため push を中止しました。" >&2
-  echo "[pre-push] 緊急時は git push --no-verify で迂回できますが、CI で同じチェックが走ります。" >&2
-fi
-
-exit $status
+echo "[pre-push] $steps"
+for step in $steps; do
+  if ! pnpm "$step" >"$log" 2>&1; then
+    cat "$log" >&2
+    echo "[pre-push] pnpm $step に失敗したため push を中止しました（上が出力）。" >&2
+    echo "[pre-push] 緊急時は git push --no-verify で迂回できますが、CI で同じチェックが走ります。" >&2
+    exit 1
+  fi
+done
+echo "[pre-push] すべて通りました"
