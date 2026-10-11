@@ -51,7 +51,7 @@
 
 - **内容** — API の一覧（メソッド・パス・本文・クエリ・状態コードごとの応答）を `packages/schemas` に置いた。応答の形は `packages/domain` の interface を zod に変えて1か所にした。web のテストの中で、MSW のハンドラと一覧が1対1か、MSW が返した状態コードと本文が一覧どおりかを確かめ、ずれたらテストを落とす。一覧から OpenAPI の文書を作って `redocly lint` を通し、Redoc の HTML を `/api-docs/` に公開する。文書の生成と lint は CI と pre-push でも流す（`docs/plans/2026-10-11-APIドキュメント.md`）
 - **理由** — 本文と応答の形がハンドラのコードの中にしか無く、API ドキュメントを作れなかった。一覧を書いても、モックの振る舞いとずれれば嘘のドキュメントになるので、ずれを機械で止める
-- **反映先** — `packages/domain/src/*/model.ts`、`packages/schemas/src/`（`endpoint/`・`api/`・各ディレクトリの `endpoints.ts`・`response.ts`）、`biome.json`（schemas の中のディレクトリの向き）、`apps/web/src/test/setup.ts`・`responseCheck.ts`・`apiEndpoints.test.ts`、`scripts/build-api-docs.mjs`、`redocly.yaml`、`package.json`、`.githooks/pre-push`、`.github/workflows/ci.yml`、`docs/process/rules/architecture.md`・`testing.md`、`docs/architecture/web-app.md`、`AGENTS.md`、`docs/.vitepress/config.mts`
+- **反映先** — `packages/domain/src/*/model.ts`、`packages/schemas/src/`（`endpoint/`・`api/`・各ディレクトリの `endpoints.ts`・`response.ts`）、`biome.json`（schemas の中のディレクトリの向き）、`apps/web/src/test/setup.ts`・`responseCheck.ts`・`apiEndpoints.test.ts`、`scripts/build-api-docs.ts`、`redocly.yaml`、`package.json`、`.githooks/pre-push`、`.github/workflows/ci.yml`、`docs/process/rules/architecture.md`・`testing.md`、`docs/architecture/web-app.md`・`known-issues.md`、`AGENTS.md`、`README.md`、`docs/.vitepress/config.mts`
 - **きっかけ** — 人間の要望 ／ **止め方** — 機械（モックの応答の検査と一覧の1対1をテストで、OpenAPI の正しさを CI と pre-push の lint で止める）
 
 ### 2026-10-11 Vitest の HTML レポートも Pages に載せ、テストレポートのページから開けるようにした

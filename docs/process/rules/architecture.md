@@ -36,13 +36,14 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
                 vite.config.ts から読むので、@cartagraph/domain も @/ も静的に import しない（Node が解決できず設定の読み込みで落ちる）
 packages/domain/src/      ドメイン型と、UIに依存しないゲームロジック（純粋関数）。
                           仕様ページに合わせたドメインごとのディレクトリ（下の「packages/domain の中の置き場所」）
-packages/schemas/src/     API のリクエストの本文のスキーマ（zod）。モック（MSW）・画面・将来のバックエンドが共用する
+packages/schemas/src/     API の一覧（メソッド・パス・本文・クエリ・状態コードごとの応答）とリクエストの本文のスキーマ（zod）、
+                          一覧から作る OpenAPI の文書。モック（MSW）・画面・将来のバックエンドが共用する
                           （下の「packages/schemas の中の置き場所」）
 scenarios/                公開したことのあるシナリオの JSON（非公開にしたものは draft のまま残る。シードの一部。
                           読み込み・検査・画面からの公開は Webアプリの仕組み「シナリオの JSON」）
 rules/                    システム製作者のルールの JSON（システムのカード一覧・キャラクター作成のルール。シードの一部。
                           読み込み・検査は Webアプリの仕組み「ルールの JSON」）
-scripts/                  ビルド補助（GitHub Pages へのコピー、自動戦闘のシミュレーション）。biome/ は Biome の GritQL のプラグイン
+scripts/                  ビルド補助（GitHub Pages へのコピー、API ドキュメントの生成、自動戦闘のシミュレーション）。biome/ は Biome の GritQL のプラグイン
                           （docs/process/rules/static-analysis.md「GritQL のプラグイン」）
 ```
 
@@ -63,10 +64,12 @@ apps/web ──→ packages/domain ──→ zod
    │
    ├──→ scenarios/*.json（mocks/scenarioFiles.ts が読み、packages/domain の検査を通す）
    └──→ rules/*.json（mocks/rulesFiles.ts が読み、packages/domain の検査を通す。scripts/ のシミュレーションも読む）
+
+scripts/build-api-docs.ts ──→ packages/schemas（API の一覧から OpenAPI の文書を作る）
 ```
 
 - **パッケージの間** — `apps/web` は `packages/domain` を参照してよい。逆は禁止。`packages/domain` は React・DOM・MSW に依存しない（下の「境界」）。`packages/schemas` は `packages/domain` を参照してよく、`apps/web` が参照する。`packages/domain` から `packages/schemas` は参照しない（domain は依存を宣言していないので、import すると解決に失敗して止まる）
-- **`@cartagraph/schemas` を import してよい層** — `entities`（mutation の本文の型）と、層の外の `mocks`（ハンドラの検査）・`test` だけ。ほかの層（app・pages・widgets・features・shared）からは Biome で止める（`biome.json` の層ごとの `noRestrictedImports`。後ろの override は前の override の禁止を置き換えるので、層の直下のファイル用の override にも書く）
+- **`@cartagraph/schemas` を import してよい層** — `entities`（mutation の本文の型と、domain に無い応答の型）と、層の外の `mocks`（ハンドラの検査）・`test` だけ。ほかの層（app・pages・widgets・features・shared）からは Biome で止める（`biome.json` の層ごとの `noRestrictedImports`。後ろの override は前の override の禁止を置き換えるので、層の直下のファイル用の override にも書く）
 - **packages/domain の中** — 下の層だけを import してよい（下の「packages/domain の中の置き場所」の図と表。Biome で機械的に止める）
 - **apps/web の中** — FSD の層の順に、下の層だけを import してよい。同じ層の別スライスは import しない（`app → pages → widgets → features → entities → shared`）
   - スライスの外は `@/<層>/…` のエイリアス、スライスの中は相対パスで import する。エイリアスに `..`・`.` を入れない。相対パスは `./` か `../` を素直に重ねた形だけで書く（`../ui/../x`・`././x` のような形は検査をすり抜けるので書かない）
@@ -80,7 +83,7 @@ apps/web ──→ packages/domain ──→ zod
 
 `packages/domain/src/` は、仕様ページ（`docs/cartagraph/`）に合わせたドメインごとのディレクトリに分ける。ディレクトリの一覧は下の表が正。
 
-- **型は `model.ts`、ロジックは役割の名前のファイル** — 各ディレクトリの型は `model.ts` に置き、zod スキーマ・型（`z.infer`）・ラベルを隣り合わせにする。ロジックは `resolve.ts`・`refs.ts`・`transition.ts` のように役割で名づける。テストは対象と同じディレクトリに、対象のファイル名で置く
+- **型は `model.ts`、ロジックは役割の名前のファイル** — 各ディレクトリの型は `model.ts` に置き、zod スキーマ・型（`z.infer`）・ラベルを隣り合わせにする。JSON に書くもの（シナリオ・ルール）と API の応答に入るもの（セッション・キャラクターなど）は、zod スキーマを正にして型を `z.infer` で導く（`packages/schemas` が API の一覧と OpenAPI に使う）。ロジックは `resolve.ts`・`refs.ts`・`transition.ts` のように役割で名づける。テストは対象と同じディレクトリに、対象のファイル名で置く
 - **直下にファイルを置かない。`index.ts` を作らない** — 利用側は `@cartagraph/domain/<ディレクトリ>/<ファイル>` を直接 import する（`package.json` の `exports` はワイルドカード）。domain の中は相対パスで import し、自分のパッケージ名では import しない
 - **新しいディレクトリを足すときは、下の依存の表にも足す**
 
@@ -116,12 +119,14 @@ check ← card ← library        user（どこにも依存しない）
 
 ## packages/schemas の中の置き場所
 
-`packages/schemas/src/` は、API の URL の最初の区切りごとのディレクトリ（`characters/`・`recruitments/`・`sessions/`・`scenarios/`）と、共通の検査の `body/` に分ける。`/scenarios/:id/start-solo`・`/scenarios/:id/recruitments` は `scenarios/` に置く。
+`packages/schemas/src/` は、API の URL の最初の区切りごとのディレクトリ（`me/`・`card-pool/`・`characters/`・`recruitments/`・`sessions/`・`scenarios/`・`library/`。名前は区切りと同じ）と、共通の `body/`（本文の検査）・`endpoint/`（一覧の1項目の定義と応答の検査）、全体をまとめる `api/` に分ける。`/scenarios/:id/start-solo`・`/scenarios/:id/recruitments` は `scenarios/` に置く。
 
 - 各ディレクトリの `request.ts` に、エンドポイントごとの本文のスキーマを `defineBody(スキーマ, 個別のメッセージの表)` で置く。書くのは形だけ（型・必須か・配列の要素の形）で、業務の検査はハンドラ・ドメインに残す
+- 各ディレクトリの `endpoints.ts` に、その区切りの API の一覧を `defineEndpoint` で置く（メソッド・パス・本文・クエリと、返しうる状態コードごとの応答の形。失敗の本文はどれも `{ message }`）。`response.ts` には、`packages/domain` に無い応答の形だけを置く。応答の形の多くは domain の zod スキーマを使う
+- `api/endpoints.ts` が全ディレクトリの一覧を1本にまとめ、`api/openapi.ts` がそこから OpenAPI の文書を作る。MSW のハンドラと一覧の1対1、MSW の応答が一覧どおりかは、web のテストが確かめる（`docs/architecture/web-app.md`「位置づけ」）
 - 列挙などは `packages/domain` のスキーマから引き、書き写さない
 - 直下にファイルを置かない・`index.ts` を作らない・自分のパッケージ名で import しない（`packages/domain` と同じ決まり）
-- 依存の向き：各ディレクトリ → `body/` だけ（各ディレクトリは `@cartagraph/domain`・zod も使ってよい）。`body/` はどこにも依存しない（zod だけ）。機械的な検査は Biome（`biome.json` の `packages/schemas/src/**` の override）
+- 依存の向き：`api/` → 各ディレクトリ・`endpoint/`・`body/`、各ディレクトリ → `endpoint/`・`body/`、`endpoint/` → `body/`。`body/` はどこにも依存しない（zod だけ）。各ディレクトリと `api/` は `@cartagraph/domain`・zod も使ってよく、`endpoint/` は zod だけ。機械的な検査は Biome（`biome.json` の `packages/schemas/src/**` の override。新しいディレクトリは区切りのディレクトリの override の `includes` に足す。足し忘れても、全体の override がほかのディレクトリの import を止める）
 
 ## React の書き方
 

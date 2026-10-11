@@ -4,12 +4,14 @@
 
 公開先：`https://hibohiboo.github.io/CarTaGraphFantasy/app/`（このdocsサイトと同じGitHub Pagesの `app/` 配下）
 テストレポート（E2E・Vitest）：[テストレポート](test-report.md)の一覧から開く（mainへのpushごとに更新）
+API ドキュメント：`https://hibohiboo.github.io/CarTaGraphFantasy/api-docs/`（Redoc。OpenAPI の文書は同じ場所の `openapi.json`。mainへのpushごとに更新。下の「API ドキュメント」）
 
 ## 位置づけ
 
 - **バックエンドはまだ作らない。** `/api/*` はすべて [MSW](https://mswjs.io/)（Mock Service Worker）が横取りして応答する。状態はブラウザのメモリ上にあり、リロードで初期化される。本番ビルド（GitHub Pages）でもMSWを起動している。
 - 本物のAPIができたら、`apps/web/src/shared/api/api.ts` の接続先を差し替え、`src/mocks/` を開発時のみ有効にする想定。
 - **API の本文は検査してから使う。** リクエストの本文の形は `packages/schemas`（zod。将来のバックエンドと共用）が持ち、MSW のハンドラは `src/mocks/body.ts` の `readBody` で検査してから使う。形が崩れていれば 422（`{ message }`）で返し、何も変えない（500 にしない）。本文が空なら `{}` として読む。スキーマに書くのは形だけで、名前が空でない・能力値の配分・募集人数などの業務の検査はハンドラとドメインが今のメッセージで行う。下書きの保存（`PATCH /api/scenarios/:id`）は、書きかけでも保存できるよう、本文がオブジェクトかだけを見る。画面の mutation の本文の型も同じスキーマから引く。ハンドラが `request.json()`・`request.text()` を直接呼ぶのは lint が止める（`docs/process/rules/static-analysis.md`「GritQL のプラグイン」。`docs/plans/2026-10-10-APIスキーマの共用.md`）
+- **API の一覧と応答も `packages/schemas` が正。** API ごとのメソッド・パス・本文・クエリ・状態コードごとの応答の形を、`packages/schemas` の各ディレクトリの `endpoints.ts` に書く（全部は `api/endpoints.ts`）。応答の形は `packages/domain` の zod スキーマ（`Session`・`Character` など）。web のテストは、MSW のハンドラと一覧が1対1か（`src/test/apiEndpoints.test.ts`）と、MSW が返した状態コードと本文が一覧どおりか（`src/test/setup.ts` が `src/test/responseCheck.ts` で全テストの応答を照らす）を確かめ、ずれたらテストを落とす。ハンドラを足す・応答を変えるときは一覧も直す。画面の応答の型も一覧と同じスキーマから引く（`docs/plans/2026-10-11-APIドキュメント.md`）
 - TanStack Queryの `QueryClient`（`src/main.tsx`）は `retry: false, staleTime: 5_000` のみを設定している。実レイテンシ・更新頻度を測定できる材料がまだ無いため、データ種別ごとのキャッシュチューニングは実バックエンド接続後に実測してから見直す。
 - [フェーズ分け](index.md#開発フェーズの段階分け決着)（まず閲覧サイト→後にセッション管理）の方針は変えていない。セッション管理系の画面も含めて先に画面を作っているのは、モックで体験を検証するためであり、バックエンド実装の着手順は改めて判断する。
 
@@ -19,6 +21,7 @@
 
 - `scripts/copy-web-to-pages.mjs` … ビルド成果物を docs の dist 配下 `app/` へコピー
 - `scripts/copy-test-reports-to-pages.mjs` … Playwright・Vitest の HTML レポートを docs の dist 配下 `e2e-report/`・`vitest-report/` へコピー
+- `scripts/build-api-docs.ts` … API ドキュメント（OpenAPI の文書と Redoc の HTML）を docs の dist 配下 `api-docs/` に作る（下の「API ドキュメント」）
 
 ## シナリオの JSON
 
@@ -68,11 +71,23 @@ pnpm web:e2e         # Playwright（Chromium）。ビルド→vite previewに対
 pnpm web:typecheck
 pnpm domain:test     # vitest（packages/domain の純粋関数。自動戦闘・シーン遷移など）
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
-pnpm schemas:test    # vitest（packages/schemas の API の本文のスキーマ）
+pnpm schemas:test    # vitest（packages/schemas の API の一覧・本文と応答のスキーマ・OpenAPI の文書）
 pnpm schemas:typecheck # tsc（packages/schemas。テストファイルも含む）
-pnpm build:pages     # docs + app を docs/.vitepress/dist にまとめてビルド（CI と同じ）
+pnpm build:pages     # docs + app + API ドキュメントを docs/.vitepress/dist にまとめてビルド（デプロイと同じ）
+pnpm api:docs        # API ドキュメントを docs/.vitepress/dist/api-docs/ に作る（docs:build の後に流す。下記）
 pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実行。下記）
 ```
+
+## API ドキュメント
+
+`packages/schemas` の API の一覧から OpenAPI 3.1 の文書を作り、Redoc の HTML 1枚にして `/api-docs/` に公開する（サイドバーの「開発」から開く）。一覧はモック（MSW）の応答とテストで突き合わせているので、文書はモックの今の振る舞いと一致する（上の「位置づけ」）。
+
+- **作る** — `pnpm api:docs`（`scripts/build-api-docs.ts`）。文書の組み立ては `packages/schemas/src/api/openapi.ts`（zod 4 の `z.toJSONSchema`。名前の付いた型は `components.schemas` に1回だけ出す）。`docs/.vitepress/dist/api-docs/` に `openapi.json` と `index.html` を書く。dist は `pnpm docs:build` が作り直すので、その後に流す
+- **検査** — `redocly lint` を通してから HTML にする。設定はルートの `redocly.yaml`：警告も誤りにする `recommended-strict` を基に、`security-defined`（認証はまだ無い）・`info-license`（公開の API ではない）・`operation-4xx-response`（`GET /me` などは失敗を返さない）だけを止めた。CI（`ci.yml`）・pre-push・デプロイ（`build:pages`）で流れ、誤りが1件でもあれば止まる
+- **手元で見る** — `pnpm docs:build && pnpm api:docs && pnpm docs:preview --port 4175 --strictPort` で `http://localhost:4175/CarTaGraphFantasy/api-docs/`（4173 は E2E、4174 はエージェントの preview が使う。`pnpm web:dev:agent:stop` では止まらないので、起動したターミナルで止める）。`pnpm docs:dev` には無い（サイドバーのリンクは 404 になる）
+- **外部への依存** — Redoc の本体は `cdn.redocly.com` から読む（`@redocly/cli` の `build-docs` は同梱できない。2026-10-11、人間が受け入れた）。Google Fonts は読まない（`--disableGoogleFont`）。`@redocly/cli` のテレメトリと更新の確認は、スクリプトが環境変数で止める
+- **下書きのシナリオ** — 下書きを返しうる API（`GET /scenarios`・`GET /scenarios/:id`・`POST /scenarios`・`PATCH /scenarios/:id`）の応答は、業務の検査（再挑戦不可の結末には結末タグが要る、など）を外した形（`ScenarioDraft`）で書く。下書きは書きかけでも保存できるため。下書きの API を分けたら直す（[要望](../backlog/scenario-draft-api.md)）
+- **項目ごとの説明** — まだ出していない（domain の JSDoc は OpenAPI に載らない）。仮ルールの型（`AutoCombatState`・`CombatRecord`・`CardPool`）は、型ごとの説明に「仮ルール」と書く
 
 ## 自動戦闘の数値シミュレーション
 

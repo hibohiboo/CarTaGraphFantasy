@@ -1,0 +1,11 @@
+# API ドキュメント（pnpm api:docs、scripts/build-api-docs.ts）の redocly lint の設定。
+# 警告も誤りにする recommended-strict を基に、今は満たさないと決めたものだけ止める（理由は docs/architecture/web-app.md「API ドキュメント」）。
+extends:
+  - recommended-strict
+rules:
+  # 認証はまだ無い（バックエンドが無い）
+  security-defined: off
+  # 公開の API ではないのでライセンスを書かない
+  info-license: off
+  # GET /me などは失敗を返さない
+  operation-4xx-response: off

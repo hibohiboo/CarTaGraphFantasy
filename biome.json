@@ -451,7 +451,7 @@
                   },
                   {
                     "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
-                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
+                    "message": "API のスキーマ（@cartagraph/schemas。本文と応答の型）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -494,7 +494,7 @@
                   },
                   {
                     "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
-                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
+                    "message": "API のスキーマ（@cartagraph/schemas。本文と応答の型）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -539,7 +539,7 @@
                   },
                   {
                     "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
-                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
+                    "message": "API のスキーマ（@cartagraph/schemas。本文と応答の型）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -586,7 +586,7 @@
                   },
                   {
                     "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
-                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
+                    "message": "API のスキーマ（@cartagraph/schemas。本文と応答の型）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -682,7 +682,7 @@
                   },
                   {
                     "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
-                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
+                    "message": "API のスキーマ（@cartagraph/schemas。本文と応答の型）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -735,7 +735,7 @@
                   },
                   {
                     "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
-                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
+                    "message": "API のスキーマ（@cartagraph/schemas。本文と応答の型）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -839,7 +839,7 @@
                   },
                   {
                     "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
-                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
+                    "message": "API のスキーマ（@cartagraph/schemas。本文と応答の型）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -893,7 +893,7 @@
                   },
                   {
                     "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
-                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
+                    "message": "API のスキーマ（@cartagraph/schemas。本文と応答の型）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }
@@ -953,7 +953,7 @@
                   },
                   {
                     "group": ["@cartagraph/schemas", "@cartagraph/schemas/**"],
-                    "message": "API の本文のスキーマ（@cartagraph/schemas）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
+                    "message": "API のスキーマ（@cartagraph/schemas。本文と応答の型）を import してよいのは entities と mocks・test だけ（docs/process/rules/architecture.md「依存の向き」）"
                   }
                 ]
               }

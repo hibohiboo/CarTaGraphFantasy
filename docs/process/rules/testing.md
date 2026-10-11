@@ -21,7 +21,7 @@ paths:
 | 単体 | Vitest | `apps/web/src/test/`（対象のファイル名を反映。例：`shared/lib/japanese.ts` → `test/japanese.test.ts`） | `pnpm web:test` | ロジックの境界値・異常系 |
 | ページ描画 | Vitest + Testing Library + MSW（node） | 全ルートの描画とページの小さな操作は `apps/web/src/test/pages.test.tsx`、機能の操作の連なりは機能名のファイル（例：`gmlessScreens.test.tsx`・`VillagePart.test.tsx`） | 同上 | 全ルートが描画できること、主要操作が通ること |
 | ドメイン | Vitest | `packages/domain/src/**/*.test.ts`（対象と同じディレクトリに、対象のファイル名を反映。例：`autoCombat/resolve.ts` → `autoCombat/resolve.test.ts`） | `pnpm domain:test`（型検査は `pnpm domain:typecheck`） | 純粋関数の判定・変換 |
-| API の本文のスキーマ | Vitest | `packages/schemas/src/**/*.test.ts`（ドメインと同じ置き方） | `pnpm schemas:test`（型検査は `pnpm schemas:typecheck`） | 本文の形の検査と、誤りのときのメッセージ |
+| API のスキーマ | Vitest | `packages/schemas/src/**/*.test.ts`（ドメインと同じ置き方） | `pnpm schemas:test`（型検査は `pnpm schemas:typecheck`） | 本文の形の検査と誤りのときのメッセージ、API の一覧、応答の検査（`checkResponse`）、OpenAPI の文書 |
 | E2E | Playwright（Chromium） | `apps/web/e2e/smoke.test.ts` | `pnpm web:e2e` | 全ルートが実ブラウザで例外なく描画できること（2026-09-21導入。`docs/plans/2026-09-21-e2e導入.md`参照） |
 
 - `pages.test.tsx` は `shared/routes/routes.ts` を走査して全ルートを描画する。ルートを追加すると自動的に対象になるので、ページ固有の操作テストだけを個別に書く
@@ -53,6 +53,7 @@ paths:
 - 各テストの後に `resetDb()` で状態を戻す（`src/test/setup.ts`）。テストは実行順に依存しない
 - 変更を伴うテストは、既存のシードを書き換えるのではなく、テストの中で操作して結果を確認し、`resetDb()` に後始末を任せる
 - 未処理のリクエストはエラーにする（`onUnhandledRequest: 'error'`）。新しい API を呼ぶなら先に `handlers.ts` へ追加する
+- MSW の応答は、すべてのテストで API の一覧（`packages/schemas` の `api/endpoints.ts`）と照らす（`src/test/setup.ts` が `src/test/responseCheck.ts` を組み込む）。一覧に無い API・状態コード、形の違う本文が返ると、そのテストが落ちる（誤りの文にリクエストを出したテストの名前が付く）。ハンドラと一覧の1対1は `src/test/apiEndpoints.test.ts`。ハンドラを足す・応答を変えるときは、一覧（各ディレクトリの `endpoints.ts`）も直す。テストの中で `server.use` で差し替える応答も、一覧どおりの形にする
 - 公開したシナリオの保存先（`setScenarioFileStore`）は、テストでは既定で無し（デモと同じ。`setup.ts` が毎回戻す）。ファイルへの書き込みを確かめるテストだけ、渡されたシナリオを記録する偽の保存先を差し込む。開発サーバーの書き込みの口（`apps/web/vite/`）のテストは、`mkdtemp` の一時ディレクトリに書き、リポジトリの `scenarios/` には書かない
 
 ## 骨抜き禁止
