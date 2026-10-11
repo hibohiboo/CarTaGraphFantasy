@@ -21,7 +21,7 @@ import {
   useUnpublishScenario,
   useUpdateScenarioDraft,
 } from '@/entities/scenario/api/mutations';
-import { isNotAuthorError, useScenario, useScenarioDraft } from '@/entities/scenario/api/queries';
+import { useEditableScenario } from '@/entities/scenario/api/queries';
 import type {
   ScenarioFileResult,
   ScenarioPublication,
@@ -54,10 +54,7 @@ type Outcome = { scenarioId: string; saved?: true; file?: ScenarioFileResult; er
  */
 export function CreatorScenarioEditPage() {
   const { scenarioId = '' } = useParams();
-  const draft = useScenarioDraft(scenarioId);
-  const notAuthor = isNotAuthorError(draft.error);
-  // 製作者でないときだけ公開版を読む（製作者の画面は、公開版の無い下書きで 404 を出さないよう公開版を引かない）
-  const published = useScenario(scenarioId, notAuthor);
+  const source = useEditableScenario(scenarioId);
   const update = useUpdateScenarioDraft();
   const publish = usePublishScenario();
   const unpublish = useUnpublishScenario();
@@ -76,11 +73,10 @@ export function CreatorScenarioEditPage() {
   };
   const shown = outcome?.scenarioId === scenarioId ? outcome : null;
 
-  if (draft.isPending) return <Loading />;
-  if (notAuthor) {
-    if (published.isPending) return <Loading />;
-    if (published.error) return <ErrorNote error={published.error} />;
-    const sc = published.data;
+  if (source.status === 'pending') return <Loading />;
+  if (source.status === 'error') return <ErrorNote error={source.error} />;
+  if (source.status === 'readOnly') {
+    const { sc } = source;
     return (
       <Editor
         key={sc.updatedAt}
@@ -91,16 +87,11 @@ export function CreatorScenarioEditPage() {
         save={() => undefined}
         setPublished={() => undefined}
         saving={false}
-        note={
-          <EmptyNote>
-            製作者でないため編集できません（シナリオ集に公開された版を表示しています）。
-          </EmptyNote>
-        }
+        note={<EmptyNote>製作者でないため編集できません（公開版を表示しています）。</EmptyNote>}
       />
     );
   }
-  if (draft.error) return <ErrorNote error={draft.error} />;
-  const view = draft.data;
+  const { view } = source;
   return (
     <Editor
       key={view.draft.updatedAt}
@@ -252,7 +243,15 @@ function Editor({
   const toggleDense = (id: string) =>
     set(
       'deck',
-      draft.deck.map((n) => (n.id === id ? { ...n, dense: !n.dense } : n)),
+      // 軽量（省いた状態）に戻すときはキーごと消す（dense: false が残ると、公開版と違う変更ありのままになる）
+      draft.deck.map((n) => {
+        if (n.id !== id) return n;
+        if (n.dense) {
+          const { dense: _, ...light } = n;
+          return light;
+        }
+        return { ...n, dense: true };
+      }),
     );
   // 結末と、それを指す結末のノードを対で足す・消す（D6・D2）
   const addEnding = () =>

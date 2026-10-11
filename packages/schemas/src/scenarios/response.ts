@@ -24,8 +24,11 @@ export function safeParseScenarioDraft(
 ): { ok: true; draft: ScenarioDraft } | { ok: false; message: string } {
   const result = scenarioDraftSchema.safeParse(value);
   if (result.success) return { ok: true, draft: result.data };
-  const where = (result.error.issues[0]?.path ?? []).map(String).join('.');
-  return { ok: false, message: `下書きの形が正しくありません（${where || '本文'}）` };
+  const issue = result.error.issues[0];
+  const where = (issue?.path ?? []).map(String).join('.') || '本文';
+  // 知らないキーは、どのキーかも出す（場所だけでは分からないため）
+  const keys = issue?.code === 'unrecognized_keys' ? `：${issue.keys.join('・')}` : '';
+  return { ok: false, message: `下書きの形が正しくありません（${where}${keys}）` };
 }
 
 /** 公開版の有無とシナリオ集に載っているか。none＝公開版が無い、listed＝載っている、unlisted＝外した */

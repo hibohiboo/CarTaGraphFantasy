@@ -135,6 +135,8 @@ function createDb(): Db {
 /** テストから初期状態へ戻すために公開 */
 export function resetDb(): void {
   db = createDb();
+  // 書き込みを待ったまま終わったテストの列を、次のテストへ持ち越さない
+  scenarioQueues.clear();
 }
 
 let seq = 1000;
@@ -205,28 +207,36 @@ const draftView = (draft: ScenarioDraft): ScenarioDraftView => ({
   changed: draftChanged(draft),
 });
 
-const notAuthor = () =>
-  HttpResponse.json({ message: '製作者でないため変更できません' }, { status: 403 });
+const notAuthor = (reading: boolean) =>
+  HttpResponse.json(
+    { message: reading ? '製作者でないため下書きを読めません' : '製作者でないため変更できません' },
+    { status: 403 },
+  );
 
 /**
  * 製作者が読み書きできる下書き（シナリオ公開のプランの D8）。下書きにも公開版にも無ければ 404、
  * 作者が自分でなければ 403（他人のシナリオは下書きを持たないので、公開版の作者で見分ける）
  */
-function ownedDraft(id: unknown): { draft: ScenarioDraft } | { error: Response } {
+function ownedDraft(id: unknown, reading = false): { draft: ScenarioDraft } | { error: Response } {
   const draft = draftOf(id);
   const published = publishedOf(id);
   if (!draft && !published) return { error: notFound('シナリオ') };
-  if ((draft ?? published)?.authorId !== fx.me.id || !draft) return { error: notAuthor() };
+  if ((draft ?? published)?.authorId !== fx.me.id) return { error: notAuthor(reading) };
+  // 自分のシナリオは必ず下書きを持つ（シードと作成で作る）。持たないのはデータの食い違いなので 404 にする
+  if (!draft) return { error: notFound('下書き') };
   return { draft };
 }
 
+/** 公開版にも下書きにも無い（シナリオが無い）。本文の検査より先に 404 にする */
+const noScenario = (id: unknown) => !publishedOf(id) && !draftOf(id);
+
 /**
  * 新しく始められるシナリオ（シナリオ集に載っている公開版。docs/cartagraph/scenario-flow.md「シナリオの公開」）。
- * 公開版も下書きも無ければ 404、載っていなければ 422。既にある募集からの開始には挟まない
+ * 載っていなければ 422（シナリオが無いときの 404 は、呼ぶ側が本文の検査より先に noScenario で返す）。
+ * 既にある募集からの開始には挟まない
  */
 function startableScenario(id: unknown): { scenario: Scenario } | { error: Response } {
   const published = publishedOf(id);
-  if (!published && !draftOf(id)) return { error: notFound('シナリオ') };
   if (published?.libraryStatus !== 'published')
     return { error: unprocessable('シナリオ集に公開されていないシナリオからは始められません') };
   return { scenario: published };
@@ -1261,7 +1271,7 @@ export const handlers = [
   // （docs/plans/2026-09-23-村スタート冒険者キャンペーン.md 決定事項5、3.詳細設計「GMレス基盤」）。
   // 既存のRecruitmentフローは変更しない。
   http.post('/api/scenarios/:id/start-solo', async ({ params, request }) => {
-    if (!publishedOf(params.id) && !draftOf(params.id)) return notFound('シナリオ');
+    if (noScenario(params.id)) return notFound('シナリオ');
     const body = await readBody(request, startSoloBody);
     if (!body.ok) return body.response;
     const startable = startableScenario(params.id);
@@ -1303,7 +1313,7 @@ export const handlers = [
   ),
 
   http.get('/api/scenarios/:id/draft', ({ params }) => {
-    const found = ownedDraft(params.id);
+    const found = ownedDraft(params.id, true);
     return 'error' in found ? found.error : HttpResponse.json(draftView(found.draft));
   }),
 
@@ -1374,7 +1384,7 @@ export const handlers = [
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
   http.post('/api/scenarios/:id/recruitments', async ({ params, request }) => {
-    if (!publishedOf(params.id) && !draftOf(params.id)) return notFound('シナリオ');
+    if (noScenario(params.id)) return notFound('シナリオ');
     const parsed = await readBody(request, createRecruitmentBody);
     if (!parsed.ok) return parsed.response;
     const startable = startableScenario(params.id);

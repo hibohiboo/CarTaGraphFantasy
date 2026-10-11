@@ -159,7 +159,11 @@ describe('公開（POST /api/scenarios/:id/publish）', () => {
       await expect(publish(id)).rejects.toMatchObject(denied);
       await expect(unpublish(id)).rejects.toMatchObject(denied);
       await expect(saveDraft(id, { title: '乗っ取り' })).rejects.toMatchObject(denied);
-      await expect(getDraft(id)).rejects.toMatchObject(denied);
+      // 読むだけの 403 は「読めません」（変更の 403 と文を分ける）
+      await expect(getDraft(id)).rejects.toMatchObject({
+        status: 403,
+        message: '製作者でないため下書きを読めません',
+      });
       expect(await getPublished(id)).toEqual(before);
     }
     expect(written).toEqual([]);
@@ -285,7 +289,7 @@ describe('下書きの保存（PATCH /api/scenarios/:id/draft）', () => {
   });
 
   it.each<[string, Record<string, unknown>, string]>([
-    ['知らないキー', { foo: 1 }, '下書きの形が正しくありません（本文）'],
+    ['知らないキー', { foo: 1 }, '下書きの形が正しくありません（本文：foo）'],
     ['題名の型違い', { title: 123 }, '下書きの形が正しくありません（title）'],
     ['人数の型違い', { partySize: 'x' }, '下書きの形が正しくありません（partySize）'],
     [
@@ -305,7 +309,7 @@ describe('下書きの保存（PATCH /api/scenarios/:id/draft）', () => {
           },
         ],
       },
-      '下書きの形が正しくありません（deck.0.cards.0）',
+      '下書きの形が正しくありません（deck.0.cards.0：foo）',
     ],
   ])('形の崩れ（%s）は 422 で、下書きは変わらない（T2）', async (_, body, message) => {
     const sc = await create();

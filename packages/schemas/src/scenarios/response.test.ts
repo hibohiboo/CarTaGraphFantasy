@@ -38,7 +38,7 @@ describe('safeParseScenarioDraft', () => {
   });
 
   it.each<[string, Record<string, unknown>, string]>([
-    ['知らないキー', { ...draft(), foo: 1 }, '下書きの形が正しくありません（本文）'],
+    ['知らないキー', { ...draft(), foo: 1 }, '下書きの形が正しくありません（本文：foo）'],
     ['型違い', { ...draft(), title: 123 }, '下書きの形が正しくありません（title）'],
     [
       'null のシナリオタイプ',

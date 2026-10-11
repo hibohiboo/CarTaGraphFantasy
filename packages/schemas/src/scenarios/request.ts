@@ -16,8 +16,9 @@ export const startSoloBody = defineBody(z.object({ name: z.string() }));
 export const createScenarioBody = defineBody(z.object({ title: z.string() }));
 
 /**
- * PATCH /scenarios/:id：下書きは書きかけでも保存できるので、オブジェクトであることだけを見て中身は見ない
- * （プランの D5。公開中のシナリオは、受け取る側が保存の前に公開のファイルの検査をかける）
+ * PATCH /scenarios/:id/draft：本文はオブジェクトであることだけを見る。受け取る側が、上書きした結果の下書きの形を
+ * safeParseScenarioDraft（./response）で検査する（業務の検査はしない。書きかけでも保存できる。
+ * docs/plans/2026-10-11-シナリオの下書きのAPI.md G3）
  */
 export const updateScenarioBody = defineBody(z.record(z.string(), z.unknown()), {
   '': '本文はオブジェクトにしてください',

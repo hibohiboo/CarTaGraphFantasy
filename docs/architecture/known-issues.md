@@ -114,7 +114,7 @@
 
 ### テスト専用のシナリオが、本番のシナリオ一覧のデータに入っている
 
-- **起きること** — `sc-exam-always-win` などのテスト専用シナリオ（C1 の `sc-village-no-propose` も同じ）が、`fixtures.ts` の `scenarios` 配列に、遊べるシナリオと一緒に入っている。システム作成で、2026-10-11 からは公開版（始められる）だが、モックがシナリオ集の一覧（`GET /api/scenarios`）から隠す（`scenarioDrafts.test.ts` で一覧に出ないことを確かめている）。GM・シナリオ製作者のシナリオ一覧画面に出ないかは確かめていない
+- **起きること** — `sc-exam-always-win` などのテスト専用シナリオ（C1 の `sc-village-no-propose` も同じ）が、`fixtures.ts` の `scenarios` 配列に、遊べるシナリオと一緒に入っている。システム作成で、2026-10-11 からは公開版（始められる）だが、モックがシナリオ集の一覧（`GET /api/scenarios`）から隠す（`scenarioDrafts.test.ts` で一覧に出ないことを確かめている）。これは仕様（[シナリオの公開](../cartagraph/scenario-flow.md#シナリオの公開)：公開版は検査を通ったもの、新しく始められるのはシナリオ集に載っているものだけ）の、テストのためだけの例外で、わざと検査に通らない形のものもある。fixtures は GitHub Pages のデモにも入るので、GM のシナリオ詳細を URL で開けば、テスト専用のシナリオから募集を出せる
 - **追記（2026-10-03）** — 遊べるシナリオは `scenarios/*.json` に分かれた。テスト専用シナリオは引き続き `fixtures.ts` にあり、同じ `scenarios` 配列に入る（MSW のメモリ上の DB は1つのため）
 - **見つけた経緯** — C2 の異常系レビュー
 - **追記（2026-09-27、C3）** — テスト専用セッション `ss-village-human-gm`（人間GMで村のシナリオを遊ぶ、自分が参加していないセッション）を足したところ、GMのセッション一覧の「参加者として関わっているセッション」に出るようになった。この一覧は、GMが自分でないセッションを参加の有無を見ずにすべて出しているため
@@ -213,7 +213,7 @@
 - **起きること** — [静的解析ルール](../process/rules/static-analysis.md)「コードの複雑さ」の上限を超える箇所が15件あり、`biome-ignore` で個別に抑えている。数字は導入時（2026-10-09）の値（2026-10-10、`applySoloEffect` は冒険者だけにする C3 で村の成長の HP・行動値の付与を消して上限の内に収まり、一覧から外した）
   - 認知的複雑度（上限15）：`mocks/handlers.ts` の4つのハンドラ（`/api/sessions/:id/play` 73・`/auto-combat` 27・`/api/scenarios/:id/recruitments` 21・`/api/recruitments/:id/start` 19）、`TutorialPage` 60、`GameCard` 52、`PlayPage` 49、`SessionBrowsePage` の `RecruitCard` 46、`resolveAutoCombat`（`packages/domain/src/autoCombat/resolve.ts`）29、`CreatorSceneEditPage` の `SceneEditor` 20、`GmSessionManagePage` 20 とその `ProposalTicket` 16、`vite/scenarioFilePlugin.ts` の書き込みの口 19
   - 関数の行数（上限200）：`TutorialPage` 235行
-  - ファイルの行数（上限1000）：`apps/web/src/mocks/handlers.ts`（1327行）
+  - ファイルの行数（上限1000）：`apps/web/src/mocks/handlers.ts`（1327行。2026-10-11、シナリオの下書きと公開版を分けて1433行。シナリオのハンドラを別のファイルに分けるのが次の候補）
 - **見つけた経緯** — 2026-10-09、SonarJS 相当のルールを Biome で有効にしたとき
 - **直すときの目安** — 定期作業のテスト駆動リファクタリング（[開発プロセス](../process/index.md)）で、数字の大きいものから分ける。判定・計算は純粋関数へ、画面は区画ごとの子コンポーネントへ、`handlers.ts` は API のまとまりごとのファイルへ。分けたら `biome-ignore` を消し、ここの一覧からも消す
 

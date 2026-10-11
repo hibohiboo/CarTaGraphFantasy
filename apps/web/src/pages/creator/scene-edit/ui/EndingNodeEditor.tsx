@@ -2,7 +2,8 @@ import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import s from '@/shared/ui/page.module.css';
-import { Button, ErrorNote, Field, PageHeader, Panel } from '@/shared/ui/ui';
+import { ErrorNote, Field, PageHeader, Panel } from '@/shared/ui/ui';
+import { SaveButton } from './SaveButton';
 
 /**
  * 結末のノードの編集：名前と「指す結末」だけ（docs/plans/2026-10-07-選択肢の移り先と結末の編集.md D4）。
@@ -14,14 +15,17 @@ export function EndingNodeEditor({
   save,
   saving,
   error,
-  fileNote,
+  notes,
+  readOnly,
 }: {
   sc: Scenario;
   node: DeckNode;
   save: (n: DeckNode) => void;
   saving: boolean;
   error: unknown;
-  fileNote: ReactNode;
+  notes: ReactNode;
+  /** 製作者でない人に公開版を見せるとき。保存のボタンを出さない */
+  readOnly: boolean;
 }) {
   const [draft, setDraft] = useState<DeckNode>(node);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(node), [draft, node]);
@@ -36,13 +40,16 @@ export function EndingNodeEditor({
           </>
         }
         actions={
-          <Button disabled={!dirty || saving} onClick={() => save(draft)}>
-            {saving ? '保存中…' : '保存'}
-          </Button>
+          <SaveButton
+            readOnly={readOnly}
+            dirty={dirty}
+            saving={saving}
+            onSave={() => save(draft)}
+          />
         }
       />
       {error ? <ErrorNote error={error} /> : null}
-      {fileNote}
+      {notes}
       <Panel
         title="結末のノードの情報"
         sub="GM 不在のセッションでは、このノードへ進むと終わる。指す結末に結末タグがあれば、ドライバーのキャラクターにすぐ付く（GM 不在のソロの仮ルール）。"

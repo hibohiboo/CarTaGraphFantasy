@@ -5,10 +5,12 @@
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
 import type { ScenarioDraftView } from '@/entities/scenario/api/types';
 import { api } from '@/shared/api/api';
 import { setScenarioFileStore } from '../mocks/handlers';
+import { server } from '../mocks/node';
 import { renderAt } from './renderAt';
 
 const SAVED = (id: string) => `scenarios/${id}.json に保存しました`;
@@ -227,7 +229,78 @@ describe('他人のシナリオは読むだけ（T16）', () => {
     renderAt('/creator/scenarios/sc-village-always-win/scenes/vs-square');
     expect(await screen.findByText(NOT_AUTHOR)).toBeInTheDocument();
     expect(screen.getByText('（テスト用）迷い道')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '保存' })).not.toBeInTheDocument();
+    expect(button('＋カードを追加')).toBeDisabled();
+  });
+});
+
+describe('他人のシナリオの境界（読み取り専用）', () => {
+  it('外した他人のシナリオは「シナリオ集から外している」と出る', async () => {
+    const gray = await api.get<Scenario>('/scenarios/sc-gray-mansion');
+    server.use(
+      http.get('/api/scenarios/sc-gray-mansion', () =>
+        HttpResponse.json({ ...gray, libraryStatus: 'draft' }),
+      ),
+    );
+    renderAt('/creator/scenarios/sc-gray-mansion');
+    expect(await screen.findByText(NOT_AUTHOR)).toBeInTheDocument();
+    expect(within(header()).getByText('シナリオ集から外している')).toBeInTheDocument();
+  });
+
+  it('公開版も無い他人のシナリオは「見つかりません」', async () => {
+    server.use(
+      http.get('/api/scenarios/sc-hidden', () =>
+        HttpResponse.json({ message: 'シナリオ が見つかりません' }, { status: 404 }),
+      ),
+      http.get('/api/scenarios/sc-hidden/draft', () =>
+        HttpResponse.json({ message: '製作者でないため下書きを読めません' }, { status: 403 }),
+      ),
+    );
+    renderAt('/creator/scenarios/sc-hidden');
+    expect(await screen.findByRole('alert')).toHaveTextContent('シナリオ が見つかりません');
+  });
+
+  it('結末のノードも読み取り専用で、保存のボタンが無い', async () => {
+    renderAt('/creator/scenarios/sc-gray-mansion/scenes/d-end');
+    expect(await screen.findByText(NOT_AUTHOR)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '保存' })).not.toBeInTheDocument();
+  });
+});
+
+describe('編集画面の境界', () => {
+  it('下書きの一覧が古いうちに、自分の新しい下書きを開いても編集できる（別のタブで作った直後など）', async () => {
+    const router = renderAt('/creator/scenarios');
+    await screen.findByRole('link', { name: '鉄鎖のガレオン船' });
+    // 一覧を読み込んだ後に、画面を通さずに作る（一覧のキャッシュは古いまま）
+    const sc = await createDraft('別のタブで作った下書き');
+    await router.navigate(`/creator/scenarios/${sc.id}`);
+    expect(
+      await screen.findByRole('heading', { level: 1, name: '別のタブで作った下書き' }),
+    ).toBeInTheDocument();
+    expect(within(header()).getByText('下書きのみ')).toBeInTheDocument();
+    expect(screen.queryByText(NOT_AUTHOR)).not.toBeInTheDocument();
+  });
+
+  it('「濃密に」して「軽量に」戻して保存しても、公開版と違う変更ありにならない', async () => {
+    const user = userEvent.setup();
+    renderAt('/creator/scenarios/sc-galleon');
+    const row = (await screen.findByText('1 鎖の桟橋')).closest('[data-kind]') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: '濃密に' }));
+    await user.click(within(row).getByRole('button', { name: '軽量に' }));
+    // 戻すと dense のキーごと消えるので、編集前と同じ（保存するものが無い）になる
     expect(button('保存')).toBeDisabled();
+    expect(within(header()).queryByText('公開版と違う変更あり')).not.toBeInTheDocument();
+  });
+
+  it('シーン編集の「下書きを保存しました」は、別のシーンへ移ると出ない', async () => {
+    const user = userEvent.setup();
+    const router = renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-s2');
+    await user.type(await screen.findByLabelText('目的（仮）'), 'x');
+    await user.click(button('保存'));
+    expect(await screen.findByText(DRAFT_SAVED)).toBeInTheDocument();
+    await router.navigate('/creator/scenarios/sc-mansion-mine/scenes/d-s3');
+    await screen.findByRole('heading', { level: 1, name: '3-3 隠し書庫' });
+    expect(screen.queryByText(DRAFT_SAVED)).not.toBeInTheDocument();
   });
 });
 
