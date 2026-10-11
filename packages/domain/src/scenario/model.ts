@@ -60,19 +60,24 @@ export const deckNodeSchema = z.strictObject({
 
 export type DeckNode = z.infer<typeof deckNodeSchema>;
 
+/**
+ * 結末の定義の形だけ（下の endingDefSchema の業務の検査を外したもの）。書きかけでも保存できる下書きのシナリオを
+ * API の応答で表すときに使う（packages/schemas の scenarios/response.ts。docs/plans/2026-10-11-APIドキュメント.md G10）
+ */
+export const endingDefShapeSchema = z.strictObject({
+  id: idSchema,
+  name: z.string(),
+  /** 後続シナリオの前提タグとして配るタグ。無ければ単発扱い */
+  grantsTag: z.string().optional(),
+  /**
+   * 再挑戦不可（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）。この結末の結末タグを
+   * 持つ PC は、同じシナリオをもう一度遊べない。結末タグのカード化のときに、カードの属性へ移す
+   */
+  noReplay: z.boolean().optional(),
+});
+
 /** 結末の定義（成功／失敗に限らず任意の数）。結末タグは grantsTag */
-export const endingDefSchema = z
-  .strictObject({
-    id: idSchema,
-    name: z.string(),
-    /** 後続シナリオの前提タグとして配るタグ。無ければ単発扱い */
-    grantsTag: z.string().optional(),
-    /**
-     * 再挑戦不可（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）。この結末の結末タグを
-     * 持つ PC は、同じシナリオをもう一度遊べない。結末タグのカード化のときに、カードの属性へ移す
-     */
-    noReplay: z.boolean().optional(),
-  })
+export const endingDefSchema = endingDefShapeSchema
   // 再挑戦不可は結末タグで判定するので、結末タグを配らない結末には付けられない（1つの結末の中の制約なので、
   // 参照の整合 refs.ts ではなくスキーマで止める）
   .superRefine((e, ctx) => {
