@@ -47,6 +47,12 @@
 
 後から「改善がどこから生まれ、どれだけ機械で止められるようになったか」を辿れるようにするため。[体制の進化のタイムライン](timeline.md)が、この節と「却下」からビルド時に年表と内訳を作る。きっかけ・止め方は、まとめの1行（`- **きっかけ** — … ／ **止め方** — …`）か、小項目ごとの1行（`- きっかけ：… ／ 止め方：…`）で書く。読めないとビルドが止まる。止め方は最初の「。」（括弧の外）までを読むので、まだやっていない案は「。」の後ろに書く
 
+### 2026-10-11 シナリオの下書きと公開版を分け、下書きの一覧の API を schemas の scenarios/ に置く例外を足した
+
+- **内容** — シナリオを公開版と下書きに分けた（`docs/plans/2026-10-11-シナリオの下書きのAPI.md`）。自分の下書きの一覧 `GET /scenario-drafts` は URL の最初の区切りが `scenarios` と違うが、下書きの形（`scenarios/response.ts`）を使うので `packages/schemas/src/scenarios/` に置き、OpenAPI のタグも `scenarios` に寄せる、を `architecture.md`「packages/schemas の中の置き場所」の例外に足した。`/scenarios/drafts` にしなかったのは `/scenarios/:id` と照合が重なるため（API ドキュメントの実装レビュー（異常系）の指摘）
+- **反映先** — `docs/process/rules/architecture.md`、`packages/schemas/src/scenarios/endpoints.ts`・`api/openapi.ts`
+- **きっかけ** — 計画（プランの AI レビュー（設計整合性）の P0） ／ **止め方** — 手順・ルール（置き場所の例外を書く）
+
 ### 2026-10-11 API ドキュメントの振り返りから3件を採用（ファイルを戻す git の止め、docs の preview の停止、測る前の確かめ）
 
 - **わざと崩した箇所を git checkout・git restore で戻さない** — テストが効くかを試すためにわざと崩した箇所を `git checkout <パス>` で戻し、zod 化を済ませた未コミットの `session/model.ts` まで main の版に戻した（書いた内容が手元にあったので書き直せた）。`--` 付き・作業ツリーにあるパスの `git checkout` と、ステージを外すだけでない `git restore` を、Claude Code のフックで止める。ブランチの切り替え・作成は止めない。入れた直後、heredoc で渡したコミットメッセージの本文（「git restore をフックで止める」）を止めたので、判定の前に heredoc の本文を取り除くようにした（stash・`--no-verify` の判定も同じ誤検知を持っていた）。反映先：`.claude/hooks/guard-bash.mjs`（と `guard-bash.test.mjs`）・`CLAUDE.md`

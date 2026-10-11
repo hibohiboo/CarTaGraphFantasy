@@ -1,6 +1,6 @@
 // シナリオタイプ（docs/cartagraph/scenario-type.md）の表示名と、宣言と中身の食い違いの検査。
-// 検査は参照の整合（refs.ts）とは分け、file.ts の safeParseScenarioFile から呼ぶ（読み込み・公開・公開中の保存・
-// 開発サーバーの書き込み口が通る。docs/plans/2026-10-10-冒険者だけにする.md G3）。
+// 検査は参照の整合（refs.ts）とは分け、file.ts の safeParseScenarioFile から呼ぶ（読み込み・公開・公開し直す・
+// 開発サーバーの書き込み口が通る。下書きの保存は通らない。docs/plans/2026-10-10-冒険者だけにする.md G3）。
 // 機械で見分けるのは「戦闘なし」なのに自動戦闘のシーンか空間モデルを持つ場合だけ（人間 GM の濃密モードの
 // 戦闘のシーンは見分けられないので見ない。docs/notes/scenario-type.md）。
 

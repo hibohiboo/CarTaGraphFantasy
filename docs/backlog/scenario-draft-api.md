@@ -1,12 +1,12 @@
 ---
 title: シナリオの下書きの API を分ける
 milestone: backend-1on1
-status: 検討中
+status: 進行中
 summary: 書きかけのシナリオ（下書き）を専用の API で読み書きし、公開するときに検査して正式なシナリオにする。シナリオの API はいつも検査済みの形を返すようになる。
 plans:
   - 2026-10-11-シナリオの下書きのAPI.md
 cycles:
-  - { name: C1 下書きと公開版, status: 検討中 }
+  - { name: C1 下書きと公開版, status: 進行中 }
   - { name: C2 セッションの独立, status: 未着手 }
   - { name: C3 シナリオのコピー, status: 未着手 }
 updated: 2026-10-11
