@@ -13,6 +13,13 @@
     grid-template-columns: 1fr;
   }
 }
+/* 読み取り専用で入力と操作をまとめて押せなくするための fieldset（枠と余白を持たない） */
+.plainFieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
 
 .stack {
   display: flex;

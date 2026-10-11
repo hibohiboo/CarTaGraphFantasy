@@ -68,9 +68,13 @@ import {
   startSoloBody,
   updateScenarioBody,
 } from '@cartagraph/schemas/scenarios/request';
-import type {
-  ScenarioFileResult,
-  ScenarioSaveResult,
+import {
+  type ScenarioDraft,
+  type ScenarioDraftView,
+  type ScenarioFileResult,
+  type ScenarioPublication,
+  type ScenarioSaveResult,
+  safeParseScenarioDraft,
 } from '@cartagraph/schemas/scenarios/response';
 import {
   approveProposalBody,
@@ -95,7 +99,10 @@ const DEFAULT_PROPOSAL_CARD_NAME = '新たな選択肢';
 
 type Db = {
   characters: Character[];
+  /** シナリオの公開版（GM・PL が使う）。libraryStatus は「シナリオ集に載っているか」（published＝載っている、draft＝外した） */
   scenarios: Scenario[];
+  /** 製作者の下書き（docs/plans/2026-10-11-シナリオの下書きのAPI.md G1）。新しいものを先に置く */
+  drafts: ScenarioDraft[];
   recruitments: Recruitment[];
   sessions: Session[];
 };
@@ -111,9 +118,15 @@ const creationPool = () => [...basicPool(characterCreation, systemCards), ...fx.
 let db: Db = createDb();
 
 function createDb(): Db {
+  const draftOnly = new Set(fx.draftOnlyScenarioIds);
+  // 自分が作者のシナリオは下書きを持つ（下書きだけのシード以外は、公開版の写し）。他人・system のものは持たない
+  const drafts = fx.scenarios
+    .filter((s) => s.authorId === fx.me.id)
+    .map((s): ScenarioDraft => ({ ...s, libraryStatus: 'draft' }));
   return clone({
     characters: fx.characters,
-    scenarios: fx.scenarios,
+    scenarios: fx.scenarios.filter((s) => !draftOnly.has(s.id)),
+    drafts,
     recruitments: fx.recruitments,
     sessions: fx.sessions,
   });
@@ -122,6 +135,8 @@ function createDb(): Db {
 /** テストから初期状態へ戻すために公開 */
 export function resetDb(): void {
   db = createDb();
+  // 書き込みを待ったまま終わったテストの列を、次のテストへ持ち越さない
+  scenarioQueues.clear();
 }
 
 let seq = 1000;
@@ -151,25 +166,84 @@ export function setScenarioFileStore(store: ScenarioFileStore | null): void {
   scenarioFileStore = store;
 }
 
-/** fixtures にしか無いシナリオ（デモの下書き・テスト専用）。公開できない（プランの D7） */
+/**
+ * fixtures にしか無いシナリオ（デモの下書き・テスト専用）。公開・非公開できない（シナリオ公開のプランの D7）。
+ * 公開版があるもの（テスト専用）は、シナリオ集の一覧からも隠す（docs/plans/2026-10-11-シナリオの下書きのAPI.md G2）
+ */
 const fixtureOnlyScenarioIds = new Set(
   fx.scenarios.filter((s) => !scenarioFiles.some((f) => f.id === s.id)).map((s) => s.id),
 );
 
-/** 書き込み（公開・非公開・保存）できるシナリオ。製作者が自分のものだけ（プランの D8） */
-function editableScenario(id: unknown): { scenario: Scenario } | { error: Response } {
-  const scenario = db.scenarios.find((x) => x.id === id);
-  if (!scenario) return { error: notFound('シナリオ') };
-  if (scenario.authorId !== fx.me.id) {
-    return {
-      error: HttpResponse.json({ message: '製作者でないため変更できません' }, { status: 403 }),
-    };
-  }
-  return { scenario };
+const publishedOf = (id: unknown) => db.scenarios.find((x) => x.id === id);
+const draftOf = (id: unknown) => db.drafts.find((x) => x.id === id);
+
+function publicationOf(id: string): ScenarioPublication {
+  const published = publishedOf(id);
+  if (!published) return 'none';
+  return published.libraryStatus === 'published' ? 'listed' : 'unlisted';
+}
+
+/** キーの順によらない JSON（下書きと公開版を比べるため） */
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  const entries = Object.entries(value)
+    .filter(([, v]) => v !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(',')}}`;
+}
+
+/** 下書きが公開版と違うか（libraryStatus・updatedAt を除く。公開版が無ければ false） */
+function draftChanged(draft: ScenarioDraft): boolean {
+  const published = publishedOf(draft.id);
+  if (!published) return false;
+  const strip = ({ libraryStatus: _, updatedAt: __, ...rest }: Scenario) => rest;
+  return canonical(strip(draft)) !== canonical(strip(published));
+}
+
+const draftView = (draft: ScenarioDraft): ScenarioDraftView => ({
+  draft,
+  publication: publicationOf(draft.id),
+  changed: draftChanged(draft),
+});
+
+const notAuthor = (reading: boolean) =>
+  HttpResponse.json(
+    { message: reading ? '製作者でないため下書きを読めません' : '製作者でないため変更できません' },
+    { status: 403 },
+  );
+
+/**
+ * 製作者が読み書きできる下書き（シナリオ公開のプランの D8）。下書きにも公開版にも無ければ 404、
+ * 作者が自分でなければ 403（他人のシナリオは下書きを持たないので、公開版の作者で見分ける）
+ */
+function ownedDraft(id: unknown, reading = false): { draft: ScenarioDraft } | { error: Response } {
+  const draft = draftOf(id);
+  const published = publishedOf(id);
+  if (!draft && !published) return { error: notFound('シナリオ') };
+  if ((draft ?? published)?.authorId !== fx.me.id) return { error: notAuthor(reading) };
+  // 自分のシナリオは必ず下書きを持つ（シードと作成で作る）。持たないのはデータの食い違いなので 404 にする
+  if (!draft) return { error: notFound('下書き') };
+  return { draft };
+}
+
+/** 公開版にも下書きにも無い（シナリオが無い）。本文の検査より先に 404 にする */
+const noScenario = (id: unknown) => !publishedOf(id) && !draftOf(id);
+
+/**
+ * 新しく始められるシナリオ（シナリオ集に載っている公開版。docs/cartagraph/scenario-flow.md「シナリオの公開」）。
+ * 載っていなければ 422（シナリオが無いときの 404 は、呼ぶ側が本文の検査より先に noScenario で返す）。
+ * 既にある募集からの開始には挟まない
+ */
+function startableScenario(id: unknown): { scenario: Scenario } | { error: Response } {
+  const published = publishedOf(id);
+  if (published?.libraryStatus !== 'published')
+    return { error: unprocessable('シナリオ集に公開されていないシナリオからは始められません') };
+  return { scenario: published };
 }
 
 /**
- * 書き込みの対象（公開・非公開・公開中の保存）を、ファイルに書く形にして検査し、保存先があれば書く。
+ * 書き込みの対象（公開・公開し直す・非公開）を、ファイルに書く形にして検査し、保存先があれば書く。
  * 検査はデモでもかける（開発サーバーとデモで、公開できるシナリオを揃える）。失敗したら応答を返し、呼び出し側はメモリを変えない
  */
 async function writeScenarioFile(
@@ -194,12 +268,14 @@ async function writeScenarioFile(
   return { file: { saved: true, path } };
 }
 
-function replaceScenario(next: Scenario): void {
-  db.scenarios = db.scenarios.map((s) => (s.id === next.id ? next : s));
+/** 公開版を置く（無ければ足す） */
+function putPublished(next: Scenario): void {
+  if (publishedOf(next.id)) db.scenarios = db.scenarios.map((s) => (s.id === next.id ? next : s));
+  else db.scenarios.unshift(next);
 }
 
 /**
- * 同じシナリオへの保存・公開・非公開を、届いた順に1つずつ処理する。書き込みを待つ間に別のタブから届いた操作が、
+ * 同じシナリオへの下書きの保存・公開・非公開を、届いた順に1つずつ処理する。書き込みを待つ間に別のタブから届いた操作が、
  * 待つ前に読んだ古い値で上書きされて失われないように
  */
 const scenarioQueues = new Map<string, Promise<unknown>>();
@@ -212,21 +288,38 @@ function inScenarioQueue<T>(id: string, fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
-/** 公開・非公開。公開中を公開・下書きを非公開にしても誤りにせず書き直す（ボタンの二度押しで失敗させない） */
-function setLibraryStatus(id: unknown, status: Scenario['libraryStatus']) {
+const demoScenario = () => unprocessable('デモ用のシナリオは公開・非公開を変えられません');
+
+/**
+ * シナリオ集へ公開・公開し直す：下書きを公開のファイルの検査に通し、公開版にする。公開中で変更が無くても書き直す
+ * （ボタンの二度押しで失敗させない）。公開版の updatedAt は下書きの値（中身が同じなら同じファイルになる）。
+ * 失敗すれば公開版・一覧・下書きは変わらない（docs/plans/2026-10-11-シナリオの下書きのAPI.md G3）
+ */
+function publishScenario(id: unknown) {
   return inScenarioQueue(String(id), async () => {
-    const found = editableScenario(id);
+    const found = ownedDraft(id);
     if ('error' in found) return found.error;
-    if (fixtureOnlyScenarioIds.has(found.scenario.id)) {
-      return HttpResponse.json(
-        { message: 'デモ用のシナリオは公開・非公開を変えられません' },
-        { status: 422 },
-      );
-    }
-    const next: Scenario = { ...found.scenario, libraryStatus: status, updatedAt: nowIso() };
+    if (fixtureOnlyScenarioIds.has(found.draft.id)) return demoScenario();
+    const next: Scenario = { ...clone(found.draft), libraryStatus: 'published' };
     const written = await writeScenarioFile(next);
     if ('error' in written) return written.error;
-    replaceScenario(next);
+    putPublished(next);
+    return HttpResponse.json<ScenarioSaveResult>({ scenario: next, file: written.file });
+  });
+}
+
+/** シナリオ集から外す：公開版の中身のまま一覧から外し、ファイルを書き直す。下書きは変えない。外したものを外しても書き直す */
+function unpublishScenario(id: unknown) {
+  return inScenarioQueue(String(id), async () => {
+    const found = ownedDraft(id);
+    if ('error' in found) return found.error;
+    if (fixtureOnlyScenarioIds.has(found.draft.id)) return demoScenario();
+    const published = publishedOf(found.draft.id);
+    if (!published) return unprocessable('公開していないシナリオは非公開にできません');
+    const next: Scenario = { ...published, libraryStatus: 'draft', updatedAt: nowIso() };
+    const written = await writeScenarioFile(next);
+    if ('error' in written) return written.error;
+    putPublished(next);
     return HttpResponse.json<ScenarioSaveResult>({ scenario: next, file: written.file });
   });
 }
@@ -1178,10 +1271,12 @@ export const handlers = [
   // （docs/plans/2026-09-23-村スタート冒険者キャンペーン.md 決定事項5、3.詳細設計「GMレス基盤」）。
   // 既存のRecruitmentフローは変更しない。
   http.post('/api/scenarios/:id/start-solo', async ({ params, request }) => {
-    const scenario = db.scenarios.find((x) => x.id === params.id);
-    if (!scenario) return notFound('シナリオ');
+    if (noScenario(params.id)) return notFound('シナリオ');
     const body = await readBody(request, startSoloBody);
     if (!body.ok) return body.response;
+    const startable = startableScenario(params.id);
+    if ('error' in startable) return startable.error;
+    const { scenario } = startable;
     const character = buildSoloCharacter(body.data.name, scenario.soloStarter);
     if (!character)
       return HttpResponse.json({ message: '名前を入力してください' }, { status: 422 });
@@ -1197,18 +1292,29 @@ export const handlers = [
   }),
 
   // ---------- シナリオ ----------
-  http.get('/api/scenarios', ({ request }) => {
-    const url = new URL(request.url);
-    const mine = url.searchParams.get('mine') === '1';
-    const list = mine
-      ? db.scenarios.filter((s) => s.authorId === fx.me.id)
-      : db.scenarios.filter((s) => s.libraryStatus === 'published');
-    return HttpResponse.json(list);
+  // シナリオ集：載っている公開版（テスト専用のものは隠す。G2）
+  http.get('/api/scenarios', () =>
+    HttpResponse.json(
+      db.scenarios.filter(
+        (s) => s.libraryStatus === 'published' && !fixtureOnlyScenarioIds.has(s.id),
+      ),
+    ),
+  ),
+
+  // 公開版（外したものも返す。既にある募集・セッションと、製作者でない人が読むため）
+  http.get('/api/scenarios/:id', ({ params }) => {
+    const s = publishedOf(params.id);
+    return s ? HttpResponse.json(s) : notFound('シナリオ');
   }),
 
-  http.get('/api/scenarios/:id', ({ params }) => {
-    const s = db.scenarios.find((x) => x.id === params.id);
-    return s ? HttpResponse.json(s) : notFound('シナリオ');
+  // 自分の下書きの一覧（製作者のシナリオ管理）
+  http.get('/api/scenario-drafts', () =>
+    HttpResponse.json(db.drafts.filter((d) => d.authorId === fx.me.id).map(draftView)),
+  ),
+
+  http.get('/api/scenarios/:id/draft', ({ params }) => {
+    const found = ownedDraft(params.id, true);
+    return 'error' in found ? found.error : HttpResponse.json(draftView(found.draft));
   }),
 
   http.post('/api/scenarios', async ({ request }) => {
@@ -1218,10 +1324,10 @@ export const handlers = [
     if (!body.title.trim())
       return HttpResponse.json({ message: 'タイトルを入力してください' }, { status: 422 });
     // 結末「結末」と、それを指す結末のノードを対で作る（結末タグは付けない。docs/plans/2026-10-07-選択肢の移り先と結末の編集.md D3）
-    const draft: Scenario = {
+    const draft: ScenarioDraft = {
       id: nextFreeId(
         () => nextId('sc'),
-        (id) => db.scenarios.some((x) => x.id === id),
+        (id) => Boolean(publishedOf(id) ?? draftOf(id)),
       ),
       title: body.title.trim(),
       authorId: fx.me.id,
@@ -1240,52 +1346,50 @@ export const handlers = [
       libraryStatus: 'draft',
       updatedAt: nowIso(),
     };
-    const s = addEnding(draft, '結末', { endingId: nextId('e'), nodeId: nextId('d') });
-    db.scenarios.unshift(s);
-    return HttpResponse.json(s, { status: 201 });
+    const s: ScenarioDraft = addEnding(draft, '結末', {
+      endingId: nextId('e'),
+      nodeId: nextId('d'),
+    });
+    db.drafts.unshift(s);
+    return HttpResponse.json(draftView(s), { status: 201 });
   }),
 
-  // 保存。公開・非公開は publish・unpublish だけで変えるので、本文の libraryStatus は無視する。
-  // 公開中のシナリオはファイルにも書き直す。下書きは検査も書き込みもしない（書きかけの参照切れも保存できる）
-  http.patch('/api/scenarios/:id', async ({ params, request }) => {
-    // 下書きは書きかけでも保存できるので、オブジェクトであることだけを見る（docs/plans/2026-10-10-APIスキーマの共用.md D5）
+  // 下書きの保存。本文の項目で上書きし、上書きした結果の形を検査する（業務の検査はしない。書きかけの参照切れも
+  // 保存できる）。公開版とファイルは変えない（公開し直すまで届かない。docs/plans/2026-10-11-シナリオの下書きのAPI.md G3）
+  http.patch('/api/scenarios/:id/draft', async ({ params, request }) => {
     const body = await readBody(request, updateScenarioBody);
     if (!body.ok) return body.response;
-    const patch = body.data as Partial<Scenario>;
     return inScenarioQueue(String(params.id), async () => {
-      const found = editableScenario(params.id);
+      const found = ownedDraft(params.id);
       if ('error' in found) return found.error;
-      const s = found.scenario;
-      const next: Scenario = {
-        ...s,
-        ...patch,
-        id: s.id,
-        authorId: s.authorId,
-        authorName: s.authorName,
-        libraryStatus: s.libraryStatus,
+      const d = found.draft;
+      const checked = safeParseScenarioDraft({
+        ...d,
+        ...body.data,
+        id: d.id,
+        authorId: d.authorId,
+        authorName: d.authorName,
+        libraryStatus: 'draft',
         updatedAt: nowIso(),
-      };
-      let file: ScenarioFileResult = null;
-      if (s.libraryStatus === 'published') {
-        const written = await writeScenarioFile(next);
-        if ('error' in written) return written.error;
-        file = written.file;
-      }
-      replaceScenario(next);
-      return HttpResponse.json<ScenarioSaveResult>({ scenario: next, file });
+      });
+      if (!checked.ok) return unprocessable(checked.message);
+      db.drafts = db.drafts.map((x) => (x.id === d.id ? checked.draft : x));
+      return HttpResponse.json(draftView(checked.draft));
     });
   }),
 
-  http.post('/api/scenarios/:id/publish', ({ params }) => setLibraryStatus(params.id, 'published')),
+  http.post('/api/scenarios/:id/publish', ({ params }) => publishScenario(params.id)),
 
-  http.post('/api/scenarios/:id/unpublish', ({ params }) => setLibraryStatus(params.id, 'draft')),
+  http.post('/api/scenarios/:id/unpublish', ({ params }) => unpublishScenario(params.id)),
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
   http.post('/api/scenarios/:id/recruitments', async ({ params, request }) => {
-    const s = db.scenarios.find((x) => x.id === params.id);
-    if (!s) return notFound('シナリオ');
+    if (noScenario(params.id)) return notFound('シナリオ');
     const parsed = await readBody(request, createRecruitmentBody);
     if (!parsed.ok) return parsed.response;
+    const startable = startableScenario(params.id);
+    if ('error' in startable) return startable.error;
+    const s = startable.scenario;
     const body = parsed.data;
     const kind = body.kind ?? 'normal';
     // GM 不在の募集は応募を持たないので、募集人数は使わない（docs/cartagraph/scenario-flow.md「募集とセッション」）

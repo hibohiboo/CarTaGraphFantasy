@@ -239,7 +239,9 @@ function examScenario(o: {
       },
     ],
     endings: [],
-    libraryStatus: 'draft',
+    // テスト専用のシナリオは公開版として始められ、シナリオ集の一覧からはモックの中で隠す
+    // （docs/plans/2026-10-11-シナリオの下書きのAPI.md G2）
+    libraryStatus: 'published',
     updatedAt: ago(0),
   };
 }
@@ -253,8 +255,9 @@ function villageAlwaysWin(): Scenario {
   if (!base) throw new Error('scenarios/sc-village-start.json がありません');
   const s = structuredClone(base);
   s.id = 'sc-village-always-win';
-  // 村はずれの一歩は公開済みだが、テスト専用のシナリオは公開済みの一覧（GM のシナリオ一覧）に出さない
-  s.libraryStatus = 'draft';
+  // テスト専用のシナリオは公開版として始められるが、シナリオ集の一覧（GM のシナリオ一覧）からはモックの中で隠す
+  // （docs/plans/2026-10-11-シナリオの下書きのAPI.md G2）
+  s.libraryStatus = 'published';
   s.title = '（テスト用）必ず合格する村はずれ';
   s.summary = 'テスト専用シナリオ。';
   const exam = s.deck.find((n) => n.id === 'vs-exam');
@@ -289,6 +292,12 @@ function mansionMine(): Scenario {
   s.libraryStatus = 'draft';
   return s;
 }
+
+/**
+ * 下書きだけ（公開版なし）のシードにするシナリオ。ほかの自分のシナリオは、公開版の写しを下書きにする
+ * （docs/plans/2026-10-11-シナリオの下書きのAPI.md G1）
+ */
+export const draftOnlyScenarioIds: readonly string[] = ['sc-draft-well', 'sc-mansion-mine'];
 
 export const scenarios: Scenario[] = [
   // 遊べるシナリオ（リポジトリ直下の scenarios/*.json。docs/plans/2026-10-03-シナリオのJSON管理.md）
@@ -391,7 +400,7 @@ export const scenarios: Scenario[] = [
       { id: 'vnp-end', kind: 'ending', name: '結末', cards: [] },
     ],
     endings: [],
-    libraryStatus: 'draft',
+    libraryStatus: 'published',
     updatedAt: ago(0),
   },
   {
@@ -410,7 +419,7 @@ export const scenarios: Scenario[] = [
     proposalHandling: 'auto-resolve',
     deck: [{ id: 'ni-scene', kind: 'scene', name: 'シーン', cards: [] }],
     endings: [],
-    libraryStatus: 'draft',
+    libraryStatus: 'published',
     updatedAt: ago(0),
   },
   // ---- シーン編集のテスト専用シナリオ。灰色館の一夜の写しで、製作者が自分 ----

@@ -8,6 +8,7 @@ import {
   Button,
   Chip,
   ChipGroup,
+  EmptyNote,
   ErrorNote,
   Loading,
   PageHeader,
@@ -90,7 +91,12 @@ export function GmScenarioDetailPage() {
               </div>
             </div>
           </Panel>
-          <RecruitForm scenario={sc} excluded={excluded} />
+          {/* シナリオ集から外したシナリオからは、新しい募集を出せない（docs/cartagraph/scenario-flow.md「シナリオの公開」） */}
+          {sc.libraryStatus === 'published' ? (
+            <RecruitForm scenario={sc} excluded={excluded} />
+          ) : (
+            <EmptyNote>シナリオ集から外されているため、新しい募集を出せません。</EmptyNote>
+          )}
         </aside>
         <div className="u-stack">
           <Panel

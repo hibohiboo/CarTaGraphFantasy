@@ -7,6 +7,7 @@ import { toScenarioFile } from '@cartagraph/domain/scenario/file';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import { scenarioSchema } from '@cartagraph/domain/scenario/model';
 import { describe, expect, it } from 'vitest';
+import type { ScenarioDraftView } from '@/entities/scenario/api/types';
 import { api } from '@/shared/api/api';
 import { scenarios, sessions } from '../mocks/fixtures';
 import { playScript } from '../mocks/handlers';
@@ -65,10 +66,10 @@ describe('scenarios/*.json の読み込み', () => {
 });
 
 describe('テスト専用の sc-village-always-win（村はずれの一歩の JSON から作る）', () => {
-  it('sc-village-start との違いは、id・題名・概要・公開の状態（下書き）・試験官の HP・広場のテスト用カードだけ', () => {
+  it('sc-village-start との違いは、id・題名・概要・試験官の HP・広場のテスト用カードだけ（公開版。シナリオ集の一覧からはモックが隠す）', () => {
     const expected = structuredClone(byId('sc-village-start'));
     expected.id = 'sc-village-always-win';
-    expected.libraryStatus = 'draft';
+    expected.libraryStatus = 'published';
     expected.title = '（テスト用）必ず合格する村はずれ';
     expected.summary = 'テスト専用シナリオ。';
     const exam = expected.deck.find((n) => n.id === 'vs-exam');
@@ -133,9 +134,9 @@ describe('MSW 経由で取得する（local-flow の完成の条件2）', () => 
     expect(ids).not.toContain('sc-draft-well');
   });
 
-  it('自分のシナリオの一覧には、JSON の自分のもの（ガレオン）と fixtures の下書き（涸れ井戸・テスト専用の自分の灰色館）が出る', async () => {
-    const list = await api.get<Scenario[]>('/scenarios?mine=1');
-    const ids = list.map((s) => s.id);
+  it('自分の下書きの一覧には、JSON の自分のもの（ガレオン）と fixtures の下書き（涸れ井戸・テスト専用の自分の灰色館）が出る', async () => {
+    const list = await api.get<ScenarioDraftView[]>('/scenario-drafts');
+    const ids = list.map((v) => v.draft.id);
     expect(ids).toEqual([
       ...scenarioFiles.filter((s) => s.authorId === 'u-me').map((s) => s.id),
       'sc-draft-well',

@@ -8,12 +8,18 @@ import { findScenarioRefErrors } from '@cartagraph/domain/scenario/refs';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import type { ScenarioDraftView } from '@/entities/scenario/api/types';
 import { api } from '@/shared/api/api';
 import { setScenarioFileStore } from '../mocks/handlers';
 import { DEAD_END, recruitCard, recruitPanel } from './gmlessHelpers';
 import { renderAt } from './renderAt';
 
-const get = (id: string) => api.get<Scenario>(`/scenarios/${id}`);
+/** 製作者の下書き（保存の結果はここに入る。公開版は公開し直すまで変わらない） */
+const get = async (id: string) =>
+  (await api.get<ScenarioDraftView>(`/scenarios/${id}/draft`)).draft;
+/** 下書きを作る（公開版は作らない） */
+const createDraft = async (title: string) =>
+  (await api.post<ScenarioDraftView>('/scenarios', { title })).draft;
 const nodeOf = (s: Scenario, id: string) => s.deck.find((n) => n.id === id) as DeckNode;
 const button = (name: string | RegExp) => screen.getByRole('button', { name });
 
@@ -89,21 +95,33 @@ describe('シーン編集：選択肢の移り先', () => {
 
   it('デッキに無い移り先は「（見つからない：〈id〉）」と出て、選び直せる。ほかのカードには出ない', async () => {
     const user = userEvent.setup();
-    renderAt('/creator/scenarios/sc-village-always-win/scenes/vs-square');
-    const select = within(await cardRow('（テスト用）迷い道')).getByLabelText('移り先');
-    expect(select).toHaveValue('vw-nowhere');
-    expect(optionLabels(select)).toContain('（見つからない：vw-nowhere）');
+    // 自分のシナリオの下書きに、デッキに無いノードを指す選択肢を置く（他人のシナリオは読み取り専用）
+    const s = await get('sc-mansion-mine');
+    const lost: CardDef = {
+      id: 'c-lost',
+      kind: 'choice',
+      name: '迷い道',
+      tags: [],
+      nextNodeId: 'd-nowhere',
+    };
+    await api.patch('/scenarios/sc-mansion-mine/draft', {
+      deck: s.deck.map((n) => (n.id === 'd-s2' ? { ...n, cards: [...n.cards, lost] } : n)),
+    });
+    renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-s2');
+    const select = within(await cardRow('迷い道')).getByLabelText('移り先');
+    expect(select).toHaveValue('d-nowhere');
+    expect(optionLabels(select)).toContain('（見つからない：d-nowhere）');
     expect(
-      within(await cardRow('お店へ行く')).queryByRole('option', { name: /見つからない/ }),
+      within(await cardRow('調べる')).queryByRole('option', { name: /見つからない/ }),
     ).not.toBeInTheDocument();
-    await user.selectOptions(select, 'vs-shop');
-    expect(select).toHaveValue('vs-shop');
+    await user.selectOptions(select, 'd-s3');
+    expect(select).toHaveValue('d-s3');
   });
 
   it('候補外の移り先（導入を指す）は「（候補外：〈名前〉）」と出て、選び直さずに保存しても残る', async () => {
     const user = userEvent.setup();
     const s = await get('sc-mansion-mine');
-    await api.patch(`/scenarios/sc-mansion-mine`, {
+    await api.patch(`/scenarios/sc-mansion-mine/draft`, {
       deck: s.deck.map((n) =>
         n.id === 'd-s2'
           ? {
@@ -136,7 +154,7 @@ describe('シーン編集：選択肢の移り先', () => {
       soloEffect: { raiseAbility: 'mind' },
     };
     const s = await get('sc-mansion-mine');
-    await api.patch(`/scenarios/sc-mansion-mine`, {
+    await api.patch(`/scenarios/sc-mansion-mine/draft`, {
       deck: s.deck.map((n) => (n.id === 'd-s2' ? { ...n, cards: [...n.cards, rich] } : n)),
     });
     renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-s2');
@@ -199,7 +217,7 @@ describe('シーン編集：導入と結末', () => {
     const user = userEvent.setup();
     const s = await get('sc-mansion-mine');
     const epilogue: CardDef = { id: 'c-epilogue', kind: 'info', name: '後日談', tags: [] };
-    await api.patch(`/scenarios/sc-mansion-mine`, {
+    await api.patch(`/scenarios/sc-mansion-mine/draft`, {
       deck: s.deck.map((n) => (n.id === 'd-end' ? { ...n, cards: [epilogue] } : n)),
     });
     renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-end');
@@ -211,7 +229,7 @@ describe('シーン編集：導入と結末', () => {
   it('結末に無い結末を指す結末のノードは「（見つからない：〈id〉）」と出て、選び直さずに保存しても残る', async () => {
     const user = userEvent.setup();
     const s = await get('sc-mansion-mine');
-    await api.patch(`/scenarios/sc-mansion-mine`, {
+    await api.patch(`/scenarios/sc-mansion-mine/draft`, {
       deck: s.deck.map((n) => (n.id === 'd-end' ? { ...n, endingId: 'e-gone' } : n)),
     });
     renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-end');
@@ -225,7 +243,7 @@ describe('シーン編集：導入と結末', () => {
 
   it('自分自身を指す選択肢（JSON で書いたもの）は「（候補外：〈名前〉）」と出る', async () => {
     const s = await get('sc-mansion-mine');
-    await api.patch(`/scenarios/sc-mansion-mine`, {
+    await api.patch(`/scenarios/sc-mansion-mine/draft`, {
       deck: s.deck.map((n) =>
         n.id === 'd-s2'
           ? {
@@ -244,7 +262,7 @@ describe('シーン編集：導入と結末', () => {
 
 describe('シナリオ編集：削除と結末', () => {
   const open = async (title = '編集のテスト') => {
-    const sc = await api.post<Scenario>('/scenarios', { title });
+    const sc = await createDraft(title);
     const router = renderAt(`/creator/scenarios/${sc.id}`);
     await screen.findByRole('heading', { level: 1, name: title });
     return { sc, router };
@@ -281,7 +299,7 @@ describe('シナリオ編集：削除と結末', () => {
   it('移り先になっているシーンは削除できず理由が出る。指されていないシーンは消える', async () => {
     const user = userEvent.setup();
     const s = await get('sc-mansion-mine');
-    await api.patch('/scenarios/sc-mansion-mine', {
+    await api.patch('/scenarios/sc-mansion-mine/draft', {
       deck: s.deck.map((n) =>
         n.id === 'd-intro'
           ? {
@@ -306,7 +324,7 @@ describe('シナリオ編集：削除と結末', () => {
   it('下書きの中で、指している側のシーンを先に消すと、指されていたシーンも消せる', async () => {
     const user = userEvent.setup();
     const s = await get('sc-mansion-mine');
-    await api.patch('/scenarios/sc-mansion-mine', {
+    await api.patch('/scenarios/sc-mansion-mine/draft', {
       deck: s.deck.map((n) =>
         n.id === 'd-s1'
           ? {
@@ -362,9 +380,9 @@ describe('シナリオ編集：削除と結末', () => {
 
   it('移り先になっている結末のノードの結末は消せず、理由が出る', async () => {
     const user = userEvent.setup();
-    const sc = await api.post<Scenario>('/scenarios', { title: '結末を指す' });
+    const sc = await createDraft('結末を指す');
     const endNode = sc.deck.find((n) => n.kind === 'ending') as DeckNode;
-    await api.patch(`/scenarios/${sc.id}`, {
+    await api.patch(`/scenarios/${sc.id}/draft`, {
       deck: sc.deck.map((n) =>
         n.kind === 'intro'
           ? {
@@ -410,8 +428,12 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     setScenarioFileStore({ write: async (s) => void written.push(structuredClone(s)) });
     const title = '村はずれの小道';
 
+    // GM の一覧を先に読み込んでおく（公開で作り直されることも確かめる）
+    const router = renderAt('/gm/scenarios');
+    await screen.findByRole('heading', { level: 1, name: 'シナリオを選ぶ' });
+
     // 製作者：作る
-    const router = renderAt('/creator/scenarios');
+    await router.navigate('/creator/scenarios');
     await user.type(await screen.findByPlaceholderText('シナリオのタイトル'), title);
     await user.click(button('下書きを作成'));
     await screen.findByRole('heading', { level: 1, name: title });
@@ -442,8 +464,20 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     await screen.findByRole('heading', { level: 1, name: title });
     await user.type(screen.getByLabelText('結末タグ'), '村を見た');
     await save(user);
-    await user.click(button('シナリオ集へ公開'));
+    // 保存は下書きだけ。ファイルに書かず、公開する前は GM の一覧に無く、詳細も開けない（D2・D5）
+    expect(written).toEqual([]);
+    expect(within(screen.getByRole('banner')).getByText('下書きのみ')).toBeInTheDocument();
+    await router.navigate('/gm/scenarios');
+    await screen.findByText('村はずれの一歩');
+    expect(screen.queryByRole('link', { name: title })).not.toBeInTheDocument();
+    await router.navigate(`/gm/scenarios/${id}`);
+    expect(await screen.findByRole('alert')).toHaveTextContent('シナリオ が見つかりません');
+
+    await router.navigate(`/creator/scenarios/${id}`);
+    await user.click(await screen.findByRole('button', { name: 'シナリオ集へ公開' }));
     await screen.findByText(`scenarios/${id}.json に保存しました`);
+    expect(written).toHaveLength(1);
+    expect(within(screen.getByRole('banner')).getByText('シナリオ集に公開中')).toBeInTheDocument();
 
     // 書かれた JSON が、遊べる形になっている
     const file = written.at(-1) as Scenario;
@@ -456,8 +490,9 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     expect(file.endings[0]?.grantsTag).toBe('村を見た');
     expect(safeParseScenarioFile(`scenarios/${id}.json`, toScenarioFile(file)).ok).toBe(true);
 
-    // GM：GM 不在・提案不可で募集する
-    await router.navigate(`/gm/scenarios/${id}`);
+    // GM：シナリオ集の一覧から選び、GM 不在・提案不可で募集する
+    await router.navigate('/gm/scenarios');
+    await user.click(await screen.findByRole('link', { name: title }));
     const p = await recruitPanel();
     await user.click(within(p).getByLabelText('GM 不在（PL が自由に始める）'));
     await user.selectOptions(within(p).getByLabelText('提案の扱い'), 'disabled');
@@ -466,23 +501,62 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     await screen.findByRole('heading', { name: '自分の募集' });
 
     // PL：絞り込んで自分の PC で始め、結末まで
-    await router.navigate('/pl/sessions');
-    await screen.findByRole('heading', { name: '参加できるセッション' });
-    await user.click(screen.getByLabelText('GM 不在の募集だけ'));
-    const card = await recruitCard(title, 'ユウ');
-    await user.selectOptions(within(card).getByLabelText('始める PC'), 'pc-jin');
-    await user.click(within(card).getByRole('button', { name: 'この PC で始める' }));
-    await user.click(await screen.findByRole('button', { name: /村へ/ }));
-    // 移ると、手札は移り先のノードの選択肢で配り直される（play-and-field.md「次のシーンへ進む」）
-    await screen.findByRole('button', { name: /帰る/ });
-    expect(screen.queryByRole('button', { name: /村へ/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /新たな選択肢を提案/ })).not.toBeInTheDocument();
-    await user.click(await screen.findByRole('button', { name: /帰る/ }));
-    expect(await screen.findByText('このセッションは終了しています。')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '結末「結末」' })).toBeInTheDocument();
+    const playThrough = async (pc: string) => {
+      await router.navigate('/pl/sessions');
+      await screen.findByRole('heading', { name: '参加できるセッション' });
+      await user.click(screen.getByLabelText('GM 不在の募集だけ'));
+      const card = await recruitCard(title, 'ユウ');
+      await user.selectOptions(within(card).getByLabelText('始める PC'), pc);
+      await user.click(within(card).getByRole('button', { name: 'この PC で始める' }));
+      await user.click(await screen.findByRole('button', { name: /村へ/ }));
+      // 移ると、手札は移り先のノードの選択肢で配り直される（play-and-field.md「次のシーンへ進む」）
+      await screen.findByRole('button', { name: /帰る/ });
+      expect(screen.queryByRole('button', { name: /村へ/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /新たな選択肢を提案/ })).not.toBeInTheDocument();
+      await user.click(await screen.findByRole('button', { name: /帰る/ }));
+      expect(await screen.findByText('このセッションは終了しています。')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: '結末「結末」' })).toBeInTheDocument();
+    };
+    await playThrough('pc-jin');
     expect(screen.getAllByText(/結末タグ『村を見た』を得た。/).length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole('link', { name: 'キャラクターシート' }));
     expect(await screen.findByText('村を見た')).toBeInTheDocument();
+
+    // 製作者：下書きの結末タグを変えて保存する。公開し直すまで届かない（D1）
+    await router.navigate(`/creator/scenarios/${id}`);
+    const tag = await screen.findByLabelText('結末タグ');
+    await user.clear(tag);
+    await user.type(tag, '村を出た');
+    await save(user);
+    expect(
+      await within(screen.getByRole('banner')).findByText('公開版と違う変更あり'),
+    ).toBeInTheDocument();
+    await router.navigate('/creator/scenarios');
+    // 一覧は保存で作り直される（前の一覧が先に出るので、出るまで待つ）
+    await waitFor(() => {
+      const row = screen
+        .getByRole('link', { name: title })
+        .closest('[data-scenario-row]') as HTMLElement;
+      expect(within(row).getByText('公開版と違う変更あり')).toBeInTheDocument();
+    });
+
+    // 新しく始めたセッションは公開版のまま（別の PC で）
+    await playThrough('pc-akari');
+    expect(screen.getAllByText(/結末タグ『村を見た』を得た。/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/結末タグ『村を出た』を得た。/)).not.toBeInTheDocument();
+
+    // 公開し直すと、変更ありの表示が消え、新しく始めたセッションは新しい結末タグになる
+    await router.navigate(`/creator/scenarios/${id}`);
+    await user.click(await screen.findByRole('button', { name: '公開し直す' }));
+    await screen.findByText(`scenarios/${id}.json に保存しました`);
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('banner')).queryByText('公開版と違う変更あり'),
+      ).not.toBeInTheDocument(),
+    );
+    expect(written).toHaveLength(2);
+    await playThrough('pc-jin');
+    expect(screen.getAllByText(/結末タグ『村を出た』を得た。/).length).toBeGreaterThan(0);
   });
 });

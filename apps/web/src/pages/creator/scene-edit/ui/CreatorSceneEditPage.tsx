@@ -5,14 +5,15 @@ import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '@/entities/card/ui/GameCard';
-import { useUpdateScenario } from '@/entities/scenario/api/mutations';
-import { useScenario } from '@/entities/scenario/api/queries';
-import { ScenarioFileNote } from '@/entities/scenario/ui/ScenarioFileNote';
+import { useUpdateScenarioDraft } from '@/entities/scenario/api/mutations';
+import { useEditableScenario } from '@/entities/scenario/api/queries';
+import type { ScenarioDraftView } from '@/entities/scenario/api/types';
 import s from '@/shared/ui/page.module.css';
-import { Button, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/ui/ui';
+import { Button, EmptyNote, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 import { loadCardImage, removeCardImage, saveCardImage } from '../api/cardImageStorage';
 import { EndingNodeEditor } from './EndingNodeEditor';
 import { MoveTargetSelect } from './MoveTargetSelect';
+import { SaveButton } from './SaveButton';
 
 /** 追加できるカード種別（ロケーションは専用の枠で扱うため含めない） */
 const ADDABLE_KINDS: CardKind[] = ['npc', 'info', 'choice', 'enemy'];
@@ -34,70 +35,107 @@ const dataUrlBytes = (dataUrl: string) => Math.floor((dataUrl.length * 3) / 4);
  * シーンの目的・終了条件は未決の仮ルール（docs/provisional/scene-objective.md）。
  * 導入も同じ画面で編集する（目的・終了条件は出さない）。結末は EndingNodeEditor
  * （docs/plans/2026-10-07-選択肢の移り先と結末の編集.md）。
+ * 製作者は下書きを読み書きする（公開はシナリオ編集から）。製作者でない人には公開版を読み取り専用で見せる
+ * （docs/plans/2026-10-11-シナリオの下書きのAPI.md G4）。
  */
+/** 下書きを保存した知らせ・公開していない編集が消える注意・製作者でない人への案内 */
+function SceneNotes({
+  notAuthor,
+  saved,
+  view,
+}: {
+  notAuthor: boolean;
+  saved: boolean;
+  view: ScenarioDraftView | null;
+}) {
+  if (notAuthor)
+    return <EmptyNote>製作者でないため編集できません（公開版を表示しています）。</EmptyNote>;
+  return (
+    <>
+      {saved ? <EmptyNote>下書きを保存しました。</EmptyNote> : null}
+      {view && (view.publication === 'none' || view.changed) ? (
+        <EmptyNote>
+          公開していない編集は、リロードで消えます。公開・公開し直すのはシナリオ編集の画面から。
+        </EmptyNote>
+      ) : null}
+    </>
+  );
+}
+
 export function CreatorSceneEditPage() {
   const { scenarioId = '', sceneId = '' } = useParams();
-  const scenario = useScenario(scenarioId);
-  const update = useUpdateScenario();
+  const source = useEditableScenario(scenarioId);
+  const update = useUpdateScenarioDraft();
   // SceneEditor は保存成功のたびに key が変わって再マウントするため、
   // 画像保存の失敗メッセージはここ（親）で持って再マウントをまたいで表示し続ける。
   const [imageSaveError, setImageSaveError] = useState<string | null>(null);
+  // 保存したシナリオとシーン。別のシーンへ移ったら（ページのコンポーネントは使い回される）「保存しました」を出さない
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const here = `${scenarioId}/${sceneId}`;
 
-  if (scenario.isPending) return <Loading />;
-  if (scenario.error) return <ErrorNote error={scenario.error} />;
+  if (source.status === 'error') return <ErrorNote error={source.error} />;
+  if (source.status === 'pending') return <Loading />;
+  const { sc } = source;
+  const notAuthor = source.status === 'readOnly';
+  const view = source.status === 'own' ? source.view : null;
   // プール用のノード（独立した npc/info/enemy）は、URL を直接叩いても開けないよう「見つからない」扱いにする
-  const scene = scenario.data.deck.find((n) => n.id === sceneId && EDITABLE_KINDS.has(n.kind));
+  const scene = sc.deck.find((n) => n.id === sceneId && EDITABLE_KINDS.has(n.kind));
   if (!scene) return <ErrorNote error={new Error('シーンが見つかりません')} />;
 
-  const saveNode = (next: DeckNode) =>
-    update.mutate({
-      id: scenarioId,
-      patch: { deck: scenario.data.deck.map((n) => (n.id === next.id ? next : n)) },
-    });
-  // ファイルへの書き込みの知らせ（公開中のシナリオ）。ミューテーションはこの親にあるので、再マウントをまたいで残る
-  const fileNote = <ScenarioFileNote file={update.isSuccess ? update.data.file : undefined} />;
-
-  if (scene.kind === 'ending')
-    return (
-      <EndingNodeEditor
-        key={`${scenario.data.updatedAt}-${scene.id}`}
-        sc={scenario.data}
-        node={scene}
-        save={saveNode}
-        saving={update.isPending}
-        error={update.error}
-        fileNote={fileNote}
-      />
+  const saveNode = (next: DeckNode) => {
+    setSavedAt(null);
+    update.mutate(
+      { id: scenarioId, patch: { deck: sc.deck.map((n) => (n.id === next.id ? next : n)) } },
+      { onSuccess: () => setSavedAt(here) },
     );
+  };
+  // 知らせはこの親に持つので、保存のたびの再マウントをまたいで残る
+  const notes = <SceneNotes notAuthor={notAuthor} saved={savedAt === here} view={view} />;
 
   return (
-    <SceneEditor
-      key={`${scenario.data.updatedAt}-${scene.id}`}
-      sc={scenario.data}
-      scene={scene}
-      imageSaveError={imageSaveError}
-      save={(nextScene) => {
-        // 仮の画像URL（data URL）は、保存のタイミングで初めて localStorage へ書き込む
-        // （アップロードしただけでは書き込まない。docs/plans/2026-09-16-scene-builder.md 決定7）。
-        // localStorageは容量上限（QuotaExceededError等）を超えることがあるため、失敗しても
-        // シナリオ本体の保存（update.mutate）は必ず実行する。
-        setImageSaveError(null);
-        for (const c of nextScene.cards) {
-          if (!c.portraitUrl) continue;
-          try {
-            saveCardImage(c.id, c.portraitUrl);
-          } catch {
-            setImageSaveError(
-              '画像の保存に失敗しました（容量が大きすぎる可能性があります）。他の変更は保存されます。',
-            );
-          }
-        }
-        saveNode(nextScene);
-      }}
-      saving={update.isPending}
-      error={update.error}
-      fileNote={fileNote}
-    />
+    <fieldset disabled={notAuthor} className={s.plainFieldset}>
+      {scene.kind === 'ending' ? (
+        <EndingNodeEditor
+          key={`${sc.updatedAt}-${scene.id}`}
+          sc={sc}
+          node={scene}
+          save={saveNode}
+          saving={update.isPending}
+          error={update.error}
+          notes={notes}
+          readOnly={notAuthor}
+        />
+      ) : (
+        <SceneEditor
+          key={`${sc.updatedAt}-${scene.id}`}
+          sc={sc}
+          scene={scene}
+          imageSaveError={imageSaveError}
+          save={(nextScene) => {
+            // 仮の画像URL（data URL）は、保存のタイミングで初めて localStorage へ書き込む
+            // （アップロードしただけでは書き込まない。docs/plans/2026-09-16-scene-builder.md 決定7）。
+            // localStorageは容量上限（QuotaExceededError等）を超えることがあるため、失敗しても
+            // シナリオ本体の保存（update.mutate）は必ず実行する。
+            setImageSaveError(null);
+            for (const c of nextScene.cards) {
+              if (!c.portraitUrl) continue;
+              try {
+                saveCardImage(c.id, c.portraitUrl);
+              } catch {
+                setImageSaveError(
+                  '画像の保存に失敗しました（容量が大きすぎる可能性があります）。他の変更は保存されます。',
+                );
+              }
+            }
+            saveNode(nextScene);
+          }}
+          saving={update.isPending}
+          error={update.error}
+          notes={notes}
+          readOnly={notAuthor}
+        />
+      )}
+    </fieldset>
   );
 }
 
@@ -108,7 +146,8 @@ function SceneEditor({
   save,
   saving,
   error,
-  fileNote,
+  notes,
+  readOnly,
   imageSaveError,
 }: {
   sc: Scenario;
@@ -116,7 +155,9 @@ function SceneEditor({
   save: (n: DeckNode) => void;
   saving: boolean;
   error: unknown;
-  fileNote: ReactNode;
+  notes: ReactNode;
+  /** 製作者でない人に公開版を見せるとき。保存のボタンを出さない */
+  readOnly: boolean;
   imageSaveError: string | null;
 }) {
   const [draft, setDraft] = useState<DeckNode>(scene);
@@ -221,14 +262,10 @@ function SceneEditor({
             {sc.title} ／ <Link to={`/creator/scenarios/${sc.id}`}>シナリオ編集へ戻る</Link>
           </>
         }
-        actions={
-          <Button disabled={!dirty || saving} onClick={onSave}>
-            {saving ? '保存中…' : '保存'}
-          </Button>
-        }
+        actions={<SaveButton readOnly={readOnly} dirty={dirty} saving={saving} onSave={onSave} />}
       />
       {error ? <ErrorNote error={error} /> : null}
-      {fileNote}
+      {notes}
       <div className={s.twoCol}>
         <aside className="u-stack">
           <Panel title={isIntro ? '導入の情報' : 'シーン情報'}>

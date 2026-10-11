@@ -19,8 +19,8 @@ import { z } from 'zod';
 import { cardPoolSchema } from '../card-pool/response';
 import { type Endpoint, errorBodySchema } from '../endpoint/define';
 import {
-  scenarioDraftSaveResultSchema,
   scenarioDraftSchema,
+  scenarioDraftViewSchema,
   scenarioSaveResultSchema,
 } from '../scenarios/response';
 import { endpoints } from './endpoints';
@@ -52,15 +52,15 @@ const named: [z.ZodType, string, string?][] = [
   [
     scenarioSchema,
     'Scenario',
-    '公開のファイルの検査（業務の検査を含む）を通ったシナリオ。仮ルールを含む：ソロ開始の初期装備（soloStarter。docs/provisional/auto-combat.md）',
+    'シナリオの公開版。公開のファイルの検査（業務の検査を含む）を通ったもの（テスト用のシードを除く）。仮ルールを含む：ソロ開始の初期装備（soloStarter。docs/provisional/auto-combat.md）',
   ],
   [
     scenarioDraftSchema,
     'ScenarioDraft',
-    '下書きを含みうるシナリオ。業務の検査を外した形（下書きの API を分けたら直す）。仮ルールを含む：ソロ開始の初期装備（soloStarter。docs/provisional/auto-combat.md）',
+    'シナリオの下書き（製作者の書きかけ）。書きかけでも保存できるよう業務の検査を外した形（形は検査する）。仮ルールを含む：ソロ開始の初期装備（soloStarter。docs/provisional/auto-combat.md）',
   ],
+  [scenarioDraftViewSchema, 'ScenarioDraftView', '製作者が見る下書きと、その公開の状態'],
   [scenarioSaveResultSchema, 'ScenarioSaveResult'],
-  [scenarioDraftSaveResultSchema, 'ScenarioDraftSaveResult'],
   [recruitmentSchema, 'Recruitment'],
   [participantSchema, 'Participant'],
   [proposalSchema, 'Proposal'],
@@ -123,8 +123,15 @@ function convert(schema: z.ZodType, io: 'input' | 'output', components: Json): J
   return rewriteRefs(rest) as Json;
 }
 
-/** タグは URL の最初の区切り（`/sessions/:id/play` → `sessions`） */
-const tagOf = (e: Endpoint): string => e.path.split('/')[1] ?? '';
+/**
+ * タグは URL の最初の区切り（`/sessions/:id/play` → `sessions`）。`/scenario-drafts` はシナリオの API の一部なので
+ * `scenarios` に寄せる（置き場所も scenarios/endpoints.ts。docs/plans/2026-10-11-シナリオの下書きのAPI.md G3）
+ */
+const TAG_ALIASES: Record<string, string> = { 'scenario-drafts': 'scenarios' };
+const tagOf = (e: Endpoint): string => {
+  const first = e.path.split('/')[1] ?? '';
+  return TAG_ALIASES[first] ?? first;
+};
 
 const pathParams = (path: string): string[] =>
   [...path.matchAll(/:([^/]+)/g)].map((m) => m[1] as string);
@@ -149,14 +156,6 @@ function operation(e: Endpoint, components: Json): Json {
     required: true,
     schema: { type: 'string' },
   }));
-  if (e.query) {
-    const query = convert(e.query, 'input', components);
-    const props = (query.properties ?? {}) as Record<string, Json>;
-    const required = new Set((query.required ?? []) as string[]);
-    for (const [name, { description, ...schema }] of Object.entries(props)) {
-      parameters.push({ name, in: 'query', required: required.has(name), description, schema });
-    }
-  }
   const responses: Json = {};
   for (const [status, res] of Object.entries(e.responses)) {
     if (!res) continue;

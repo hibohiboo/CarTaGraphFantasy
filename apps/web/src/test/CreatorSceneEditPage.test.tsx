@@ -308,8 +308,9 @@ describe('CreatorSceneEditPage', () => {
 
   it('CreatorScenarioEditPageから「編集」リンクをクリックするとシーン編集画面へ遷移する', async () => {
     const user = userEvent.setup();
-    const router = renderAt('/creator/scenarios/sc-gray-mansion');
-    await screen.findByRole('heading', { level: 1, name: '灰色館の一夜' });
+    // 自分のシナリオ（他人のシナリオは読み取り専用。docs/plans/2026-10-11-シナリオの下書きのAPI.md D7）
+    const router = renderAt('/creator/scenarios/sc-mansion-mine');
+    await screen.findByRole('heading', { level: 1, name: '（テスト用）自分の灰色館' });
 
     // 導入・結末にも「編集」があるので、シーンの行で絞って押す
     const sceneRow = screen.getByText('3-1 地下回廊').closest('[data-kind]') as HTMLElement;
@@ -317,7 +318,7 @@ describe('CreatorSceneEditPage', () => {
 
     await waitFor(() =>
       expect(router.state.location.pathname).toMatch(
-        /^\/creator\/scenarios\/sc-gray-mansion\/scenes\/d-s1$/,
+        /^\/creator\/scenarios\/sc-mansion-mine\/scenes\/d-s1$/,
       ),
     );
   });

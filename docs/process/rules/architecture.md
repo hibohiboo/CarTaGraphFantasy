@@ -36,7 +36,7 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
                 vite.config.ts から読むので、@cartagraph/domain も @/ も静的に import しない（Node が解決できず設定の読み込みで落ちる）
 packages/domain/src/      ドメイン型と、UIに依存しないゲームロジック（純粋関数）。
                           仕様ページに合わせたドメインごとのディレクトリ（下の「packages/domain の中の置き場所」）
-packages/schemas/src/     API の一覧（メソッド・パス・本文・クエリ・状態コードごとの応答）とリクエストの本文のスキーマ（zod）、
+packages/schemas/src/     API の一覧（メソッド・パス・本文・状態コードごとの応答）とリクエストの本文のスキーマ（zod）、
                           一覧から作る OpenAPI の文書。モック（MSW）・画面・将来のバックエンドが共用する
                           （下の「packages/schemas の中の置き場所」）
 scenarios/                公開したことのあるシナリオの JSON（非公開にしたものは draft のまま残る。シードの一部。
@@ -119,10 +119,10 @@ check ← card ← library        user（どこにも依存しない）
 
 ## packages/schemas の中の置き場所
 
-`packages/schemas/src/` は、API の URL の最初の区切りごとのディレクトリ（`me/`・`card-pool/`・`characters/`・`recruitments/`・`sessions/`・`scenarios/`・`library/`。名前は区切りと同じ）と、共通の `body/`（本文の検査）・`endpoint/`（一覧の1項目の定義と応答の検査）、全体をまとめる `api/` に分ける。`/scenarios/:id/start-solo`・`/scenarios/:id/recruitments` は `scenarios/` に置く。
+`packages/schemas/src/` は、API の URL の最初の区切りごとのディレクトリ（`me/`・`card-pool/`・`characters/`・`recruitments/`・`sessions/`・`scenarios/`・`library/`。名前は区切りと同じ）と、共通の `body/`（本文の検査）・`endpoint/`（一覧の1項目の定義と応答の検査）、全体をまとめる `api/` に分ける。`/scenarios/:id/start-solo`・`/scenarios/:id/recruitments` は `scenarios/` に置く。`/scenario-drafts`（自分の下書きの一覧）も、下書きの形（`scenarios/response.ts`）を使うので `scenarios/` に置く（OpenAPI のタグも `scenarios`）。
 
 - 各ディレクトリの `request.ts` に、エンドポイントごとの本文のスキーマを `defineBody(スキーマ, 個別のメッセージの表)` で置く。書くのは形だけ（型・必須か・配列の要素の形）で、業務の検査はハンドラ・ドメインに残す
-- 各ディレクトリの `endpoints.ts` に、その区切りの API の一覧を `defineEndpoint` で置く（メソッド・パス・本文・クエリと、返しうる状態コードごとの応答の形。失敗の本文はどれも `{ message }`）。`response.ts` には、`packages/domain` に無い応答の形だけを置く。応答の形の多くは domain の zod スキーマを使う
+- 各ディレクトリの `endpoints.ts` に、その区切りの API の一覧を `defineEndpoint` で置く（メソッド・パス・本文と、返しうる状態コードごとの応答の形。失敗の本文はどれも `{ message }`）。`response.ts` には、`packages/domain` に無い応答の形だけを置く。応答の形の多くは domain の zod スキーマを使う
 - `api/endpoints.ts` が全ディレクトリの一覧を1本にまとめ、`api/openapi.ts` がそこから OpenAPI の文書を作る。MSW のハンドラと一覧の1対1、MSW の応答が一覧どおりかは、web のテストが確かめる（`docs/architecture/web-app.md`「位置づけ」）
 - 列挙などは `packages/domain` のスキーマから引き、書き写さない
 - 直下にファイルを置かない・`index.ts` を作らない・自分のパッケージ名で import しない（`packages/domain` と同じ決まり）

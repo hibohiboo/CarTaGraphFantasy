@@ -1,4 +1,4 @@
-// API の一覧の1項目（メソッド・パス・本文・クエリ・状態コードごとの応答）の定義（docs/plans/2026-10-11-APIドキュメント.md G2）。
+// API の一覧の1項目（メソッド・パス・本文・状態コードごとの応答）の定義（docs/plans/2026-10-11-APIドキュメント.md G2）。
 // 一覧から OpenAPI の文書を作り（api/openapi.ts）、モック（MSW）の応答が一覧どおりかを検査する（check.ts）。
 
 import { z } from 'zod';
@@ -28,8 +28,6 @@ export interface Endpoint {
   description?: string;
   /** リクエストの本文（本文を読む API だけ）。受け取る側の検査と同じもの */
   body?: AnyRequestBody;
-  /** クエリ文字列 */
-  query?: z.ZodObject;
   responses: EndpointResponses;
 }
 

@@ -154,7 +154,11 @@ export const scenarioSchema = z.strictObject({
   soloStarter: z.strictObject({ cards: z.array(cardDefSchema) }).optional(),
   deck: z.array(deckNodeSchema),
   endings: z.array(endingDefSchema),
-  /** シナリオ集への公開状態 */
+  /**
+   * シナリオ集に載っているか（docs/cartagraph/scenario-flow.md「シナリオの公開」）。公開版では published＝載っている、
+   * draft＝シナリオ集から外した。下書きでは意味を持たず、いつも draft（公開の状態は packages/schemas の
+   * ScenarioDraftView.publication が持つ）
+   */
   libraryStatus: z.enum(['draft', 'published']),
   /** ISO 8601 の日時。時差付き（+09:00 など）も書ける */
   updatedAt: z.iso.datetime({ offset: true }),
