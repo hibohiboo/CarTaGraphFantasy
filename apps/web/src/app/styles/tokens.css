@@ -1,4 +1,4 @@
-/* docs/architecture/web-app.md「デザインシステム」のデザイントークン */
+/* デザイントークンの値の正はこのファイル。役割は docs/architecture/web-app.md「デザインシステム」 */
 :root {
   --felt: #1f2a24;
   --felt-panel: #24322b;

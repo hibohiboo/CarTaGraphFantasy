@@ -48,23 +48,16 @@ API ドキュメント：`https://hibohiboo.github.io/CarTaGraphFantasy/api-docs
 
 ## デザインシステム
 
-画面の見た目の決まり。トークンの値は `apps/web/src/app/styles/tokens.css` に置く。
+画面の見た目の決まり。トークンの値の正は `apps/web/src/app/styles/tokens.css`（このページには役割だけを書く）。「UIパターン」「コンポーネントの境界」は、試作で確かめた指針で、実装の名前や CSS そのままではない（実在しない名前を含む）。
 
 ### カラートークン（全画面共通）
 
-```css
---felt: #1f2a24;        /* 卓上フェルト地（背景） */
---felt-panel: #24322b;  /* パネル背景 */
---felt-panel-2: #1a241e;/* さらに暗いパネル/伏せ札の地 */
---card: #efe7d8;        /* カード地（生成り紙） */
---ink: #2b241c;          /* カード上の文字 */
---ink-soft: #55493a;     /* カード上の副次テキスト */
---parchment-text: #ddd3bf;     /* 卓上の文字 */
---parchment-text-dim: #a99f8c; /* 卓上の副次テキスト */
---seal: #a33227;    /* 朱印・GM系の強調色 */
---thread: #b8935a;  /* 金糸＝グラフ/場のエッジ、装飾線 */
---focus: #d9b877;   /* フォーカスリング・強調枠 */
-```
+- `--felt`・`--felt-panel`・`--felt-panel-2` — 卓上フェルト地（背景）／パネル背景／さらに暗いパネル・伏せ札の地
+- `--card`・`--ink`・`--ink-soft` — カード地（生成り紙）／カード上の文字／カード上の副次テキスト
+- `--parchment-text`・`--parchment-text-dim` — 卓上の文字／卓上の副次テキスト
+- `--seal` — 朱印・GM系の強調色
+- `--thread` — 金糸＝グラフ・場のエッジ、装飾線
+- `--focus` — フォーカスリング・強調枠
 
 役割バッジは色で統一する：ドライバー＝金（`--role-driver`）／ナビゲーター＝スレード（`--role-navigator`）／GM＝朱（`--role-gm`）／戦闘の敵＝朱（`--role-enemy`）。状態の色は`--pending`（承認待ち・黄）／`--approved`（緑）／`--rejected`（赤）／`--neutral`（灰）で、アクセントの金とは役割を分ける。
 
@@ -79,7 +72,7 @@ API ドキュメント：`https://hibohiboo.github.io/CarTaGraphFantasy/api-docs
 
 ### カードの視覚言語
 
-- **朱印スタンプ**（丸・朱色・「決」の字）＝ 決着した論点を図像化したもの
+- **朱印スタンプ**（丸・朱色・「決」の字）＝ 決着した論点を図像化したもの（図鑑ページのみ）
 - **伏せ札**（`repeating-linear-gradient`の斜線パターン、暗い地）＝ 内容不明・秘匿情報。存在は見えるが中身が分からない状態（[カードの裏表](../cartagraph/card-face-back.md)の「ゾーンで隠す／裏表で隠す」の後者）
 - **ゾーンピル**（GM専用／PL可視の小さな角丸ラベル）＝ [場のゾーン構造](../cartagraph/card-face-back.md#場のゾーン構造)をそのままUIラベル化したもの
 - **カード画像＋アイコンフォールバック**（`.card-portrait`）＝ 背景画像があればそれを表示し、無ければ人型シルエットのSVGアイコン（金線画）にする

@@ -16,7 +16,7 @@ CarTaGraphFantasyの実装に使う技術スタックの方針を整理する。
 ## インフラ・ホスティング（決着）
 
 - **クラウド** — AWSを使い、CDK（TypeScript）でIaCする。
-- **閲覧サイトのホスティング** — いまはGitHub Pages。移行先はS3 + CloudFront。移行の時期は[未解決論点](../open-questions.md#開発の仕組み)。
+- **閲覧サイトのホスティング** — いまはGitHub Pages。バックエンドAPI（セッション管理機能）を作り始めるタイミングで、S3 + CloudFrontへまとめて移行する。
 - **バックエンドAPI・グラフDB（Neptune等）の具体的な構成** — セッション管理機能のフェーズで決める（[未解決論点](../open-questions.md#開発の仕組み)）。
 
 ## パッケージマネージャ・モノレポ構成（決着）
