@@ -103,6 +103,7 @@ export default withMermaid(
                 { text: 'レビュー', link: '/process/rules/review' },
                 { text: '静的解析', link: '/process/rules/static-analysis' },
                 { text: '仕様のページの書き方', link: '/process/rules/spec-writing' },
+                { text: 'docs の1ファイル1責務', link: '/process/rules/doc-responsibility' },
               ],
             },
             {
