@@ -1,6 +1,6 @@
 # Webアプリ（apps/web）の仕組み
 
-[技術スタック](index.md)のモノレポ方針に沿って追加した、React製フロントエンドの構成をまとめる。[試作フェーズの引き継ぎ](prototype-handover.md)で決めたデザイントークン・コンポーネント境界を、そのままReactに移植したもの。
+[技術スタック](index.md)のモノレポ方針に沿って追加した、React製フロントエンドの構成をまとめる。デザイントークン・コンポーネント境界は、下の「デザインシステム」が正。
 
 公開先：`https://hibohiboo.github.io/CarTaGraphFantasy/app/`（このdocsサイトと同じGitHub Pagesの `app/` 配下）
 テストレポート（E2E・Vitest）：[テストレポート](test-report.md)の一覧から開く（mainへのpushごとに更新）
@@ -12,8 +12,8 @@ API ドキュメント：`https://hibohiboo.github.io/CarTaGraphFantasy/api-docs
 - 本物のAPIができたら、`apps/web/src/shared/api/api.ts` の接続先を差し替え、`src/mocks/` を開発時のみ有効にする想定。
 - **API の本文は検査してから使う。** リクエストの本文の形は `packages/schemas`（zod。将来のバックエンドと共用）が持ち、MSW のハンドラは `src/mocks/body.ts` の `readBody` で検査してから使う。形が崩れていれば 422（`{ message }`）で返し、何も変えない（500 にしない）。本文が空なら `{}` として読む。スキーマに書くのは形だけで、名前が空でない・能力値の配分・募集人数などの業務の検査はハンドラとドメインが今のメッセージで行う。下書きの保存（`PATCH /api/scenarios/:id/draft`）は、書きかけでも保存できるよう、本文がオブジェクトかを見たうえで、上書きした結果の形（業務の検査を外した `ScenarioDraft`）を検査する。画面の mutation の本文の型も同じスキーマから引く。ハンドラが `request.json()`・`request.text()` を直接呼ぶのは lint が止める（`docs/process/rules/static-analysis.md`「GritQL のプラグイン」。`docs/plans/2026-10-10-APIスキーマの共用.md`）
 - **API の一覧と応答も `packages/schemas` が正。** API ごとのメソッド・パス・本文・状態コードごとの応答の形を、`packages/schemas` の各ディレクトリの `endpoints.ts` に書く（全部は `api/endpoints.ts`）。応答の形は `packages/domain` の zod スキーマ（`Session`・`Character` など）。web のテストは、MSW のハンドラと一覧が1対1か（`src/test/apiEndpoints.test.ts`）と、MSW が返した状態コードと本文が一覧どおりか（`src/test/setup.ts` が `src/test/responseCheck.ts` で全テストの応答を照らす）を確かめ、ずれたらテストを落とす。ハンドラを足す・応答を変えるときは一覧も直す。画面の応答の型も一覧と同じスキーマから引く（`docs/plans/2026-10-11-APIドキュメント.md`）
-- TanStack Queryの `QueryClient`（`src/main.tsx`）は `retry: false, staleTime: 5_000` のみを設定している。実レイテンシ・更新頻度を測定できる材料がまだ無いため、データ種別ごとのキャッシュチューニングは実バックエンド接続後に実測してから見直す。
-- [フェーズ分け](index.md#開発フェーズの段階分け決着)（まず閲覧サイト→後にセッション管理）の方針は変えていない。セッション管理系の画面も含めて先に画面を作っているのは、モックで体験を検証するためであり、バックエンド実装の着手順は改めて判断する。
+- TanStack Queryの `QueryClient`（`src/main.tsx`）は `retry: false, staleTime: 5_000` のみを設定している。データ種別ごとのキャッシュチューニングは[未解決論点](../open-questions.md#開発の仕組み)。
+- [フェーズ分け](index.md#開発フェーズの段階分け決着)（まず閲覧サイト→後にセッション管理）の方針は変えていない。セッション管理系の画面も含めて先に画面を作っている（バックエンド実装の着手順は[未解決論点](../open-questions.md#開発の仕組み)）。
 
 ## ディレクトリ
 
@@ -45,6 +45,60 @@ API ドキュメント：`https://hibohiboo.github.io/CarTaGraphFantasy/api-docs
 - **シナリオからの参照** — シナリオの JSON は、システムのカードを `soloEffect.gainCardIds` に id だけで書く（お店で習う戦闘スキル）。シナリオ固有のカード（引換カード・達成カード）は今までどおり `gainCards`・`achievement` に中身ごと書く。読み込み時に、`gainCardIds` の実在と、シナリオ固有のカードの id がシステムのカードとぶつからないことを確かめる（`findSystemCardRefErrors`）
 - **注記・整形・直したら** — 「シナリオの JSON」と同じ（`$comment`、Biome、`pnpm web:test`）。中身だけを直す変更はライトルート（[開発プロセス](../process/index.md)）。画面で確かめるときは `pnpm web:check:character`（`apps/web/e2e/dev/character-rules.mjs`。値は `rules/` から読む）
 - **仕様のページから指さない** — 正式仕様のページ（`docs/cartagraph/`・`docs/concept/`・用語集）は `rules/` などの実装のパスを指さない。実装との対応はこのページに書く（`pnpm docs:build` の `scripts/check-spec-paths.mjs` が止める）
+
+## デザインシステム
+
+画面の見た目の決まり。トークンの値は `apps/web/src/app/styles/tokens.css` に置く。
+
+### カラートークン（全画面共通）
+
+```css
+--felt: #1f2a24;        /* 卓上フェルト地（背景） */
+--felt-panel: #24322b;  /* パネル背景 */
+--felt-panel-2: #1a241e;/* さらに暗いパネル/伏せ札の地 */
+--card: #efe7d8;        /* カード地（生成り紙） */
+--ink: #2b241c;          /* カード上の文字 */
+--ink-soft: #55493a;     /* カード上の副次テキスト */
+--parchment-text: #ddd3bf;     /* 卓上の文字 */
+--parchment-text-dim: #a99f8c; /* 卓上の副次テキスト */
+--seal: #a33227;    /* 朱印・GM系の強調色 */
+--thread: #b8935a;  /* 金糸＝グラフ/場のエッジ、装飾線 */
+--focus: #d9b877;   /* フォーカスリング・強調枠 */
+```
+
+役割バッジは色で統一する：ドライバー＝金（`--role-driver`）／ナビゲーター＝スレード（`--role-navigator`）／GM＝朱（`--role-gm`）／戦闘の敵＝朱（`--role-enemy`）。状態の色は`--pending`（承認待ち・黄）／`--approved`（緑）／`--rejected`（赤）／`--neutral`（灰）で、アクセントの金とは役割を分ける。
+
+### タイポグラフィ
+
+- 見出し・カード名：Zen Old Mincho（明朝、Google Fonts）
+- 本文・UI：Zen Kaku Gothic New（ゴシック、Google Fonts）
+
+### カードの縦横比
+
+**5:7に統一**する。CSSでは`aspect-ratio: 5 / 7`。用語集カード・手札・場のカード・ロケーションカード・カードプール等、「単一のゲーム内カードを表す」要素はすべてこの比率。GM承認のチケットや募集カードなど「複数の情報を束ねたUI部品」は対象外（別のコンポーネント系統）。
+
+### カードの視覚言語
+
+- **朱印スタンプ**（丸・朱色・「決」の字）＝ 決着した論点を図像化したもの
+- **伏せ札**（`repeating-linear-gradient`の斜線パターン、暗い地）＝ 内容不明・秘匿情報。存在は見えるが中身が分からない状態（[カードの裏表](../cartagraph/card-face-back.md)の「ゾーンで隠す／裏表で隠す」の後者）
+- **ゾーンピル**（GM専用／PL可視の小さな角丸ラベル）＝ [場のゾーン構造](../cartagraph/card-face-back.md#場のゾーン構造)をそのままUIラベル化したもの
+- **カード画像＋アイコンフォールバック**（`.card-portrait`）＝ 背景画像があればそれを表示し、無ければ人型シルエットのSVGアイコン（金線画）にする
+
+### UIパターン
+
+- **1画面完結レイアウト**（プレイ画面・戦闘画面）：`body { height: 100dvh; overflow-y: auto; display: flex; flex-direction: column; }` とし、可変の中央コンテンツは `flex: 1 1 auto; min-height: 0`。ナビ・HUDは**折り返さず横スクロール**（`flex-wrap: nowrap; overflow-x: auto`）にする。折り返すとスマホ幅で縦方向の予算を圧迫して表示が崩れるため
+- **プレイマット式の奥行き表現**：GMが用意するもの（シーン・場に出たカード）を上（奥）、PLが操作するもの（選択肢・パーティー）を下（手前）に配置する縦積みレイアウト
+
+### コンポーネントの境界
+
+- `Card`（5:7比率、`.card-portrait`込み。種類バリアント：用語／場／手札／ロケーション／プール）
+- `HandDock`（横スクロールの手札列）
+- `Hud` / `ProtoNav`（横スクロール1行の固定ヘッダー）
+- `TurnChips`（行動順表示、クリックで表示中PC切り替え）
+- `MatZone` / `PlayMat`（奥行き順の簡易俯瞰）
+- `ZonePill`・`RoleBadge`・`StatusPill`（状態表示の小部品）
+
+デザインシステムの決めた経緯は[デザイナーノート](../notes/architecture/prototype-handover.md)。
 
 ## ページ一覧（グループ別）
 
@@ -85,9 +139,9 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 - **作る** — `pnpm api:docs`（`scripts/build-api-docs.ts`）。文書の組み立ては `packages/schemas/src/api/openapi.ts`（zod 4 の `z.toJSONSchema`。名前の付いた型は `components.schemas` に1回だけ出す）。`docs/.vitepress/dist/api-docs/` に `openapi.json` と `index.html` を書く。dist は `pnpm docs:build` が作り直すので、その後に流す
 - **検査** — `redocly lint` を通してから HTML にする。設定はルートの `redocly.yaml`：警告も誤りにする `recommended-strict` を基に、`security-defined`（認証はまだ無い）・`info-license`（公開の API ではない）・`operation-4xx-response`（`GET /me` などは失敗を返さない）だけを止めた。CI（`ci.yml`）・pre-push・デプロイ（`build:pages`）で流れ、誤りが1件でもあれば止まる
 - **手元で見る** — `pnpm docs:build && pnpm api:docs && pnpm docs:preview --port 4175 --strictPort` で `http://localhost:4175/CarTaGraphFantasy/api-docs/`（4173 は E2E、4174 はエージェントの vite の preview が使う。4175 番の vitepress preview も `pnpm web:dev:agent:stop` で止まる）。`pnpm docs:dev` には無い（サイドバーのリンクは 404 になる）
-- **外部への依存** — Redoc の本体は `cdn.redocly.com` から読む（`@redocly/cli` の `build-docs` は同梱できない。2026-10-11、人間が受け入れた）。開くとブラウザのコンソールに React のハイドレーションの誤り（#418・#423）が出るが、`@redocly/cli` 2.62.1 が作る HTML と CDN の Redoc の組み合わせで、最小の文書でも出る（2026-10-11 に確かめた）。React がブラウザ側で描き直すので、表示と操作に影響は無い。Google Fonts は読まない（`--disableGoogleFont`）。`@redocly/cli` のテレメトリと更新の確認は、スクリプトが環境変数で止める
+- **外部への依存** — Redoc の本体は `cdn.redocly.com` から読む（`@redocly/cli` の `build-docs` は同梱できないため。2026-10-11）。ブラウザのコンソールに出る React のハイドレーションの誤りは[既知の問題](known-issues.md#redoc-のハイドレーションの誤りがコンソールに出る)。Google Fonts は読まない（`--disableGoogleFont`）。`@redocly/cli` のテレメトリと更新の確認は、スクリプトが環境変数で止める
 - **下書きのシナリオ** — 下書きの API（`GET /scenario-drafts`・`GET`・`PATCH /scenarios/:id/draft`・`POST /scenarios`）は、業務の検査（再挑戦不可の結末には結末タグが要る、など）を外した形（`ScenarioDraft`）と公開の状態（`ScenarioDraftView`）を返す。下書きは書きかけでも保存できるため。公開版の API（`GET /scenarios`・`GET /scenarios/:id`）は、公開の検査を通った `Scenario` を返す（テスト用のシードを除く。`docs/plans/2026-10-11-シナリオの下書きのAPI.md` G2）
-- **項目ごとの説明** — まだ出していない（domain の JSDoc は OpenAPI に載らない）。仮ルールの項目を持つ型（`CardDef`・`DeckNode`・`Scenario`・`ScenarioDraft`・`Session`・`AutoCombatState`・`CombatRecord`・`CardPool`）は、型ごとの説明に「仮ルール」と、どの項目がどの仮ルールかを書く（`packages/schemas/src/api/openapi.ts`）。Redoc は応答の一番外側の型の説明を表示しないので、同じものを文書の冒頭の「仮ルールと仕様とのずれ」にも並べる。モックの振る舞いが仕様とずれている所（`Session` の無反応の中断、再開の権限）も説明に書き、直す要望を示す
+- **項目ごとの説明** — 仮ルールの項目を持つ型（`CardDef`・`DeckNode`・`Scenario`・`ScenarioDraft`・`Session`・`AutoCombatState`・`CombatRecord`・`CardPool`）は、型ごとの説明に「仮ルール」と、どの項目がどの仮ルールかを書く（`packages/schemas/src/api/openapi.ts`）。Redoc は応答の一番外側の型の説明を表示しないので、同じものを文書の冒頭の「仮ルールと仕様とのずれ」にも並べる。モックの振る舞いが仕様とずれている所（`Session` の無反応の中断、再開の権限）も説明に書く。項目ごとの説明を出していないこと（domain の JSDoc は OpenAPI に載らない）は[既知の問題](known-issues.md#api-ドキュメントに項目ごとの説明が無い)
 
 ## 自動戦闘の数値シミュレーション
 
@@ -106,7 +160,7 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 - **Git Bash で `WEB_BASE` を渡すとき** — `WEB_BASE=/CarTaGraphFantasy/app/ pnpm web:build` のように環境変数でパスを渡すと、Windows の Git Bash（MSYS2）がパス文字列をWindows形式に変換してしまい壊れる。ローカルで確認する場合は `MSYS_NO_PATHCONV=1 WEB_BASE=/CarTaGraphFantasy/app/ pnpm web:build` のように付ける。GitHub Actions（Ubuntu）では不要（`.github/workflows/deploy.yml` 参照）。
 - **開発サーバーは決まったポートでだけ起動する** — `vite.config.ts` の `server.strictPort: true` で、ポートが埋まっていると起動は失敗する（別のポートで黙って起動しない）。人間が手で起動する `pnpm web:dev` は 5173 番、エージェントがブラウザで確かめるときの `pnpm web:dev:agent` は 5174 番に分けている。人間の開発サーバーと取り合わず、エージェントの確かめのスクリプトが開く URL も 5174 番に決まる。失敗したら、別の作業ツリー・ブランチの開発サーバーが同じポートで動いていないか確かめ、止めてから起動する
 - **エージェントがブラウザで確かめるときの起動と後始末** — `pnpm -w web:dev:agent` をバックグラウンドで起動する（`-w` を付けると、作業ディレクトリが `apps/web` などでもリポジトリ直下のスクリプトを呼べる）。build を preview で確かめるときは `--port 4174 --strictPort` で起動する（E2E の 4173 番と分け、下の停止のスクリプトで止められるように）。終わったら（タスクが時間切れで止まったときも）`pnpm web:dev:agent:stop` で止める。Windows では、起動したタスクを止めても vite の子プロセスが残ってポートを使い続け、次の起動が strictPort で失敗する。停止のスクリプトは、5174 番を待ち受けるのが `vite --port 5174`、4174 番が vite preview、4175 番が vitepress preview（docs と API ドキュメントの確かめ）のときだけ止め、ほかのプロセスには触らない
-- **測る前に、そのページが本当に返っているかを確かめる** — ブラウザで誤りの数や表示を測るときは、先に状態コードとページのタイトル（または決まった見出し）を確かめる。`vitepress preview` は起動した後に dist に足したディレクトリを把握せず 404 のページを返すので、測った「誤り0件」が 404 のページのものだったことがある（2026-10-11、API ドキュメントのハイドレーションの誤りの切り分け）。dist を作り直したら preview を起動し直す
+- **測る前に、そのページが本当に返っているかを確かめる** — ブラウザで誤りの数や表示を測るときは、先に状態コードとページのタイトル（または決まった見出し）を確かめる。`vitepress preview` は起動した後に dist に足したディレクトリを把握せず 404 のページを返すので、測った「誤り0件」が 404 のページのものだったことがある。dist を作り直したら preview を起動し直す
 - **作ったシナリオ・下書きはメモリにだけある** — エージェント用の `pnpm web:dev:agent`（既定）や GitHub Pages のデモでは、リロードすると作ったシナリオ・募集・セッションが消える。書き込みを開いた開発サーバーでも、下書き（公開していない編集）はリロードで消える。ブラウザで確かめるスクリプトは、画面の移動を `location.hash` で行い、`page.goto`・`page.reload` で読み直さない。画面だけで作って GM 不在で結末まで遊ぶ流れは `pnpm web:check:authoring`（`apps/web/e2e/dev/scenario-authoring.mjs`）で確かめる
 - **開発サーバーで公開すると、`scenarios/` にファイルが書かれる** — 「シナリオの JSON」の「画面から公開する」。書いても画面はリロードしない（メモリ上の募集・セッションを消さないため）。次に手でリロードしたとき、書いた JSON を読む（新しいファイルも拾う）。書き込みの口（`PUT /__dev/scenarios/:id`）はループバックからだけ受け付けるので、`http://localhost:5173` で開く（LAN の IP で開いた画面から公開すると失敗する）。整形はリポジトリ直下の Biome で行う（`@biomejs/biome` は apps/web の依存ではない）。エージェント用の `pnpm web:dev:agent`（5174番）は、既定で口を閉じ、デモと同じく書かない。書き込みを確かめるときだけ `CARTAGRAPH_WRITE_SCENARIOS=1` を付けて起動し、終わったら `git status scenarios/` を見て、作ったファイルを消し、書き直したファイルを `git checkout` で戻す。`vite build`・`vite preview`・Vitest には口が無い。口や HMR まわりを変えたら、`pnpm web:check:publish`（`apps/web/e2e/dev/scenario-publish.mjs`）で、公開・リロードしないこと・保存だけではファイルが変わらずリロードで公開していない編集が消えること・公開し直しと非公開の書き直しをブラウザで通しで確かめる（作ったファイルは自分で消す）
 - **vitest のバージョンを上げるときは pnpm workspace の peer 解決に注意** — pnpm workspace のルート（VitePress が使う vite 5 系）から peer 依存を解決してしまうと、`apps/web` の vitest が意図せず vite 5 系を掴んで動かなくなることがある。そのため `.npmrc` に `resolve-peers-from-workspace-root=false` を置き、`apps/web` の vitest は vite 7 系と整合する 4 系に固定している。`.npmrc` を消したり pnpm の設定を変えたりする際はこの依存関係を思い出すこと。
@@ -120,8 +174,8 @@ pnpm sim:auto-combat # 自動戦闘の数値シミュレーション（任意実
 - シーン進行（GM視点）：`scene-play.html`
 - 場の状況：`session-field.html`
 
-**React 化したら、その画面の試作 HTML は削除する**（サイドバー「試作」の項目も外す）。React 化済みだった10画面の試作は 2026-09-27 に削除した（`docs/plans/2026-09-27-試作HTMLの整理.md`）。削除した試作を見たいときは、git 履歴から取り出す（例：`git show 89845da:docs/public/preview/session-play.html`）。
+**React 化したら、その画面の試作 HTML は削除する**（サイドバー「試作」の項目も外す）。削除した試作を見たいときは、git 履歴から取り出す（例：`git show 89845da:docs/public/preview/session-play.html`）。
 
-シーン構築画面（カード編集）は`/creator/scenarios/:scenarioId/scenes/:sceneId`（`CreatorSceneEditPage.tsx`）としてReact化済み（`docs/plans/2026-09-16-scene-builder.md`、開発サイクルC4）。導入・結末のノードも同じ画面で開ける（導入はシーンと同じで目的・終了条件は出さない。結末は名前と指す結末だけ。`docs/plans/2026-10-07-選択肢の移り先と結末の編集.md`）。シーンの「目的」「終了条件」は未決の仮ルールとして実装しており、[未解決論点トラッカー](../open-questions.md)の該当項目は決着していない。
+シーン構築画面（カード編集）は`/creator/scenarios/:scenarioId/scenes/:sceneId`（`CreatorSceneEditPage.tsx`）。導入・結末のノードも同じ画面で開ける（導入はシーンと同じで目的・終了条件は出さない。結末は名前と指す結末だけ。`docs/plans/2026-10-07-選択肢の移り先と結末の編集.md`）。シーンの「目的」「終了条件」は[仮ルール](../provisional/scene-objective.md)として実装している。
 
-React 化する際は、この試作の見た目・情報設計を踏襲しつつ、既存の React コンポーネント（`entities/card/ui/GameCard.tsx`・`shared/ui/ui.tsx` 等）を再利用する。試作HTML自体のクラス構造をそのまま持ち込むのではない（[試作フェーズの引き継ぎ](prototype-handover.md)参照）。
+React 化する際は、この試作の見た目・情報設計を踏襲しつつ、既存の React コンポーネント（`entities/card/ui/GameCard.tsx`・`shared/ui/ui.tsx` 等）を再利用する。試作HTML自体のクラス構造をそのまま持ち込まない。

@@ -112,7 +112,6 @@ export default withMermaid(
               items: [
                 { text: '技術スタック', link: '/architecture/' },
                 { text: 'Webアプリの仕組み', link: '/architecture/web-app' },
-                { text: '試作の引き継ぎまとめ', link: '/architecture/prototype-handover' },
               ],
             },
             { text: '既知の問題', link: '/architecture/known-issues' },
@@ -130,7 +129,7 @@ export default withMermaid(
             // アプリは VitePress 管理外の静的ファイルなので SPA 遷移を避ける
             { text: 'アプリを開く（モックAPI）', link: '/app/', target: '_self' },
             {
-              // ゲームの仕様の各ページに1対1で対応する。決めた理由・経緯・将来の拡張候補を置く
+              // 仕様・定義のページに1対1で対応する。決めた理由・経緯・将来の拡張候補を置く
               text: 'デザイナーノート',
               link: '/notes/',
               collapsed: true,
@@ -150,6 +149,12 @@ export default withMermaid(
                 { text: 'パーティー編成と非同期セッション', link: '/notes/party-and-session' },
                 { text: 'GM不在のソロの進行（仮）', link: '/notes/solo-village' },
                 { text: '自動戦闘（仮）', link: '/notes/auto-combat' },
+                { text: 'カルタグラフ構想', link: '/notes/cartagraph' },
+                { text: 'コンセプト', link: '/notes/concept/' },
+                { text: '技術スタック', link: '/notes/architecture/' },
+                { text: 'Webアプリの仕組み', link: '/notes/architecture/web-app' },
+                { text: '試作の経緯', link: '/notes/architecture/prototype-handover' },
+                { text: 'ロードマップ', link: '/notes/roadmap' },
               ],
             },
             {

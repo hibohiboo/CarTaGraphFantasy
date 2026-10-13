@@ -2,6 +2,7 @@
 
 アプリ（`apps/web`）の画面の一覧と、画面どうしのつながり（導線）を置く。画面ごとの課題は [画面ごとの課題](issues.md) に置く。
 
+- **まだ無い画面** — パスを書かず、図では点線の枠にする（無い画面の状態は[画面ごとの課題](issues.md)）
 - **正の置き場所** — ルート（パス・画面名・一行の説明）の正は `apps/web/src/shared/routes/routes.ts`（アプリ内のサイトマップ `/admin/sitemap` もここから作る）。このページは、ロールごとのまとまりと導線を読むためのもの。画面を足す・消す・リンクを変えたら、このページの表と図も直す
 - **図の描き方** — ノードのラベルには、`routes.ts` と同じパスを書く（まだ無い画面はパスを書かず、点線の枠にする）。矢印は、画面の中のリンク・ボタンで移るもの
 - **食い違いの検査** — 画面の一覧の表・図のノード・[画面ごとの課題](issues.md)のパスがルート定義と食い違うと、`pnpm docs:build` が止まる（`scripts/check-screens.mjs`）。図の矢印は検査しないので、画面の中のリンクを変えたら手で直す
@@ -25,7 +26,7 @@ flowchart TB
   end
 
   subgraph GM["GM"]
-    gmHome["GM のホーム（未実装）"]:::missing
+    gmHome["GM のホーム"]:::missing
     gmScenarios["シナリオ管理（GM） /gm/scenarios"]
     gmScenario["カスタマイズと募集<br/>/gm/scenarios/:scenarioId"]
     gmSessions["セッション管理（GM） /gm/sessions"]
@@ -91,7 +92,7 @@ flowchart TB
 | PL | キャラクターシート | `/pl/characters/:characterId` | 能力値・HP・所持デッキ・称号タグ・結末タグを見る（編集はできない） |
 | PL | 旅立ちの酒場 | `/pl/tutorial` | 初めての人向け。酒場の NPC との問答で最初のキャラクターができる |
 | PL | 村はずれの一歩 | `/pl/village-start` | 初めての人向け。GM 不在の1人プレイで、村の依頼とお店を経て冒険者試験に挑む |
-| GM | GM のホーム | （未実装） | GM としての入口。シナリオのテストプレイもここから始める。[課題 GMH-1](issues.md#gm-のホーム) |
+| GM | GM のホーム | — | GM としての入口。シナリオのテストプレイもここから始める。[課題 GMH-1](issues.md#gm-のホーム) |
 | GM | シナリオ管理（GM） | `/gm/scenarios` | シナリオ集からシナリオを選ぶ |
 | GM | シナリオのカスタマイズと募集 | `/gm/scenarios/:scenarioId` | カードの取捨選択→募集。通常の募集か GM 不在の募集かを選び、先へ進めないシーン・自動戦闘のシーンの注意を見る。シナリオ集から外されたシナリオは募集を出せない（案内を出す） |
 | GM | セッション管理（GM） | `/gm/sessions` | 自分の募集から始める（GM 不在の募集は始まったセッションの件数）・自分が GM を務めるセッションの一覧 |
@@ -106,4 +107,4 @@ flowchart TB
 | システム管理者 | サイトマップ | `/admin/sitemap` | 全ページの一覧と役割 |
 | システム管理者 | コンポーネントカタログ | `/admin/components` | 共通 UI 部品の一覧とバリエーション |
 
-まだ React にしていない画面（チャット・シーン進行・戦闘画面・場の状況）の試作は、[Webアプリの仕組み「未React化の画面」](../architecture/web-app.md#未react化の画面)。
+まだ React にしていない画面は、[Webアプリの仕組み「未React化の画面」](../architecture/web-app.md#未react化の画面)。

@@ -139,8 +139,8 @@ React のコードは、Vercel Labs の [react-best-practices](https://github.co
   - フックの呼び方 → `correctness/useHookAtTopLevel`
   - `bundle-barrel-imports` → 下の「境界」の barrel 禁止
 - **Biome に対応があっても有効にしていないもの**
-  - `rendering-conditional-render` → `suspicious/noLeakedRender`：型を見ずに `&&` を一律に指摘するので、真偽値・文字列の条件まで誤検知する（2026-10-03 に既存コードで20件、ほぼ誤検知）。数値が漏れるかはレビューで見る
-  - `js-hoist-regexp` → `performance/useTopLevelRegex`：既存コードに違反がある（本体9件・テスト11件）。直してから有効にする（[既知の問題](../../architecture/known-issues.md)）
+  - `rendering-conditional-render` → `suspicious/noLeakedRender`：型を見ずに `&&` を一律に指摘するので、真偽値・文字列の条件まで誤検知する。数値が漏れるかはレビューで見る
+  - `js-hoist-regexp` → `performance/useTopLevelRegex`：既存コードに違反がある。直してから有効にする（[既知の問題](../../architecture/known-issues.md)）
 
 ## 1ファイル1責務
 

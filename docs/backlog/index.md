@@ -13,17 +13,17 @@ paths:
 
 ```yaml
 ---
-title: 村スタート冒険者キャンペーン
-milestone: local-flow  # どのマイルストーンのための要望か（docs/roadmap.md の id）。無ければ書かない
-status: 完了        # 未着手／検討中／進行中／判断待ち／完了／見送り
+title: ○○ができるようにする
+milestone: example-milestone  # どのマイルストーンのための要望か（docs/roadmap.md の id）。無ければ書かない
+status: 進行中      # 未着手／検討中／進行中／判断待ち／完了／見送り
 summary: PO向けに1〜2文で、何が実現するか
 decisions:          # PO が決めないといけないこと（あれば）
-  - 旧チュートリアルを残すか、村スタートを入口にするか
+  - Aを残すか、Bに替えるか
 plans:              # docs/plans/ のプランのファイル名（あれば）
-  - 2026-09-23-村スタート冒険者キャンペーン.md
+  - 2026-01-01-○○.md
 cycles:             # 開発者向け：サイクルごとの状態と PR（あれば）
-  - { name: C1 GMレス基盤, status: 完了, pr: 5 }
-updated: 2026-09-27
+  - { name: C1 基盤, status: 完了, pr: 1 }
+updated: 2026-01-01
 ---
 ```
 

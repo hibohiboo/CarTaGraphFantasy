@@ -25,7 +25,7 @@ paths:
 | E2E | Playwright（Chromium） | `apps/web/e2e/smoke.test.ts` | `pnpm web:e2e` | 全ルートが実ブラウザで例外なく描画できること（2026-09-21導入。`docs/plans/2026-09-21-e2e導入.md`参照） |
 
 - `pages.test.tsx` は `shared/routes/routes.ts` を走査して全ルートを描画する。ルートを追加すると自動的に対象になるので、ページ固有の操作テストだけを個別に書く
-- 1つの機能の操作の連なり（複数の画面をまたぐ流れ、通しのテスト）は、`pages.test.tsx` に足さず、機能名のファイルに置く。`pages.test.tsx` が大きくなりすぎないように（2026-10-05、1000行を超えた）。描画は共有の `renderAt`（`apps/web/src/test/renderAt.tsx`）を使う
+- 1つの機能の操作の連なり（複数の画面をまたぐ流れ、通しのテスト）は、`pages.test.tsx` に足さず、機能名のファイルに置く。`pages.test.tsx` が大きくなりすぎないように（2026-10-05）。描画は共有の `renderAt`（`apps/web/src/test/renderAt.tsx`）を使う
 - `e2e/smoke.test.ts` も同じく `shared/routes/routes.ts` を走査する。実ブラウザでの崩れ・実行時エラーの検出が目的で、`pages.test.tsx`（MSWのnodeサーバー、描画のみ）と役割が重複しないよう、深いインタラクションシナリオはE2E化しない
 - 型検査（`pnpm web:typecheck`・`pnpm domain:typecheck`・`pnpm schemas:typecheck`）もテストの一部として扱う。push前に`.githooks/pre-push`が自動で確認する（AGENTS.md参照）。E2Eはブラウザ起動を伴い重いため `.githooks/pre-push` には含めず、CIのみで実行する
 
@@ -82,5 +82,5 @@ expect(toDictionaryForm('扉を破壊する')).toBe('扉を破壊する'); // �
 
 - 各テストが自分の QueryClient・ルーターを作り、共有状態を持たない（`renderAt` の型を踏襲する）
 - `waitForTimeout` で待たず、`findBy*` やロケータの自動待機を使う
-- 画面を移ったことは、URL（router の pathname・`toHaveURL`）ではなく、**移った先にしか無い要素**（その画面だけの見出し・リンクなど）が出るのを待って確かめる。SPA では URL が先に変わり、画面の描画はあとから追いつく。確かめたい文言が移る前の画面にもあるときは、先にその要素を待ってから文言を確かめる。待たないと、Testing Library の `findBy*` は移る前の画面の要素を掴み、画面が切り替わって外れたところで**ときどき落ちる**。Playwright の locator は毎回探し直すので外れて落ちることはないが、移る前の画面を見て**誤って通る**（2026-10-04、PR #14 の不安定なテスト。`docs/process/evolution.md`）
+- 画面を移ったことは、URL（router の pathname・`toHaveURL`）ではなく、**移った先にしか無い要素**（その画面だけの見出し・リンクなど）が出るのを待って確かめる。SPA では URL が先に変わり、画面の描画はあとから追いつく。確かめたい文言が移る前の画面にもあるときは、先にその要素を待ってから文言を確かめる。待たないと、Testing Library の `findBy*` は移る前の画面の要素を掴み、画面が切り替わって外れたところで**ときどき落ちる**。Playwright の locator は毎回探し直すので外れて落ちることはないが、移る前の画面を見て**誤って通る**（2026-10-04。`docs/process/evolution.md`）
 - セレクタは role / label / testid を優先し、CSS Modules のクラス名に依存しない

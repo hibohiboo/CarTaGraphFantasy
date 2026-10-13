@@ -31,10 +31,10 @@ Biome の推奨ルール（`"preset": "recommended"`）に加えて、次のル�
 | `complexity/noExcessiveCognitiveComplexity` | 15 | `cognitive-complexity`（既定15） | 分岐・ループ・入れ子が深く、頭の中で追いきれない関数 |
 | `complexity/noExcessiveLinesPerFunction` | 200行 | S138（関数の行数、既定200） | 1つの関数に詰め込みすぎた処理。テストは対象外（下の overrides） |
 | `style/noExcessiveLinesPerFile` | 1000行 | S104（ファイルの行数、既定1000） | 責務の割れていないファイル（「1ファイル1責務」の機械的な目安） |
-| `complexity/useMaxParams` | 4個 | S107（既定7） | 引数の多い関数。オブジェクト1つで受ける。導入時の違反が0件だったので、Biome の既定（4）のまま厳しくした |
+| `complexity/useMaxParams` | 4個 | S107（既定7） | 引数の多い関数。オブジェクト1つで受ける。Biome の既定（4）のまま |
 
 - **引っかかったとき・`biome-ignore` で抑えるとき** — コードを書く側の決まりなので、[アーキテクチャルール](architecture.md)「1ファイル1責務」が正
-- **既存の違反** — 導入時に16件あった（認知的複雑度14件、関数の行数1件、ファイルの行数1件）。それぞれの箇所に `biome-ignore`（理由つき）を付けて止め、一覧と直し方は[既知の問題](../../architecture/known-issues.md)「複雑度・行数の上限を超える既存のコード」に置いた。一覧の件数・項目と、その見出しを指す `biome-ignore` の食い違いは `pnpm docs:build`（`scripts/check-suppressions.mjs`）が止める
+- **既存の違反** — それぞれの箇所に `biome-ignore`（理由つき）を付けて止め、一覧と直し方は[既知の問題](../../architecture/known-issues.md)「複雑度・行数の上限を超える既存のコード」に置いた。一覧の件数・項目と、その見出しを指す `biome-ignore` の食い違いは `pnpm docs:build`（`scripts/check-suppressions.mjs`）が止める
 
 ## overrides で外しているもの
 
@@ -51,7 +51,7 @@ Biome の組み込みのルールに無い検査を、GritQL のプラグイン�
 
 | プラグイン | かける範囲 | 止めるもの | 理由 |
 |---|---|---|---|
-| `no-request-body.grit` | `apps/web/src/mocks/**`（`mocks/body.ts` を除く） | `request.json()`・`request.text()` | MSW のハンドラが本文を型の付け替えだけで使い、形の崩れた本文で 500 になる穴が、実装の AI レビューで続けて見つかっていた。本文は `body.ts` の `readBody` と `packages/schemas` のスキーマで検査してから使う（`docs/plans/2026-10-10-APIスキーマの共用.md`）。`request` という名前の値だけを見るので、応答の `res.json()`（`devScenarioFileStore.ts` など）には当たらない（`$x.json()` で書くとここも止まる）。`request['json']()`・別名に入れてからの呼び出し（`({ request: r }) => r.json()` など）・`request.clone().json()`・`arrayBuffer()`・`formData()`・`blob()` はすり抜けるが、許す（MSW のハンドラは `({ request })` で受け取るのが定石で、書く理由が無い。レビューで見る） |
+| `no-request-body.grit` | `apps/web/src/mocks/**`（`mocks/body.ts` を除く） | `request.json()`・`request.text()` | MSW のハンドラが本文を型の付け替えだけで使うと、形の崩れた本文で 500 になるため。本文は `body.ts` の `readBody` と `packages/schemas` のスキーマで検査してから使う（`docs/plans/2026-10-10-APIスキーマの共用.md`）。`request` という名前の値だけを見るので、応答の `res.json()`（`devScenarioFileStore.ts` など）には当たらない（`$x.json()` で書くとここも止まる）。`request['json']()`・別名に入れてからの呼び出し（`({ request: r }) => r.json()` など）・`request.clone().json()`・`arrayBuffer()`・`formData()`・`blob()` はすり抜けるが、許す（MSW のハンドラは `({ request })` で受け取るのが定石で、書く理由が無い。レビューで見る） |
 
 - **nursery のルールを入れていないこととの違い** — nursery のルールは版の更新で名前や挙動が変わる。プラグインは自分で書いたパターンなので、Biome の版を上げてプラグインの読み込みが壊れれば `pnpm lint` が設定の誤りで止まり、気づける（黙って効かなくなるのではない）
 - **確かめ方** — 違反を一時的に入れて `pnpm lint` が止まることを手で確かめる（Biome の設定の固定のテストは書かない。`docs/process/evolution.md` の却下「Biome の設定に対する固定のテスト」）
@@ -67,7 +67,7 @@ Biome の組み込みのルールに無い検査を、GritQL のプラグイン�
 
 ## 入れていないもの
 
-- **重複コード（コピー＆ペースト）の検出** — SonarJS の「重複」の指標にあたるものは Biome に無い。入れるなら `jscpd` を CI に足す（候補）
+- **重複コード（コピー＆ペースト）の検出** — SonarJS の「重複」の指標にあたるものは Biome に無い。入れるかは[進化ログの候補](../evolution.md#候補未評価)
 - **意味まで見る SonarJS のルール**（同じ条件の分岐 `no-identical-conditions`、常に同じ値を返す関数など） — Biome に対応が無い。SonarJS 自体を使うには ESLint を併走させることになり、道具が2つになるので入れていない
-- **`nursery/noExcessiveNestedCallbacks`** — 導入時の違反は0件だが、nursery（試験中）のルールは版の更新で名前や挙動が変わり、`biome.json` が読めなくなることがある。推奨ルールの群に上がったら入れる
+- **`nursery/noExcessiveNestedCallbacks`** — nursery（試験中）のルールは版の更新で名前や挙動が変わり、`biome.json` が読めなくなることがある。推奨ルールの群に上がったら入れる
 - **React の書き方のうち誤検知が多いもの・既存の違反があるもの**（`suspicious/noLeakedRender`・`performance/useTopLevelRegex`） — [アーキテクチャルール](architecture.md)「React の書き方」

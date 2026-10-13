@@ -53,7 +53,7 @@ export function ComponentCatalogPage() {
     <>
       <PageHeader
         title="コンポーネントカタログ"
-        crumb="共通UI部品とデザイントークン。試作フェーズ（docs/architecture/prototype-handover.md）で決めた見た目を React に移植したもの。"
+        crumb="共通UI部品とデザイントークン。見た目の決まりは docs/architecture/web-app.md「デザインシステム」。"
       />
       <div className={s.catalog}>
         <Section title="デザイントークン" note="CSS変数。src/app/styles/tokens.css">
