@@ -6,10 +6,11 @@ summary: 書きかけのシナリオ（下書き）を専用の API で読み書
 plans:
   - 2026-10-11-シナリオの下書きのAPI.md
   - 2026-10-14-セッションの独立.md
+  - 2026-10-14-シナリオのコピー.md
 cycles:
   - { name: C1 下書きと公開版, status: 完了, pr: 24 }
   - { name: C2 セッションの独立, status: 完了, pr: 25 }
-  - { name: C3 シナリオのコピー, status: 未着手 }
+  - { name: C3 シナリオのコピー, status: 検討中 }
 updated: 2026-10-14
 ---
 
