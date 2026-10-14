@@ -34,6 +34,8 @@ export const recruitmentSchema = z.strictObject({
    */
   proposalHandling: recruitmentProposalHandlingSchema.optional(),
   scenarioId: z.string(),
+  /** 募集を出したときのシナリオの公開版の版番号。始めたセッションは最後までこの版で進む */
+  scenarioVersion: z.number().int().min(1),
   scenarioTitle: z.string(),
   gmId: z.string(),
   gmName: z.string(),
@@ -140,6 +142,8 @@ export const SYSTEM_GM_NAME = '（自動進行）';
 export const sessionSchema = z.strictObject({
   id: z.string(),
   scenarioId: z.string(),
+  /** 進むシナリオの版番号。通常の募集・GM 不在の募集は募集を出したときの版、ソロ開始は始めたときの公開版 */
+  scenarioVersion: z.number().int().min(1),
   scenarioTitle: z.string(),
   /** 始めた募集（ソロ開始のセッションには無い） */
   recruitmentId: z.string().optional(),

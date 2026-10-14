@@ -19,8 +19,6 @@ export const characterSchema = z.strictObject({
   deck: z.array(cardDefSchema),
   /** 称号タグ（特徴カードの一種。所有者が反映を選んだもの） */
   titles: z.array(z.string()),
-  /** 結末タグ（後続シナリオの前提タグと突き合わせる） */
-  endingTags: z.array(z.string()),
   cp: z.strictObject({ total: z.number(), spent: z.number() }),
   createdAt: z.string(),
 });

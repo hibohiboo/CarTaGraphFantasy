@@ -133,6 +133,17 @@ describe('dealChoices（配る条件。docs/cartagraph/solo-village.md、仮ル�
     expect(names(dealChoices(square, [slash], soloGm))).toEqual(['猪へ', 'お店へ']);
   });
 
+  it('配るカードは複製で、シナリオのノードのカードとは別のオブジェクト（書き換えても版が変わらない）', () => {
+    const dealt = dealChoices(square, [done, slash], humanGm);
+    const original = square.cards.filter((c) => c.kind === 'choice');
+    expect(dealt).toEqual(original);
+    dealt.forEach((c, i) => {
+      expect(c).not.toBe(original[i]);
+    });
+    dealt[0].name = '書き換えた';
+    expect(original[0].name).not.toBe('書き換えた');
+  });
+
   it('GM不在でないセッションでは、配る条件を満たさないカードも配る', () => {
     expect(names(dealChoices(square, [done, slash], humanGm))).toEqual([
       '猪へ',
@@ -160,29 +171,29 @@ describe('planTransition の結末タグ（docs/cartagraph/solo-village.md「結
     endings,
   });
 
-  it('GM不在で、結末のノードが結末タグを持つ結末を指せば、endingTag が返る', () => {
+  it('GM不在で、結末のノードが結末タグを持つ結末を指せば、その結末（id・名前・結末タグ）が返る', () => {
     const plan = planTransition(withEnding('e-ok'), soloGm, 'end', []);
-    expect(plan.ok && plan.endingTag).toBe('冒険者になった');
+    expect(plan.ok && plan.ending).toEqual(endings[0]);
   });
 
   it.each([
     ['endingId が無い', undefined],
     ['指す結末がシナリオに無い', 'e-missing'],
     ['結末に結末タグが無い', 'e-plain'],
-  ])('%s なら endingTag は返らない', (_, endingId) => {
+  ])('%s なら ending は返らない', (_, endingId) => {
     const plan = planTransition(withEnding(endingId), soloGm, 'end', []);
-    expect(plan.ok && plan.endingTag).toBeUndefined();
+    expect(plan.ok && plan.ending).toBeUndefined();
   });
 
-  it('結末でないノードが endingId を持っていても、endingTag は返らない', () => {
+  it('結末でないノードが endingId を持っていても、ending は返らない', () => {
     const plan = planTransition(withEnding('e-ok', 'scene'), soloGm, 'end', []);
     expect(plan.ok && plan.ended).toBe(false);
-    expect(plan.ok && plan.endingTag).toBeUndefined();
+    expect(plan.ok && plan.ending).toBeUndefined();
   });
 
-  it('GM不在でないセッションでは、同じ結末のノードでも endingTag は返らない', () => {
+  it('GM不在でないセッションでは、同じ結末のノードでも ending は返らない', () => {
     const plan = planTransition(withEnding('e-ok'), humanGm, 'end', []);
     expect(plan.ok && plan.ended).toBe(false);
-    expect(plan.ok && plan.endingTag).toBeUndefined();
+    expect(plan.ok && plan.ending).toBeUndefined();
   });
 });

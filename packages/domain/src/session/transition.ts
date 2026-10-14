@@ -4,7 +4,7 @@
 import type { AutoCombatEnemy } from '../autoCombat/model';
 import { meetsCondition } from '../card/condition';
 import type { CardDef } from '../card/model';
-import type { DeckNode, Scenario } from '../scenario/model';
+import type { DeckNode, EndingDef, Scenario } from '../scenario/model';
 import type { Session } from './model';
 
 /** シナリオデッキを入れ子まで探す。path は最上位の祖先から見つかったノードまで */
@@ -36,8 +36,9 @@ export function dealChoices(
   session: Pick<Session, 'gmless'>,
 ): CardDef[] {
   const choices = node.cards.filter((c) => c.kind === 'choice');
-  if (!session.gmless) return choices;
-  return choices.filter((c) => meetsCondition(c.dealWhen, held));
+  // 配るところで複製する（手札のカードがシナリオの版のオブジェクトと同じものにならないように）
+  const dealt = session.gmless ? choices.filter((c) => meetsCondition(c.dealWhen, held)) : choices;
+  return dealt.map((c) => structuredClone(c));
 }
 
 export type TransitionPlan =
@@ -51,8 +52,8 @@ export type TransitionPlan =
       autoCombat?: { enemy: AutoCombatEnemy; maxRounds: number };
       /** GM不在のセッションで結末のノードへ移ったら true */
       ended: boolean;
-      /** ended のとき、結末のノードが指す結末の結末タグ（docs/cartagraph/solo-village.md「結末タグ」、仮ルール） */
-      endingTag?: string;
+      /** ended のとき、結末のノードが指す結末のうち、結末タグを配るもの（docs/cartagraph/solo-village.md「結末タグ」、仮ルール） */
+      ending?: EndingDef & { grantsTag: string };
     };
 
 export function planTransition(
@@ -73,8 +74,9 @@ export function planTransition(
     };
   // 結末で自動終了するのはGM不在のセッションだけ（play-and-field.md「次のシーンへ進む」）
   const ended = node.kind === 'ending' && session.gmless;
-  const endingTag = ended
-    ? scenario.endings.find((e) => e.id === node.endingId)?.grantsTag
+  const endingDef = ended ? scenario.endings.find((e) => e.id === node.endingId) : undefined;
+  const ending = endingDef?.grantsTag
+    ? { ...endingDef, grantsTag: endingDef.grantsTag }
     : undefined;
   return {
     ok: true,
@@ -88,6 +90,6 @@ export function planTransition(
     choices: node.autoCombat ? [] : dealChoices(node, held, session),
     ...(node.autoCombat && { autoCombat: node.autoCombat }),
     ended,
-    ...(endingTag && { endingTag }),
+    ...(ending && { ending }),
   };
 }

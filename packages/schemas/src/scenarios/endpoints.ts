@@ -59,6 +59,17 @@ export const scenarioEndpoints = [
   }),
   defineEndpoint({
     method: 'get',
+    path: '/scenarios/:id/versions/:version',
+    summary: 'シナリオの版を取得する',
+    description:
+      '公開・公開し直すたびにできる版のうち、募集とセッションが指す版を読む。版の中身は変わらない。だれでも読める。`version` は1以上の整数（先頭に0を付けない）。`libraryStatus` はシナリオ集の今の状態',
+    responses: {
+      200: success('その版', scenarioSchema),
+      404: failure('公開版が無い、その版が無い、版番号として読めない'),
+    },
+  }),
+  defineEndpoint({
+    method: 'get',
     path: '/scenario-drafts',
     summary: '自分のシナリオの下書きの一覧を取得する（製作者）',
     responses: {

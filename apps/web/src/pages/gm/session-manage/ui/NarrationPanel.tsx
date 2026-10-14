@@ -9,7 +9,7 @@ import {
 } from '@cartagraph/domain/session/narrate';
 import { findDeckNode } from '@cartagraph/domain/session/transition';
 import { useRef, useState } from 'react';
-import { useScenario } from '@/entities/scenario/api/queries';
+import { useScenarioVersion } from '@/entities/scenario/api/queries';
 import { useNarrate } from '@/entities/session/api/mutations';
 import s from '@/shared/ui/page.module.css';
 import { Button, ErrorNote, Field, Panel } from '@/shared/ui/ui';
@@ -26,7 +26,7 @@ type ChoiceRow = DealtChoice & { key: number; targetDropped?: boolean };
  * 検査・移り先の一覧・結末の判定は packages/domain の session/narrate.ts
  */
 export function NarrationPanel({ session }: { session: Session }) {
-  const scenario = useScenario(session.scenarioId);
+  const scenario = useScenarioVersion(session.scenarioId, session.scenarioVersion);
   const narrate = useNarrate();
   const [flavor, setFlavor] = useState('');
   const [withdraw, setWithdraw] = useState<string[]>([]);

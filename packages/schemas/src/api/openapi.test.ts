@@ -41,6 +41,15 @@ describe('OpenAPI の文書', () => {
     expect(Object.keys(paths).some((p) => p.includes(':'))).toBe(false);
   });
 
+  it('シナリオの版の取得は、パスの引数が id・version の2つで、Scenario を返し、version の読み方を説明に書く', () => {
+    const o = op('get', '/scenarios/{id}/versions/{version}');
+    expect(o.tags).toEqual(['scenarios']);
+    expect((o.parameters as { name: string }[]).map((p) => p.name)).toEqual(['id', 'version']);
+    expect(responseSchema(o, '200')).toEqual({ $ref: '#/components/schemas/Scenario' });
+    expect(o.description).toMatch(/version.*1以上の整数/);
+    expect(Object.keys(o.responses as object).sort()).toEqual(['200', '404']);
+  });
+
   it('下書きの API（/scenario-drafts・/scenarios/{id}/draft）は scenarios のタグに入り、ScenarioDraftView を返す', () => {
     expect(op('get', '/scenario-drafts').tags).toEqual(['scenarios']);
     expect(op('patch', '/scenarios/{id}/draft').tags).toEqual(['scenarios']);

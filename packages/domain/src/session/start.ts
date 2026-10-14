@@ -2,8 +2,8 @@
 // 「セッション開始までの全体フロー」5、party-and-session.md「ドライバーとナビゲーター」）。
 // 画面（開始のフォーム）とサーバー（MSW の開始 API）の両方がここを使う。
 
+import type { EndingCardInfo } from '../card/model';
 import type { Character } from '../character/model';
-import type { EndingDef } from '../scenario/model';
 import { replayBlockedMessage } from '../scenario/replay';
 import type { Participant, Recruitment, Session } from './model';
 
@@ -83,7 +83,7 @@ export function buildParticipants(v: {
 export function checkPlayFromRecruitment(
   recruitment: Pick<Recruitment, 'kind'>,
   character: Pick<Character, 'name' | 'ownerId'>,
-  v: { meId: string; blockedBy: EndingDef | null },
+  v: { meId: string; blockedBy: EndingCardInfo | null },
 ): { ok: false; error: string } | { ok: true } {
   if (recruitment.kind !== 'gmless')
     return { ok: false, error: 'この募集は GM 不在の募集ではありません' };

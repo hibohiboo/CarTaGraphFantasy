@@ -126,11 +126,16 @@ describe('GM 不在の募集', () => {
 
   it('再挑戦不可：結末タグを得たジンは、GM 不在の募集・通常の募集で「再挑戦不可」で選べず、初期値にならない。灰色館では選べる', async () => {
     await clearVillageWith('pc-jin');
-    await api.post('/scenarios/sc-village-start/recruitments', { capacity: 2, note: '通常の村' });
+    // 再挑戦不可は、結末で得たシナリオ（sc-village-always-win）ごとに止まる。そのシナリオの募集を足して確かめる
+    await createGmlessRecruitment('sc-village-always-win', { note: '再挑戦不可の確かめ' });
+    await api.post('/scenarios/sc-village-always-win/recruitments', {
+      capacity: 2,
+      note: '通常の村',
+    });
     renderAt('/pl/sessions');
     await screen.findByRole('heading', { name: '参加できるセッション' });
-    // テストで足した通常の村の募集も「村はずれの一歩・GM：ユウ」なので、シードの GM 不在の募集はメモで特定する
-    const gmless = (await screen.findByText(gmlessNote)).closest('article')!;
+    // 同じシナリオの募集が2つあるので、メモで特定する
+    const gmless = (await screen.findByText('再挑戦不可の確かめ')).closest('article')!;
     await waitFor(() => expect(optionOf(gmless, /ジン.*再挑戦不可/).disabled).toBe(true));
     expect(within(gmless).getByLabelText('始める PC')).toHaveValue('pc-akari');
     const normal = (await screen.findByText('通常の村')).closest('article')!;

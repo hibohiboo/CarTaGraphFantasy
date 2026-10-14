@@ -1,32 +1,55 @@
 import { describe, expect, it } from 'vitest';
-import type { EndingDef } from './model';
+import type { CardDef } from '../card/model';
 import { endingDefSchema, endingDefShapeSchema } from './model';
 import { replayBlockedBy, replayBlockedMessage } from './replay';
 
-const cleared: EndingDef = {
-  id: 'e-ok',
-  name: '冒険者として旅立つ',
-  grantsTag: '冒険者になった',
-  noReplay: true,
-};
-const failed: EndingDef = { id: 'e-ng', name: '村に戻る', grantsTag: '試験に落ちた' };
-const scenario = { endings: [cleared, failed] };
+const endingCard = (
+  scenarioId: string,
+  noReplay: boolean,
+  name = '冒険者として旅立つ',
+): CardDef => ({
+  id: `c-${scenarioId}-${name}`,
+  kind: 'trait',
+  name: '冒険者になった',
+  tags: ['冒険者になった'],
+  ending: { scenarioId, endingId: 'e-ok', endingName: name, noReplay },
+});
+const held = (...deck: CardDef[]) => ({ deck });
 
 describe('replayBlockedBy（再挑戦不可。docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）', () => {
-  it('再挑戦不可の結末の結末タグを持つ PC は、その結末が返る', () => {
-    expect(replayBlockedBy(scenario, { endingTags: ['冒険者になった'] })).toEqual(cleared);
+  it('そのシナリオの再挑戦不可の結末タグのカードを持つ PC は、そのカードの結末が返る', () => {
+    expect(replayBlockedBy('sc-1', held(endingCard('sc-1', true)))).toEqual({
+      scenarioId: 'sc-1',
+      endingId: 'e-ok',
+      endingName: '冒険者として旅立つ',
+      noReplay: true,
+    });
   });
 
-  it('再挑戦不可でない結末のタグだけを持つ PC は null（失敗した PC は再挑戦できる）', () => {
-    expect(replayBlockedBy(scenario, { endingTags: ['試験に落ちた'] })).toBeNull();
+  it('再挑戦不可でない結末のカードだけを持つ PC は null（失敗した PC は再挑戦できる）', () => {
+    expect(replayBlockedBy('sc-1', held(endingCard('sc-1', false)))).toBeNull();
   });
 
-  it('結末タグを1つも持たない PC は null', () => {
-    expect(replayBlockedBy(scenario, { endingTags: [] })).toBeNull();
+  it('別のシナリオの再挑戦不可のカードでは止まらない', () => {
+    expect(replayBlockedBy('sc-1', held(endingCard('sc-2', true)))).toBeNull();
+  });
+
+  it('同じ名前のタグだけを持つカード（ending なし）では止まらない', () => {
+    const plain: CardDef = {
+      id: 'c-plain',
+      kind: 'trait',
+      name: '冒険者になった',
+      tags: ['冒険者になった'],
+    };
+    expect(replayBlockedBy('sc-1', held(plain))).toBeNull();
+  });
+
+  it('カードを1枚も持たない PC は null', () => {
+    expect(replayBlockedBy('sc-1', held())).toBeNull();
   });
 
   it('止める理由の文は、PC 名と結末の名前を含む', () => {
-    expect(replayBlockedMessage('ジン', cleared)).toBe(
+    expect(replayBlockedMessage('ジン', { endingName: '冒険者として旅立つ' })).toBe(
       'ジンはこのシナリオの結末「冒険者として旅立つ」に至っているため、もう一度は遊べません',
     );
   });

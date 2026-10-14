@@ -128,8 +128,8 @@ describe('シード（T6）', () => {
   });
 });
 
-describe('始めたセッションは公開版を使う（T10）', () => {
-  it('下書きで選択肢の名前を変えても、新しく始めたセッションの手札は公開版の名前。公開し直すと新しい名前', async () => {
+describe('始めたセッションは、募集を出したときの公開版を使う（T10）', () => {
+  it('下書きで選択肢の名前を変えても、新しく始めたセッションの手札は公開版の名前。公開し直しても既にある募集は変わらず、後から出した募集は新しい名前', async () => {
     const published = await getPublished('sc-galleon');
     await api.patch('/scenarios/sc-galleon/draft', {
       deck: withIntroChoice(published.deck, '甲板へ'),
@@ -144,7 +144,15 @@ describe('始めたセッションは公開版を使う（T10）', () => {
     expect(before.hand.map((c) => c.name)).not.toContain('船倉へ');
 
     await api.post('/scenarios/sc-galleon/publish');
+    // 既にある募集は、出したときの版のまま（公開し直しても変わらない。D6）
     const after = await playFromRecruitment(rc.id, 'pc-akari');
-    expect(after.hand.map((c) => c.name)).toContain('船倉へ');
+    expect(after.scenarioVersion).toBe(before.scenarioVersion);
+    expect(after.hand.map((c) => c.name)).toContain('甲板へ');
+    expect(after.hand.map((c) => c.name)).not.toContain('船倉へ');
+    // 公開し直した後に出した募集から始めると、新しい名前
+    const rc2 = await createGmlessRecruitment('sc-galleon');
+    expect(rc2.scenarioVersion).toBe(before.scenarioVersion + 1);
+    const fresh = await playFromRecruitment(rc2.id, 'pc-akari');
+    expect(fresh.hand.map((c) => c.name)).toContain('船倉へ');
   });
 });

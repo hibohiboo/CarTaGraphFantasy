@@ -44,7 +44,6 @@ const character = {
   baseActionValue: 3,
   deck: [],
   titles: [],
-  endingTags: [],
   cp: { total: 10, spent: 0 },
   createdAt: '2026-10-11T00:00:00Z',
 };

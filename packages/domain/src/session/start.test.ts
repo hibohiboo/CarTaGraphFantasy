@@ -176,9 +176,9 @@ describe('checkPlayFromRecruitment（GM 不在の募集から始められるか�
   const gmless = { kind: 'gmless' as const };
   const mine = { name: 'ジン', ownerId: 'u-me' };
   const cleared = {
-    id: 'e-ok',
-    name: '冒険者として旅立つ',
-    grantsTag: '冒険者になった',
+    scenarioId: 'sc-1',
+    endingId: 'e-ok',
+    endingName: '冒険者として旅立つ',
     noReplay: true,
   };
 

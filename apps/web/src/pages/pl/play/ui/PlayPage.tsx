@@ -1,11 +1,12 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
 import { isAtEnding } from '@cartagraph/domain/session/narrate';
+import { findDeckNode } from '@cartagraph/domain/session/transition';
 import { heldCards, isSoloRuleCard, unplayableReason } from '@cartagraph/domain/soloVillage/rules';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '@/entities/card/ui/GameCard';
 import { useCharacter } from '@/entities/character/api/queries';
-import { useScenario } from '@/entities/scenario/api/queries';
+import { useScenarioVersion } from '@/entities/scenario/api/queries';
 import { usePlayCard, usePropose, useResume } from '@/entities/session/api/mutations';
 import { useSession } from '@/entities/session/api/queries';
 import { useMe } from '@/entities/user/api/queries';
@@ -47,7 +48,10 @@ export function PlayPage() {
   // シナリオを読む
   const endedAny = session.data?.status === 'ended';
   const endedGmless = gmless && endedAny;
-  const scenario = useScenario(endedAny ? (session.data?.scenarioId ?? '') : '');
+  const scenario = useScenarioVersion(
+    endedAny ? (session.data?.scenarioId ?? '') : '',
+    session.data?.scenarioVersion ?? 1,
+  );
 
   if (session.isPending) return <Loading what="卓を準備中" />;
   if (session.error) return <ErrorNote error={session.error} />;
@@ -65,8 +69,11 @@ export function PlayPage() {
   const reasonFor = held ? (card: CardDef) => unplayableReason(card, held) : undefined;
   // 仮ルールに関わるカードが手札にあれば「仮」と出す（architecture.md「境界」）
   const usesSoloRules = gmless && s.hand.some(isSoloRuleCard);
-  const gotEndingTag = scenario.data?.endings.some(
-    (e) => e.grantsTag && character.data?.endingTags.includes(e.grantsTag),
+  // 結末タグのカードは、このセッションが至った結末で得たもの（前の周回で別の結末のカードを持っていても数えない）
+  const reachedEndingId = findDeckNode(scenario.data?.deck ?? [], s.currentScene.nodeId ?? '')?.node
+    .endingId;
+  const gotEndingTag = character.data?.deck.some(
+    (c) => c.ending?.scenarioId === s.scenarioId && c.ending.endingId === reachedEndingId,
   );
   const enemyName =
     s.field.plVisible.find((c) => c.id === s.autoCombat?.enemyCardId)?.name ?? '相手';

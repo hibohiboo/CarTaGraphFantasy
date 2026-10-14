@@ -5,7 +5,6 @@ import type { Recruitment } from '@cartagraph/domain/session/model';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useCharacters } from '@/entities/character/api/queries';
-import { useScenario } from '@/entities/scenario/api/queries';
 import { useApply, usePlayFromRecruitment } from '@/entities/session/api/mutations';
 import { useRecruitments } from '@/entities/session/api/queries';
 import { useMe } from '@/entities/user/api/queries';
@@ -13,7 +12,7 @@ import s from '@/shared/ui/page.module.css';
 import { Button, Chip, ChipGroup, EmptyNote, ErrorNote, Loading, PageHeader } from '@/shared/ui/ui';
 
 /**
- * PCが持つタグ（結末タグ＋デッキのタグ）と募集の前提タグを突き合わせる。ソフトガイドなのでブロックはしない
+ * PCのデッキのカードが持つタグ（結末タグのカードも含む）と募集の前提タグを突き合わせる。ソフトガイドなのでブロックはしない
  * （GM 不在の募集でも表示だけはする。unlock.md「強制力」）
  */
 function fitOf(rc: Recruitment, chars: Character[]) {
@@ -27,7 +26,7 @@ function fitOf(rc: Recruitment, chars: Character[]) {
 }
 
 function hasTag(c: Character, tag: string) {
-  return c.endingTags.includes(tag) || c.deck.some((card) => card.tags.includes(tag));
+  return c.deck.some((card) => card.tags.includes(tag));
 }
 
 export function SessionBrowsePage() {
@@ -78,13 +77,12 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
   const apply = useApply();
   const play = usePlayFromRecruitment();
   const navigate = useNavigate();
-  // 再挑戦不可（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）の判定にシナリオの結末を使う
-  const scenario = useScenario(rc.scenarioId);
   const gmless = rc.kind === 'gmless';
   // GM 不在の募集は、自分が所有者の PC だけ（借りた PC は使えない。solo-village.md「適用範囲」）
   const candidates = gmless ? chars.filter((c) => c.ownerId === myId) : chars;
   const fit = fitOf(rc, candidates);
-  const blocked = (c: Character) => (scenario.data ? !!replayBlockedBy(scenario.data, c) : false);
+  // 再挑戦不可（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）は、PC が持つ結末タグのカードだけで決める
+  const blocked = (c: Character) => !!replayBlockedBy(rc.scenarioId, c);
   const [picked, setPicked] = useState<string>();
   // 初期値（と、選んだ PC が再挑戦不可になったとき）は、選べる PC の先頭
   const characterId =
@@ -94,8 +92,7 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
   // 応募した人で判定する（借りたPCで応募しても応募済みと出す）
   const applied = rc.applicants.some((a) => a.userId === myId);
   const closed = !gmless && rc.applicants.length >= rc.capacity;
-  // 再挑戦不可の判定にシナリオが要るので、読み込むまでは始めない・応募しない
-  const busy = apply.isPending || play.isPending || scenario.isPending || !!scenario.error;
+  const busy = apply.isPending || play.isPending;
 
   return (
     <article className={s.recruit}>
@@ -190,9 +187,7 @@ function RecruitCard({ rc, chars, myId }: { rc: Recruitment; chars: Character[];
                 {gmless ? '始められる自分の PC がありません。' : '応募できる PC がありません。'}
               </p>
             )}
-            {(apply.error || play.error || scenario.error) && (
-              <ErrorNote error={apply.error ?? play.error ?? scenario.error} />
-            )}
+            {(apply.error || play.error) && <ErrorNote error={apply.error ?? play.error} />}
             {gmless ? (
               <p className={s.recruitNote}>
                 応募は不要。自分の PC で、すぐに1人で始める。提案の扱い：
