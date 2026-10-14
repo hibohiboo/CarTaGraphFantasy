@@ -1,5 +1,6 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
 import { isAtEnding } from '@cartagraph/domain/session/narrate';
+import { findDeckNode } from '@cartagraph/domain/session/transition';
 import { heldCards, isSoloRuleCard, unplayableReason } from '@cartagraph/domain/soloVillage/rules';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -68,8 +69,12 @@ export function PlayPage() {
   const reasonFor = held ? (card: CardDef) => unplayableReason(card, held) : undefined;
   // 仮ルールに関わるカードが手札にあれば「仮」と出す（architecture.md「境界」）
   const usesSoloRules = gmless && s.hand.some(isSoloRuleCard);
-  // 結末タグのカードは、このシナリオの結末で得たもの（結末タグのカードは、得たときの版の値を持つ）
-  const gotEndingTag = character.data?.deck.some((c) => c.ending?.scenarioId === s.scenarioId);
+  // 結末タグのカードは、このセッションが至った結末で得たもの（前の周回で別の結末のカードを持っていても数えない）
+  const reachedEndingId = findDeckNode(scenario.data?.deck ?? [], s.currentScene.nodeId ?? '')?.node
+    .endingId;
+  const gotEndingTag = character.data?.deck.some(
+    (c) => c.ending?.scenarioId === s.scenarioId && c.ending.endingId === reachedEndingId,
+  );
   const enemyName =
     s.field.plVisible.find((c) => c.id === s.autoCombat?.enemyCardId)?.name ?? '相手';
 
