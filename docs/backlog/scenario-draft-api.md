@@ -8,7 +8,7 @@ plans:
   - 2026-10-14-セッションの独立.md
 cycles:
   - { name: C1 下書きと公開版, status: 完了, pr: 24 }
-  - { name: C2 セッションの独立, status: 進行中 }
+  - { name: C2 セッションの独立, status: 完了, pr: 25 }
   - { name: C3 シナリオのコピー, status: 未着手 }
 updated: 2026-10-14
 ---
