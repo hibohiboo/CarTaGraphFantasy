@@ -13,7 +13,6 @@ const character = (): Record<string, unknown> => ({
   baseActionValue: 3,
   deck: [{ id: 'c-1', kind: 'skill', name: 'スキル', tags: [] }],
   titles: [],
-  endingTags: [],
   cp: { total: 10, spent: 4 },
   createdAt: '2026-10-11T00:00:00Z',
 });

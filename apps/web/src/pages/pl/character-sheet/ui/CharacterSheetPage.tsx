@@ -14,6 +14,8 @@ export function CharacterSheetPage() {
   if (character.error) return <ErrorNote error={character.error} />;
   const c = character.data;
   const isMine = c.ownerId === me.data?.id;
+  // 結末タグは、デッキの結末タグのカード（ending を持つもの）。後続シナリオの前提タグと突き合わされる
+  const endingCards = c.deck.filter((card) => card.ending);
 
   return (
     <>
@@ -53,9 +55,9 @@ export function CharacterSheetPage() {
             <div className={s.metaRow}>
               <div className={s.metaLabel}>結末タグ（後続シナリオの前提タグと突き合わされる）</div>
               <ChipGroup>
-                {c.endingTags.length === 0 && <Chip tone="off">まだない</Chip>}
-                {c.endingTags.map((t) => (
-                  <Chip key={t}>{t}</Chip>
+                {endingCards.length === 0 && <Chip tone="off">まだない</Chip>}
+                {endingCards.map((card) => (
+                  <Chip key={card.id}>{card.name}</Chip>
                 ))}
               </ChipGroup>
             </div>

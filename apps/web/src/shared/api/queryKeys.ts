@@ -12,6 +12,7 @@ export const keys = {
   // シナリオの公開版・下書きは、どれも ['scenarios'] で始める（保存・公開の後にまとめて作り直すため）
   scenarios: ['scenarios', 'library'] as const,
   scenario: (id: string) => ['scenarios', 'published', id] as const,
+  scenarioVersion: (id: string, version: number) => ['scenarios', id, 'versions', version] as const,
   scenarioDrafts: ['scenarios', 'drafts'] as const,
   scenarioDraft: (id: string) => ['scenarios', 'draft', id] as const,
   library: ['library'] as const,

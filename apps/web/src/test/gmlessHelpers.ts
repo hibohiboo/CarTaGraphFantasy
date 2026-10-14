@@ -35,12 +35,20 @@ export const playFromRecruitment = (recruitmentId: string, characterId: string) 
 
 /**
  * 結末タグ「冒険者になった」を得させる。sc-village-always-win（村はずれの一歩の複製。試験官の HP が 1）の
- * GM 不在の募集をこの PC で遊び、結末まで進める。結末タグの文字列が同じなので、本物の村はずれの一歩でも
- * 再挑戦不可になる
+ * GM 不在の募集をこの PC で遊び、結末まで進める。結末タグのカードは、遊んだシナリオ（sc-village-always-win）の
+ * 結末で得たものなので、止まるのはそのシナリオだけ（再挑戦不可はシナリオごと）
  */
 export async function clearVillageWith(characterId: string) {
   const rc = await createGmlessRecruitment('sc-village-always-win');
   const s = await playFromRecruitment(rc.id, characterId);
+  return finishVillage(s.id);
+}
+
+/**
+ * 村はずれの一歩（の複製）を、導入から結末まで遊ぶ。依頼を1件・お店で斬撃・街道・試験の戦闘（斬撃だけ）・合格。
+ * 試験官を倒せる複製（HP が低い）でだけ結末に着く
+ */
+export async function finishVillage(sessionId: string) {
   for (const id of [
     'vs-to-square',
     'vs-to-quest-0',
@@ -51,9 +59,9 @@ export async function clearVillageWith(characterId: string) {
     'vs-to-guild',
     'vs-to-exam',
   ])
-    await api.post(`/sessions/${s.id}/play`, { cardId: id });
-  await api.post(`/sessions/${s.id}/auto-combat`, {
+    await api.post(`/sessions/${sessionId}/play`, { cardId: id });
+  await api.post(`/sessions/${sessionId}/auto-combat`, {
     priority: [{ cardId: 'c-slash', when: 'always' }],
   });
-  return api.post<Session>(`/sessions/${s.id}/play`, { cardId: 'vs-accept' });
+  return api.post<Session>(`/sessions/${sessionId}/play`, { cardId: 'vs-accept' });
 }

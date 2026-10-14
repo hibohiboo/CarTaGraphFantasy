@@ -6,6 +6,7 @@ import { conditionFailure, hasTag } from '../card/condition';
 import type { CardDef, SoloEffect } from '../card/model';
 import type { Character } from '../character/model';
 import type { Abilities } from '../check/model';
+import type { EndingDef, Scenario } from '../scenario/model';
 import type { Session } from '../session/model';
 
 const ACHIEVEMENT_TAG = '達成';
@@ -38,12 +39,47 @@ export function isSoloRuleCard(card: CardDef): boolean {
 }
 
 /**
- * 結末タグを重ねずに足した新しいキャラクターを返す（solo-village.md「結末タグ」、仮ルール）。入力は書き換えない。
- * すでに持っていれば、入力と同じキャラクターを返す
+ * 結末タグのカードを作る（scenario-flow.md「連作・キャンペーンの表現：結末タグ」）。特徴カードで、タグは結末の結末タグ。
+ * どのシナリオのどの結末で得たかと再挑戦不可を、得たときの値で持つ。結末タグを配らない結末では呼ばない
  */
-export function grantEndingTag(character: Character, tag: string): Character {
-  if (character.endingTags.includes(tag)) return character;
-  return { ...character, endingTags: [...character.endingTags, tag] };
+export function endingCard(
+  scenario: Pick<Scenario, 'id' | 'title'>,
+  ending: EndingDef & { grantsTag: string },
+  id: string,
+): CardDef {
+  return {
+    id,
+    kind: 'trait',
+    name: ending.grantsTag,
+    description: `『${scenario.title}』の結末『${ending.name}』`,
+    tags: [ending.grantsTag],
+    ending: {
+      scenarioId: scenario.id,
+      endingId: ending.id,
+      endingName: ending.name,
+      noReplay: ending.noReplay === true,
+    },
+  };
+}
+
+/**
+ * 結末タグのカードを重ねずに足した新しいキャラクターを返す（solo-village.md「結末タグ」、仮ルール）。入力は書き換えない。
+ * 同じシナリオの同じ結末のカードをすでに持っていれば足さず、入力と同じキャラクターを返す。
+ * ただし再挑戦不可の値が違えば（同じ結末にもう一度至った＝そのときの版の値で得た）、その値に替えた新しいキャラクターを返す
+ */
+export function grantEndingCard(character: Character, card: CardDef): Character {
+  const info = card.ending;
+  if (!info) return character;
+  const i = character.deck.findIndex(
+    (c) => c.ending?.scenarioId === info.scenarioId && c.ending.endingId === info.endingId,
+  );
+  if (i < 0) return { ...character, deck: [...character.deck, card] };
+  const held = character.deck[i];
+  if (held.ending?.noReplay === info.noReplay) return character;
+  const deck = character.deck.map((c, j) =>
+    j === i ? { ...c, ending: { ...info, noReplay: info.noReplay } } : c,
+  );
+  return { ...character, deck };
 }
 
 /**

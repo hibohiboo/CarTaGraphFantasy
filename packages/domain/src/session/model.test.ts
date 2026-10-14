@@ -9,6 +9,7 @@ const recruitment = (): Record<string, unknown> => ({
   id: 'rc-1',
   kind: 'normal',
   scenarioId: 'sc-1',
+  scenarioVersion: 1,
   scenarioTitle: 'シナリオ',
   gmId: 'u-gm',
   gmName: 'GM',
@@ -27,6 +28,7 @@ const recruitment = (): Record<string, unknown> => ({
 const session = (): Record<string, unknown> => ({
   id: 's-1',
   scenarioId: 'sc-1',
+  scenarioVersion: 1,
   scenarioTitle: 'シナリオ',
   gmId: 'u-gm',
   gmName: 'GM',
@@ -44,6 +46,22 @@ const session = (): Record<string, unknown> => ({
   feed: [],
   lastActivityAt: '2026-10-11T00:00:00Z',
   suspendAt: '2026-10-12T00:00:00Z',
+});
+
+describe('scenarioVersion（募集・セッションが進む版番号）', () => {
+  it.each([0, -1, 1.5, '1', null, undefined])('%s は募集でもセッションでも落ちる', (v) => {
+    expect(recruitmentSchema.safeParse({ ...recruitment(), scenarioVersion: v }).success).toBe(
+      false,
+    );
+    expect(sessionSchema.safeParse({ ...session(), scenarioVersion: v }).success).toBe(false);
+  });
+
+  it('1以上の整数は通る', () => {
+    expect(recruitmentSchema.safeParse({ ...recruitment(), scenarioVersion: 1 }).success).toBe(
+      true,
+    );
+    expect(sessionSchema.safeParse({ ...session(), scenarioVersion: 12 }).success).toBe(true);
+  });
 });
 
 describe('recruitmentSchema', () => {

@@ -52,7 +52,8 @@ import {
 } from '@cartagraph/domain/session/transition';
 import {
   applySoloEffect,
-  grantEndingTag,
+  endingCard,
+  grantEndingCard,
   heldCards,
   unplayableReason,
 } from '@cartagraph/domain/soloVillage/rules';
@@ -91,6 +92,17 @@ import { readBody } from './body';
 import * as fx from './fixtures';
 import { characterCreation, systemCards } from './rulesFiles';
 import { scenarioFiles } from './scenarioFiles';
+import {
+  appendVersion,
+  canonical,
+  contentOf,
+  latestVersion,
+  needsNewVersion,
+  parseVersion,
+  type ScenarioVersions,
+  seedVersions,
+  versionOf,
+} from './scenarioVersions';
 
 // ソロ開始のセッションの GM 欄には SYSTEM_GM_ID のダミーを入れる（packages/domain）。GM 不在かどうかは Session.gmless、
 // 提案の扱いは Session.proposalHandling（開始時にシナリオか募集からコピーした値）で判定する
@@ -103,6 +115,8 @@ type Db = {
   scenarios: Scenario[];
   /** 製作者の下書き（docs/plans/2026-10-11-シナリオの下書きのAPI.md G1）。新しいものを先に置く */
   drafts: ScenarioDraft[];
+  /** 公開・公開し直すたびに残す版の履歴（docs/plans/2026-10-14-セッションの独立.md G4）。募集とセッションは版番号で引く */
+  versions: ScenarioVersions;
   recruitments: Recruitment[];
   sessions: Session[];
 };
@@ -123,10 +137,12 @@ function createDb(): Db {
   const drafts = fx.scenarios
     .filter((s) => s.authorId === fx.me.id)
     .map((s): ScenarioDraft => ({ ...s, libraryStatus: 'draft' }));
+  const scenarios = fx.scenarios.filter((s) => !draftOnly.has(s.id));
   return clone({
     characters: fx.characters,
-    scenarios: fx.scenarios.filter((s) => !draftOnly.has(s.id)),
+    scenarios,
     drafts,
+    versions: seedVersions(scenarios),
     recruitments: fx.recruitments,
     sessions: fx.sessions,
   });
@@ -183,22 +199,11 @@ function publicationOf(id: string): ScenarioPublication {
   return published.libraryStatus === 'published' ? 'listed' : 'unlisted';
 }
 
-/** キーの順によらない JSON（下書きと公開版を比べるため） */
-function canonical(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
-  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
-  const entries = Object.entries(value)
-    .filter(([, v]) => v !== undefined)
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(',')}}`;
-}
-
 /** 下書きが公開版と違うか（libraryStatus・updatedAt を除く。公開版が無ければ false） */
 function draftChanged(draft: ScenarioDraft): boolean {
   const published = publishedOf(draft.id);
   if (!published) return false;
-  const strip = ({ libraryStatus: _, updatedAt: __, ...rest }: Scenario) => rest;
-  return canonical(strip(draft)) !== canonical(strip(published));
+  return canonical(contentOf(draft)) !== canonical(contentOf(published));
 }
 
 const draftView = (draft: ScenarioDraft): ScenarioDraftView => ({
@@ -303,6 +308,9 @@ function publishScenario(id: unknown) {
     const next: Scenario = { ...clone(found.draft), libraryStatus: 'published' };
     const written = await writeScenarioFile(next);
     if ('error' in written) return written.error;
+    // 中身が変わるときだけ新しい版を残す（変更の無い公開し直し・外したものの載せ直しでは増やさない）。
+    // 書き込みが成功した後に足すので、検査落ち・保存先の失敗では増えない
+    if (needsNewVersion(db.versions, next)) appendVersion(db.versions, next);
     putPublished(next);
     return HttpResponse.json<ScenarioSaveResult>({ scenario: next, file: written.file });
   });
@@ -407,7 +415,6 @@ function buildSoloCharacter(name: string, starter?: Scenario['soloStarter']): Ch
     ...creationStats(characterCreation, defaultAbilities(characterCreation.abilities)),
     deck: starter ? clone(starter.cards) : [],
     titles: [],
-    endingTags: [],
     cp: { total: characterCreation.cpBudget, spent: 0 },
     createdAt: nowIso(),
   };
@@ -421,7 +428,7 @@ function buildSoloCharacter(name: string, starter?: Scenario['soloStarter']): Ch
 function buildSession(
   scenario: Scenario,
   v: Pick<Session, 'gmId' | 'gmName' | 'gmless' | 'partyName' | 'participants'> &
-    Pick<Session, 'recruitmentId' | 'excludedNodeIds'> & {
+    Pick<Session, 'recruitmentId' | 'excludedNodeIds' | 'scenarioVersion'> & {
       driver: Character;
       startedText: string;
       /** GM 不在の募集から始めるときの、募集の提案の扱い（無ければシナリオの値） */
@@ -436,6 +443,7 @@ function buildSession(
   return {
     id: nextId('ss'),
     scenarioId: scenario.id,
+    scenarioVersion: v.scenarioVersion,
     scenarioTitle: scenario.title,
     ...(v.recruitmentId && { recruitmentId: v.recruitmentId }),
     ...(v.excludedNodeIds && { excludedNodeIds: v.excludedNodeIds }),
@@ -464,15 +472,16 @@ function buildSession(
   };
 }
 
-/** 募集のシナリオの再挑戦不可に当たれば、その理由（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」） */
+/** 募集のシナリオの再挑戦不可に当たれば、その理由（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）。PC の結末タグのカードだけで決める */
 function blockedReason(rc: Recruitment, ch: Character): string | null {
-  const scenario = db.scenarios.find((x) => x.id === rc.scenarioId);
-  const ending = scenario && replayBlockedBy(scenario, ch);
+  const ending = replayBlockedBy(rc.scenarioId, ch);
   return ending ? replayBlockedMessage(ch.name, ending) : null;
 }
 
 function buildSoloSession(scenario: Scenario, character: Character): Session | null {
   return buildSession(scenario, {
+    // ソロ開始は、始めたときの公開版で進む
+    scenarioVersion: latestVersion(db.versions, scenario.id),
     gmId: SYSTEM_GM_ID,
     gmName: SYSTEM_GM_NAME,
     gmless: true,
@@ -492,14 +501,46 @@ function buildSoloSession(scenario: Scenario, character: Character): Session | n
   });
 }
 
+/** セッション・募集が進む版（公開し直しても変わらない。docs/cartagraph/scenario-flow.md「セッション開始までの全体フロー」） */
+const versionFor = (v: Pick<Session, 'scenarioId' | 'scenarioVersion'>) =>
+  versionOf(db.versions, v.scenarioId, v.scenarioVersion);
+
 /**
- * セッションで使うシナリオ。GMが外したシーンを除いたデッキに差し替える（docs/cartagraph/scenario-flow.md
+ * セッションで使うシナリオ。セッションの版から、GMが外したシーンを除いたデッキに差し替える（docs/cartagraph/scenario-flow.md
  * 「GMのカスタマイズ」）。セッションはシーンを移るたびにシナリオを引くので、引く箇所はすべてここを通す
  */
 function scenarioOf(s: Session): Scenario | undefined {
-  const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
+  const scenario = versionFor(s);
   if (!scenario || !s.excludedNodeIds?.length) return scenario;
   return { ...scenario, deck: sessionDeck(scenario.deck, s.excludedNodeIds) };
+}
+
+/**
+ * 結末に至ったドライバーに、結末タグのカードを即時に付ける（solo-village.md「結末タグ」、仮ルール）。
+ * 同じシナリオの同じ結末のカードをすでに持っていれば重ねない（再挑戦不可の値だけ違えば替えるが、ログには出さない）
+ */
+function grantEndingToDriver(
+  s: Session,
+  scenario: Scenario,
+  ending: NonNullable<Extract<TransitionPlan, { ok: true }>['ending']>,
+  driverCharacterId: string | undefined,
+): void {
+  const actor = db.characters.find((c) => c.id === driverCharacterId);
+  if (!actor) return;
+  const card = endingCard(scenario, ending, nextId('c-ending'));
+  const granted = grantEndingCard(actor, card);
+  if (granted === actor) return;
+  const had = actor.deck.some(
+    (c) => c.ending?.scenarioId === scenario.id && c.ending.endingId === ending.id,
+  );
+  db.characters[db.characters.indexOf(actor)] = granted;
+  if (had) return;
+  s.feed.unshift({
+    id: nextId('f'),
+    at: nowIso(),
+    text: `${actor.name}は結末タグ『${ending.grantsTag}』を得た`,
+  });
+  s.flavor = `${s.flavor} 結末タグ『${ending.grantsTag}』を得た。`;
 }
 
 const RETRY_TRAIT_NAME = '再挑戦の記憶';
@@ -621,7 +662,7 @@ export const handlers = [
     };
     const check = checkStart(rc, selection);
     if (!check.ok) return unprocessable(check.error);
-    const base = db.scenarios.find((x) => x.id === rc.scenarioId);
+    const base = versionFor(rc);
     if (!base) return notFound('シナリオ');
     // 応募のあとで結末タグを得た PC もあるので、始めるときにも再挑戦不可を確かめる
     for (const id of selection.characterIds) {
@@ -639,6 +680,7 @@ export const handlers = [
     const session = buildSession(
       { ...base, deck: sessionDeck(base.deck, rc.excludedNodeIds) },
       {
+        scenarioVersion: rc.scenarioVersion,
         gmId: rc.gmId,
         gmName: rc.gmName,
         gmless: false,
@@ -675,16 +717,17 @@ export const handlers = [
     if (!body.ok) return body.response;
     const ch = db.characters.find((c) => c.id === body.data.characterId);
     if (!ch) return notFound('キャラクター');
-    const base = db.scenarios.find((x) => x.id === rc.scenarioId);
+    const base = versionFor(rc);
     if (!base) return notFound('シナリオ');
     const check = checkPlayFromRecruitment(rc, ch, {
       meId: fx.me.id,
-      blockedBy: replayBlockedBy(base, ch),
+      blockedBy: replayBlockedBy(rc.scenarioId, ch),
     });
     if (!check.ok) return unprocessable(check.error);
     const session = buildSession(
       { ...base, deck: sessionDeck(base.deck, rc.excludedNodeIds) },
       {
+        scenarioVersion: rc.scenarioVersion,
         gmId: rc.gmId,
         gmName: rc.gmName,
         gmless: true,
@@ -766,7 +809,6 @@ export const handlers = [
       ...creationStats(characterCreation, abilities),
       deck,
       titles: [],
-      endingTags: [],
       cp: { total: characterCreation.cpBudget, spent },
       createdAt: nowIso(),
     };
@@ -933,21 +975,8 @@ export const handlers = [
         gmless ? grownFlavor || card.description || undefined : undefined,
       );
       // 結末タグは、GM不在のソロでは結末に至った時点で即時に付ける（solo-village.md「結末タグ」、仮ルール）
-      const actorNow = db.characters.find((c) => c.id === driver?.characterId);
-      const granted =
-        gmless && transition.endingTag && actorNow
-          ? grantEndingTag(actorNow, transition.endingTag)
-          : undefined;
-      // すでに持っていれば grantEndingTag は同じキャラクターを返す。そのときは「得た」と記録しない
-      if (actorNow && granted && granted !== actorNow) {
-        db.characters[db.characters.indexOf(actorNow)] = granted;
-        s.feed.unshift({
-          id: nextId('f'),
-          at: nowIso(),
-          text: `${actorNow.name}は結末タグ『${transition.endingTag}』を得た`,
-        });
-        s.flavor = `${s.flavor} 結末タグ『${transition.endingTag}』を得た。`;
-      }
+      if (gmless && transition.ending && scenario)
+        grantEndingToDriver(s, scenario, transition.ending, driver?.characterId);
     }
     s.lastActivityAt = nowIso();
     return HttpResponse.json(s);
@@ -1033,7 +1062,7 @@ export const handlers = [
     // 候補は描写の枠と同じ sessionNarrationTargets（外したシーン・NPC など・いま居るノードは除く。
     // 自動戦闘のノードは GM 不在のセッションでだけ含める）
     if (nextNodeId !== undefined && nextNodeId !== '') {
-      const scenario = db.scenarios.find((x) => x.id === s.scenarioId);
+      const scenario = versionFor(s);
       const targets = scenario ? sessionNarrationTargets(scenario, s) : [];
       if (!targets.some((t) => t.id === nextNodeId))
         return unprocessable(`「${nextNodeId}」へは、選択肢で進めません`);
@@ -1307,6 +1336,16 @@ export const handlers = [
     return s ? HttpResponse.json(s) : notFound('シナリオ');
   }),
 
+  // シナリオの版（公開・公開し直すたびにできる。中身は変わらない。だれでも読める）。libraryStatus はシナリオ集の今の状態
+  http.get('/api/scenarios/:id/versions/:version', ({ params }) => {
+    const published = publishedOf(params.id);
+    const version = parseVersion(params.version);
+    const found = published && version !== null && versionOf(db.versions, published.id, version);
+    return found
+      ? HttpResponse.json({ ...found, libraryStatus: published.libraryStatus })
+      : notFound('シナリオの版');
+  }),
+
   // 自分の下書きの一覧（製作者のシナリオ管理）
   http.get('/api/scenario-drafts', () =>
     HttpResponse.json(db.drafts.filter((d) => d.authorId === fx.me.id).map(draftView)),
@@ -1419,6 +1458,8 @@ export const handlers = [
       kind,
       ...(proposalHandling && { proposalHandling }),
       scenarioId: s.id,
+      // 出したときの公開版。サーバーが持つ最新の版で、GM が画面で見ていた版とは照らさない
+      scenarioVersion: latestVersion(db.versions, s.id),
       scenarioTitle: s.title,
       gmId: fx.me.id,
       gmName: fx.me.name,

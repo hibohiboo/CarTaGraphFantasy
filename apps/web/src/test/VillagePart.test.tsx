@@ -23,6 +23,9 @@ const INITIAL = {
 /** 村の成長で HP・行動値を与えていたころの文（いまは出ない） */
 const OLD_GROWTH_LINE = /HPを得た|行動値を得た/;
 
+/** 結末タグのカード（ending を持つデッキのカード）の名前 */
+const endingCardNames = (pc: Character) => pc.deck.filter((c) => c.ending).map((c) => c.name);
+
 const start = (scenarioId: string, name = '新人') =>
   api.post<Session>(`/scenarios/${scenarioId}/start-solo`, { name });
 
@@ -143,7 +146,7 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
       '素早い突き',
     ]);
     expect(pc.deck.filter((c) => c.tags.includes('引換'))).toEqual([]);
-    expect(pc.endingTags).toEqual(['冒険者になった']);
+    expect(endingCardNames(pc)).toEqual(['冒険者になった']);
   });
 
   it('本物のシナリオ（sc-village-start）でも、依頼1件→お店で斬撃→街道→試験の戦い方の設定まで進める', async () => {
@@ -215,7 +218,7 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     const ended = await api.get<Session>(`/sessions/${sessionId}`);
     expect(ended.status).toBe('ended');
     const pc = await characterOf(ended);
-    expect(pc.endingTags).toEqual(['冒険者になった']);
+    expect(endingCardNames(pc)).toEqual(['冒険者になった']);
     expect(pc).toMatchObject(INITIAL);
     // 村の成長で HP・行動値を与えていたころの痕跡が無い（値そのものは作成時と同じなので、区別には使えない）
     expect(ended.feed.some((f) => OLD_GROWTH_LINE.test(f.text))).toBe(false);
@@ -608,9 +611,9 @@ describe('結末の「仮ルール」表示', () => {
       await screen.findByRole('heading', { name: '結末「冒険者として旅立つ」' }),
     ).toBeInTheDocument();
     // 終了後に読むシナリオ（結末の定義）とキャラクターの応答を待ってから確かめる
-    expect((await characterOf(s)).endingTags).toEqual([]);
+    expect(endingCardNames(await characterOf(s))).toEqual([]);
     await api.get(`/scenarios/sc-exam-always-win`);
     expect(screen.queryByText(/結末タグの即時反映は仮ルール/)).not.toBeInTheDocument();
-    expect((await characterOf(s)).endingTags).toEqual([]);
+    expect(endingCardNames(await characterOf(s))).toEqual([]);
   });
 });

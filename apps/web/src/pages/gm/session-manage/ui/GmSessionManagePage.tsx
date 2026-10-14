@@ -8,7 +8,7 @@ import { sessionNarrationTargets } from '@cartagraph/domain/session/narrate';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '@/entities/card/ui/GameCard';
-import { useScenario } from '@/entities/scenario/api/queries';
+import { useScenarioVersion } from '@/entities/scenario/api/queries';
 import {
   useApproveProposal,
   useEndSession,
@@ -256,7 +256,7 @@ function ProposalTicket({ p, session }: { p: Proposal; session: Session }) {
   const [nextNodeId, setNextNodeId] = useState('');
   // 採用で作るカードにも移り先を付けられる（docs/cartagraph/play-and-field.md「次のシーンへ進む」）。
   // 候補は描写の枠・サーバーと同じ sessionNarrationTargets
-  const scenario = useScenario(session.scenarioId);
+  const scenario = useScenarioVersion(session.scenarioId, session.scenarioVersion);
   const targets = scenario.data ? sessionNarrationTargets(scenario.data, session) : [];
   const [reason, setReason] = useState('');
   const [rejecting, setRejecting] = useState(false);

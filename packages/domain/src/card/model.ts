@@ -116,6 +116,19 @@ export const soloEffectSchema = z.strictObject({
 /** GM不在のソロで、選択肢カードを選んだときの成長の効果（docs/cartagraph/solo-village.md、仮ルール） */
 export type SoloEffect = z.infer<typeof soloEffectSchema>;
 
+/**
+ * 結末タグのカードが持つ、どのシナリオのどの結末で得たか（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）。
+ * 得たときの版の値のまま持ち、後から製作者が直しても変わらない。noReplay は再挑戦不可の結末で得たか
+ */
+export const endingCardInfoSchema = z.strictObject({
+  scenarioId: idSchema,
+  endingId: idSchema,
+  endingName: z.string(),
+  noReplay: z.boolean(),
+});
+
+export type EndingCardInfo = z.infer<typeof endingCardInfoSchema>;
+
 /** カード1枚。生成元（シナリオ製作者／GM／進化）に関わらず同じ構造を持つ */
 export const cardDefSchema = z.strictObject({
   $comment: commentSchema,
@@ -146,6 +159,8 @@ export const cardDefSchema = z.strictObject({
   dealWhen: cardConditionSchema.optional(),
   /** 使える条件。満たさなければ手札に出すが選べない（同上、仮ルール） */
   playWhen: cardConditionSchema.optional(),
+  /** 結末タグのカードだけが持つ。どのシナリオのどの結末で得たかと、再挑戦不可か */
+  ending: endingCardInfoSchema.optional(),
   /** 選んだときの成長の効果（同上、仮ルール） */
   get soloEffect(): z.ZodOptional<typeof soloEffectSchema> {
     return soloEffectSchema.optional();

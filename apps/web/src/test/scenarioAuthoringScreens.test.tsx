@@ -2,6 +2,8 @@
 // （docs/plans/2026-10-07-選択肢の移り先と結末の編集.md「5. 新規テストケース（画面）」）。
 
 import type { CardDef } from '@cartagraph/domain/card/model';
+import { defaultAbilities } from '@cartagraph/domain/character/creation';
+import type { Character } from '@cartagraph/domain/character/model';
 import { safeParseScenarioFile, toScenarioFile } from '@cartagraph/domain/scenario/file';
 import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
 import { findScenarioRefErrors } from '@cartagraph/domain/scenario/refs';
@@ -11,6 +13,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ScenarioDraftView } from '@/entities/scenario/api/types';
 import { api } from '@/shared/api/api';
 import { setScenarioFileStore } from '../mocks/handlers';
+import { characterCreation } from '../mocks/rulesFiles';
 import { DEAD_END, recruitCard, recruitPanel } from './gmlessHelpers';
 import { renderAt } from './renderAt';
 
@@ -521,7 +524,8 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     expect(screen.getAllByText(/結末タグ『村を見た』を得た。/).length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole('link', { name: 'キャラクターシート' }));
-    expect(await screen.findByText('村を見た')).toBeInTheDocument();
+    // 結末タグの欄と、デッキの特徴カードの両方に出る
+    expect((await screen.findAllByText('村を見た')).length).toBeGreaterThanOrEqual(1);
 
     // 製作者：下書きの結末タグを変えて保存する。公開し直すまで届かない（D1）
     await router.navigate(`/creator/scenarios/${id}`);
@@ -541,12 +545,12 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
       expect(within(row).getByText('公開版と違う変更あり')).toBeInTheDocument();
     });
 
-    // 新しく始めたセッションは公開版のまま（別の PC で）
+    // 同じ募集から新しく始めたセッションは、募集を出したときの版のまま（別の PC で）
     await playThrough('pc-akari');
     expect(screen.getAllByText(/結末タグ『村を見た』を得た。/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/結末タグ『村を出た』を得た。/)).not.toBeInTheDocument();
 
-    // 公開し直すと、変更ありの表示が消え、新しく始めたセッションは新しい結末タグになる
+    // 公開し直すと変更ありの表示が消える。既にある募集は変わらず、公開し直した後に出した募集から始めると新しい結末タグになる
     await router.navigate(`/creator/scenarios/${id}`);
     await user.click(await screen.findByRole('button', { name: '公開し直す' }));
     await screen.findByText(`scenarios/${id}.json に保存しました`);
@@ -556,7 +560,20 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
       ).not.toBeInTheDocument(),
     );
     expect(written).toHaveLength(2);
-    await playThrough('pc-jin');
+    // 結末のカードは、同じシナリオの同じ結末なら重ねないので、結末タグをまだ持たない新しい PC で遊ぶ
+    const fresh = await api.post<Character>('/characters', {
+      name: '新人',
+      cardIds: [],
+      abilities: defaultAbilities(characterCreation.abilities),
+    });
+    await router.navigate('/gm/scenarios');
+    await user.click(await screen.findByRole('link', { name: title }));
+    const p2 = await recruitPanel();
+    await user.click(within(p2).getByLabelText('GM 不在（PL が自由に始める）'));
+    await user.selectOptions(within(p2).getByLabelText('提案の扱い'), 'disabled');
+    await user.click(within(p2).getByRole('button', { name: /この構成で募集を出す/ }));
+    await screen.findByRole('heading', { name: '自分の募集' });
+    await playThrough(fresh.id);
     expect(screen.getAllByText(/結末タグ『村を出た』を得た。/).length).toBeGreaterThan(0);
   });
 });

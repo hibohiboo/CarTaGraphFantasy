@@ -70,8 +70,9 @@ export const endingDefShapeSchema = z.strictObject({
   /** 後続シナリオの前提タグとして配るタグ。無ければ単発扱い */
   grantsTag: z.string().optional(),
   /**
-   * 再挑戦不可（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）。この結末の結末タグを
-   * 持つ PC は、同じシナリオをもう一度遊べない。結末タグのカード化のときに、カードの属性へ移す
+   * 再挑戦不可（docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）。この結末で得た結末タグの
+   * カードを持つ PC は、同じシナリオをもう一度遊べない。得たときの値がカードの ending.noReplay に写り、
+   * 止めるかどうかはカードだけで決める（後から付け外しても、既に得たカードには及ばない）
    */
   noReplay: z.boolean().optional(),
 });

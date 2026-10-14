@@ -203,7 +203,12 @@ describe('GM 不在のセッションの進行（gmless の判定。GM は自分
   it('自動戦闘のシーンへ進め、結末に至ると自動で終わり、結末タグが即時に付く', async () => {
     const ended = await clearVillageWith('pc-jin');
     expect(ended.status).toBe('ended');
-    expect((await characterOf('pc-jin')).endingTags).toContain('冒険者になった');
+    const card = (await characterOf('pc-jin')).deck.find((c) => c.ending);
+    expect(card?.name).toBe('冒険者になった');
+    expect(card?.ending).toMatchObject({
+      scenarioId: 'sc-village-always-win',
+      noReplay: true,
+    });
   });
 
   it('/narrate は 422 でセッションは変わらない。ソロ開始のセッションは従来どおり 403', async () => {
@@ -323,9 +328,9 @@ describe('提案で中断し、GM の裁定のあとドライバーが再開す�
 });
 
 describe('再挑戦不可', () => {
-  it('結末タグを得たジンは、村はずれの一歩の GM 不在の募集から始められない。アカリは始められる', async () => {
+  it('結末タグのカードを得たジンは、そのシナリオの GM 不在の募集から始められない。アカリは始められる', async () => {
     await clearVillageWith('pc-jin');
-    const rc = await gmless('sc-village-start');
+    const rc = await gmless('sc-village-always-win');
     await expect(playFrom(rc.id, 'pc-jin')).rejects.toMatchObject({
       status: 422,
       message:
@@ -334,9 +339,9 @@ describe('再挑戦不可', () => {
     expect((await playFrom(rc.id, 'pc-akari')).status).toBe('playing');
   });
 
-  it('通常の募集（村はずれの一歩）へのジンの応募は 422。灰色館の一夜の募集には応募できる', async () => {
+  it('通常の募集（結末まで遊んだシナリオ）へのジンの応募は 422。灰色館の一夜の募集には応募できる', async () => {
     await clearVillageWith('pc-jin');
-    const village = await createRecruitment('sc-village-start', { capacity: 2 });
+    const village = await createRecruitment('sc-village-always-win', { capacity: 2 });
     await expect(
       api.post(`/recruitments/${village.id}/apply`, { characterId: 'pc-jin' }),
     ).rejects.toMatchObject({ status: 422 });
@@ -344,8 +349,8 @@ describe('再挑戦不可', () => {
     await api.post(`/recruitments/${mansion.id}/apply`, { characterId: 'pc-jin' });
   });
 
-  it('応募したあとで結末タグを得たジンを含めて GM が始めると 422 で、募集は受付中・セッションは増えない', async () => {
-    const village = await createRecruitment('sc-village-start', { capacity: 2 });
+  it('応募したあとで結末タグのカードを得たジンを含めて GM が始めると 422 で、募集は受付中・セッションは増えない', async () => {
+    const village = await createRecruitment('sc-village-always-win', { capacity: 2 });
     await api.post(`/recruitments/${village.id}/apply`, { characterId: 'pc-jin' });
     await clearVillageWith('pc-jin');
     const before = (await api.get<Session[]>('/sessions')).length;

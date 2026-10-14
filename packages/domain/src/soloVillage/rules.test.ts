@@ -6,7 +6,8 @@ import type { Abilities } from '../check/model';
 import type { Session } from '../session/model';
 import {
   applySoloEffect,
-  grantEndingTag,
+  endingCard,
+  grantEndingCard,
   heldCards,
   isSoloRuleCard,
   resolveGainCards,
@@ -41,7 +42,6 @@ const pc = (extra: Partial<Character> = {}): Character => ({
   baseActionValue: 10,
   deck: [],
   titles: [],
-  endingTags: [],
   cp: { total: 5, spent: 0 },
   createdAt: '2026-09-27T00:00:00Z',
   ...extra,
@@ -242,17 +242,46 @@ describe('applySoloEffect：カードの出入り', () => {
   });
 });
 
-describe('grantEndingTag（結末タグの即時反映。仮ルール）', () => {
-  it('持っていなければ足し、入力は書き換えない', () => {
-    const c = pc({ endingTags: ['灯りの回廊を経験'] });
-    const next = grantEndingTag(c, '冒険者になった');
-    expect(next.endingTags).toEqual(['灯りの回廊を経験', '冒険者になった']);
-    expect(c.endingTags).toEqual(['灯りの回廊を経験']);
+describe('endingCard・grantEndingCard（結末タグのカードと即時反映。仮ルール）', () => {
+  const scenario = { id: 'sc-1', title: '村はずれの一歩' };
+  const ok = { id: 'e-ok', name: '旅立ち', grantsTag: '冒険者になった', noReplay: true };
+  const made = (e = ok, id = 'c-end') => endingCard(scenario, e, id);
+
+  it('endingCard は特徴カードで、タグは結末タグ、ending に結末の値を持つ', () => {
+    expect(made()).toEqual({
+      id: 'c-end',
+      kind: 'trait',
+      name: '冒険者になった',
+      description: '『村はずれの一歩』の結末『旅立ち』',
+      tags: ['冒険者になった'],
+      ending: { scenarioId: 'sc-1', endingId: 'e-ok', endingName: '旅立ち', noReplay: true },
+    });
+    const failed = { id: 'e-ng', name: '村に戻る', grantsTag: '試験に落ちた' };
+    expect(endingCard(scenario, failed, 'c-ng').ending?.noReplay).toBe(false);
   });
-  it('すでに持っていれば重ねない', () => {
-    const c = pc({ endingTags: ['冒険者になった'] });
+  it('持っていなければ足し、入力は書き換えない', () => {
+    const c = pc({ deck: [lantern] });
+    const next = grantEndingCard(c, made());
+    expect(next.deck).toEqual([lantern, made()]);
+    expect(c.deck).toEqual([lantern]);
+  });
+  it('同じシナリオの同じ結末のカードを持っていれば重ねず、同じキャラクターを返す', () => {
+    const c = pc({ deck: [made()] });
     // 同じキャラクターを返す（呼び出し側は、これで「得た」と記録しないことを判断する）
-    expect(grantEndingTag(c, '冒険者になった')).toBe(c);
+    expect(grantEndingCard(c, made(ok, 'c-end-2'))).toBe(c);
+  });
+  it('noReplay だけ違えば、その値に替えた新しいキャラクターを返す（入力は書き換えない）', () => {
+    const c = pc({ deck: [made({ ...ok, noReplay: false })] });
+    const next = grantEndingCard(c, made());
+    expect(next).not.toBe(c);
+    expect(next.deck).toHaveLength(1);
+    expect(next.deck[0].ending?.noReplay).toBe(true);
+    expect(c.deck[0].ending?.noReplay).toBe(false);
+  });
+  it('別のシナリオの同じ名前のタグは別のカードとして足す', () => {
+    const other = endingCard({ id: 'sc-2', title: '別の話' }, ok, 'c-other');
+    const next = grantEndingCard(pc({ deck: [made()] }), other);
+    expect(next.deck.map((c) => c.id)).toEqual(['c-end', 'c-other']);
   });
 });
 

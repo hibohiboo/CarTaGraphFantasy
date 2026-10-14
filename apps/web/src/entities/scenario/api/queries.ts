@@ -19,6 +19,18 @@ export const useScenario = (id: string, enabled = true) =>
     enabled: enabled && id !== '',
   });
 
+/**
+ * シナリオの版（セッション・募集が進む版。docs/cartagraph/scenario-flow.md「シナリオの公開」）。版の中身は変わらないので
+ * 読み直さない。id が空なら取りに行かない
+ */
+export const useScenarioVersion = (id: string, version: number) =>
+  useQuery({
+    queryKey: keys.scenarioVersion(id, version),
+    queryFn: () => api.get<Scenario>(`/scenarios/${id}/versions/${version}`),
+    enabled: id !== '',
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+
 /** 自分の下書きの一覧（製作者のシナリオ管理） */
 export const useScenarioDrafts = () =>
   useQuery({
