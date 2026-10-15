@@ -112,6 +112,7 @@ export default withMermaid(
               items: [
                 { text: '技術スタック', link: '/architecture/' },
                 { text: 'Webアプリの仕組み', link: '/architecture/web-app' },
+                { text: '業務領域の分類', link: '/architecture/domain-map' },
               ],
             },
             { text: '既知の問題', link: '/architecture/known-issues' },
@@ -154,6 +155,7 @@ export default withMermaid(
                 { text: '技術スタック', link: '/notes/architecture/' },
                 { text: 'Webアプリの仕組み', link: '/notes/architecture/web-app' },
                 { text: '試作の経緯', link: '/notes/architecture/prototype-handover' },
+                { text: '業務領域の分類', link: '/notes/architecture/domain-map' },
                 { text: 'ロードマップ', link: '/notes/roadmap' },
               ],
             },
