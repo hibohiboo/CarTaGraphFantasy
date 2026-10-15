@@ -81,7 +81,7 @@ scripts/build-api-docs.ts ──→ packages/schemas（API の一覧から OpenA
 
 ## packages/domain の中の置き場所
 
-`packages/domain/src/` は、仕様ページ（`docs/cartagraph/`）に合わせたドメインごとのディレクトリに分ける。ディレクトリの一覧は下の表が正。
+`packages/domain/src/` は、仕様ページ（`docs/cartagraph/`）に合わせたドメインごとのディレクトリに分ける。ディレクトリの一覧は下の表が正。ディレクトリは、ドメイン駆動設計で決めた[業務領域](../../architecture/domain-map.md)・[境界づけられたコンテキスト](../../architecture/bounded-contexts.md)・[集約](../../architecture/aggregates.md)とは1対1になっていない。コードを組み替えるときは、それらと既知の問題「ドメインモデル」を先に読む。
 
 - **型は `model.ts`、ロジックは役割の名前のファイル** — 各ディレクトリの型は `model.ts` に置き、zod スキーマ・型（`z.infer`）・ラベルを隣り合わせにする。JSON に書くもの（シナリオ・ルール）と API の応答に入るもの（セッション・キャラクターなど）は、zod スキーマを正にして型を `z.infer` で導く（`packages/schemas` が API の一覧と OpenAPI に使う）。ロジックは `resolve.ts`・`refs.ts`・`transition.ts` のように役割で名づける。テストは対象と同じディレクトリに、対象のファイル名で置く
 - **直下にファイルを置かない。`index.ts` を作らない** — 利用側は `@cartagraph/domain/<ディレクトリ>/<ファイル>` を直接 import する（`package.json` の `exports` はワイルドカード）。domain の中は相対パスで import し、自分のパッケージ名では import しない
