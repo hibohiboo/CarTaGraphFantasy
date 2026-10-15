@@ -7,4 +7,5 @@
 - [ティザー映像](teaser-movie.md) — docs/public/teaser/movie-v1.html（体験）と movie-v1-b.html（30秒・コンセプト）。ui-polish 完了後に v2 を作り直す予定
 - [進め方の変更は進化ログに漏らさず残す](record-process-evolution.md) — 採らなかった案も候補に残す
 - [複数ファイルの書き換えは全部検査してから書く](transactional-edit-scripts.md) — 途中で止まって半端に書き換えない
+- [DDD の設計文書](ddd-design-docs.md) — docs/architecture の業務領域・コンテキスト・集約。コードの組み替えは backend-1on1 で
 - [崩した箇所を git checkout で戻さない](no-git-checkout-to-undo-mutation.md) — 未コミットの変更ごと消える。mutate-check か逆向きの置換で戻す
