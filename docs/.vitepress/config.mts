@@ -12,6 +12,10 @@ export default withMermaid(
     // docs/plans/ は作業単位のプランドキュメント（コードのパス等を多く含む）で、公開サイトには載せない
     srcExclude: ['plans/**'],
     markdown: { anchor: { slugify: githubSlug } },
+    // docs:dev で mermaid を事前バンドルさせる。しないと mermaid の ESM が CommonJS の依存（dayjs・fastdom など）を
+    // そのまま import し、ブラウザで「default が無い」と落ちる。withMermaid が足す "dayjs" などの指定は、pnpm では
+    // 直下から解決できず黙って飛ばされるので効かない（build は Rollup が変換するので落ちない）
+    vite: { optimizeDeps: { include: ['mermaid'] } },
 
     themeConfig: {
       nav: [
@@ -113,6 +117,7 @@ export default withMermaid(
                 { text: '技術スタック', link: '/architecture/' },
                 { text: 'Webアプリの仕組み', link: '/architecture/web-app' },
                 { text: '業務領域の分類', link: '/architecture/domain-map' },
+                { text: '境界づけられたコンテキスト', link: '/architecture/bounded-contexts' },
               ],
             },
             { text: '既知の問題', link: '/architecture/known-issues' },
@@ -156,6 +161,10 @@ export default withMermaid(
                 { text: 'Webアプリの仕組み', link: '/notes/architecture/web-app' },
                 { text: '試作の経緯', link: '/notes/architecture/prototype-handover' },
                 { text: '業務領域の分類', link: '/notes/architecture/domain-map' },
+                {
+                  text: '境界づけられたコンテキスト',
+                  link: '/notes/architecture/bounded-contexts',
+                },
                 { text: 'ロードマップ', link: '/notes/roadmap' },
               ],
             },
