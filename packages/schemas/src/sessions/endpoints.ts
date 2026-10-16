@@ -101,7 +101,7 @@ export const sessionEndpoints = [
   defineEndpoint({
     method: 'post',
     path: '/sessions/:id/mode',
-    summary: '軽量モード・濃密モードを切り替える（GM）',
+    summary: '通常進行・じっくり進行を切り替える（GM）',
     body: modeBody,
     responses: {
       200: ok,

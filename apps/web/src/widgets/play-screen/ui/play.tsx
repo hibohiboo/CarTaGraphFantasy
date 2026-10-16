@@ -34,7 +34,7 @@ export function Hud({
         <RoleBadge badgeRole="gm">{session.gmName}（GM）</RoleBadge>
       )}
       <RoleBadge badgeRole="mode">
-        {session.mode === 'dense' ? '濃密モード' : '軽量モード'}
+        {session.mode === 'dense' ? 'じっくり進行' : '通常進行'}
       </RoleBadge>
       <div className={s.hudParty}>
         {others.map((p) => (

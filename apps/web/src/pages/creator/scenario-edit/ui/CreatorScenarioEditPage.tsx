@@ -243,7 +243,7 @@ function Editor({
   const toggleDense = (id: string) =>
     set(
       'deck',
-      // 軽量（省いた状態）に戻すときはキーごと消す（dense: false が残ると、公開版と違う変更ありのままになる）
+      // 通常進行（省いた状態）に戻すときはキーごと消す（dense: false が残ると、公開版と違う変更ありのままになる）
       draft.deck.map((n) => {
         if (n.id !== id) return n;
         if (n.dense) {
@@ -447,7 +447,7 @@ function Editor({
                     <>
                       {editLink(n)}
                       <Button size="sm" variant="ghost" onClick={() => toggleDense(n.id)}>
-                        {n.dense ? '軽量に' : '濃密に'}
+                        {n.dense ? '通常進行に' : 'じっくり進行に'}
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => removeNode(n.id)}>
                         削除

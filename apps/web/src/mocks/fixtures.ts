@@ -757,7 +757,7 @@ export const sessions: Session[] = [
         at: ago(6),
         text: 'アキラが新たな選択肢を提案「鎖を切って亡霊を海に落としたい」',
       },
-      { id: 'fg-2', at: ago(7), text: '戦闘イベントにより濃密モードへ切り替わった' },
+      { id: 'fg-2', at: ago(7), text: '戦闘イベントによりじっくり進行へ切り替わった' },
     ],
     lastActivityAt: ago(0.5),
     suspendAt: later(24 * 2),

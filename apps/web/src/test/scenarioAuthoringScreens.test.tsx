@@ -271,13 +271,15 @@ describe('シナリオ編集：削除と結末', () => {
     return { sc, router };
   };
 
-  it('導入・結末にも「編集」のリンクがあり、プール用には無い。導入・結末に「削除」「濃密に」は無い', async () => {
+  it('導入・結末にも「編集」のリンクがあり、プール用には無い。導入・結末に「削除」「じっくり進行に」は無い', async () => {
     renderAt('/creator/scenarios/sc-mansion-mine');
     for (const name of ['灰色館へ到着', '結末']) {
       const row = await deckRow(name);
       expect(within(row).getByRole('link', { name: '編集' })).toBeInTheDocument();
       expect(within(row).queryByRole('button', { name: '削除' })).not.toBeInTheDocument();
-      expect(within(row).queryByRole('button', { name: /濃密に|軽量に/ })).not.toBeInTheDocument();
+      expect(
+        within(row).queryByRole('button', { name: /じっくり進行に|通常進行に/ }),
+      ).not.toBeInTheDocument();
     }
     expect(
       within(await deckRow('館の老従者')).queryByRole('link', { name: '編集' }),

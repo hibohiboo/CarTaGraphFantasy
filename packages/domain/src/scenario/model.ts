@@ -35,7 +35,7 @@ export const deckNodeSchema = z.strictObject({
   id: idSchema,
   kind: deckNodeKindSchema,
   name: z.string(),
-  /** 濃密モードを要求するシーンか */
+  /** じっくり進行（dense）を要求するシーンか */
   dense: z.boolean().optional(),
   cards: z.array(cardDefSchema),
   get children(): z.ZodOptional<z.ZodArray<typeof deckNodeSchema>> {
@@ -51,7 +51,7 @@ export const deckNodeSchema = z.strictObject({
   endCondition: z.string().optional(),
   /**
    * このシーンで自動戦闘を行う（docs/cartagraph/auto-combat.md、仮ルール）。dense とは独立で、
-   * 自動戦闘中もセッションは軽量モードのまま
+   * 自動戦闘中もセッションは通常進行（light）のまま
    */
   autoCombat: z.strictObject({ enemy: autoCombatEnemySchema, maxRounds: z.number() }).optional(),
   /** 結末のノードが指す結末（Scenario.endings の id）。意味を持つのは kind === 'ending' のときだけ */

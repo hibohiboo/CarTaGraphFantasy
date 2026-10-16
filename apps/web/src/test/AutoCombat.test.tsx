@@ -97,7 +97,7 @@ describe('試験シーンへの遷移（次のシーンへ進む）', () => {
     expect(s.autoCombat).toMatchObject({ status: 'awaiting-priority', attempts: 0 });
     expect(s.field.plVisible.map((c) => c.name)).toContain('試験官');
     expect(s.hand.filter((c) => c.kind === 'choice')).toEqual([]);
-    // 自動戦闘は濃密モードにしない（docs/cartagraph/auto-combat.md 差分2）
+    // 自動戦闘はじっくり進行にしない（docs/cartagraph/auto-combat.md 差分2）
     expect(s.mode).toBe('light');
   });
 

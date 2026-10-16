@@ -281,12 +281,12 @@ describe('編集画面の境界', () => {
     expect(screen.queryByText(NOT_AUTHOR)).not.toBeInTheDocument();
   });
 
-  it('「濃密に」して「軽量に」戻して保存しても、公開版と違う変更ありにならない', async () => {
+  it('「じっくり進行に」して「通常進行に」戻して保存しても、公開版と違う変更ありにならない', async () => {
     const user = userEvent.setup();
     renderAt('/creator/scenarios/sc-galleon');
     const row = (await screen.findByText('1 鎖の桟橋')).closest('[data-kind]') as HTMLElement;
-    await user.click(within(row).getByRole('button', { name: '濃密に' }));
-    await user.click(within(row).getByRole('button', { name: '軽量に' }));
+    await user.click(within(row).getByRole('button', { name: 'じっくり進行に' }));
+    await user.click(within(row).getByRole('button', { name: '通常進行に' }));
     // 戻すと dense のキーごと消えるので、編集前と同じ（保存するものが無い）になる
     expect(button('保存')).toBeDisabled();
     expect(within(header()).queryByText('公開版と違う変更あり')).not.toBeInTheDocument();

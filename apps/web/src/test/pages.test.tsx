@@ -480,8 +480,8 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     await user.selectOptions(within(p).getByLabelText('選択肢1の移り先'), '村の広場');
     // 別の画面でドライバーが広場へ進み（手札の選択肢が配り直される）、GM の画面のセッションが新しくなる
     await api.post(`/sessions/${s.id}/play`, { cardId: 'vs-to-square' });
-    await user.click(screen.getByRole('button', { name: '次のシーンを濃密モードにする' }));
-    await screen.findByRole('button', { name: '軽量モードに戻す' });
+    await user.click(screen.getByRole('button', { name: '次のシーンをじっくり進行にする' }));
+    await screen.findByRole('button', { name: '通常進行に戻す' });
     expect(within(p).queryByLabelText('「辺りを見回す」を取り下げる')).not.toBeInTheDocument();
     expect(within(p).getByLabelText('選択肢1の移り先')).toHaveValue('');
     expect(

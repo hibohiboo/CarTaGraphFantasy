@@ -24,6 +24,15 @@ const ROLE_HISTORY = [
   /^apps\/web\/src\/test\//,
 ];
 
+/**
+ * 「濃密」「軽量モード」を経緯として正当に書いてよい場所（通常進行・じっくり進行への言い換え。
+ * docs/plans/2026-10-16-通常進行とじっくり進行.md G5）：言い換えの要望と、デザイナーノートの経緯の節
+ */
+const MODE_HISTORY = [
+  /^docs\/backlog\/progress-mode-names\.md$/,
+  /^docs\/notes\/party-and-session\.md$/,
+];
+
 /** 旧称と、今の名前の案内と、その語だけを見ないパス（無ければどこでも見る） */
 export const TERMS = [
   ['共有ライブラリ', '「シナリオ集」（シナリオの公開先）か「共有設定」（格上げしたカード・設定）'],
@@ -45,6 +54,8 @@ export const TERMS = [
     '「シナリオタイプ」（docs/cartagraph/scenario-type.md）',
     [/^docs\/notes\//, /^docs\/roadmap\.md$/],
   ],
+  ['濃密', '「じっくり進行」（docs/cartagraph/party-and-session.md）', MODE_HISTORY],
+  ['軽量モード', '「通常進行」（docs/cartagraph/party-and-session.md）', MODE_HISTORY],
 ];
 
 const EXCLUDED = [

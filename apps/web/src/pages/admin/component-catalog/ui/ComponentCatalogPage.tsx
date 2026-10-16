@@ -182,7 +182,7 @@ export function ComponentCatalogPage() {
           <RoleBadge badgeRole="navigator">カヤ（ナビゲーター）</RoleBadge>
           <RoleBadge badgeRole="gm">霧乃（GM）</RoleBadge>
           <RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>
-          <RoleBadge badgeRole="mode">軽量モード</RoleBadge>
+          <RoleBadge badgeRole="mode">通常進行</RoleBadge>
           <RoleBadge badgeRole="library">シナリオ集に公開中</RoleBadge>
         </Section>
 

@@ -66,7 +66,7 @@ export function CharacterSheetPage() {
         <div className="u-stack">
           <Panel
             title="能力値"
-            sub="体・技・心＋2d6で判定する。戦闘スキルを持てば濃密モードの戦闘で使える。"
+            sub="体・技・心＋2d6で判定する。戦闘スキルを持てばじっくり進行の戦闘で使える。"
           >
             {(['body', 'skill', 'mind'] as const).map((k) => (
               <div key={k} className={s.abilityRow}>

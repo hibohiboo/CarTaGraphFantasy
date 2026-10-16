@@ -12,7 +12,7 @@ import { proposalHandlingSchema, scenarioTypeSchema, spaceModelSchema } from '..
 export const recruitmentKindSchema = z.enum(['normal', 'gmless']);
 /** GM 不在の募集の提案の扱い（Recruitment.proposalHandling） */
 export const recruitmentProposalHandlingSchema = proposalHandlingSchema.exclude(['auto-resolve']);
-/** 軽量モード・濃密モード（Session.mode。docs/cartagraph/party-and-session.md） */
+/** 通常進行＝light、じっくり進行＝dense（Session.mode。docs/cartagraph/party-and-session.md） */
 export const sessionModeSchema = z.enum(['light', 'dense']);
 
 /**

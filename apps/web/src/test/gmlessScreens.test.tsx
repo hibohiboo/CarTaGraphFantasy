@@ -227,8 +227,8 @@ describe('GM 不在の募集', () => {
     renderAt(`/gm/sessions/${s.id}`);
     await screen.findByRole('link', { name: 'ドライバーとしてプレイ画面へ' });
     expect(screen.queryByRole('heading', { name: '描写と選択肢を配る' })).not.toBeInTheDocument();
-    // GM 不在のセッションの GM は、提案の裁定と終了だけ（モードは切り替えない）
-    expect(screen.queryByRole('button', { name: /濃密モード/ })).not.toBeInTheDocument();
+    // GM 不在のセッションの GM は、提案の裁定と終了だけ（進行は切り替えない）
+    expect(screen.queryByRole('button', { name: /じっくり進行/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'セッションを終了する' })).toBeEnabled();
   });
 

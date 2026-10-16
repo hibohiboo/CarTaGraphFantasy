@@ -28,7 +28,7 @@ export function DeckTree({
           <span className={s.kind}>{DECK_NODE_LABEL[n.kind]}</span>
           <span className={s.name}>{n.name}</span>
           <span className={s.meta}>
-            {n.dense && <span className={s.dense}>濃密</span>}
+            {n.dense && <span className={s.dense}>じっくり</span>}
             {n.cards.length > 0 && <span>{n.cards.length}枚</span>}
             {n.id === currentId && <span>進行中</span>}
             {renderActions && <span className={s.nodeActions}>{renderActions(n)}</span>}

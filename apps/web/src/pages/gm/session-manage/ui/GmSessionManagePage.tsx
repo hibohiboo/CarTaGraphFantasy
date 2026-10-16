@@ -85,7 +85,7 @@ export function GmSessionManagePage() {
           value={`${x.currentScene.name.split(' ')[0]} / ${x.currentScene.total}`}
           label="進行中のシーン"
         />
-        <StatTile value={x.mode === 'dense' ? '濃密' : '軽量'} label="現在のモード" />
+        <StatTile value={x.mode === 'dense' ? 'じっくり' : '通常'} label="現在の進行" />
         <StatTile value={relativeTime(x.lastActivityAt)} label="最後の参加者反応" />
         {x.status === 'playing' ? (
           <StatTile
@@ -211,10 +211,10 @@ export function GmSessionManagePage() {
                   setMode.mutate({ sessionId, mode: x.mode === 'dense' ? 'light' : 'dense' })
                 }
               >
-                {x.mode === 'dense' ? '軽量モードに戻す' : '次のシーンを濃密モードにする'}
+                {x.mode === 'dense' ? '通常進行に戻す' : '次のシーンをじっくり進行にする'}
               </Button>
               <span className="u-small u-dim">
-                戦闘イベントなど特定のカードは自動で濃密モードを要求する
+                戦闘イベントなど特定のカードは自動でじっくり進行を要求する
               </span>
             </div>
           )}

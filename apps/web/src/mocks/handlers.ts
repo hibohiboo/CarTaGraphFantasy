@@ -1160,7 +1160,7 @@ export const handlers = [
     s.feed.unshift({
       id: nextId('f'),
       at: nowIso(),
-      text: `${s.gmName}が${mode === 'dense' ? '濃密' : '軽量'}モードへ切り替えた`,
+      text: `${s.gmName}が${mode === 'dense' ? 'じっくり' : '通常'}進行へ切り替えた`,
     });
     return HttpResponse.json(s);
   }),
