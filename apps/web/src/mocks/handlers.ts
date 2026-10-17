@@ -1435,7 +1435,6 @@ export const handlers = [
         id: d.id,
         authorId: d.authorId,
         authorName: d.authorName,
-        ...(d.copiedFrom ? { copiedFrom: d.copiedFrom } : {}),
         libraryStatus: 'draft',
         updatedAt: nowIso(),
       });
