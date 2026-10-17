@@ -22,6 +22,18 @@ export function useCreateScenario() {
   });
 }
 
+/**
+ * 公開版のあるシナリオを、自分の下書きとしてコピーする（公開版は作らない）。画面の移動はページ側が行う
+ * （一覧を読み直してから移らないと、新しい id の下書きを取りに行って 404 になる）
+ */
+export function useCopyScenario() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.post<ScenarioDraftView>(`/scenarios/${id}/copy`),
+    onSuccess: () => refreshScenarios(qc),
+  });
+}
+
 /** 下書きを保存する。公開版とファイルは変わらない（公開し直すまで GM・PL に届かない） */
 export function useUpdateScenarioDraft() {
   const qc = useQueryClient();

@@ -15,18 +15,21 @@ import {
 } from '@cartagraph/domain/scenario/model';
 import { scenarioTypeLabel } from '@cartagraph/domain/scenario/type';
 import { type ReactNode, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import {
+  useCopyScenario,
   usePublishScenario,
   useUnpublishScenario,
   useUpdateScenarioDraft,
 } from '@/entities/scenario/api/mutations';
 import { useEditableScenario } from '@/entities/scenario/api/queries';
 import type {
+  ScenarioDraftView,
   ScenarioFileResult,
   ScenarioPublication,
   ScenarioSaveResult,
 } from '@/entities/scenario/api/types';
+import { CopiedFromLine } from '@/entities/scenario/ui/CopiedFromLine';
 import { DeckTree } from '@/entities/scenario/ui/DeckTree';
 import { ScenarioFileNote } from '@/entities/scenario/ui/ScenarioFileNote';
 import { ScenarioPublicationPill } from '@/entities/scenario/ui/ScenarioPublicationPill';
@@ -58,6 +61,8 @@ export function CreatorScenarioEditPage() {
   const update = useUpdateScenarioDraft();
   const publish = usePublishScenario();
   const unpublish = useUnpublishScenario();
+  const copy = useCopyScenario();
+  const navigate = useNavigate();
   // 知らせと誤りはページ側に持つ（Editor は保存のたびに key={updatedAt} で作り直されるので、中に置くと消える）
   // 操作を始めたら前の知らせを消す。別のシナリオへ移ったら出さない（ページのコンポーネントは使い回される）
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -72,6 +77,16 @@ export function CreatorScenarioEditPage() {
     });
   };
   const shown = outcome?.scenarioId === scenarioId ? outcome : null;
+  // 公開版をコピーして、そのコピーのシナリオ編集へ移る（一覧を読み直した後に移る。useCopyScenario）
+  const copyScenario = () =>
+    run<ScenarioDraftView>(
+      (cb) =>
+        copy.mutate(scenarioId, {
+          ...cb,
+          onSuccess: (v) => navigate(`/creator/scenarios/${v.draft.id}`),
+        }),
+      () => ({ scenarioId }),
+    );
 
   if (source.status === 'pending') return <Loading />;
   if (source.status === 'error') return <ErrorNote error={source.error} />;
@@ -86,8 +101,14 @@ export function CreatorScenarioEditPage() {
         changed={false}
         save={() => undefined}
         setPublished={() => undefined}
-        saving={false}
-        note={<EmptyNote>製作者でないため編集できません（公開版を表示しています）。</EmptyNote>}
+        copyScenario={copyScenario}
+        saving={copy.isPending}
+        note={
+          <>
+            {shown?.error ? <ErrorNote error={shown.error} /> : null}
+            <EmptyNote>製作者でないため編集できません（公開版を表示しています）。</EmptyNote>
+          </>
+        }
       />
     );
   }
@@ -111,7 +132,8 @@ export function CreatorScenarioEditPage() {
           (r) => ({ scenarioId, file: r.file }),
         )
       }
-      saving={update.isPending || publish.isPending || unpublish.isPending}
+      copyScenario={copyScenario}
+      saving={update.isPending || publish.isPending || unpublish.isPending || copy.isPending}
       note={
         <>
           {shown?.error ? <ErrorNote error={shown.error} /> : null}
@@ -182,6 +204,7 @@ function Editor({
   changed,
   save,
   setPublished,
+  copyScenario,
   saving,
   note,
 }: {
@@ -192,6 +215,8 @@ function Editor({
   changed: boolean;
   save: (p: Partial<Scenario>) => void;
   setPublished: (published: boolean) => void;
+  /** 公開版をコピーして自分の下書きにする（公開版があるときだけ出す。未保存の編集があっても押せる） */
+  copyScenario: () => void;
   saving: boolean;
   note: ReactNode;
 }) {
@@ -302,6 +327,11 @@ function Editor({
           <>
             <RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>
             <ScenarioPublicationPill publication={publication} changed={changed} />
+            {publication === 'none' ? null : (
+              <Button variant="ghost" disabled={saving} onClick={copyScenario}>
+                コピーして編集
+              </Button>
+            )}
             {readOnly ? null : (
               <PublishActions
                 publication={publication}
@@ -315,6 +345,12 @@ function Editor({
           </>
         }
       />
+      {sc.copiedFrom ? (
+        <CopiedFromLine
+          copiedFrom={sc.copiedFrom}
+          renderLink={(id, label) => <Link to={`/creator/scenarios/${id}`}>{label}</Link>}
+        />
+      ) : null}
       {dirty ? <EmptyNote>保存してから公開・非公開にできます。</EmptyNote> : null}
       {readOnly ? null : <DraftNotes publication={publication} changed={changed} />}
       {note}

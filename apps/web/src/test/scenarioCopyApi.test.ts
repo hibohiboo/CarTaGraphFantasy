@@ -2,12 +2,21 @@
 // docs/cartagraph/scenario-flow.md「シナリオのコピー」）。コピー元は、他人の公開版（灰色館の一夜）と、
 // 自分の公開版（鉄鎖のガレオン船。公開し直しを挟むテストはこちら）。
 
+import type { Character } from '@cartagraph/domain/character/model';
 import type { Scenario } from '@cartagraph/domain/scenario/model';
 import { describe, expect, it } from 'vitest';
 import type { ScenarioDraftView, ScenarioSaveResult } from '@/entities/scenario/api/types';
 import { api } from '@/shared/api/api';
 import { setScenarioFileStore } from '../mocks/handlers';
-import { draftOf, editNode, getVersion, patchDraft, publish } from './scenarioVersionHelpers';
+import { createGmlessRecruitment, finishVillage, playFromRecruitment } from './gmlessHelpers';
+import {
+  draftOf,
+  editNode,
+  getVersion,
+  patchDraft,
+  publish,
+  publishVillageCopy,
+} from './scenarioVersionHelpers';
 
 const copy = (id: string) => api.post<ScenarioDraftView>(`/scenarios/${id}/copy`);
 const getPublished = (id: string) => api.get<Scenario>(`/scenarios/${id}`);
@@ -186,6 +195,33 @@ describe('親はサーバーが決める（T6）', () => {
     expect(result.scenario.copiedFrom).toEqual(parent);
     expect(written).toHaveLength(1);
     expect(written[0]?.copiedFrom).toEqual(parent);
+  });
+});
+
+describe('通し：コピーして公開し、GM 不在で遊ぶ（T12）', () => {
+  it('自分が公開した村はずれの一歩の写しをコピーして題名を変え、公開して、結末まで遊べる。結末タグは元と同じ', async () => {
+    const written: Scenario[] = [];
+    setScenarioFileStore({ write: async (s) => void written.push(structuredClone(s)) });
+    const parent = await publishVillageCopy();
+    const parentTags = (await getPublished(parent)).endings.map((e) => e.grantsTag);
+
+    const id = (await copy(parent)).draft.id;
+    await patchDraft(id, { title: '改良した村はずれ' });
+    await publish(id);
+    expect(written.at(-1)).toMatchObject({
+      id,
+      title: '改良した村はずれ',
+      copiedFrom: { scenarioId: parent, version: 1 },
+    });
+
+    const rc = await createGmlessRecruitment(id);
+    const session = await playFromRecruitment(rc.id, 'pc-jin');
+    expect(session.scenarioId).toBe(id);
+    await finishVillage(session.id);
+    const pc = (await api.get<Character[]>('/characters')).find((c) => c.id === 'pc-jin');
+    const card = pc?.deck.find((c) => c.ending?.scenarioId === id);
+    expect(parentTags).toContain(card?.tags[0]);
+    expect(card?.ending?.noReplay).toBe(true);
   });
 });
 

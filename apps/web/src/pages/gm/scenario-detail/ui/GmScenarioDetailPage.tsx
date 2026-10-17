@@ -2,6 +2,7 @@ import { scenarioTypeLabel } from '@cartagraph/domain/scenario/type';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useScenario } from '@/entities/scenario/api/queries';
+import { CopiedFromLine } from '@/entities/scenario/ui/CopiedFromLine';
 import { DeckTree } from '@/entities/scenario/ui/DeckTree';
 import s from '@/shared/ui/page.module.css';
 import {
@@ -49,6 +50,12 @@ export function GmScenarioDetailPage() {
         }
         actions={<RoleBadge badgeRole="gm">GMとしてカスタマイズ中</RoleBadge>}
       />
+      {sc.copiedFrom ? (
+        <CopiedFromLine
+          copiedFrom={sc.copiedFrom}
+          renderLink={(id, label) => <Link to={`/creator/scenarios/${id}`}>{label}</Link>}
+        />
+      ) : null}
       <div className={s.twoCol}>
         <aside className="u-stack">
           <Panel
