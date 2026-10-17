@@ -5,7 +5,6 @@ import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
 import { editableSceneNodes } from '@cartagraph/domain/scenario/readiness';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { GameCard } from '@/entities/card/ui/GameCard';
 import { useUpdateScenarioDraft } from '@/entities/scenario/api/mutations';
 import { useEditableScenario } from '@/entities/scenario/api/queries';
 import type { ScenarioDraftView } from '@/entities/scenario/api/types';
@@ -13,9 +12,13 @@ import { useUnsavedGuard } from '@/shared/lib/useUnsavedGuard';
 import s from '@/shared/ui/page.module.css';
 import { Button, EmptyNote, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 import { loadCardImage, removeCardImage, saveCardImage } from '../api/cardImageStorage';
+import { nodeWarnings, sceneLinkTargets } from '../lib/sceneCheck';
 import { EndingNodeEditor } from './EndingNodeEditor';
+import { LocationPanel } from './LocationPanel';
 import { MoveTargetSelect } from './MoveTargetSelect';
 import { SaveButton } from './SaveButton';
+import { SceneLinks } from './SceneLinks';
+import { SceneWarnings } from './SceneWarnings';
 
 /** 追加できるカード種別（ロケーションは専用の枠で扱うため含めない） */
 const ADDABLE_KINDS: CardKind[] = ['npc', 'info', 'choice', 'enemy'];
@@ -67,6 +70,8 @@ export function CreatorSceneEditPage() {
   const [imageSaveError, setImageSaveError] = useState<string | null>(null);
   // 保存したシナリオとシーン。別のシーンへ移ったら（ページのコンポーネントは使い回される）「保存しました」を出さない
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  // 補足の開閉（null は既定：製作者は閉じて、読み取り専用は開いて始める）
+  const [supplementOpen, setSupplementOpen] = useState<boolean | null>(null);
   const here = `${scenarioId}/${sceneId}`;
 
   if (source.status === 'error') return <ErrorNote error={source.error} />;
@@ -129,13 +134,14 @@ export function CreatorSceneEditPage() {
           error={update.error}
           notes={notes}
           readOnly={notAuthor}
+          supplementOpen={supplementOpen ?? notAuthor}
+          onSupplementToggle={setSupplementOpen}
         />
       )}
     </fieldset>
   );
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 既存の違反。分けるまで個別に抑える（docs/architecture/known-issues.md「複雑度・行数の上限を超える既存のコード」）
 function SceneEditor({
   sc,
   scene,
@@ -145,6 +151,8 @@ function SceneEditor({
   notes,
   readOnly,
   imageSaveError,
+  supplementOpen,
+  onSupplementToggle,
 }: {
   sc: Scenario;
   scene: DeckNode;
@@ -155,17 +163,20 @@ function SceneEditor({
   /** 製作者でない人に公開版を見せるとき。保存のボタンを出さない */
   readOnly: boolean;
   imageSaveError: string | null;
+  /** 補足（ロケーション・目的・終了条件）の開閉。保存で作り直されても開いたままにするため親が持つ */
+  supplementOpen: boolean;
+  onSupplementToggle: (open: boolean) => void;
 }) {
   const [draft, setDraft] = useState<DeckNode>(scene);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(scene), [draft, scene]);
   useUnsavedGuard(dirty);
+  const warnings = useMemo(() => nodeWarnings(sc, draft), [sc, draft]);
+  const links = useMemo(() => sceneLinkTargets(sc.deck, draft), [sc.deck, draft]);
 
   const [nameError, setNameError] = useState<string | null>(null);
   const [addingCard, setAddingCard] = useState(false);
   const [newCardName, setNewCardName] = useState('');
   const [newCardKind, setNewCardKind] = useState<CardKind>('npc');
-  const [editingLocation, setEditingLocation] = useState(false);
-  const [newLocationName, setNewLocationName] = useState('');
   const [imageError, setImageError] = useState<string | null>(null);
   const nextId = (prefix: string) =>
     `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -188,9 +199,7 @@ function SceneEditor({
   const location = draft.cards.find((c) => c.kind === 'location');
   const otherCards = draft.cards.filter((c) => c.kind !== 'location');
 
-  const confirmLocation = () => {
-    const name = newLocationName.trim();
-    if (!name) return;
+  const confirmLocation = (name: string) => {
     const oldId = location?.id;
     const nextLocation: CardDef = location
       ? { ...location, name }
@@ -204,8 +213,6 @@ function SceneEditor({
         ? draft.cards.map((c) => (c.kind === 'location' ? nextLocation : c))
         : [nextLocation, ...draft.cards],
     );
-    setEditingLocation(false);
-    setNewLocationName('');
   };
 
   const confirmAddCard = () => {
@@ -263,87 +270,19 @@ function SceneEditor({
       />
       {error ? <ErrorNote error={error} /> : null}
       {notes}
-      <div className={s.twoCol}>
-        <aside className="u-stack">
-          <Panel title={isIntro ? '導入の情報' : 'シーン情報'}>
-            <div className={s.form}>
-              <Field label={isIntro ? '導入の名前' : 'シーン名'}>
-                <input
-                  type="text"
-                  value={draft.name}
-                  onChange={(e) => setField('name', e.target.value)}
-                />
-              </Field>
-              {!isIntro && (
-                <>
-                  <Field label="目的（仮）">
-                    <textarea
-                      value={draft.objective ?? ''}
-                      onChange={(e) => setField('objective', e.target.value)}
-                      placeholder="このシーンでPLに何をさせたいか"
-                    />
-                  </Field>
-                  <Field label="終了条件（仮）">
-                    <textarea
-                      value={draft.endCondition ?? ''}
-                      onChange={(e) => setField('endCondition', e.target.value)}
-                      placeholder="GMがこのシーンを終えて次へ進む目安"
-                    />
-                  </Field>
-                  <p className="u-small u-dim">
-                    「目的」「終了条件」は未決の仮ルール（docs/provisional/scene-objective.md）。正式な仕様として決着したものではない。
-                  </p>
-                </>
-              )}
-            </div>
-          </Panel>
-          <Panel title="ロケーション" sub="1シーン1ロケーションを想定した暫定分類">
-            {location ? (
-              <GameCard
-                card={{
-                  ...location,
-                  portraitUrl: location.portraitUrl ?? loadCardImage(location.id),
-                }}
-                portrait
+      <div className="u-stack">
+        <Panel title={isIntro ? '導入の情報' : 'シーン情報'}>
+          <div className={s.form}>
+            <Field label={isIntro ? '導入の名前' : 'シーン名'}>
+              <input
+                type="text"
+                value={draft.name}
+                onChange={(e) => setField('name', e.target.value)}
               />
-            ) : (
-              <p className="u-small u-dim">ロケーションは未設定</p>
-            )}
-            {location && loadCardImage(location.id) && !location.portraitUrl && (
-              <p className="u-small u-dim">保存済みの画像を表示中</p>
-            )}
-            {editingLocation ? (
-              <div className={s.form}>
-                <Field label="新しいロケーション名">
-                  <input
-                    type="text"
-                    value={newLocationName}
-                    onChange={(e) => setNewLocationName(e.target.value)}
-                  />
-                </Field>
-                <div className="u-row">
-                  <Button size="sm" onClick={confirmLocation}>
-                    確定
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditingLocation(false)}>
-                    キャンセル
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setNewLocationName(location?.name ?? '');
-                  setEditingLocation(true);
-                }}
-              >
-                {location ? '差し替え' : 'ロケーションを設定'}
-              </Button>
-            )}
-          </Panel>
-        </aside>
+            </Field>
+          </div>
+        </Panel>
+        {readOnly ? null : <SceneWarnings kinds={warnings} />}
         <div className="u-stack">
           <Panel
             title="配置されているカード"
@@ -483,6 +422,45 @@ function SceneEditor({
             </ul>
           </Panel>
         </div>
+        <SceneLinks scenarioId={sc.id} links={links} />
+        <details
+          className={s.foldPanel}
+          open={supplementOpen}
+          onToggle={(e) => onSupplementToggle(e.currentTarget.open)}
+        >
+          <summary className={s.foldSummary}>
+            <h2 className="u-inline" style={{ display: 'inline', fontSize: '1rem' }}>
+              補足
+            </h2>
+            <span className={s.foldLine}>
+              {isIntro ? 'ロケーション' : 'ロケーション・目的（仮）・終了条件（仮）'}
+            </span>
+          </summary>
+          <div className={`${s.foldBody} u-stack`}>
+            {!isIntro && (
+              <div className={s.form}>
+                <Field label="目的（仮）">
+                  <textarea
+                    value={draft.objective ?? ''}
+                    onChange={(e) => setField('objective', e.target.value)}
+                    placeholder="このシーンでPLに何をさせたいか"
+                  />
+                </Field>
+                <Field label="終了条件（仮）">
+                  <textarea
+                    value={draft.endCondition ?? ''}
+                    onChange={(e) => setField('endCondition', e.target.value)}
+                    placeholder="GMがこのシーンを終えて次へ進む目安"
+                  />
+                </Field>
+                <p className="u-small u-dim">
+                  「目的」「終了条件」は未決の仮ルール（docs/provisional/scene-objective.md）。正式な仕様として決着したものではない。
+                </p>
+              </div>
+            )}
+            <LocationPanel location={location} onConfirm={confirmLocation} />
+          </div>
+        </details>
       </div>
     </>
   );

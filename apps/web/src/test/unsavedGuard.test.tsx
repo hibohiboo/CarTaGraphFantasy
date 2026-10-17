@@ -124,6 +124,23 @@ describe('シーン編集・結末のノードの編集（T13）', () => {
     await screen.findByLabelText('タイトル');
   });
 
+  it('シーン編集：つながりのリンクで他のシーンへ移るときも確かめが出る。断ると留まり、認めると移る', async () => {
+    const user = userEvent.setup();
+    const router = renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-s2');
+    await heading('3-2 奥の扉');
+    await user.type(screen.getByLabelText('シーン名'), '（改）');
+    const next = () => screen.getByRole('link', { name: '3-3 隠し書庫' });
+    const confirm = confirmWith(false);
+    await user.click(next());
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(router.state.location.pathname).toBe('/creator/scenarios/sc-mansion-mine/scenes/d-s2');
+    expect(screen.getByLabelText('シーン名')).toHaveValue('3-2 奥の扉（改）');
+
+    confirm.mockReturnValue(true);
+    await user.click(next());
+    await heading('3-3 隠し書庫');
+  });
+
   it('シーン編集：保存した後は確かめずに移る', async () => {
     const user = userEvent.setup();
     renderAt('/creator/scenarios/sc-mansion-mine/scenes/d-s2');

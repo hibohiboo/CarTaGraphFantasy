@@ -238,8 +238,8 @@
 
 ### 複雑度・行数の上限を超える既存のコード
 
-- **起きること** — [静的解析ルール](../process/rules/static-analysis.md)「コードの複雑さ」の上限を超える箇所が15件あり、`biome-ignore` で個別に抑えている。数字は導入時の値
-  - 認知的複雑度（上限15）：`mocks/handlers.ts` の4つのハンドラ（`/api/sessions/:id/play` 73・`/auto-combat` 27・`/api/scenarios/:id/recruitments` 21・`/api/recruitments/:id/start` 19）、`TutorialPage` 60、`GameCard` 52、`PlayPage` 49、`SessionBrowsePage` の `RecruitCard` 46、`resolveAutoCombat`（`packages/domain/src/autoCombat/resolve.ts`）29、`CreatorSceneEditPage` の `SceneEditor` 20、`GmSessionManagePage` 20 とその `ProposalTicket` 16、`vite/scenarioFilePlugin.ts` の書き込みの口 19
+- **起きること** — [静的解析ルール](../process/rules/static-analysis.md)「コードの複雑さ」の上限を超える箇所が14件あり、`biome-ignore` で個別に抑えている。数字は導入時の値
+  - 認知的複雑度（上限15）：`mocks/handlers.ts` の4つのハンドラ（`/api/sessions/:id/play` 73・`/auto-combat` 27・`/api/scenarios/:id/recruitments` 21・`/api/recruitments/:id/start` 19）、`TutorialPage` 60、`GameCard` 52、`PlayPage` 49、`SessionBrowsePage` の `RecruitCard` 46、`resolveAutoCombat`（`packages/domain/src/autoCombat/resolve.ts`）29、`GmSessionManagePage` 20 とその `ProposalTicket` 16、`vite/scenarioFilePlugin.ts` の書き込みの口 19
   - 関数の行数（上限200）：`TutorialPage` 235行
   - ファイルの行数（上限1000）：`apps/web/src/mocks/handlers.ts`（1433行）
 - **見つけた経緯** — 2026-10-09、SonarJS 相当のルールを Biome で有効にしたとき

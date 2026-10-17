@@ -455,8 +455,15 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     );
     await save(user);
 
-    await router.navigate(`/creator/scenarios/${id}`);
-    await user.click(within(await deckRow('1 新しいシーン')).getByRole('link', { name: '編集' }));
+    // 導入からシーンへは、つながりの「選択肢の移り先」のリンクで移る（T14）
+    await user.click(
+      within(screen.getByText('選択肢の移り先').nextElementSibling as HTMLElement).getByRole(
+        'link',
+        {
+          name: '1 新しいシーン',
+        },
+      ),
+    );
     await screen.findByRole('heading', { name: 'シーン情報' });
     await addCard(user, '帰る');
     await user.selectOptions(
@@ -468,7 +475,25 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     await router.navigate(`/creator/scenarios/${id}`);
     await screen.findByRole('heading', { level: 1, name: title });
     await user.type(screen.getByLabelText('結末タグ'), '村を見た');
+    // 次にすること：つなぐところまで済み、次は「公開の前に決めること」。概要を書くと問題はなくなる
+    const steps = within(screen.getByRole('region', { name: '次にすること' }));
+    expect(steps.getByText('選択肢で結末までつなぐ').closest('li')).toHaveAttribute(
+      'data-done',
+      'true',
+    );
+    expect(steps.getByText('公開の前に決めること').closest('li')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(screen.getByRole('region', { name: '公開の前の確かめ' })).toHaveTextContent(
+      '概要が未記入',
+    );
+    await user.click(screen.getByRole('heading', { name: '公開の前に決めること' }));
+    await user.type(screen.getByLabelText('概要'), '村の小道を歩く。');
     await save(user);
+    expect(screen.getByRole('region', { name: '公開の前の確かめ' })).toHaveTextContent(
+      '公開の前の確かめ：問題はありません',
+    );
     // 保存は下書きだけ。ファイルに書かず、公開する前は GM の一覧に無く、詳細も開けない（D2・D5）
     expect(written).toEqual([]);
     expect(within(screen.getByRole('banner')).getByText('下書きのみ')).toBeInTheDocument();
