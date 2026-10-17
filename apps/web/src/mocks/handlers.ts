@@ -91,6 +91,7 @@ import { toDictionaryForm } from '@/shared/lib/japanese';
 import { readBody } from './body';
 import * as fx from './fixtures';
 import { characterCreation, systemCards } from './rulesFiles';
+import { copyOf } from './scenarioCopy';
 import { scenarioFiles } from './scenarioFiles';
 import {
   appendVersion,
@@ -1393,6 +1394,30 @@ export const handlers = [
     return HttpResponse.json(draftView(s), { status: 201 });
   }),
 
+  // コピー：公開版のあるシナリオの最新の公開版を、自分の下書きにする（外したものも。公開版・ファイルは作らない。
+  // docs/plans/2026-10-14-シナリオのコピー.md G3・G4）
+  http.post('/api/scenarios/:id/copy', ({ params }) => {
+    const published = publishedOf(params.id);
+    if (!published) return notFound('シナリオ');
+    if (fixtureOnlyScenarioIds.has(published.id))
+      return unprocessable('デモ用のシナリオはコピーできません');
+    // 最新の版の番号と中身を対で取る（公開版の下書きの変更は写さない）
+    const version = latestVersion(db.versions, published.id);
+    const source = versionOf(db.versions, published.id, version);
+    if (!source) return notFound('シナリオの版');
+    const draft = copyOf(source, {
+      version,
+      me: fx.me,
+      id: nextFreeId(
+        () => nextId('sc'),
+        (id) => Boolean(publishedOf(id) ?? draftOf(id)),
+      ),
+      now: nowIso(),
+    });
+    db.drafts.unshift(draft);
+    return HttpResponse.json(draftView(draft), { status: 201 });
+  }),
+
   // 下書きの保存。本文の項目で上書きし、上書きした結果の形を検査する（業務の検査はしない。書きかけの参照切れも
   // 保存できる）。公開版とファイルは変えない（公開し直すまで届かない。docs/plans/2026-10-11-シナリオの下書きのAPI.md G3）
   http.patch('/api/scenarios/:id/draft', async ({ params, request }) => {
@@ -1402,12 +1427,15 @@ export const handlers = [
       const found = ownedDraft(params.id);
       if ('error' in found) return found.error;
       const d = found.draft;
+      // 親（copiedFrom）もサーバーが決める。本文に書いても（null・不正な形でも）変わらない
+      const { copiedFrom: _ignored, ...fields } = body.data;
       const checked = safeParseScenarioDraft({
         ...d,
-        ...body.data,
+        ...fields,
         id: d.id,
         authorId: d.authorId,
         authorName: d.authorName,
+        ...(d.copiedFrom ? { copiedFrom: d.copiedFrom } : {}),
         libraryStatus: 'draft',
         updatedAt: nowIso(),
       });
