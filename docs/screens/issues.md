@@ -94,6 +94,45 @@ PLAY-6・PLAY-7 は、既知の問題 [自動戦闘の設定中に、プレイ�
 | RB-2 | 「読了（自己申告）」が何のことか分からない | 未着手 | [ルールブックの読みやすさ](../backlog/rulebook-reading.md) |
 | RB-3 | 目次が無い。1ページの情報が多く、「読了」とする範囲が広すぎる | 未着手 | [ルールブックの読みやすさ](../backlog/rulebook-reading.md) |
 
+## シナリオ管理（製作者）
+
+`/creator/scenarios`
+
+出どころ：2026-10-17、[シナリオ製作の導線](../backlog/creator-flow-clarity.md)のプランで洗い出した。
+
+| ID | 課題 | 状態 | 要望 |
+|---|---|---|---|
+| CRL-1 | 新規作成の説明に、今は使えない「共有設定をテンプレートとして使える」がある。作った後に何をするのかも分からない | 対応中 | [シナリオ製作の導線](../backlog/creator-flow-clarity.md) |
+
+共有設定から作れないことは、既知の問題 [共有設定をテンプレートにして作れない](../architecture/known-issues.md#共有設定をテンプレートにして作れない) に置く。
+
+## シナリオ編集
+
+`/creator/scenarios/:scenarioId`
+
+出どころ：CRE-1 は 2026-10-14 の PO の指摘（シナリオの下書きの API の C2 の人間レビュー）。ほかは 2026-10-17 に[シナリオ製作の導線](../backlog/creator-flow-clarity.md)のプランで洗い出した。
+
+| ID | 課題 | 状態 | 要望 |
+|---|---|---|---|
+| CRE-1 | メタデータ（想定人数・推奨 CP・空間モデルなど）がずっと出ていてビジー。デッキ構造と結末が主役に見えない | 対応中 | [シナリオ製作の導線](../backlog/creator-flow-clarity.md) |
+| CRE-2 | タイトルを付け、シーンを作り、つなぎ、公開する順に進めればよいと分からない。次に何をすればよいか分からない | 対応中 | [シナリオ製作の導線](../backlog/creator-flow-clarity.md) |
+| CRE-3 | 公開を押すまで、検査に通るかも、GM 不在で遊べる形かも分からない | 対応中 | [シナリオ製作の導線](../backlog/creator-flow-clarity.md) |
+| CRE-4 | 保存していない編集があるまま、リンクで別の画面へ移ると、黙って消える | 対応中 | [シナリオ製作の導線](../backlog/creator-flow-clarity.md) |
+| CRE-5 | 提案の扱い方を画面で直せない（作ると常に GM 必須になる）。このプランの範囲外 | 未着手 | [シナリオ製作の導線](../backlog/creator-flow-clarity.md) |
+
+## シーン編集
+
+`/creator/scenarios/:scenarioId/scenes/:sceneId`
+
+出どころ：2026-10-17、[シナリオ製作の導線](../backlog/creator-flow-clarity.md)のプランで洗い出した。
+
+| ID | 課題 | 状態 | 要望 |
+|---|---|---|---|
+| SCE-1 | 補足の項目（ロケーション・目的・終了条件）が先に並び、主役のカードの配置が下にある | 対応中 | [シナリオ製作の導線](../backlog/creator-flow-clarity.md) |
+| SCE-2 | 他のシーンへ移るには、シナリオ編集へ戻らなければならない | 対応中 | [シナリオ製作の導線](../backlog/creator-flow-clarity.md) |
+| SCE-3 | このシーンが、GM 不在で遊ぶと先へ進めないか、導入から届かないかが分からない | 対応中 | [シナリオ製作の導線](../backlog/creator-flow-clarity.md) |
+| SCE-4 | CRE-4 と同じ。保存していない編集があるまま、リンクで移ると黙って消える（結末のノードの編集も同じ） | 対応中 | [シナリオ製作の導線](../backlog/creator-flow-clarity.md) |
+
 ## GM のホーム
 
 （未実装。`/gm/` に当たる画面が無い）
