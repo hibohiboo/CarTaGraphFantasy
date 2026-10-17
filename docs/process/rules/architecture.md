@@ -23,7 +23,7 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
     entities/<エンティティ>/   card・character・scenario・session・library・user。
                 api/（queries.ts：取得、mutations.ts：変更）と ui/（GameCard・DeckTree など）
     shared/     ui/（ui.tsx の部品・page.module.css）、api/（api.ts：fetch のラッパー、queryKeys.ts）、
-                lib/（整形・変換）、content/（ルールブック本文。docs の要約）、
+                lib/（整形・変換・画面に依らない小さなフック）、content/（ルールブック本文。docs の要約）、
                 routes/（routes.ts：ルート一覧＝ナビ・サイトマップの唯一の情報源）
     main.tsx    エントリ（層の外）
     mocks/      層の外。fixtures.ts（モックデータのシード）、scenarioFiles.ts（scenarios/*.json の読み込み）、

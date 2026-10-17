@@ -14,7 +14,7 @@ import {
   type ScenarioType,
 } from '@cartagraph/domain/scenario/model';
 import { scenarioTypeLabel } from '@cartagraph/domain/scenario/type';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
   useCopyScenario,
@@ -33,6 +33,7 @@ import { CopiedFromLine } from '@/entities/scenario/ui/CopiedFromLine';
 import { DeckTree } from '@/entities/scenario/ui/DeckTree';
 import { ScenarioFileNote } from '@/entities/scenario/ui/ScenarioFileNote';
 import { ScenarioPublicationPill } from '@/entities/scenario/ui/ScenarioPublicationPill';
+import { UNSAVED_CONFIRM_MESSAGE, useUnsavedGuard } from '@/shared/lib/useUnsavedGuard';
 import s from '@/shared/ui/page.module.css';
 import {
   Button,
@@ -78,15 +79,27 @@ export function CreatorScenarioEditPage() {
   };
   const shown = outcome?.scenarioId === scenarioId ? outcome : null;
   // 公開版をコピーして、そのコピーのシナリオ編集へ移る（一覧を読み直した後に移る。useCopyScenario）
-  const copyScenario = () =>
+  // onFail：コピーに失敗したとき（確かめ済みの移動の許可を取り消す。useUnsavedGuard）
+  // 続けて押されても1件だけ作る（押した直後はまだ再描画されず、ボタンが押せなくなっていないため ref で止める）
+  const copying = useRef(false);
+  const copyScenario = (onFail?: () => void) => {
+    if (copying.current) return;
+    copying.current = true;
     run<ScenarioDraftView>(
       (cb) =>
         copy.mutate(scenarioId, {
-          ...cb,
+          onError: (error) => {
+            cb.onError(error);
+            onFail?.();
+          },
           onSuccess: (v) => navigate(`/creator/scenarios/${v.draft.id}`),
+          onSettled: () => {
+            copying.current = false;
+          },
         }),
       () => ({ scenarioId }),
     );
+  };
 
   if (source.status === 'pending') return <Loading />;
   if (source.status === 'error') return <ErrorNote error={source.error} />;
@@ -197,6 +210,19 @@ function DraftNotes({
   );
 }
 
+/**
+ * 保存していない編集があるときの移動の確かめと、「コピーして編集」の確かめ。
+ * コピーされるのは公開版で未保存の編集は消えるので、コピーを作る前に確かめ、認めたらその後の移動は止めない
+ */
+function useCopyWithConfirm(dirty: boolean, copyScenario: (onFail?: () => void) => void) {
+  const { allowNextNavigation } = useUnsavedGuard(dirty);
+  return () => {
+    if (!dirty) return copyScenario();
+    if (!window.confirm(UNSAVED_CONFIRM_MESSAGE)) return;
+    copyScenario(allowNextNavigation());
+  };
+}
+
 function Editor({
   sc,
   readOnly,
@@ -216,12 +242,13 @@ function Editor({
   save: (p: Partial<Scenario>) => void;
   setPublished: (published: boolean) => void;
   /** 公開版をコピーして自分の下書きにする（公開版があるときだけ出す。未保存の編集があっても押せる） */
-  copyScenario: () => void;
+  copyScenario: (onFail?: () => void) => void;
   saving: boolean;
   note: ReactNode;
 }) {
   const [draft, setDraft] = useState<Scenario>(sc);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(sc), [draft, sc]);
+  const copyWithConfirm = useCopyWithConfirm(dirty, copyScenario);
 
   const set = <K extends keyof Scenario>(k: K, v: Scenario[K]) =>
     setDraft((d) => ({ ...d, [k]: v }));
@@ -328,7 +355,7 @@ function Editor({
             <RoleBadge badgeRole="creator">シナリオ製作者</RoleBadge>
             <ScenarioPublicationPill publication={publication} changed={changed} />
             {publication === 'none' ? null : (
-              <Button variant="ghost" disabled={saving} onClick={copyScenario}>
+              <Button variant="ghost" disabled={saving} onClick={copyWithConfirm}>
                 コピーして編集
               </Button>
             )}

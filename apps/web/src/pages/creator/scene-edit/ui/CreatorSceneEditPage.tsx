@@ -9,6 +9,7 @@ import { GameCard } from '@/entities/card/ui/GameCard';
 import { useUpdateScenarioDraft } from '@/entities/scenario/api/mutations';
 import { useEditableScenario } from '@/entities/scenario/api/queries';
 import type { ScenarioDraftView } from '@/entities/scenario/api/types';
+import { useUnsavedGuard } from '@/shared/lib/useUnsavedGuard';
 import s from '@/shared/ui/page.module.css';
 import { Button, EmptyNote, ErrorNote, Field, Loading, PageHeader, Panel } from '@/shared/ui/ui';
 import { loadCardImage, removeCardImage, saveCardImage } from '../api/cardImageStorage';
@@ -157,6 +158,7 @@ function SceneEditor({
 }) {
   const [draft, setDraft] = useState<DeckNode>(scene);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(scene), [draft, scene]);
+  useUnsavedGuard(dirty);
 
   const [nameError, setNameError] = useState<string | null>(null);
   const [addingCard, setAddingCard] = useState(false);

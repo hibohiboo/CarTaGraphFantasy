@@ -1,6 +1,7 @@
 import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Link } from 'react-router';
+import { useUnsavedGuard } from '@/shared/lib/useUnsavedGuard';
 import s from '@/shared/ui/page.module.css';
 import { ErrorNote, Field, PageHeader, Panel } from '@/shared/ui/ui';
 import { SaveButton } from './SaveButton';
@@ -29,6 +30,7 @@ export function EndingNodeEditor({
 }) {
   const [draft, setDraft] = useState<DeckNode>(node);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(node), [draft, node]);
+  useUnsavedGuard(dirty);
 
   return (
     <>
