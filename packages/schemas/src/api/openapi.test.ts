@@ -50,6 +50,17 @@ describe('OpenAPI の文書', () => {
     expect(Object.keys(o.responses as object).sort()).toEqual(['200', '404']);
   });
 
+  it('シナリオのコピーは、本文なし・id だけのパスの引数で、ScenarioDraftView（201）・404・422 を返し、説明に写し方を書く', () => {
+    const o = op('post', '/scenarios/{id}/copy');
+    expect(o.tags).toEqual(['scenarios']);
+    expect((o.parameters as { name: string }[]).map((p) => p.name)).toEqual(['id']);
+    expect(o.requestBody).toBeUndefined();
+    expect(responseSchema(o, '201')).toEqual({ $ref: '#/components/schemas/ScenarioDraftView' });
+    expect(Object.keys(o.responses as object).sort()).toEqual(['201', '404', '422']);
+    expect(o.description).toMatch(/最新の公開版の写し.*「〇〇のコピー」.*公開版は作らない/);
+    expect(op('patch', '/scenarios/{id}/draft').description).toContain('copiedFrom');
+  });
+
   it('下書きの API（/scenario-drafts・/scenarios/{id}/draft）は scenarios のタグに入り、ScenarioDraftView を返す', () => {
     expect(op('get', '/scenario-drafts').tags).toEqual(['scenarios']);
     expect(op('patch', '/scenarios/{id}/draft').tags).toEqual(['scenarios']);

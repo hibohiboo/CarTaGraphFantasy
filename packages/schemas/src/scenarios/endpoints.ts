@@ -88,6 +88,18 @@ export const scenarioEndpoints = [
     },
   }),
   defineEndpoint({
+    method: 'post',
+    path: '/scenarios/:id/copy',
+    summary: 'シナリオをコピーして自分の下書きにする',
+    description:
+      '公開版のあるシナリオの最新の公開版を、自分の下書きとしてコピーする。最新の公開版の写しで、題名は「〇〇のコピー」、作者は自分、どの版から作ったかを `copiedFrom` に持つ。公開版は作らない。だれでもコピーできる（シナリオ集から外したシナリオも）',
+    responses: {
+      201: success('コピーした下書きと公開の状態', scenarioDraftViewSchema),
+      404: failure('公開版が無い'),
+      422: failure('デモ・テスト専用のシナリオ'),
+    },
+  }),
+  defineEndpoint({
     method: 'get',
     path: '/scenarios/:id/draft',
     summary: 'シナリオの下書きを取得する（製作者）',
@@ -102,7 +114,7 @@ export const scenarioEndpoints = [
     path: '/scenarios/:id/draft',
     summary: 'シナリオの下書きを保存する（製作者）',
     description:
-      '本文の項目で下書きを上書きし、上書きした結果の形を検査する（業務の検査はしない）。公開版とファイルは変わらない（公開し直すまで GM・PL に届かない）。id・作者・libraryStatus・updatedAt はサーバーが決める',
+      '本文の項目で下書きを上書きし、上書きした結果の形を検査する（業務の検査はしない）。公開版とファイルは変わらない（公開し直すまで GM・PL に届かない）。id・作者・libraryStatus・updatedAt・copiedFrom はサーバーが決める',
     body: updateScenarioBody,
     responses: {
       200: success('保存した下書きと公開の状態', scenarioDraftViewSchema),

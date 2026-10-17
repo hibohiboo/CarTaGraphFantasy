@@ -242,3 +242,28 @@ describe('scenarioSchema', () => {
     expect(scenarioSchema.safeParse({ ...minimal(), updatedAt: '3日前' }).success).toBe(false);
   });
 });
+
+describe('scenarioSchema の copiedFrom', () => {
+  const parses = (copiedFrom: unknown) =>
+    scenarioSchema.safeParse({ ...minimal(), copiedFrom }).success;
+
+  it('省ける', () => {
+    expect(scenarioSchema.safeParse(minimal()).success).toBe(true);
+  });
+
+  it('{ scenarioId, version } が通り、項目を落とさない', () => {
+    const s = { ...minimal(), copiedFrom: { scenarioId: 'sc-parent', version: 3 } };
+    expect(scenarioSchema.parse(s)).toEqual(s);
+  });
+
+  it.each([0, -1, 1.5, '1', null])('version が %j だと誤り', (version) => {
+    expect(parses({ scenarioId: 'sc-parent', version })).toBe(false);
+  });
+
+  it('scenarioId が空文字・欠落、知らないキー、null は誤り', () => {
+    expect(parses({ scenarioId: '', version: 1 })).toBe(false);
+    expect(parses({ version: 1 })).toBe(false);
+    expect(parses({ scenarioId: 'sc-parent', version: 1, title: 'x' })).toBe(false);
+    expect(parses(null)).toBe(false);
+  });
+});
