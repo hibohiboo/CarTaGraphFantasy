@@ -18,6 +18,20 @@ export type ScenarioFileParseResult =
   | { ok: true; scenario: Scenario }
   | { ok: false; message: string };
 
+export type ScenarioErrorSection = { title: string; errors: string[] };
+
+/**
+ * 形の通ったシナリオの、参照の誤りとシナリオタイプの食い違い。誤りのある節だけを、見出しつきで返す
+ * （直して出し直す二度手間を避けるため一度に報告する）。公開の検査（safeParseScenarioFile）と、
+ * 画面の公開の前の確かめ（readiness.ts の publishErrors）が共有し、検査が食い違わないようにする
+ */
+export function scenarioContentSections(scenario: Scenario): ScenarioErrorSection[] {
+  return [
+    { title: '参照に誤りがある', errors: findScenarioRefErrors(scenario) },
+    { title: 'シナリオタイプと中身が食い違っている', errors: findScenarioTypeErrors(scenario) },
+  ].filter((s) => s.errors.length > 0);
+}
+
 export function safeParseScenarioFile(path: string, raw: unknown): ScenarioFileParseResult {
   const parsed = scenarioSchema.safeParse(raw);
   if (!parsed.success) {
@@ -35,14 +49,8 @@ export function safeParseScenarioFile(path: string, raw: unknown): ScenarioFileP
       message: `${path} の id「${scenario.id}」は、英小文字・数字・ハイフンだけにする`,
     };
   }
-  // 参照の誤りとシナリオタイプの食い違いは、一度に報告する（直して出し直す二度手間を避ける）
-  const sections = [
-    ['参照に誤りがある', findScenarioRefErrors(scenario)],
-    ['シナリオタイプと中身が食い違っている', findScenarioTypeErrors(scenario)],
-  ] as const;
-  const message = sections
-    .filter(([, errors]) => errors.length > 0)
-    .map(([title, errors]) => `${path} の${title}:\n${errors.map((e) => `- ${e}`).join('\n')}`)
+  const message = scenarioContentSections(scenario)
+    .map(({ title, errors }) => `${path} の${title}:\n${errors.map((e) => `- ${e}`).join('\n')}`)
     .join('\n');
   if (message) return { ok: false, message };
   return { ok: true, scenario };

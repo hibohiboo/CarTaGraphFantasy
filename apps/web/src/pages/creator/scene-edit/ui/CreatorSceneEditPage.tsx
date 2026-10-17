@@ -2,6 +2,7 @@ import type { CardDef, CardKind } from '@cartagraph/domain/card/model';
 import { CARD_KIND_LABEL } from '@cartagraph/domain/card/model';
 import { moveTargets } from '@cartagraph/domain/scenario/edit';
 import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
+import { editableSceneNodes } from '@cartagraph/domain/scenario/readiness';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GameCard } from '@/entities/card/ui/GameCard';
@@ -17,12 +18,6 @@ import { SaveButton } from './SaveButton';
 
 /** 追加できるカード種別（ロケーションは専用の枠で扱うため含めない） */
 const ADDABLE_KINDS: CardKind[] = ['npc', 'info', 'choice', 'enemy'];
-
-/**
- * この画面で開けるノード：最上位のシーン・導入・結末（docs/plans/2026-10-07-選択肢の移り先と結末の編集.md D4）。
- * プール用のノード（npc/info/enemy）と入れ子のノードは開けない
- */
-const EDITABLE_KINDS = new Set<DeckNode['kind']>(['scene', 'intro', 'ending']);
 
 /** 画像1枚あたりの警告しきい値（目安200KB。data URLはbase64なので概算） */
 const IMAGE_WARN_BYTES = 200 * 1024;
@@ -79,7 +74,7 @@ export function CreatorSceneEditPage() {
   const notAuthor = source.status === 'readOnly';
   const view = source.status === 'own' ? source.view : null;
   // プール用のノード（独立した npc/info/enemy）は、URL を直接叩いても開けないよう「見つからない」扱いにする
-  const scene = sc.deck.find((n) => n.id === sceneId && EDITABLE_KINDS.has(n.kind));
+  const scene = editableSceneNodes(sc.deck).find((n) => n.id === sceneId);
   if (!scene) return <ErrorNote error={new Error('シーンが見つかりません')} />;
 
   const saveNode = (next: DeckNode) => {
