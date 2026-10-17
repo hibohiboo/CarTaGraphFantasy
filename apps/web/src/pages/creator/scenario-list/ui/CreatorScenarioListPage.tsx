@@ -27,7 +27,7 @@ export function CreatorScenarioListPage() {
       <div className={s.stack}>
         <Panel
           title="新しいシナリオを作る"
-          sub="共有設定をテンプレートとして使える（ルールブック → 共有設定）。"
+          sub="タイトルを付けて下書きを作ります。作ったら、シーンを作り、選択肢で結末までつないで公開します。"
         >
           <div className="u-row">
             <input

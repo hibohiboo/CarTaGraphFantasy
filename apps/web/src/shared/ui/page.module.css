@@ -544,3 +544,54 @@
   font-size: 0.78rem;
   color: var(--ink-soft);
 }
+
+/* シナリオ編集：次にすること・公開の前の確かめ・公開の前に決めること（畳む欄） */
+.steps,
+.check,
+.foldPanel {
+  background: var(--felt-panel);
+  border: 1px solid var(--thread-faint);
+  border-radius: var(--radius-panel);
+  padding: 14px 20px;
+}
+.stepsTitle,
+.checkTitle {
+  font-size: 1rem;
+}
+.checkSub {
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+.stepList {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stepItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stepItem[data-done="true"] {
+  color: var(--parchment-text-dim);
+}
+.stepItem[data-next="true"] {
+  font-weight: 600;
+}
+.foldSummary {
+  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+}
+.foldLine {
+  font-size: 0.84rem;
+  color: var(--parchment-text-dim);
+}
+.foldBody {
+  margin-top: 14px;
+}

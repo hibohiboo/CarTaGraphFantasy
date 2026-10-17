@@ -7,6 +7,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { routeObjects } from '@/app/router';
 import { loadCardImage } from '@/pages/creator/scene-edit/api/cardImageStorage';
+import { deckNodeName } from './renderAt';
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -313,7 +314,7 @@ describe('CreatorSceneEditPage', () => {
     await screen.findByRole('heading', { level: 1, name: '（テスト用）自分の灰色館' });
 
     // 導入・結末にも「編集」があるので、シーンの行で絞って押す
-    const sceneRow = screen.getByText('3-1 地下回廊').closest('[data-kind]') as HTMLElement;
+    const sceneRow = (await deckNodeName('3-1 地下回廊')).closest('[data-kind]') as HTMLElement;
     await user.click(within(sceneRow).getByRole('link', { name: '編集' }));
 
     await waitFor(() =>

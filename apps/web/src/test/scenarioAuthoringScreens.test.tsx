@@ -15,7 +15,7 @@ import { api } from '@/shared/api/api';
 import { setScenarioFileStore } from '../mocks/handlers';
 import { characterCreation } from '../mocks/rulesFiles';
 import { DEAD_END, recruitCard, recruitPanel } from './gmlessHelpers';
-import { renderAt } from './renderAt';
+import { deckNodeName, renderAt } from './renderAt';
 
 /** 製作者の下書き（保存の結果はここに入る。公開版は公開し直すまで変わらない） */
 const get = async (id: string) =>
@@ -319,7 +319,7 @@ describe('シナリオ編集：削除と結末', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       '『地下へ』（灰色館へ到着）から指されているので削除できません',
     );
-    expect(screen.getByText('3-1 地下回廊')).toBeInTheDocument();
+    expect(await deckNodeName('3-1 地下回廊')).toBeInTheDocument();
     expect(button('保存')).toBeDisabled();
 
     await user.click(within(await deckRow('3-3 隠し書庫')).getByRole('button', { name: '削除' }));

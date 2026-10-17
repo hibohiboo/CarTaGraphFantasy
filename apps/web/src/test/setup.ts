@@ -49,6 +49,9 @@ function installTestCanvasMeasureText() {
 }
 installTestCanvasMeasureText();
 
+// jsdom には scrollIntoView が無い（案内の「開く」が呼ぶ）。実際にスクロールする必要は無いので空の代わりを置く
+Element.prototype.scrollIntoView = () => {};
+
 // MSW の応答は、すべて API の一覧（packages/schemas）と照らす。ずれたら、そのテストを落とす（responseCheck.ts）
 watchResponses(server);
 
