@@ -86,20 +86,21 @@ export function CreatorScenarioEditPage() {
   };
   const shown = outcome?.scenarioId === scenarioId ? outcome : null;
   // 公開版をコピーして、そのコピーのシナリオ編集へ移る（一覧を読み直した後に移る。useCopyScenario）
-  // onFail：コピーに失敗したとき（確かめ済みの移動の許可を取り消す。useUnsavedGuard）
+  // allowTo：確かめ済みのコピー先への移動を通す（useUnsavedGuard）
   // 続けて押されても1件だけ作る（押した直後はまだ再描画されず、ボタンが押せなくなっていないため ref で止める）
   const copying = useRef(false);
-  const copyScenario = (onFail?: () => void) => {
+  const copyScenario = (allowTo: (pathname: string) => void) => {
     if (copying.current) return;
     copying.current = true;
     run<ScenarioDraftView>(
       (cb) =>
         copy.mutate(scenarioId, {
-          onError: (error) => {
-            cb.onError(error);
-            onFail?.();
+          onError: cb.onError,
+          onSuccess: (v) => {
+            const path = `/creator/scenarios/${v.draft.id}`;
+            allowTo(path);
+            navigate(path);
           },
-          onSuccess: (v) => navigate(`/creator/scenarios/${v.draft.id}`),
           onSettled: () => {
             copying.current = false;
           },
@@ -232,12 +233,14 @@ function DraftNotes({
  * 保存していない編集があるときの移動の確かめと、「コピーして編集」の確かめ。
  * コピーされるのは公開版で未保存の編集は消えるので、コピーを作る前に確かめ、認めたらその後の移動は止めない
  */
-function useCopyWithConfirm(dirty: boolean, copyScenario: (onFail?: () => void) => void) {
-  const { allowNextNavigation } = useUnsavedGuard(dirty);
+function useCopyWithConfirm(
+  dirty: boolean,
+  copyScenario: (allowTo: (pathname: string) => void) => void,
+) {
+  const { allowNavigationTo } = useUnsavedGuard(dirty);
   return () => {
-    if (!dirty) return copyScenario();
-    if (!window.confirm(UNSAVED_CONFIRM_MESSAGE)) return;
-    copyScenario(allowNextNavigation());
+    if (dirty && !window.confirm(UNSAVED_CONFIRM_MESSAGE)) return;
+    copyScenario(allowNavigationTo);
   };
 }
 
@@ -265,7 +268,7 @@ function Editor({
   save: (p: Partial<Scenario>) => void;
   setPublished: (published: boolean) => void;
   /** 公開版をコピーして自分の下書きにする（公開版があるときだけ出す。未保存の編集があっても押せる） */
-  copyScenario: (onFail?: () => void) => void;
+  copyScenario: (allowTo: (pathname: string) => void) => void;
   saving: boolean;
   note: ReactNode;
 }) {

@@ -9,14 +9,14 @@ export const UNSAVED_CONFIRM_MESSAGE = '保存していない編集がありま�
  * 同じパスのまま検索・ハッシュだけが変わる移動は止めない（useBlocker 自身は同じパスを除かない）。
  * リロード・タブを閉じる（beforeunload）は対象にしない。
  *
- * 返す `allowNextNavigation()` は、自分で確かめ済みの移動（例：コピーを作ってから移る）の次の1回を通す。
- * 戻り値の関数でその許可を取り消せる（移動に至らず失敗したとき）
+ * 返す `allowNavigationTo(pathname)` は、自分で確かめ済みの移動（例：コピーを作ってから移る）の先を、次の1回だけ通す。
+ * 先を指定するので、その間に押された別の移動は許可を使わず、確かめに止められる
  */
 export function useUnsavedGuard(dirty: boolean) {
-  const allowNext = useRef(false);
+  const allowedPath = useRef<string | null>(null);
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-    if (allowNext.current) {
-      allowNext.current = false;
+    if (allowedPath.current !== null && allowedPath.current === nextLocation.pathname) {
+      allowedPath.current = null;
       return false;
     }
     return dirty && currentLocation.pathname !== nextLocation.pathname;
@@ -28,11 +28,8 @@ export function useUnsavedGuard(dirty: boolean) {
     else blocker.reset();
   }, [blocker]);
 
-  const allowNextNavigation = useCallback(() => {
-    allowNext.current = true;
-    return () => {
-      allowNext.current = false;
-    };
+  const allowNavigationTo = useCallback((pathname: string) => {
+    allowedPath.current = pathname;
   }, []);
-  return { allowNextNavigation };
+  return { allowNavigationTo };
 }
