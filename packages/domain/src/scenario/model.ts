@@ -156,6 +156,12 @@ export const scenarioSchema = z.strictObject({
   deck: z.array(deckNodeSchema),
   endings: z.array(endingDefSchema),
   /**
+   * コピーして作ったシナリオの、直接の親（どのシナリオのどの公開版から作ったか。
+   * docs/cartagraph/scenario-flow.md「シナリオのコピー」）。親が外されても公開し直されても変わらず、
+   * 親が存在することは検査しない（refs.ts）
+   */
+  copiedFrom: z.strictObject({ scenarioId: idSchema, version: z.number().int().min(1) }).optional(),
+  /**
    * シナリオ集に載っているか（docs/cartagraph/scenario-flow.md「シナリオの公開」）。公開版では published＝載っている、
    * draft＝シナリオ集から外した。下書きでは意味を持たず、いつも draft（公開の状態は packages/schemas の
    * ScenarioDraftView.publication が持つ）

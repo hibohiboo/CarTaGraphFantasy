@@ -166,6 +166,11 @@ describe('findScenarioRefErrors', () => {
     ]);
     expect(findScenarioRefErrors(s)).toHaveLength(4);
   });
+
+  it('存在しないシナリオを指す copiedFrom は誤りにしない（親は外されても記録は残る）', () => {
+    const s = { ...scenario([]), copiedFrom: { scenarioId: 'sc-gone', version: 1 } };
+    expect(findScenarioRefErrors(s)).toEqual([]);
+  });
 });
 
 // シナリオからシステムのカード一覧（rules/cards.json）への参照（docs/plans/2026-10-10-ルールとカードプールのJSON管理.md E5）

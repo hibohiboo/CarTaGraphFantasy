@@ -220,6 +220,16 @@ describe('toScenarioFile', () => {
     toScenarioFile(s);
     expect(s.deck[0]?.cards[0]?.portraitUrl).toBe(img);
   });
+
+  it('copiedFrom は、ファイルにして読み直しても残る', () => {
+    const copiedFrom = { scenarioId: 'sc-parent', version: 2 };
+    const out = toScenarioFile(parseScenarioFile(PATH, raw({ copiedFrom })));
+    expect(out.copiedFrom).toEqual(copiedFrom);
+    expect(safeParseScenarioFile(PATH, out)).toEqual({
+      ok: true,
+      scenario: expect.objectContaining({ copiedFrom }),
+    });
+  });
 });
 
 // 遊べるシナリオの読み込み（docs/plans/2026-10-10-ルールとカードプールのJSON管理.md E6）
