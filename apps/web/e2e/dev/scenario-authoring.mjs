@@ -74,6 +74,18 @@ try {
   await page.getByRole('button', { name: 'シーンを追加' }).click();
   await save();
 
+  // 案内の「開く」で、畳んだ「公開の前に決めること」が開いて概要を入力できる（jsdom では畳んでいても操作できるので、実ブラウザで確かめる）
+  const guide = page.getByRole('region', { name: '次にすること' });
+  check(await guide.isVisible(), '作った直後は「次にすること」の案内が出る');
+  // 入力すると label の文字に textarea の中身が混ざる（getByLabel の exact が外れる）ので、見出しの span から引く
+  const summary = page.locator('label:has(> span:text-is("概要")) textarea');
+  check(!(await summary.isVisible()), '「公開の前に決めること」は畳んで始まる');
+  await guide.getByRole('button', { name: '開く' }).click();
+  await summary.fill('村はずれの小道を歩く短い話。');
+  check(await summary.isVisible(), '案内の「開く」で畳んだ欄が開き、概要を入力できる');
+  await shot('authoring-meta-open');
+  await save();
+
   await row('導入').getByRole('link', { name: '編集' }).click();
   await page.getByRole('heading', { name: '導入の情報' }).waitFor();
   await addChoice('村へ', 'シーン：1 新しいシーン');
@@ -96,6 +108,35 @@ try {
   await shot('authoring-delete-blocked');
   await page.locator('input[aria-label="結末タグ"]').fill('村を見た');
   await save();
+
+  // 保存していない編集があるまま移ろうとすると確かめが出る（Playwright は既定でダイアログを断る。ここでは断る・認めるを切り替える）。
+  // 止められるのは画面内のリンク・戻るだけ。location.hash を直接書く移動はルーターの外なので止められない（go() は使わない）
+  const dialogs = [];
+  let acceptDialog = false;
+  page.on('dialog', (d) => {
+    dialogs.push(d.message());
+    return acceptDialog ? d.accept() : d.dismiss();
+  });
+  await page.getByLabel('タイトル', { exact: true }).fill(`${title}（編集中）`);
+  await page.getByRole('link', { name: '一覧へ戻る' }).click();
+  await page.waitForTimeout(500);
+  check(
+    dialogs.length === 1 && page.url().endsWith(`#/creator/scenarios/${id}`),
+    '未保存のまま移ろうとすると確かめが出て、断ると留まる',
+  );
+  acceptDialog = true;
+  await page.getByRole('link', { name: '一覧へ戻る' }).click();
+  await page.waitForURL(/#\/creator\/scenarios$/);
+  check(dialogs.length === 2, '認めると移る（確かめは1回ずつ）');
+  await go(`/creator/scenarios/${id}`);
+  await page.getByRole('heading', { level: 1, name: title, exact: true }).waitFor();
+
+  const publishCheck = page.getByRole('region', { name: '公開の前の確かめ' });
+  check(
+    (await publishCheck.textContent())?.includes('問題はありません'),
+    '公開の前の確かめに「問題はありません」が出る',
+  );
+  await shot('authoring-publish-check');
   await page.getByRole('button', { name: 'シナリオ集へ公開' }).click();
   await page.getByText('シナリオ集に公開中').waitFor();
 
@@ -139,6 +180,18 @@ try {
   check(
     (await page.getByRole('button', { name: '保存', exact: true }).count()) === 0,
     '他人のシナリオのシーン編集も読むだけ',
+  );
+  // 読み取り専用のつながりのリンクは、無効の fieldset の中でも実ブラウザでは押せる（jsdom の user-event では押せないので fireEvent で確かめていた）
+  const linksPanel = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'つながり' }),
+  });
+  const firstLink = linksPanel.getByRole('link').first();
+  const hrefBefore = page.url();
+  await firstLink.click();
+  await page.waitForFunction((h) => location.href !== h, hrefBefore);
+  check(
+    page.url().includes('/scenes/') && page.url() !== hrefBefore,
+    '読み取り専用のシーン編集でも、つながりのリンクで他のシーンへ移れる',
   );
   check(
     errors.length === 0,
