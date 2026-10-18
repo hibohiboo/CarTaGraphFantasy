@@ -18,11 +18,14 @@ gh auth status        # GitHub CLI にログインしているか
 git switch main && git pull --ff-only     # main を最新にする
 git status                                 # 作業ツリーがきれいか確かめる
 node scripts/check-main-ci.mjs             # main の最新の CI が失敗していないか（失敗なら先に直す）
-git switch -c feat/<機能名>                # フルの変更は作業ブランチを切る（例：feat/scenario-copy）
+node scripts/branch-id.mjs new feat <機能名>   # 次の id で作業ブランチを切る（例：feat/P12-scenario-copy）
 ```
 
-- ブランチ名は `feat/`（機能）・`fix/`（不具合）・`chore/`（雑務）に英小文字とハイフンで続ける。
-- `docs/` だけの変更や小さな JSON の修正（ライト）は、ブランチを切らずに main へ直接コミット・push してよい（[適用範囲](index.md)）。
+- フル・ライトとも、作業は id 付きのブランチで行う（[適用範囲](index.md#適用範囲フルとライト)）。main へのコミットは pre-commit が止める。
+- 種類は `feat`（機能）・`fix`（不具合）・`docs`（docs のみ）・`chore`（雑務）・`refactor`・`test`。名前は英小文字・数字をハイフンでつなぐ。
+- フルのプランは同じ id で `docs/plans/<日付>-P<id>-<機能>.md` に置く。次の id だけ知りたいときは `node scripts/branch-id.mjs next`。
+- 同じ作業の続き（マージの後の要望ファイルの更新など）は、`node scripts/branch-id.mjs new docs <名前> --id P12` で同じ id のブランチを切る。
+- id の無いブランチ（id を振る前に切ったもの）でコミットするときは、`git branch -m <種類>/P<番号>-<名前>` で名前を変える。
 
 ## 2. 作業中の確かめ
 
@@ -60,7 +63,8 @@ git commit                       # エディタで書く。短く書くなら -m
 
 - メッセージの形：`<種別>: <日本語の要約>`。種別は `feat`・`fix`・`docs`・`chore`・`refactor`・`test`。docs の中でも進め方に関わるものは `docs(process): …`。
 - 仕様を変えるサイクルでは、仕様（`docs/`）のコミットを最初にする。
-- **pre-commit**：ステージしたファイルを Biome が整形・修正して再ステージする。`--unsafe` が要る指摘だけコミットが止まるので、指摘を見て直す。
+- **pre-commit**：main（と id の無いブランチ）へのコミットを止める。ステージしたファイルを Biome が整形・修正して再ステージする。`--unsafe` が要る指摘だけコミットが止まるので、指摘を見て直す。
+- **commit-msg**（id）：ブランチ名の id を、メッセージの1行目の末尾に ` #P12` の形で付ける（付いていれば付けない）。自分で書かなくてよい。
 - **commit-msg**：進め方に関わるファイル（`docs/process/` のルール、`AGENTS.md`、`CLAUDE.md`、`.claude/`）を変えたのに、体制の進化ログ（`docs/process/evolution.md` か `docs/process/evolution/<年-月>.md`）が変わっていないと止まる。記録が要らないときは、メッセージに次の行を足す。
 
 ```text
@@ -74,7 +78,7 @@ git commit                       # エディタで書く。短く書くなら -m
 ## 4. push
 
 ```sh
-git push -u origin feat/<機能名>      # 初回（上流を設定する）
+git push -u origin feat/P12-<機能名>      # 初回（上流を設定する）
 git push                               # 2回目以降
 ```
 
@@ -82,15 +86,22 @@ pre-push が、型検査・テスト・docs ビルド・API ドキュメント�
 
 push の前に一度 `pnpm web:e2e`（Playwright。初回は `pnpm exec playwright install` が要ることがある）。
 
-main への直接 push は、docs のみ・JSON のみのライトの変更だけ。`git push origin main` の前に `git pull --ff-only` で最新にする。
+docs のみ・JSON のみのライトの変更は、PR を作らずに main へ早送りで取り込んで push する（main で新しいコミットは作らない）。
+
+```sh
+git switch main && git pull --ff-only     # main を最新にする
+git merge --ff-only docs/P12-<名前>       # 早送りで取り込む（失敗したら、ブランチで git rebase main してからもう一度）
+git push origin main
+git branch -d docs/P12-<名前>
+```
 
 ## 5. プルリクエスト（PR）
 
-対象は `apps/`・`packages/` の振る舞いを変える変更（フル）。docs のみは直 push でよい。
+対象は `apps/`・`packages/` の振る舞いを変える変更（フル）。docs のみは 4. の早送りで取り込んでよい。
 
 ### 5-1. 本文を用意する
 
-本文の形は 課題／解決策／テスト／レビュー観点。AI が書いた「PR 下書き」はプランの末尾にある（`docs/plans/<日付>-<機能>.md`）。自分で書くときも同じ見出しにする。型検査・テスト・docs ビルドは pre-push と CI が確かめるので、結果は貼らなくてよい。
+本文の形は 課題／解決策／テスト／レビュー観点。AI が書いた「PR 下書き」はプランの末尾にある（`docs/plans/<日付>-P<id>-<機能>.md`）。自分で書くときも同じ見出しにする。型検査・テスト・docs ビルドは pre-push と CI が確かめるので、結果は貼らなくてよい。
 
 ```sh
 git diff main...HEAD --stat           # 変更の全体
@@ -121,7 +132,7 @@ CI が通ってから人間のレビューに回す。CI が落ちたら、ロ�
 ### 5-4. レビューの指摘を直す
 
 ```sh
-git switch feat/<機能名>
+git switch feat/P12-<機能名>
 # 直す → 3. のコミット → 4. の push（同じブランチに積む。force push は要らない）
 gh pr view --comments       # コメントを端末で読む
 ```
@@ -135,7 +146,7 @@ gh pr view --comments       # コメントを端末で読む
 ```sh
 gh pr merge <番号> --merge --delete-branch     # マージして、リモートの作業ブランチを消す
 git switch main && git pull --ff-only           # main を最新にする
-git branch -d feat/<機能名>                     # ローカルの作業ブランチを消す（マージ済みなら -d で通る）
+git branch -d feat/P12-<機能名>                     # ローカルの作業ブランチを消す（マージ済みなら -d で通る）
 git fetch --prune                               # 消えたリモートブランチの記録を掃除する
 ```
 
@@ -146,12 +157,13 @@ git fetch --prune                               # 消えたリモートブラン
 1. 要望ファイル（`docs/backlog/<要望>.md`）のサイクルの状態・PR 番号・更新日を直す。要望が終われば状態を「完了」にする
 2. プランの状態の行を「完了（PR #番号、日付）」にする
 3. 進め方に関わる気づきは、[体制の進化ログ](evolution.md)の「候補（未評価）」に追記する（書式は同ページの「候補」の節）
-4. これらは docs のみなので、main に直接コミットして push してよい
+4. これらは docs のみなので、`node scripts/branch-id.mjs new docs <名前> --id P<id>` で同じ id のブランチを切ってコミットし、4. の早送りで main に取り込んで push する
 
 ## 7. 困ったとき
 
 | 状況 | 対処 |
 |---|---|
+| pre-commit が「main に直接コミットしない」で止まる | `node scripts/branch-id.mjs new <種類> <名前>` でブランチを切ってからコミットする（ステージした変更はそのまま持っていける） |
 | pre-commit が止まる | 出力の指摘を読んで直す。Biome の自動修正は再ステージ済み。`pnpm lint:fix` で安全な修正をまとめて当てられる |
 | commit-msg が止まる | 進化ログを足すか、メッセージに `進化ログ不要: <理由>` を書く |
 | pre-push が止まる | 落ちた `pnpm <コマンド>` の出力を読み、そのコマンドだけ単独で流して直す |

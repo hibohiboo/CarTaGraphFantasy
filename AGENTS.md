@@ -53,6 +53,7 @@ pnpm build:pages      # docs + app + API ドキュメントをまとめてビル
 pnpm api:docs         # API ドキュメント（OpenAPI の文書と Redoc の HTML）を docs/.vitepress/dist/api-docs/ に作る。redocly lint で誤りがあれば失敗する（docs:build の後に流す。docs/architecture/web-app.md「API ドキュメント」）
 pnpm lint             # Biome（フォーマット・import整理・lintをまとめてチェック）
 pnpm lint:fix         # 同上、安全な修正を自動適用
+node scripts/branch-id.mjs new <種類> <名前> [--id P12]  # 次の連番 id で作業ブランチ <種類>/P<id>-<名前> を切る（main にはコミットできない。プランは docs/plans/<日付>-P<id>-<機能>.md）
 node scripts/replace-once.mjs <spec.json>  # ファイルの文字列を置き換える。件数（既定1件・count で指定）と二重の当たりを確かめてから書く
 node scripts/mutate-check.mjs <spec.json>  # 守る条件を1つずつ外し、テストが落ちることを確かめて元に戻す（testing.md「骨抜き禁止」）
 node scripts/sync-claude-rules.mjs          # ルールのページの frontmatter の paths から .claude/rules/ の入口ファイルを作り直す
@@ -61,8 +62,8 @@ node scripts/sync-claude-rules.mjs          # ルールのページの frontmatt
 コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`packages/schemas` を触ったら `pnpm schemas:typecheck && pnpm schemas:test` も通す。API の一覧・応答の形（`packages/schemas`・`packages/domain` の model.ts）を触ったら `pnpm docs:build && pnpm api:docs` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`scripts/`・`.claude/hooks/` を触ったら `pnpm tools:test` も通す。`scenarios/`・`rules/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオ・ルールを使うテストが走る。pre-push でも走る）。
 
 lint・型検査・テスト・docsビルドは、AI にトークンを使わせず git フックで機械的に止める。
-- `.githooks/pre-commit` … ステージ済みファイルだけ `biome check --staged --write` を実行し、安全な指摘（フォーマット崩れ等）は自動修正して再ステージする。`--unsafe`が要る指摘（意図的に自動適用しない方針）だけコミットを止める
-- `.githooks/commit-msg` … 進め方に関わるファイル（`docs/process/` のルール・`AGENTS.md`・`CLAUDE.md`・`.claude/`。範囲は `scripts/check-evolution-log.mjs`）を変えたのに、体制の進化ログ（`docs/process/evolution.md` か、月ごとのページ `docs/process/evolution/<年-月>.md`）が変わっていないコミットを止める。記録が要らない変更は、コミットメッセージに `進化ログ不要: <理由>` の行を書く
+- `.githooks/pre-commit` … main へのコミットと、id の無いブランチでのコミットを止める（作業は `node scripts/branch-id.mjs new` で切った id 付きのブランチで行う。`docs/process/index.md`「適用範囲」）。ステージ済みファイルだけ `biome check --staged --write` を実行し、安全な指摘（フォーマット崩れ等）は自動修正して再ステージする。`--unsafe`が要る指摘（意図的に自動適用しない方針）だけコミットを止める
+- `.githooks/commit-msg` … 進め方に関わるファイル（`docs/process/` のルール・`AGENTS.md`・`CLAUDE.md`・`.claude/`。範囲は `scripts/check-evolution-log.mjs`）を変えたのに、体制の進化ログ（`docs/process/evolution.md` か、月ごとのページ `docs/process/evolution/<年-月>.md`）が変わっていないコミットを止める。記録が要らない変更は、コミットメッセージに `進化ログ不要: <理由>` の行を書く。あわせて、ブランチ名の id をメッセージの1行目の末尾に ` #P12` の形で付ける（`scripts/branch-id.mjs`）
 - `.githooks/pre-push` … push前に `pnpm web:typecheck && pnpm domain:typecheck && pnpm domain:test && pnpm schemas:typecheck && pnpm schemas:test && pnpm web:test && pnpm tools:test && pnpm docs:build && pnpm api:docs`（CIと同じ）を実行する
 
 `pnpm install` すると `prepare` スクリプトが `git config --local core.hooksPath .githooks` を自動で設定するので、通常は何もしなくてよい。設定されていない場合は手動で同じコマンドを実行する。CI（`.github/workflows/ci.yml`）にも同じチェック（lint・型検査・テスト・docsビルド・API ドキュメントの生成）があり、フック未設定や `--no-verify` の取りこぼしを検出する。

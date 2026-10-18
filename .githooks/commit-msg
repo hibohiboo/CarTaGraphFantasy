@@ -1,12 +1,15 @@
 #!/bin/sh
-# 進め方に関わるファイル（docs/process/ のルール・AGENTS.md・CLAUDE.md・.claude/）を変えたのに、
-# 体制の進化ログ（docs/process/evolution.md）が変わっていないコミットを止める。
-# 記録が要らない変更は、コミットメッセージに「進化ログ不要: <理由>」の行を書けば通る。
-# 判定の本体とテストは scripts/check-evolution-log.mjs（pnpm tools:test）。
+# 1. 進め方に関わるファイル（docs/process/ のルール・AGENTS.md・CLAUDE.md・.claude/）を変えたのに、
+#    体制の進化ログ（docs/process/evolution.md）が変わっていないコミットを止める。
+#    記録が要らない変更は、コミットメッセージに「進化ログ不要: <理由>」の行を書けば通る。
+#    判定の本体とテストは scripts/check-evolution-log.mjs（pnpm tools:test）。
+# 2. ブランチ名の id（feat/P12-… の P12）を、メッセージの1行目の末尾に「 #P12」として付ける。
+#    本体とテストは scripts/branch-id.mjs（pnpm tools:test）。
 
 if ! command -v node >/dev/null 2>&1; then
-  echo "[commit-msg] node が見つかりません。進化ログの確認をスキップします（PATH を確認してください）" >&2
+  echo "[commit-msg] node が見つかりません。進化ログの確認と id の付与をスキップします（PATH を確認してください）" >&2
   exit 0
 fi
 
-exec node scripts/check-evolution-log.mjs "$1"
+node scripts/check-evolution-log.mjs "$1" || exit 1
+exec node scripts/branch-id.mjs commit-msg "$1"

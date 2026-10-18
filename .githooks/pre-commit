@@ -10,6 +10,14 @@
 # 一時的に無効化したい場合は `git commit --no-verify`。ただし CI 側にも
 # `pnpm lint` があるので、無効化してコミットしても push 前後に取りこぼしは検出される。
 
+# main へのコミットと、id の無いブランチでのコミットを止める（作業は id 付きのブランチで行う）。
+# 判定の本体とテストは scripts/branch-id.mjs（pnpm tools:test）。
+if command -v node >/dev/null 2>&1; then
+  node scripts/branch-id.mjs pre-commit || exit 1
+else
+  echo "[pre-commit] node が見つかりません。ブランチの確認をスキップします（PATH を確認してください）" >&2
+fi
+
 if ! command -v pnpm >/dev/null 2>&1; then
   echo "[pre-commit] pnpm が見つかりません。lint をスキップします（PATH を確認してください）" >&2
   exit 0
