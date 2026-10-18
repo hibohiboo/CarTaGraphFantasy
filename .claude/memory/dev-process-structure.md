@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 3e5f04df-9f84-4409-af85-7a72b948a1af
-  modified: 2026-10-10T02:34:36.241Z
+  modified: 2026-10-18T01:35:57.669Z
 ---
 
 2026-09-16に『プロフェッショナルAI駆動開発』のサンプル（`proffesional-ai/`、git管理外のローカル資料）を移植して、開発プロセスを文書化した。
@@ -13,7 +13,7 @@ metadata:
 - **正（SSOT）は `docs/process/`**：`index.md`（開発サイクル8ステップ＋体制の進化＋モデル非依存の原則）、`rules/`（architecture / testing / review）、`prompt-sample.md`（依頼文雛形1〜9）、`evolution.md`（候補→採用／却下のログ）
 - **入口は `AGENTS.md`**。`CLAUDE.md` は `@AGENTS.md` で読み込むだけ。最重要ルール（矛盾で止める・SSOT・重複は見つけ次第直して報告・プラン外は実装しない・LF）はAGENTS.md側にある
 - **`.claude/` は薄い層**：中身と決まりの正は CLAUDE.md「Claude Code 固有の補足」（AGENTS.md には書かない。2026-10-10 に重複を解消）
-- プランは `docs/plans/<日付>-<機能>.md`（VitePress の `srcExclude` で公開サイトからは除外）
+- プランは `docs/plans/<日付>-P<id>-<機能>.md`（VitePress の `srcExclude` で公開サイトからは除外）。id はブランチと共通の連番（2026-10-18〜。`scripts/branch-id.mjs`、正は docs/process/index.md「適用範囲」）
 - 基盤整備の計画は `docs/plans/2026-09-16-dev-process-foundation.md`（C1 CI → C2 Biome+githooks → C3 モデル切替で試走・メモリ知識をdocsへ → C4 シーン構築画面のReact化を新プロセスで完走 → C5 リファクタ → C6 PR運用）。**2026-09-16にユーザーが決定済み：基盤整備中はスピード重視で直push、PR運用は最後。lintはAIにトークンを使わせずコミット前フックで止める**
 
-**How to apply:** `apps/`・`packages/` の振る舞いを変える依頼はフルルート（`/dev-cycle`：プランから）。docs のみ・試作・小修正はライトルートで、[[push-then-report]] の通り直 push でよい。プロセスに不満・不足を感じたら `docs/process/evolution.md` の候補に追記し、採用はユーザーが決める。運用知識をメモリにだけ残さず docs に書く（Webアプリの運用知識は docs/architecture/web-app.md、デザインシステムも web-app.md「デザインシステム」）。
+**How to apply:** `apps/`・`packages/` の振る舞いを変える依頼はフルルート（`/dev-cycle`：プランから）。docs のみ・試作・小修正はライトルートで、id 付きのブランチでコミットし main へ早送りで取り込んで push する（2026-10-18 から main へのコミットは pre-commit が止める。push は [[push-then-report]] の通り確認不要）。プロセスに不満・不足を感じたら `docs/process/evolution.md` の候補に追記し、採用はユーザーが決める。運用知識をメモリにだけ残さず docs に書く（Webアプリの運用知識は docs/architecture/web-app.md、デザインシステムも web-app.md「デザインシステム」）。
