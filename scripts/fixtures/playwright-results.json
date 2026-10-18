@@ -1,0 +1,387 @@
+{
+  "config": {
+    "argv": [
+      "C:/Program Files/nodejs/node.exe",
+      "/repo/apps/web/node_modules/@playwright/test/cli.js",
+      "test",
+      "e2e/probe.test.ts"
+    ],
+    "configFile": "/repo/apps/web/playwright.config.ts",
+    "rootDir": "/repo/apps/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/repo/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/repo/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": ["**/*.test.ts"],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      ["list", null],
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "e2e-results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 12,
+    "webServer": {
+      "command": "pnpm build && pnpm preview",
+      "url": "http://localhost:4173",
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "probe.test.ts",
+      "file": "probe.test.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "probe-pass",
+          "ok": true,
+          "tags": ["SC-1", "SC-2"],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 771,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "SC-1 通る",
+                      "duration": 19
+                    },
+                    {
+                      "title": "SC-2 通る",
+                      "duration": 0
+                    }
+                  ],
+                  "startTime": "2026-10-18T08:03:45.351Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/repo/apps/web/test-results/probe-probe-pass-chromium/test-finished-1.png"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e0bebf02887e2b1ece03-b55cf7760c6d740d6a05",
+          "file": "probe.test.ts",
+          "line": 3,
+          "column": 1
+        },
+        {
+          "title": "probe-step-fail",
+          "ok": false,
+          "tags": ["SC-1", "SC-2", "SC-3"],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "failed",
+                  "duration": 943,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('存在しない文言xyz')\nExpected: visible\nTimeout: 500ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('存在しない文言xyz') with timeout 500ms\u001b[22m\n\u001b[2m  - waiting for getByText('存在しない文言xyz')\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('存在しない文言xyz')\nExpected: visible\nTimeout: 500ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('存在しない文言xyz') with timeout 500ms\u001b[22m\n\u001b[2m  - waiting for getByText('存在しない文言xyz')\u001b[22m\n\n    at /repo/apps/web/e2e/probe.test.ts:15:48\n    at /repo/apps/web/e2e/probe.test.ts:14:3",
+                    "location": {
+                      "file": "/repo/apps/web/e2e/probe.test.ts",
+                      "column": 48,
+                      "line": 15
+                    },
+                    "snippet": "\u001b[0m \u001b[90m 13 |\u001b[39m   \u001b[36mawait\u001b[39m test\u001b[33m.\u001b[39mstep(\u001b[32m'SC-1 通る'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {})\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m   \u001b[36mawait\u001b[39m test\u001b[33m.\u001b[39mstep(\u001b[32m'SC-2 落ちる'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 15 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByText(\u001b[32m'存在しない文言xyz'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m500\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 16 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 17 |\u001b[39m   \u001b[36mawait\u001b[39m test\u001b[33m.\u001b[39mstep(\u001b[32m'SC-3 走らない'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {})\u001b[33m;\u001b[39m\n \u001b[90m 18 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/repo/apps/web/e2e/probe.test.ts",
+                        "column": 48,
+                        "line": 15
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('存在しない文言xyz')\nExpected: visible\nTimeout: 500ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('存在しない文言xyz') with timeout 500ms\u001b[22m\n\u001b[2m  - waiting for getByText('存在しない文言xyz')\u001b[22m\n\n\n  13 |   await test.step('SC-1 通る', async () => {});\n  14 |   await test.step('SC-2 落ちる', async () => {\n> 15 |     await expect(page.getByText('存在しない文言xyz')).toBeVisible({ timeout: 500 });\n     |                                                ^\n  16 |   });\n  17 |   await test.step('SC-3 走らない', async () => {});\n  18 | });\n    at /repo/apps/web/e2e/probe.test.ts:15:48\n    at /repo/apps/web/e2e/probe.test.ts:14:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "SC-1 通る",
+                      "duration": 0
+                    },
+                    {
+                      "title": "SC-2 落ちる",
+                      "duration": 519,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('存在しない文言xyz')\nExpected: visible\nTimeout: 500ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('存在しない文言xyz') with timeout 500ms\u001b[22m\n\u001b[2m  - waiting for getByText('存在しない文言xyz')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('存在しない文言xyz')\nExpected: visible\nTimeout: 500ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('存在しない文言xyz') with timeout 500ms\u001b[22m\n\u001b[2m  - waiting for getByText('存在しない文言xyz')\u001b[22m\n\n    at /repo/apps/web/e2e/probe.test.ts:15:48\n    at /repo/apps/web/e2e/probe.test.ts:14:3",
+                        "location": {
+                          "file": "/repo/apps/web/e2e/probe.test.ts",
+                          "column": 48,
+                          "line": 15
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 13 |\u001b[39m   \u001b[36mawait\u001b[39m test\u001b[33m.\u001b[39mstep(\u001b[32m'SC-1 通る'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {})\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m   \u001b[36mawait\u001b[39m test\u001b[33m.\u001b[39mstep(\u001b[32m'SC-2 落ちる'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 15 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByText(\u001b[32m'存在しない文言xyz'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m500\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 16 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 17 |\u001b[39m   \u001b[36mawait\u001b[39m test\u001b[33m.\u001b[39mstep(\u001b[32m'SC-3 走らない'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {})\u001b[33m;\u001b[39m\n \u001b[90m 18 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
+                      }
+                    }
+                  ],
+                  "startTime": "2026-10-18T08:03:45.351Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/repo/apps/web/test-results/probe-probe-step-fail-chromium/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/repo/apps/web/test-results/probe-probe-step-fail-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/repo/apps/web/e2e/probe.test.ts",
+                    "column": 48,
+                    "line": 15
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e0bebf02887e2b1ece03-8cb89d76d1767542db9a",
+          "file": "probe.test.ts",
+          "line": 11,
+          "column": 1
+        },
+        {
+          "title": "probe-outside-fail",
+          "ok": false,
+          "tags": ["SC-1"],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "failed",
+                  "duration": 463,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m1\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m1\u001b[39m\n    at /repo/apps/web/e2e/probe.test.ts:23:13",
+                    "location": {
+                      "file": "/repo/apps/web/e2e/probe.test.ts",
+                      "column": 13,
+                      "line": 23
+                    },
+                    "snippet": "\u001b[0m \u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/#/home'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m test\u001b[33m.\u001b[39mstep(\u001b[32m'SC-1 通る'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {})\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 23 |\u001b[39m   expect(\u001b[35m1\u001b[39m)\u001b[33m.\u001b[39mtoBe(\u001b[35m2\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 24 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 25 |\u001b[39m\n \u001b[90m 26 |\u001b[39m test(\u001b[32m'probe-timeout'\u001b[39m\u001b[33m,\u001b[39m { tag\u001b[33m:\u001b[39m [\u001b[32m'@SC-1'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'@SC-2'\u001b[39m] }\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/repo/apps/web/e2e/probe.test.ts",
+                        "column": 13,
+                        "line": 23
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m1\u001b[39m\n\n  21 |   await page.goto('/#/home');\n  22 |   await test.step('SC-1 通る', async () => {});\n> 23 |   expect(1).toBe(2);\n     |             ^\n  24 | });\n  25 |\n  26 | test('probe-timeout', { tag: ['@SC-1', '@SC-2'] }, async ({ page }) => {\n    at /repo/apps/web/e2e/probe.test.ts:23:13"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "SC-1 通る",
+                      "duration": 0
+                    }
+                  ],
+                  "startTime": "2026-10-18T08:03:45.351Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/repo/apps/web/test-results/probe-probe-outside-fail-chromium/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/repo/apps/web/test-results/probe-probe-outside-fail-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/repo/apps/web/e2e/probe.test.ts",
+                    "column": 13,
+                    "line": 23
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e0bebf02887e2b1ece03-5313457ff7a02df6350e",
+          "file": "probe.test.ts",
+          "line": 20,
+          "column": 1
+        },
+        {
+          "title": "probe-timeout",
+          "ok": false,
+          "tags": ["SC-1", "SC-2"],
+          "tests": [
+            {
+              "timeout": 2000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 3,
+                  "status": "timedOut",
+                  "duration": 2072,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 2000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 2000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 2000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "/repo/apps/web/e2e/probe.test.ts",
+                        "column": 16,
+                        "line": 31
+                      },
+                      "message": "Error: page.waitForTimeout: Test timeout of 2000ms exceeded.\n\n  29 |   await test.step('SC-1 通る', async () => {});\n  30 |   await test.step('SC-2 時間切れ', async () => {\n> 31 |     await page.waitForTimeout(10000);\n     |                ^\n  32 |   });\n  33 | });\n  34 |\n    at /repo/apps/web/e2e/probe.test.ts:31:16\n    at /repo/apps/web/e2e/probe.test.ts:30:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "SC-1 通る",
+                      "duration": 0
+                    },
+                    {
+                      "title": "SC-2 時間切れ",
+                      "duration": 1676,
+                      "error": {
+                        "message": "Error: page.waitForTimeout: Test timeout of 2000ms exceeded.",
+                        "stack": "Error: page.waitForTimeout: Test timeout of 2000ms exceeded.\n    at /repo/apps/web/e2e/probe.test.ts:31:16\n    at /repo/apps/web/e2e/probe.test.ts:30:3",
+                        "location": {
+                          "file": "/repo/apps/web/e2e/probe.test.ts",
+                          "column": 16,
+                          "line": 31
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 29 |\u001b[39m   \u001b[36mawait\u001b[39m test\u001b[33m.\u001b[39mstep(\u001b[32m'SC-1 通る'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {})\u001b[33m;\u001b[39m\n \u001b[90m 30 |\u001b[39m   \u001b[36mawait\u001b[39m test\u001b[33m.\u001b[39mstep(\u001b[32m'SC-2 時間切れ'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m10000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 34 |\u001b[39m\u001b[0m"
+                      }
+                    }
+                  ],
+                  "startTime": "2026-10-18T08:03:45.367Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/repo/apps/web/test-results/probe-probe-timeout-chromium/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/repo/apps/web/test-results/probe-probe-timeout-chromium/error-context.md"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e0bebf02887e2b1ece03-45cc2d04d2fd2d741430",
+          "file": "probe.test.ts",
+          "line": 26,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-18T08:03:38.103Z",
+    "duration": 9601.436,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 3,
+    "flaky": 0
+  }
+}

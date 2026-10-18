@@ -12,7 +12,6 @@
     "test:report": "vitest run --reporter=default --reporter=html --outputFile.html=vitest-report/index.html",
     "e2e": "playwright test",
     "check:publish": "node e2e/dev/scenario-publish.mjs",
-    "check:authoring": "node e2e/dev/scenario-authoring.mjs",
     "check:character": "node e2e/dev/character-rules.mjs",
     "msw:init": "msw init public/ --save"
   },

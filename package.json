@@ -5,7 +5,7 @@
   "packageManager": "pnpm@11.18.0",
   "scripts": {
     "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs && node scripts/check-doc-anchors.mjs && node scripts/check-terms.mjs && node scripts/check-screens.mjs && node scripts/check-spec-paths.mjs && node scripts/check-provisional.mjs && node scripts/check-suppressions.mjs && node scripts/check-biome-layers.mjs && node scripts/check-events.mjs && node scripts/sync-claude-rules.mjs --check",
+    "docs:build": "vitepress build docs && node scripts/check-doc-anchors.mjs && node scripts/check-terms.mjs && node scripts/check-screens.mjs && node scripts/check-spec-paths.mjs && node scripts/check-provisional.mjs && node scripts/check-suppressions.mjs && node scripts/check-biome-layers.mjs && node scripts/check-events.mjs && node scripts/check-usecase-tags.mjs && node scripts/sync-claude-rules.mjs --check",
     "docs:preview": "vitepress preview docs",
     "web:dev": "pnpm --filter @cartagraph/web dev",
     "web:dev:agent": "pnpm --filter @cartagraph/web dev --port 5174",
@@ -13,8 +13,8 @@
     "web:build": "pnpm --filter @cartagraph/web build",
     "web:test": "pnpm --filter @cartagraph/web test",
     "web:e2e": "pnpm --filter @cartagraph/web e2e",
+    "usecase:report": "node scripts/build-usecase-report.mjs",
     "web:check:publish": "pnpm --filter @cartagraph/web check:publish",
-    "web:check:authoring": "pnpm --filter @cartagraph/web check:authoring",
     "web:check:character": "pnpm --filter @cartagraph/web check:character",
     "web:typecheck": "pnpm --filter @cartagraph/web typecheck",
     "domain:test": "pnpm --filter @cartagraph/domain test",
