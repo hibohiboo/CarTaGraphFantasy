@@ -39,7 +39,6 @@ const addChoice = async (page: Page, name: string, target?: string) => {
 test('シナリオを画面だけで作り、公開し、GM 不在で結末まで遊ぶ', {
   tag: ['@SC-1', '@SC-2', '@SC-3', '@SC-5', '@SC-6', '@SC-8', '@PL-2'],
 }, async ({ page }) => {
-  test.setTimeout(120_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => {

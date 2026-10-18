@@ -1,5 +1,5 @@
 // 中核のユースケース（docs/architecture/use-cases.md の表）ごとに、それを確かめる E2E のテストと最新の結果
-// （通った・落ちた・手前で止まった・テストなし）を一覧にする HTML を作る。デプロイが E2E を流した後に回し、
+// （確認済・落ちた・手前で止まった・テストなし）を一覧にする HTML を作る。デプロイが E2E を流した後に回し、
 // GitHub Pages の /usecase-report/ に載せる（scripts/copy-test-reports-to-pages.mjs が写す）。
 // 一覧のページへのリンクは docs/architecture/test-report.md。タグ・ステップの書き方は docs/process/rules/testing.md「ユースケースの E2E」。
 //
@@ -127,7 +127,7 @@ const escapeHtml = (s) =>
     .replaceAll("'", '&#39;');
 
 const LABELS = {
-  passed: '通った',
+  passed: '確認済',
   failed: '落ちた',
   stopped: '手前で止まった',
   none: 'テストなし',
@@ -209,7 +209,7 @@ ul { margin:0; padding-left:1.2em; }
 </head>
 <body>
 <h1>ユースケースと E2E の結果</h1>
-<p class="lead">中核のユースケース（<a href="../architecture/use-cases.html">一覧</a>）ごとに、それを確かめる E2E のテストの最新の結果。「通った」は、タグを付けたステップの主な流れが通ったという意味で、ユースケースのほかの流れまで網羅したわけではない。テストの題から Playwright のレポートへ飛べる（<a href="../architecture/test-report.html">テストレポート</a>）。</p>
+<p class="lead">中核のユースケース（<a href="../architecture/use-cases.html">一覧</a>）ごとに、それを確かめる E2E のテストの最新の結果。「確認済」は、そのユースケースの正常パス（タグを付けたステップの主な流れ）を E2E で確認したという意味で、ほかの流れ（断る・分かれる）までは確認していない。テストの題から Playwright のレポートへ飛べる（<a href="../architecture/test-report.html">テストレポート</a>）。</p>
 <p class="meta">${meta}</p>
 ${notice}
 ${sections}
@@ -256,6 +256,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   writeFileSync(OUTPUT_FILE, html);
   const count = (s) => [...states.values()].filter((v) => v.state === s).length;
   console.log(
-    `${OUTPUT_FILE} を作りました（通った ${count('passed')}・落ちた ${count('failed')}・手前で止まった ${count('stopped')}・テストなし ${count('none')}・結果なし ${count('noresult')}）`,
+    `${OUTPUT_FILE} を作りました（確認済 ${count('passed')}・落ちた ${count('failed')}・手前で止まった ${count('stopped')}・テストなし ${count('none')}・結果なし ${count('noresult')}）`,
   );
 }

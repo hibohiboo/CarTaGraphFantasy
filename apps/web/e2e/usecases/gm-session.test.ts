@@ -11,7 +11,6 @@ import { expect, test } from '@playwright/test';
 test('GM が描写を書いて選択肢を配り・取り下げ、ドライバーとしてプレイする', {
   tag: ['@PL-1', '@PL-2'],
 }, async ({ page }) => {
-  test.setTimeout(60_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => {
