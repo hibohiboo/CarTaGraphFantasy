@@ -15,7 +15,6 @@
     "web:e2e": "pnpm --filter @cartagraph/web e2e",
     "usecase:report": "node scripts/build-usecase-report.mjs",
     "web:check:publish": "pnpm --filter @cartagraph/web check:publish",
-    "web:check:authoring": "pnpm --filter @cartagraph/web check:authoring",
     "web:check:character": "pnpm --filter @cartagraph/web check:character",
     "web:typecheck": "pnpm --filter @cartagraph/web typecheck",
     "domain:test": "pnpm --filter @cartagraph/domain test",
