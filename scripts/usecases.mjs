@@ -69,7 +69,9 @@ export function parseTestFile(source) {
     ...code.matchAll(/(?<![.\w])test\(\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1/g),
   ].some((m) => /@[A-Za-z]{2}-\d+/.test(m[2]));
   const forbidden = [
-    ...code.matchAll(/\b(test(?:\.describe|\.step)?\.(?:skip|fixme)|expect\.soft)\b/g),
+    ...code.matchAll(
+      /\b(test(?:\.describe|\.step)?\.(?:skip|fixme|only|fail|slow)|expect\.soft)\b/g,
+    ),
   ].map((m) => m[1]);
   const testCount = [...code.matchAll(/(?<![.\w])test\(/g)].length;
 

@@ -70,6 +70,9 @@ test('T7: usecases/ の書き方の制限（直書きでない題・題と descr
   bad('await test.step(title, async () => {});', '直書きでない');
   bad("test('題 @SC-1', async () => {});", '題の中にタグ');
   bad("test.describe('g', { tag: ['@SC-1'] }, () => {});", 'test.describe にタグ');
+  bad("test.only('b', async () => {});", 'test.only');
+  bad("test.fail('b', async () => {});", 'test.fail');
+  bad("await test.step('SC-1 もう一度', async () => {});", '複数ある');
   bad("test.skip('b', async () => {});", 'test.skip');
   bad("test.fixme('b', async () => {});", 'test.fixme');
   bad("await test.step.skip('SC-1 x', async () => {});", 'test.step.skip');

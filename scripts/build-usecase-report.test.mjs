@@ -152,8 +152,35 @@ test('T16: 結果なし（JSON が無い・壊れている・起動の失敗）�
     suites: [{ specs: [{ title: 'a', id: 'i', tags: ['SC-1'], tests: [{ results: [] }] }] }],
   };
   assert.equal(stateOf(empty, 'SC-1'), 'noresult');
-  // errors が無ければ、テストの無い結果は「テストなし」
-  assert.equal(stateOf({ errors: [], suites: [] }, 'SC-1'), 'none');
+  // テストが1つも無い JSON（--grep の食い違いなど）は、E2E が動いていないので結果なし
+  assert.equal(stateOf({ errors: [], suites: [] }, 'SC-1'), 'noresult');
+  // テストはあるが、そのタグを持つものが無ければ「テストなし」
+  const other = jsonOf(specOf('a', ['SC-1'], { status: 'passed', steps: [step('SC-1 a')] }));
+  assert.equal(stateOf(other, 'SC-4'), 'none');
+});
+
+test('T12: ステップの外で落ちたとき、通った ID は通ったまま、次の走らなかった ID が落ちた', () => {
+  const json = jsonOf(
+    specOf('a', ['PL-1', 'PL-2'], {
+      status: 'failed',
+      steps: [step('PL-1 a'), step('下ごしらえ', { error: { message: 'x' } })],
+    }),
+  );
+  const states = computeStates(
+    [
+      { id: 'PL-1', name: 'a', domain: 'プレイ' },
+      { id: 'PL-2', name: 'b', domain: 'プレイ' },
+    ],
+    json,
+  );
+  assert.equal(states.get('PL-1').state, 'passed');
+  assert.equal(states.get('PL-2').state, 'failed');
+});
+
+test('T12: skipped は落ちたでなく手前で止まった', () => {
+  const json = jsonOf(specOf('a', ['SC-1', 'SC-2'], { status: 'skipped', steps: [] }));
+  assert.equal(stateOf(json, 'SC-1'), 'stopped');
+  assert.equal(stateOf(json, 'SC-2'), 'stopped');
 });
 
 test('T17: 組み立て（題・レポートへのリンク・見出しへのリンク・開始時刻・エスケープ）', () => {

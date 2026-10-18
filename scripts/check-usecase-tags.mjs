@@ -52,6 +52,11 @@ function usecaseProblems(t) {
       (word) => `${word} は使わない（skip したステップは結果で「通った」に見える）`,
     ),
   ];
+  // 走らなかったステップは結果に記録されない。同じ ID が2つあると、1つ目が通っただけで「通った」に見える
+  const duplicated = [...stepSet].filter((id) => t.stepIds.filter((x) => x === id).length > 1);
+  for (const id of duplicated) {
+    problems.push(`ステップの ID ${id} が複数ある。同じ ID のステップは1つにまとめる`);
+  }
   if (t.nonLiteralSteps > 0) {
     problems.push(
       `test.step の最初の引数が文字列の直書きでない（テンプレート文字列・変数）ものが ${t.nonLiteralSteps} 件ある。静的に読めないので直書きにする`,

@@ -26,7 +26,7 @@ const strongest = (a, b) => (!a || (RANK[b] ?? 0) > (RANK[a] ?? 0) ? b : a);
 export function idSteps(steps = []) {
   return steps.flatMap((step) => {
     const id = step.title?.match(STEP_ID_RE)?.[1];
-    // 時間切れで走りかけのステップは duration が負のことがある。error が無くても通ったとは言わない
+    // 念のため：duration が負（走りかけ）で error も無いステップは、通ったとは言わない
     const own = id
       ? [{ id, state: step.error ? 'failed' : step.duration >= 0 ? 'passed' : 'stopped' }]
       : [];
@@ -43,8 +43,15 @@ export function runStates(tags, result) {
   const found = idSteps(result.steps);
   const states = new Map();
   for (const { id, state } of found) states.set(id, strongest(states.get(id), state));
-  if (result.status !== 'passed' && ![...states.values()].includes('failed')) {
-    const last = found.at(-1)?.id ?? tags[0];
+  // skipped は落ちたのではなく走らなかった（手前で止まった扱いのまま）
+  if (
+    result.status !== 'passed' &&
+    result.status !== 'skipped' &&
+    ![...states.values()].includes('failed')
+  ) {
+    // 落ちた箇所に最も近い、まだ走っていない ID（無ければ最後に記録された ID）を落ちた扱いにする
+    const next = tags.find((id) => !states.has(id));
+    const last = next ?? found.at(-1)?.id ?? tags[0];
     if (last) states.set(last, 'failed');
   }
   return new Map(tags.map((id) => [id, states.get(id) ?? 'stopped']));
@@ -68,8 +75,11 @@ export function collectSpecs(json) {
 /** 結果が読めない（JSON が無い・壊れている、起動の失敗で spec が無い／すべて結果が空）か */
 export function hasNoResults(json) {
   if (!json || typeof json !== 'object') return true;
+  const specs = collectSpecs(json);
+  // テストが1つも無い JSON（--grep の食い違い・testDir の誤りなど）は、E2E が動いていないので「テストなし」とは区別する
+  if (specs.length === 0) return true;
   if ((json.errors ?? []).length === 0) return false;
-  return collectSpecs(json).every((spec) => spec.runs.length === 0);
+  return specs.every((spec) => spec.runs.length === 0);
 }
 
 /**

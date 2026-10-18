@@ -70,10 +70,8 @@ test('シナリオを画面だけで作り、公開し、GM 不在で結末ま�
     await save(page);
   });
 
-  await test.step('SC-2 導入に選択肢を置き、シーンへ移る', async () => {
-    await deckRow(page, '導入').getByRole('link', { name: '編集' }).click();
-    await expect(page.getByRole('heading', { name: '導入の情報' })).toBeVisible();
-    await addChoice(page, '村へ', 'シーン：1 新しいシーン');
+  await test.step('SC-3 結末タグを決める', async () => {
+    await page.locator('input[aria-label="結末タグ"]').fill('村を見た');
     await save(page);
   });
 
@@ -96,24 +94,31 @@ test('シナリオを画面だけで作り、公開し、GM 不在で結末ま�
     await expect(warnings).toContainText('先へ進む選択肢がありません');
 
     await addChoice(page, '帰る', '結末：結末');
-    await expect(warnings).toHaveCount(0);
+    // 導入からの経路はまだ無いので、「届きません」の注意は残る。行き止まりの注意だけが消える
+    await expect(warnings.getByText('先へ進む選択肢がありません')).toHaveCount(0);
     await save(page);
   });
 
-  await test.step('SC-2 移り先のシーンは消せない', async () => {
+  // 同じ ID のステップは1つにまとめる（走らなかったステップは結果に記録されず、手前で止まったと判定できないため）
+  await test.step('SC-2 導入に選択肢を置き、移り先のシーンは消せず、未保存の確かめが出る', async () => {
+    await go(page, `/creator/scenarios/${id}`);
+    await expect(page.getByRole('heading', { level: 1, name: TITLE })).toBeVisible();
+    await deckRow(page, '導入').getByRole('link', { name: '編集' }).click();
+    await expect(page.getByRole('heading', { name: '導入の情報' })).toBeVisible();
+    await addChoice(page, '村へ', 'シーン：1 新しいシーン');
+    await save(page);
+
     await go(page, `/creator/scenarios/${id}`);
     await expect(page.getByRole('heading', { level: 1, name: TITLE })).toBeVisible();
     await deckRow(page, '1 新しいシーン').getByRole('button', { name: '削除' }).click();
     await expect(page.getByRole('alert')).toContainText('から指されているので削除できません');
-  });
 
-  await test.step('SC-3 結末タグを決める', async () => {
-    await page.locator('input[aria-label="結末タグ"]').fill('村を見た');
-    await save(page);
-  });
-
-  await test.step('SC-2 未保存のまま移ろうとすると確かめが出る', async () => {
     // 止められるのは画面内のリンク・戻るだけ。location.hash を直接書く移動はルーターの外なので止められない
+    // 確かめの回数も数える（1回の操作で確かめが2回出ないこと）
+    let dialogCount = 0;
+    page.on('dialog', () => {
+      dialogCount++;
+    });
     const titleInput = page.getByLabel('タイトル', { exact: true });
     await titleInput.fill(`${TITLE}（編集中）`);
 
@@ -124,12 +129,14 @@ test('シナリオを画面だけで作り、公開し、GM 不在で結末ま�
     // 断ると、編集の画面にしか無い要素が残り、一覧の画面にしか無い要素は出ない
     await expect(titleInput).toHaveValue(`${TITLE}（編集中）`);
     await expect(page.getByPlaceholder('シナリオのタイトル')).toHaveCount(0);
+    expect(dialogCount).toBe(1);
 
     const second = page.waitForEvent('dialog');
     const back2 = page.getByRole('link', { name: '一覧へ戻る' }).click();
     await (await second).accept();
     await back2;
     await expect(page.getByPlaceholder('シナリオのタイトル')).toBeVisible();
+    expect(dialogCount).toBe(2);
 
     // 確かめを断った編集は捨てられている
     await go(page, `/creator/scenarios/${id}`);
