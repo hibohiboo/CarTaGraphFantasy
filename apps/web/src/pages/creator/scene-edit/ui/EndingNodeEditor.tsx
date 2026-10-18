@@ -1,9 +1,13 @@
 import type { DeckNode, Scenario } from '@cartagraph/domain/scenario/model';
 import { type ReactNode, useMemo, useState } from 'react';
 import { Link } from 'react-router';
+import { useUnsavedGuard } from '@/shared/lib/useUnsavedGuard';
 import s from '@/shared/ui/page.module.css';
 import { ErrorNote, Field, PageHeader, Panel } from '@/shared/ui/ui';
+import { nodeWarnings, sceneLinkTargets } from '../lib/sceneCheck';
 import { SaveButton } from './SaveButton';
+import { SceneLinks } from './SceneLinks';
+import { SceneWarnings } from './SceneWarnings';
 
 /**
  * 結末のノードの編集：名前と「指す結末」だけ（docs/plans/2026-10-07-選択肢の移り先と結末の編集.md D4）。
@@ -29,6 +33,9 @@ export function EndingNodeEditor({
 }) {
   const [draft, setDraft] = useState<DeckNode>(node);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(node), [draft, node]);
+  useUnsavedGuard(dirty);
+  const warnings = useMemo(() => nodeWarnings(sc, draft), [sc, draft]);
+  const links = useMemo(() => sceneLinkTargets(sc.deck, draft), [sc.deck, draft]);
 
   return (
     <>
@@ -50,6 +57,7 @@ export function EndingNodeEditor({
       />
       {error ? <ErrorNote error={error} /> : null}
       {notes}
+      {readOnly ? null : <SceneWarnings kinds={warnings} />}
       <Panel
         title="結末のノードの情報"
         sub="GM 不在のセッションでは、このノードへ進むと終わる。指す結末に結末タグがあれば、ドライバーのキャラクターにすぐ付く（GM 不在のソロの仮ルール）。"
@@ -85,6 +93,7 @@ export function EndingNodeEditor({
           </Field>
         </div>
       </Panel>
+      <SceneLinks scenarioId={sc.id} links={links} />
     </>
   );
 }

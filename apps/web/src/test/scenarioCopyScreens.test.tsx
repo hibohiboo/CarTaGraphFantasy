@@ -91,8 +91,9 @@ describe('コピーの失敗と二重押し（T8b）', () => {
     expect(await draftCount()).toBe(before + 1);
   });
 
-  it('未保存の編集があってもコピーでき、コピーに写るのは公開版（編集中の下書きではない）', async () => {
+  it('未保存の編集があっても確かめて認めればコピーでき、コピーに写るのは公開版（編集中の下書きではない）', async () => {
     const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const router = renderAt('/creator/scenarios/sc-galleon');
     await heading('鉄鎖のガレオン船');
     await user.type(screen.getByLabelText('タイトル'), '（書きかけ）');

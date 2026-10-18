@@ -11,7 +11,7 @@ import type { ScenarioDraftView } from '@/entities/scenario/api/types';
 import { api } from '@/shared/api/api';
 import { setScenarioFileStore } from '../mocks/handlers';
 import { server } from '../mocks/node';
-import { renderAt } from './renderAt';
+import { deckNodeName, renderAt } from './renderAt';
 
 const SAVED = (id: string) => `scenarios/${id}.json に保存しました`;
 const DEMO = 'デモのため保存されません（リロードで消えます）';
@@ -176,7 +176,7 @@ describe('シナリオ編集の公開・公開し直す・非公開・保存（T
       ),
     });
     renderAt('/creator/scenarios/sc-galleon');
-    const s1 = (await screen.findByText('1 鎖の桟橋')).closest('li, div') as HTMLElement;
+    const s1 = (await deckNodeName('1 鎖の桟橋')).closest('li, div') as HTMLElement;
     await user.click(
       within(s1.parentElement as HTMLElement).getAllByRole('button', {
         name: '削除',
@@ -185,7 +185,7 @@ describe('シナリオ編集の公開・公開し直す・非公開・保存（T
     expect(await screen.findByRole('alert')).toHaveTextContent(
       '『桟橋へ』（港の酒場）から指されているので削除できません',
     );
-    expect(screen.getByText('1 鎖の桟橋')).toBeInTheDocument();
+    expect(await deckNodeName('1 鎖の桟橋')).toBeInTheDocument();
     expect(button('保存')).toBeDisabled();
     expect(within(header()).getByText('シナリオ集に公開中')).toBeInTheDocument();
     expect(written).toEqual([]);
@@ -284,7 +284,7 @@ describe('編集画面の境界', () => {
   it('「じっくり進行に」して「通常進行に」戻して保存しても、公開版と違う変更ありにならない', async () => {
     const user = userEvent.setup();
     renderAt('/creator/scenarios/sc-galleon');
-    const row = (await screen.findByText('1 鎖の桟橋')).closest('[data-kind]') as HTMLElement;
+    const row = (await deckNodeName('1 鎖の桟橋')).closest('[data-kind]') as HTMLElement;
     await user.click(within(row).getByRole('button', { name: 'じっくり進行に' }));
     await user.click(within(row).getByRole('button', { name: '通常進行に' }));
     // 戻すと dense のキーごと消えるので、編集前と同じ（保存するものが無い）になる

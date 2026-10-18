@@ -95,6 +95,31 @@ describe('parseScenarioFile の誤りの文', () => {
   });
 });
 
+// 参照の誤りとシナリオタイプの食い違いが両方あるとき、見出しごとにまとめて返す（文面の完全一致。
+// 公開の前の確かめ publishErrors が節を切り出して共有しても、サーバーの文面を変えないため）
+describe('safeParseScenarioFile の節の文面', () => {
+  it('参照の誤りとシナリオタイプの食い違いを、見出しごとに1つのメッセージで返す', () => {
+    const both = raw({
+      scenarioType: { noCombat: true, noCheck: false },
+      spaceModel: '1d',
+      deck: [
+        {
+          id: 'a',
+          kind: 'intro',
+          name: '導入',
+          cards: [{ id: 'lost', kind: 'choice', name: '迷う', tags: [], nextNodeId: 'nowhere' }],
+        },
+      ],
+    });
+    expect(safeParseScenarioFile(PATH, both)).toEqual({
+      ok: false,
+      message:
+        `${PATH} の参照に誤りがある:\n- カード「lost」の nextNodeId「nowhere」のノードが無い\n` +
+        `${PATH} のシナリオタイプと中身が食い違っている:\n- 「戦闘なし」なのに、空間モデル「1d」を持っている`,
+    });
+  });
+});
+
 const brokenRef = () =>
   raw({
     deck: [
