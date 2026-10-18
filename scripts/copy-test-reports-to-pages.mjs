@@ -12,6 +12,8 @@ import { resolve } from 'node:path';
 const reports = [
   // Playwright（pnpm web:e2e）
   ['apps/web/playwright-report', 'e2e-report'],
+  // ユースケースと E2E の結果（scripts/build-usecase-report.mjs。deploy.yml が E2E の後に作る）
+  ['apps/web/usecase-report', 'usecase-report'],
   // Vitest（pnpm test:report）
   ['apps/web/vitest-report', 'vitest-report/web'],
   ['packages/domain/vitest-report', 'vitest-report/domain'],
