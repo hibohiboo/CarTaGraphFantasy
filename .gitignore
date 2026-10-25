@@ -9,6 +9,8 @@ apps/web/test-results/
 # Vitest の JSON（pnpm test:report。ルールとテストの結果のページの入力）と、そのページ（pnpm rule:report）
 */*/vitest-results/
 /rule-test-report/
+# トレースのページ（pnpm trace:report）
+/trace-report/
 *.log
 # 開発サーバーの書き込みの口が書いている途中の一時ファイル（apps/web/vite/scenarioFilePlugin.ts）
 scenarios/.*.tmp

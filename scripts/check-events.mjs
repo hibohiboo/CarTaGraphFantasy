@@ -60,9 +60,17 @@ export function parseAggregateEvents(md) {
   }));
 }
 
+/** aggregates.md の「集約の一覧」の表から、{ context（コンテキスト）, name（集約） } を読む */
+export function parseAggregateList(md) {
+  return tableRows(section(md, '集約の一覧')).map((c) => ({
+    context: c[0] ?? '',
+    name: c[1] ?? '',
+  }));
+}
+
 /** aggregates.md の「集約の一覧」の表から、集約の名前（2列目）を読む */
 export function parseAggregateNames(md) {
-  return tableRows(section(md, '集約の一覧')).map((c) => c[1] ?? '');
+  return parseAggregateList(md).map((a) => a.name);
 }
 
 /** event-flows.md の流れの表（イベントの列を持つ表）を { event, aggregate } の配列にする。1行に複数のイベントは「・」で分ける */

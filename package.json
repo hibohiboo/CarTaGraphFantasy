@@ -15,6 +15,7 @@
     "web:e2e": "pnpm --filter @cartagraph/web e2e",
     "usecase:report": "node scripts/build-usecase-report.mjs",
     "rule:report": "node scripts/build-rule-test-report.mjs",
+    "trace:report": "node scripts/build-trace-report.mjs",
     "web:check:publish": "pnpm --filter @cartagraph/web check:publish",
     "web:check:character": "pnpm --filter @cartagraph/web check:character",
     "web:typecheck": "pnpm --filter @cartagraph/web typecheck",

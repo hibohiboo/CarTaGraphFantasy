@@ -247,7 +247,7 @@ export function buildRuleReportHtml({
 }
 
 /** JSON を読む。無い・壊れている・形が違うときは null */
-function readResults(file) {
+export function readResults(file) {
   try {
     const json = JSON.parse(readFileSync(file, 'utf8'));
     return Array.isArray(json?.testResults) ? json : null;
@@ -256,7 +256,7 @@ function readResults(file) {
   }
 }
 
-const readText = (file) => (existsSync(file) ? readFileSync(file, 'utf8') : null);
+export const readText = (file) => (existsSync(file) ? readFileSync(file, 'utf8') : null);
 
 /** ファイルを読んでページを書く。戻り値は書いたファイルと状態の数 */
 export function main({
