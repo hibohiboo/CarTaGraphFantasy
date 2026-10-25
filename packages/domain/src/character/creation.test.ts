@@ -146,7 +146,9 @@ describe('defaultAbilities', () => {
   });
 });
 
-describe('creationStats（作成時の値。仮ルール）', () => {
+describe('creationStats（作成時の値。仮ルール）', {
+  tags: ['rule:character-growth/PCが持つデータ'],
+}, () => {
   // 20・10（いまの rules/）と区別するため、別の値のルールで確かめる
   const rules = parse({ initialHp: 7, initialBaseActionValue: 3 });
 

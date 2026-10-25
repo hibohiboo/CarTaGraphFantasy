@@ -47,7 +47,7 @@ const nestedExam: DeckNode[] = [
   { id: 'intro', kind: 'intro', name: '導入', cards: [], children: [examNode] },
 ];
 
-describe('scenarioTypeLabel', () => {
+describe('scenarioTypeLabel', { tags: ['rule:scenario-type/タイプの宣言'] }, () => {
   it.each([
     [{ noCombat: false, noCheck: false }, '冒険'],
     [{ noCombat: true, noCheck: false }, '戦闘なし'],
@@ -58,7 +58,9 @@ describe('scenarioTypeLabel', () => {
   });
 });
 
-describe('findScenarioTypeErrors（宣言と中身の食い違い）', () => {
+describe('findScenarioTypeErrors（宣言と中身の食い違い）', {
+  tags: ['rule:scenario-type/タイプの宣言'],
+}, () => {
   it('戦闘なしなのに自動戦闘のシーン（入れ子も）があれば、ノードの id を含む誤り', () => {
     const errors = findScenarioTypeErrors(
       scenario({ scenarioType: { noCombat: true, noCheck: false }, deck: nestedExam }),

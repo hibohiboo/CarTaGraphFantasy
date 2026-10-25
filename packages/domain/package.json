@@ -10,7 +10,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "test:report": "vitest run --reporter=default --reporter=html --outputFile.html=vitest-report/index.html"
+    "test:report": "vitest run --reporter=default --reporter=html --reporter=json --outputFile.html=vitest-report/index.html --outputFile.json=vitest-results/results.json"
   },
   "devDependencies": {
     "@vitest/ui": "^4.1.11",

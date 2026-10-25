@@ -20,8 +20,9 @@ API ドキュメント：`https://hibohiboo.github.io/CarTaGraphFantasy/api-docs
 コードのディレクトリ構成と依存の向きは、[アーキテクチャルール](../process/rules/architecture.md)の「構造」「依存の向き」が正。ここでは、そこに書いていない GitHub Pages 用のスクリプトだけを挙げる。
 
 - `scripts/copy-web-to-pages.mjs` … ビルド成果物を docs の dist 配下 `app/` へコピー
-- `scripts/copy-test-reports-to-pages.mjs` … Playwright・Vitest の HTML レポートを docs の dist 配下 `e2e-report/`・`usecase-report/`・`vitest-report/` へコピー
+- `scripts/copy-test-reports-to-pages.mjs` … Playwright・Vitest の HTML レポートを docs の dist 配下 `e2e-report/`・`usecase-report/`・`rule-test-report/`・`vitest-report/` へコピー
 - `scripts/build-usecase-report.mjs` … E2E の結果（`apps/web/e2e-results/results.json`）と use-cases.md の表から、ユースケースごとの結果のページ `apps/web/usecase-report/index.html` を作る。デプロイが E2E の後に流し、`copy-test-reports-to-pages.mjs` が dist 配下 `usecase-report/` へ写す（表の読み取りは `scripts/usecases.mjs`、タグの検査は `scripts/check-usecase-tags.mjs`。[テストレポート](test-report.md)）
+- `scripts/build-rule-test-report.mjs` … 3パッケージの Vitest の JSON（`vitest-results/results.json`）とルールのページの見出し（`scripts/rule-sections.mjs`）から、節ごとのテストの結果のページ `rule-test-report/index.html` を作る。デプロイが Vitest の後に流し、`copy-test-reports-to-pages.mjs` が dist 配下 `rule-test-report/` へ写す（対象外の一覧は [rule-test-exclusions.md](rule-test-exclusions.md)、検査は `scripts/check-rule-test-exclusions.mjs`。[テストレポート](test-report.md)）
 - `scripts/build-api-docs.ts` … API ドキュメント（OpenAPI の文書と Redoc の HTML）を docs の dist 配下 `api-docs/` に作る（下の「API ドキュメント」）
 
 ## シナリオの JSON

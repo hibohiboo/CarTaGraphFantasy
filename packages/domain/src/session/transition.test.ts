@@ -85,7 +85,9 @@ describe('planTransition', () => {
     expect(plan.ok && plan.ended).toBe(true);
   });
 
-  it('GM不在でないセッションでは自動戦闘のノードへ進めない（自動戦闘はGM不在のセッション限定）', () => {
+  it('GM不在でないセッションでは自動戦闘のノードへ進めない（自動戦闘はGM不在のセッション限定）', {
+    tags: ['rule:auto-combat/優先順位リスト'],
+  }, () => {
     expect(planTransition({ deck, endings: [] }, humanGm, 'exam', [])).toEqual({
       ok: false,
       error: expect.stringMatching(/自動戦闘/),
@@ -110,7 +112,9 @@ describe('planTransition', () => {
   });
 });
 
-describe('dealChoices（配る条件。docs/cartagraph/solo-village.md、仮ルール）', () => {
+describe('dealChoices（配る条件。docs/cartagraph/solo-village.md、仮ルール）', {
+  tags: ['rule:solo-village/配る条件・使える条件'],
+}, () => {
   const voucher: CardDef = { id: 'v', kind: 'item', name: '報酬', tags: ['引換'] };
   const done: CardDef = { id: 'a', kind: 'info', name: '達成', tags: ['達成', '達成:猪'] };
   const square: DeckNode = {
@@ -158,7 +162,9 @@ describe('dealChoices（配る条件。docs/cartagraph/solo-village.md、仮ル�
   });
 });
 
-describe('planTransition の結末タグ（docs/cartagraph/solo-village.md「結末タグ」、仮ルール）', () => {
+describe('planTransition の結末タグ（docs/cartagraph/solo-village.md「結末タグ」、仮ルール）', {
+  tags: ['rule:solo-village/結末タグ'],
+}, () => {
   const endings = [
     { id: 'e-ok', name: '旅立ち', grantsTag: '冒険者になった' },
     { id: 'e-plain', name: '静かな結末' },

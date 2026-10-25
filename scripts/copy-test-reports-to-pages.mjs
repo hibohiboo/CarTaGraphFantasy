@@ -14,6 +14,8 @@ const reports = [
   ['apps/web/playwright-report', 'e2e-report'],
   // ユースケースと E2E の結果（scripts/build-usecase-report.mjs。deploy.yml が E2E の後に作る）
   ['apps/web/usecase-report', 'usecase-report'],
+  // ルールのページの節ごとのテストの結果（scripts/build-rule-test-report.mjs。deploy.yml が Vitest の後に作る）
+  ['rule-test-report', 'rule-test-report'],
   // Vitest（pnpm test:report）
   ['apps/web/vitest-report', 'vitest-report/web'],
   ['packages/domain/vitest-report', 'vitest-report/domain'],

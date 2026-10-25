@@ -16,7 +16,9 @@ const endingCard = (
 });
 const held = (...deck: CardDef[]) => ({ deck });
 
-describe('replayBlockedBy（再挑戦不可。docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）', () => {
+describe('replayBlockedBy（再挑戦不可。docs/cartagraph/scenario-flow.md「連作・キャンペーンの表現：結末タグ」）', {
+  tags: ['rule:scenario-flow/連作・キャンペーンの表現：結末タグ'],
+}, () => {
   it('そのシナリオの再挑戦不可の結末タグのカードを持つ PC は、そのカードの結末が返る', () => {
     expect(replayBlockedBy('sc-1', held(endingCard('sc-1', true)))).toEqual({
       scenarioId: 'sc-1',
@@ -55,7 +57,9 @@ describe('replayBlockedBy（再挑戦不可。docs/cartagraph/scenario-flow.md�
   });
 });
 
-describe('endingDefSchema の noReplay', () => {
+describe('endingDefSchema の noReplay', {
+  tags: ['rule:scenario-flow/連作・キャンペーンの表現：結末タグ'],
+}, () => {
   it('noReplay: true で grantsTag の無い結末は断る。grantsTag があれば通る', () => {
     expect(endingDefSchema.safeParse({ id: 'e', name: '結末', noReplay: true }).success).toBe(
       false,

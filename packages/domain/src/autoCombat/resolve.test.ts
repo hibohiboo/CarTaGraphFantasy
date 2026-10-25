@@ -63,7 +63,7 @@ const heal = (n: number): CombatEffect => ({
   dice: { count: 1, sides: 1, bonus: n - 1 },
 });
 
-describe('pickCard', () => {
+describe('pickCard', { tags: ['rule:auto-combat/解決の手順'] }, () => {
   const light = card('軽', 2, hit(2));
   const heavy = card('重', 5, hit(6));
   const aid = card('手当', 3, heal(4));
@@ -92,7 +92,7 @@ describe('pickCard', () => {
     expect(pickCard({ hp: 10, maxHp: 10, actionValue: 1 }, list(heavy, light, aid))).toBeNull();
   });
 
-  describe('使う条件（HPの段階）', () => {
+  describe('使う条件（HPの段階）', { tags: ['rule:auto-combat/優先順位リスト'] }, () => {
     const at = (hp: number, maxHp: number) => ({ hp, maxHp, actionValue: 10 });
 
     it('「半分以下」は、最大HP20ならHP10で使え、11では使えず次の候補へ', () => {
@@ -121,7 +121,7 @@ describe('pickCard', () => {
   });
 });
 
-describe('validatePriority', () => {
+describe('validatePriority', { tags: ['rule:auto-combat/優先順位リスト'] }, () => {
   it('1枚ちょうどの正しいリストなら null', () => {
     expect(validatePriority(list(card('a', 1, hit(1))))).toBeNull();
   });
@@ -223,7 +223,9 @@ describe('resolveAutoCombat', () => {
     });
   });
 
-  describe('canFight（自動戦闘のシーンへ進めるか）', () => {
+  describe('canFight（自動戦闘のシーンへ進めるか）', {
+    tags: ['rule:auto-combat/優先順位リスト'],
+  }, () => {
     const fightable = card('打', 3, hit(1));
 
     it('HP・行動値・自動戦闘の効果を持つカードがそろっていれば null', () => {
@@ -268,7 +270,9 @@ describe('resolveAutoCombat', () => {
     });
   });
 
-  it('カウント制どおりの行動順になる（同じラウンドの再行動・途中の同値はスタック・払えなければパス）', () => {
+  it('カウント制どおりの行動順になる（同じラウンドの再行動・途中の同値はスタック・払えなければパス）', {
+    tags: ['rule:auto-combat/解決の手順'],
+  }, () => {
     // PL 行動値12・コスト3、敵 行動値10・コスト4。
     // 12:PL→9 / 10:敵→6 / 9:PL→6 / 6:両者6だが後から6になったPLが先→3、続いて敵→2 / 3:PL→0 / 2:敵は払えずパス
     const pl = fighter('PL', 100, 12, [card('突', 3, hit(1))]);
@@ -284,7 +288,9 @@ describe('resolveAutoCombat', () => {
     ]);
   });
 
-  it('行動値13・コスト5なら、同じラウンドの8と3で再行動する', () => {
+  it('行動値13・コスト5なら、同じラウンドの8と3で再行動する', {
+    tags: ['rule:auto-combat/解決の手順'],
+  }, () => {
     const pl = fighter('PL', 100, 13, [card('斬', 5, hit(1))]);
     const enemy = fighter('敵', 100, 1, [card('打', 1, hit(1))]);
     const counts = run(pl, enemy, 1)
@@ -293,7 +299,9 @@ describe('resolveAutoCombat', () => {
     expect(counts).toEqual([13, 8, 3]);
   });
 
-  it('パスしたラウンドの次のラウンドは、基本行動値から始まる（持ち越しはない）', () => {
+  it('パスしたラウンドの次のラウンドは、基本行動値から始まる（持ち越しはない）', {
+    tags: ['rule:auto-combat/解決の手順'],
+  }, () => {
     // PL 行動値5・コスト3：5で行動→2でパス。次のラウンドも5から行動する
     const pl = fighter('PL', 100, 5, [card('突', 3, hit(1))]);
     const enemy = fighter('敵', 100, 1, [card('打', 1, hit(1))]);
@@ -306,7 +314,9 @@ describe('resolveAutoCombat', () => {
     ]);
   });
 
-  it('ラウンド開始時に行動値が同じならPLが先。互いに一撃で倒せるなら、PLが勝ち敵は行動しない（同時HP0は起きない）', () => {
+  it('ラウンド開始時に行動値が同じならPLが先。互いに一撃で倒せるなら、PLが勝ち敵は行動しない（同時HP0は起きない）', {
+    tags: ['rule:auto-combat/解決の手順'],
+  }, () => {
     const pl = fighter('PL', 5, 10, [card('突', 3, hit(5))]);
     const enemy = fighter('敵', 5, 10, [card('打', 3, hit(5))]);
     const r = run(pl, enemy);
@@ -315,7 +325,9 @@ describe('resolveAutoCombat', () => {
     expect(r.log[0]).toMatchObject({ plHp: 5, enemyHp: 0, amount: 5 });
   });
 
-  it('敵のHPがちょうど0になったら勝利し、そこでログが終わる', () => {
+  it('敵のHPがちょうど0になったら勝利し、そこでログが終わる', {
+    tags: ['rule:auto-combat/解決の手順'],
+  }, () => {
     const pl = fighter('PL', 10, 10, [card('突', 5, hit(3))]);
     const enemy = fighter('敵', 6, 1, [card('打', 1, hit(1))]);
     const r = run(pl, enemy);
@@ -323,7 +335,7 @@ describe('resolveAutoCombat', () => {
     expect(trace(r.log)).toEqual(['pl@10:突', 'pl@5:突']);
   });
 
-  it('敵のHPが1残れば戦闘は続く', () => {
+  it('敵のHPが1残れば戦闘は続く', { tags: ['rule:auto-combat/解決の手順'] }, () => {
     const pl = fighter('PL', 10, 10, [card('突', 5, hit(3))]);
     const enemy = fighter('敵', 7, 1, [card('打', 1, hit(1))]);
     const r = run(pl, enemy);
@@ -332,7 +344,9 @@ describe('resolveAutoCombat', () => {
     expect(r).toMatchObject({ outcome: 'win', rounds: 2 });
   });
 
-  it('PLのHPが0になったら敗北する（途中の同値は後からその値になった敵が先）', () => {
+  it('PLのHPが0になったら敗北する（途中の同値は後からその値になった敵が先）', {
+    tags: ['rule:auto-combat/解決の手順'],
+  }, () => {
     const pl = fighter('PL', 4, 5, [card('突', 5, hit(1))]);
     const enemy = fighter('敵', 100, 10, [card('打', 5, hit(2))]);
     const r = run(pl, enemy);
@@ -341,20 +355,24 @@ describe('resolveAutoCombat', () => {
     expect(r.log.at(-1)).toMatchObject({ plHp: 0 });
   });
 
-  it('ラウンド上限ちょうどのラウンドで決着すれば勝利', () => {
+  it('ラウンド上限ちょうどのラウンドで決着すれば勝利', {
+    tags: ['rule:auto-combat/解決の手順'],
+  }, () => {
     // 1ラウンドに1ダメージ×1回。敵HP3なら3ラウンド目に決着
     const pl = fighter('PL', 10, 3, [card('突', 3, hit(1))]);
     const enemy = fighter('敵', 3, 1, [card('打', 1, hit(0))]);
     expect(run(pl, enemy, 3)).toMatchObject({ outcome: 'win', rounds: 3 });
   });
 
-  it('ラウンド上限までに決着しなければ時間切れ', () => {
+  it('ラウンド上限までに決着しなければ時間切れ', { tags: ['rule:auto-combat/解決の手順'] }, () => {
     const pl = fighter('PL', 10, 3, [card('突', 3, hit(1))]);
     const enemy = fighter('敵', 3, 1, [card('打', 1, hit(0))]);
     expect(run(pl, enemy, 2)).toMatchObject({ outcome: 'timeout', rounds: 2 });
   });
 
-  it('回復は最大HPで頭打ちになり、最大に戻った後は攻撃を選ぶ', () => {
+  it('回復は最大HPで頭打ちになり、最大に戻った後は攻撃を選ぶ', {
+    tags: ['rule:auto-combat/解決の手順'],
+  }, () => {
     // 敵の2ダメージを受けた後、PLは回復(5)で最大10まで戻り（実際の回復量2）、次は攻撃する
     const pl = fighter('PL', 10, 6, [card('手当', 3, heal(5)), card('突', 3, hit(1))]);
     const enemy = fighter('敵', 100, 7, [card('打', 7, hit(2))]);
@@ -363,13 +381,15 @@ describe('resolveAutoCombat', () => {
     expect(r.log[1]).toMatchObject({ effect: 'heal', amount: 2, plHp: 10 });
   });
 
-  it('ダメージはHP0で止まり、実際に減った量が記録される', () => {
+  it('ダメージはHP0で止まり、実際に減った量が記録される', {
+    tags: ['rule:auto-combat/解決の手順'],
+  }, () => {
     const pl = fighter('PL', 10, 10, [card('突', 3, hit(9))]);
     const enemy = fighter('敵', 4, 1, [card('打', 1, hit(1))]);
     expect(run(pl, enemy).log[0]).toMatchObject({ amount: 4, enemyHp: 0 });
   });
 
-  it('ダイスの出目がログに残る', () => {
+  it('ダイスの出目がログに残る', { tags: ['rule:auto-combat/解決の手順'] }, () => {
     const twoDice: CombatEffect = { type: 'damage', dice: { count: 2, sides: 6, bonus: 1 } };
     const pl = fighter('PL', 10, 10, [card('突', 3, twoDice)]);
     const enemy = fighter('敵', 100, 1, [card('打', 1, hit(1))]);
@@ -377,7 +397,9 @@ describe('resolveAutoCombat', () => {
     expect(r.log[0]).toMatchObject({ rolls: [1, 6], amount: 8, enemyHp: 92 });
   });
 
-  it('「応急手当（HPが半分以下）→突き」なら、HPが半分を切るまでは攻撃し、切ったら回復する', () => {
+  it('「応急手当（HPが半分以下）→突き」なら、HPが半分を切るまでは攻撃し、切ったら回復する', {
+    tags: ['rule:auto-combat/解決の手順', 'rule:auto-combat/優先順位リスト'],
+  }, () => {
     // 敵は毎ラウンド4ダメージ。PL（最大20）は 16→12 の間は攻撃し、8 になったラウンドで回復する
     const pl: Combatant = {
       name: 'PL',
@@ -399,7 +421,9 @@ describe('resolveAutoCombat', () => {
     ]);
   });
 
-  it('回復カードだけの優先順位でも、ループせず時間切れで終わる', () => {
+  it('回復カードだけの優先順位でも、ループせず時間切れで終わる', {
+    tags: ['rule:auto-combat/解決の手順'],
+  }, () => {
     const pl = fighter('PL', 10, 6, [card('手当', 3, heal(5))]);
     const enemy = fighter('敵', 100, 7, [card('打', 7, hit(1))]);
     expect(run(pl, enemy, 3)).toMatchObject({ outcome: 'timeout', rounds: 3 });

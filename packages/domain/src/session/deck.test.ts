@@ -45,7 +45,9 @@ const deck: DeckNode[] = [
 const ids = (nodes: DeckNode[]): string[] => nodes.flatMap((n) => [n.id, ...ids(n.children ?? [])]);
 const cardIds = (node: DeckNode) => node.cards.map((c) => c.id);
 
-describe('sessionDeck（GMが外したシーンを除いたデッキ。docs/cartagraph/scenario-flow.md「GMのカスタマイズ」）', () => {
+describe('sessionDeck（GMが外したシーンを除いたデッキ。docs/cartagraph/scenario-flow.md「GMのカスタマイズ」）', {
+  tags: ['rule:scenario-flow/GMのカスタマイズ'],
+}, () => {
   it('外したシーンが無ければ、元のデッキと同じ内容を返す', () => {
     expect(sessionDeck(deck, [])).toEqual(deck);
   });

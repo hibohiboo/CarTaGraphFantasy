@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { configDefaults, defineConfig } from 'vitest/config';
+import { vitestTags } from '../../scripts/rule-sections.mjs';
 import { scenarioFilePlugin } from './vite/scenarioFilePlugin';
 
 // GitHub Pages では docs サイト配下の /CarTaGraphFantasy/app/ に置く（scripts/copy-web-to-pages.mjs）。
@@ -35,5 +36,7 @@ export default defineConfig({
     // e2e/ は Playwright 専用（apps/web/playwright.config.ts）。Vitest の既定includeは
     // .test.ts/.spec.ts の両方を拾うため、明示的に除外しないと二重に実行されてしまう
     exclude: [...configDefaults.exclude, '**/e2e/**'],
+    // ルールのページの節のタグ（docs/process/rules/testing.md「ルールのテストのタグ」）。見出しに無いタグを付けたテストは落ちる
+    tags: vitestTags(),
   },
 });

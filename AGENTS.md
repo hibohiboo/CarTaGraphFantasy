@@ -46,10 +46,11 @@ pnpm tools:test       # node --test（scripts/ と .claude/hooks/ の補助ス�
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）
 pnpm schemas:test     # Vitest（packages/schemas の API の一覧・本文と応答のスキーマ・OpenAPI の文書）
 pnpm schemas:typecheck # tsc（packages/schemas。テストファイルも含む）
-pnpm test:report      # 各パッケージの Vitest を HTML レポート付きで流す（各パッケージの vitest-report/ に書く。デプロイが Pages に載せる。docs/architecture/test-report.md）
+pnpm rule:report      # ルールのページの節ごとのテストの結果のページ（rule-test-report/index.html）を作る。`pnpm docs:build; pnpm test:report; pnpm rule:report` と流す（docs/architecture/test-report.md）
+pnpm test:report      # 各パッケージの Vitest を HTML・JSON のレポート付きで流す（各パッケージの vitest-report/ に書く。デプロイが Pages に載せる。docs/architecture/test-report.md）
 pnpm sim:auto-combat  # 自動戦闘のシミュレーションを回し docs/cartagraph/auto-combat-simulation.md を作り直す（任意。CIでは回さない）
 pnpm docs:dev         # 仕様書サイトをローカルで確認
-pnpm docs:build       # 仕様書サイトのビルド（リンク切れ・見出しへのリンクの食い違い・用語の旧称（scripts/check-terms.mjs）・画面一覧とルート定義の食い違い（scripts/check-screens.mjs）・正式仕様のページにある実装のパス（scripts/check-spec-paths.mjs）・仮ルールの一覧と仕様ページの「仮」の印の食い違い（scripts/check-provisional.mjs）・既知の問題の複雑度の一覧と biome-ignore の食い違い（scripts/check-suppressions.mjs）・biome.json の層ごとの import の禁止の漏れ（scripts/check-biome-layers.mjs）・集約・イベントの流れ・実装パターンの文書どうしのドメインイベントの食い違い（scripts/check-events.mjs）・E2E のテストに付けたユースケースの ID のタグ・ステップと use-cases.md の表の食い違い（scripts/check-usecase-tags.mjs）・プランの PR 下書きに、そのプランのテストの番号と実装順の browser-check・web:check:* が出てこない漏れ（scripts/check-plan-pr-draft.mjs。2026-10-19 以降のプラン）・下の「開発ルールの適用」の表や .claude/rules/ とルールのページの paths の食い違い（scripts/sync-claude-rules.mjs --check）があると失敗する）
+pnpm docs:build       # 仕様書サイトのビルド（リンク切れ・見出しへのリンクの食い違い・用語の旧称（scripts/check-terms.mjs）・画面一覧とルート定義の食い違い（scripts/check-screens.mjs）・正式仕様のページにある実装のパス（scripts/check-spec-paths.mjs）・仮ルールの一覧と仕様ページの「仮」の印の食い違い（scripts/check-provisional.mjs）・既知の問題の複雑度の一覧と biome-ignore の食い違い（scripts/check-suppressions.mjs）・biome.json の層ごとの import の禁止の漏れ（scripts/check-biome-layers.mjs）・集約・イベントの流れ・実装パターンの文書どうしのドメインイベントの食い違い（scripts/check-events.mjs）・E2E のテストに付けたユースケースの ID のタグ・ステップと use-cases.md の表の食い違い（scripts/check-usecase-tags.mjs）・プランの PR 下書きに、そのプランのテストの番号と実装順の browser-check・web:check:* が出てこない漏れ（scripts/check-plan-pr-draft.mjs。2026-10-19 以降のプラン）・ルールのテストの対象外の一覧とルールのページの見出しの食い違い・見出しの書式（scripts/check-rule-test-exclusions.mjs）・下の「開発ルールの適用」の表や .claude/rules/ とルールのページの paths の食い違い（scripts/sync-claude-rules.mjs --check）があると失敗する）
 pnpm build:pages      # docs + app + API ドキュメントをまとめてビルド（デプロイと同じ）
 pnpm api:docs         # API ドキュメント（OpenAPI の文書と Redoc の HTML）を docs/.vitepress/dist/api-docs/ に作る。redocly lint で誤りがあれば失敗する（docs:build の後に流す。docs/architecture/web-app.md「API ドキュメント」）
 pnpm lint             # Biome（フォーマット・import整理・lintをまとめてチェック）
@@ -60,7 +61,7 @@ node scripts/mutate-check.mjs <spec.json>  # 守る条件を1つずつ外し、�
 node scripts/sync-claude-rules.mjs          # ルールのページの frontmatter の paths から .claude/rules/ の入口ファイルを作り直す
 ```
 
-コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`packages/schemas` を触ったら `pnpm schemas:typecheck && pnpm schemas:test` も通す。API の一覧・応答の形（`packages/schemas`・`packages/domain` の model.ts）を触ったら `pnpm docs:build && pnpm api:docs` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`apps/web/e2e/` を触ったら `pnpm docs:build` も通す（ユースケースのタグの検査が走る）。`scripts/`・`.claude/hooks/` を触ったら `pnpm tools:test` も通す。`scenarios/`・`rules/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオ・ルールを使うテストが走る。pre-push でも走る）。
+コミット前に最低限 `pnpm web:typecheck && pnpm web:test` を通す。`packages/domain` を触ったら `pnpm domain:typecheck && pnpm domain:test` も通す。`packages/schemas` を触ったら `pnpm schemas:typecheck && pnpm schemas:test` も通す。API の一覧・応答の形（`packages/schemas`・`packages/domain` の model.ts）を触ったら `pnpm docs:build && pnpm api:docs` も通す。`docs/` を触ったら `pnpm docs:build` も通す。`docs/cartagraph/` の見出しを直したら `pnpm domain:test` も通す（その見出しのタグを付けたテストが落ちる。docs/process/rules/testing.md「ルールのテストのタグ」）。`apps/web/e2e/` を触ったら `pnpm docs:build` も通す（ユースケースのタグの検査が走る）。`scripts/`・`.claude/hooks/` を触ったら `pnpm tools:test` も通す。`scenarios/`・`rules/` を触ったら `pnpm web:test` が通ることを確かめる（形・参照の整合の検査と、シナリオ・ルールを使うテストが走る。pre-push でも走る）。
 
 lint・型検査・テスト・docsビルドは、AI にトークンを使わせず git フックで機械的に止める。
 - `.githooks/pre-commit` … main へのコミットと、id の無いブランチでのコミットを止める（作業は `node scripts/branch-id.mjs new` で切った id 付きのブランチで行う。`docs/process/index.md`「適用範囲」）。ステージ済みファイルだけ `biome check --staged --write` を実行し、安全な指摘（フォーマット崩れ等）は自動修正して再ステージする。`--unsafe`が要る指摘（意図的に自動適用しない方針）だけコミットを止める
