@@ -5,6 +5,9 @@ status: 完了
 summary: シナリオ製作者が、シーンごとにロケーション・NPC・情報・イベント・エネミーのカードを編集できる画面をアプリに作る。
 plans:
   - 2026-09-16-scene-builder.md
+trace:
+  usecases: [SC-2]
+  screens: [/creator/scenarios/:scenarioId/scenes/:sceneId]
 updated: 2026-09-21
 ---
 

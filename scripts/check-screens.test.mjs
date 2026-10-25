@@ -6,6 +6,7 @@ import {
   findScreenMismatches,
   parseDiagramPaths,
   parseIssuePaths,
+  parseMissingScreens,
   parseRoutes,
   parseTablePaths,
 } from './check-screens.mjs';
@@ -55,12 +56,42 @@ const screensMd = [
 const issuesMd = ['## ホーム', '', '`/home`', '', '本文の `/nowhere` は見ない'].join('\n');
 
 describe('読み取り', () => {
-  it('routes.ts から、パスとグループを読む（description が複数行でも）', () => {
+  it('routes.ts から、パス・題・グループを読む（description が複数行でも）', () => {
     assert.deepEqual(parseRoutes(routesSource), [
-      { path: '/home', group: 'pl' },
-      { path: '/pl/sessions/:sessionId/play', group: 'pl' },
-      { path: '/admin/sitemap', group: 'admin' },
+      { path: '/home', title: 'ホーム', group: 'pl' },
+      { path: '/pl/sessions/:sessionId/play', title: 'プレイページ', group: 'pl' },
+      { path: '/admin/sitemap', title: 'サイトマップ', group: 'admin' },
     ]);
+  });
+
+  it('example があるルートは example も読み、無いルートは読めても example を持たない', () => {
+    const source = `
+  {
+    path: '/a/:id',
+    title: 'あ',
+    group: 'pl',
+    description: 'x',
+    example: '/a/one',
+  },
+  {
+    path: '/b',
+    title: 'い',
+    group: 'gm',
+    description: 'y',
+  },
+`;
+    assert.deepEqual(parseRoutes(source), [
+      { path: '/a/:id', title: 'あ', group: 'pl', example: '/a/one' },
+      { path: '/b', title: 'い', group: 'gm' },
+    ]);
+  });
+
+  it('導線図の、まだ無い画面のラベルを読む（実在する画面のノードは読まない）', () => {
+    assert.deepEqual(parseMissingScreens(screensMd), ['GM のホーム（未実装）']);
+    assert.deepEqual(
+      parseMissingScreens('```mermaid\n  g["GM のホーム"]:::missing\n  h["ホーム /home"]\n```\n'),
+      ['GM のホーム'],
+    );
   });
 
   it('表は3列目のパスだけを読み、（未実装）の行と他の列のパスは読まない', () => {

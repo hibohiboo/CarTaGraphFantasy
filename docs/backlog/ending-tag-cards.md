@@ -2,6 +2,10 @@
 title: 結末タグをカードとして持たせる
 status: 完了
 summary: シナリオの結末で得た結末タグ（例：「冒険者になった」）を、仕様どおりカードの一種として PC に持たせる。後続シナリオの前提条件や、選択肢の条件で使えるようにする。
+trace:
+  usecases: [SC-3]
+  screens: [/pl/characters/:characterId]
+  rules: [scenario-flow/連作・キャンペーンの表現：結末タグ, solo-village/結末タグ]
 updated: 2026-10-14
 ---
 

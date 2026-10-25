@@ -7,6 +7,9 @@ plans:
   - 2026-10-17-シナリオ製作の導線.md
 cycles:
   - { name: シナリオ製作の導線, status: 完了, pr: 27 }
+trace:
+  usecases: [SC-1, SC-6]
+  screens: [/creator/scenarios, /creator/scenarios/:scenarioId]
 updated: 2026-10-18
 ---
 

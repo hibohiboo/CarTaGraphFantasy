@@ -11,6 +11,10 @@ cycles:
   - { name: C1 下書きと公開版, status: 完了, pr: 24 }
   - { name: C2 セッションの独立, status: 完了, pr: 25 }
   - { name: C3 シナリオのコピー, status: 完了, pr: 26 }
+trace:
+  usecases: [SC-1, SC-2, SC-6]
+  screens: [/creator/scenarios/:scenarioId]
+  rules: [scenario-flow/シナリオの公開]
 updated: 2026-10-17
 ---
 

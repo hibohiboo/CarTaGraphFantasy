@@ -9,6 +9,10 @@ plans:
 cycles:
   - { name: C1 公開で JSON に書き込む, status: 完了, pr: 17 }
   - { name: C2 選択肢の移り先と結末の編集, status: 完了, pr: 18 }
+trace:
+  usecases: [SC-1, SC-6, SC-8]
+  screens: [/creator/scenarios, /creator/scenarios/:scenarioId]
+  rules: [scenario-flow/シナリオの公開]
 updated: 2026-10-07
 ---
 

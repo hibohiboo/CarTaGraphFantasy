@@ -22,15 +22,26 @@ export function parseUseCases(md) {
   const found = [];
   let domain = '';
   let future = false;
+  let headers = [];
   for (const line of md.split('\n')) {
     const heading = line.match(/^## (.+)$/);
     if (heading) {
       future = heading[1].includes('（将来）');
       domain = heading[1].replace('（将来）', '').trim();
+      headers = [];
       continue;
     }
-    const row = line.match(/^\|\s*([A-Z]{2}-\d+)\s*\|\s*([^|]+?)\s*\|/);
-    if (row) found.push({ id: row[1], name: row[2], domain, future });
+    if (!line.startsWith('|')) continue;
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((c) => c.trim());
+    if (cells[0] === 'ID') {
+      headers = cells;
+      continue;
+    }
+    if (!ID_RE.test(cells[0] ?? '') || cells.length < 2) continue;
+    found.push(readRow(cells, headers, { domain, future }));
   }
   if (found.length === 0) {
     throw new Error(`${USE_CASES_FILE} の表からユースケースを1件も読めない（表の形が変わった？）`);
@@ -41,6 +52,41 @@ export function parseUseCases(md) {
     seen.add(id);
   }
   return found;
+}
+
+/** 表の1行を読む。列は見出しの名前で探す（位置で読まない）。見出しに無い列は空 */
+function readRow(cells, headers, { domain, future }) {
+  const cell = (name) => cells[headers.indexOf(name)] ?? '';
+  return {
+    id: cells[0],
+    name: headers.includes('ユースケース') ? cell('ユースケース') : cells[1],
+    domain,
+    future,
+    columns: headers,
+    screens: splitList(cell('画面')).map((s) => s.replace(/^`|`$/g, '')),
+    actors: normalizeActors(cell('アクター')),
+    aggregates: splitList(cell('書き換える集約')),
+    events: splitList(cell('起きるイベント')),
+  };
+}
+
+/** 表のセルを `・` で区切る。`—` と、全体が（…）のセル（`（読むだけ）`）は空として読む */
+function splitList(cell) {
+  const text = cell.trim();
+  if (text === '' || text === '—' || /^（[^）]*）$/.test(text)) return [];
+  return text
+    .split('・')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * アクターの列を正規化する。`・` で区切り、`（…）` の注記を除く（`GM（自動解決ならシステム）` → `GM`）。
+ * 注記だけ（`（セッションの正常終了）`）は「システム」。`誰でも` はそのまま1つのアクター。
+ */
+export function normalizeActors(cell) {
+  const names = splitList(cell.replace(/（[^）]*）/g, ''));
+  return names.length > 0 ? names : ['システム'];
 }
 
 /** コメント（行コメント・ブロックコメント）を、行数を変えずに空にする */

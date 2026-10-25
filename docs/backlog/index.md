@@ -23,9 +23,15 @@ plans:              # docs/plans/ のプランのファイル名（あれば）
   - 2026-01-01-○○.md
 cycles:             # 開発者向け：サイクルごとの状態と PR（あれば）
   - { name: C1 基盤, status: 完了, pr: 1 }
+trace:              # アイデアがどこへ届くか（必須）。usecases・screens・rules のリストか、none の理由のどちらか
+  usecases: [SC-6]
+  screens: [/creator/scenarios/:scenarioId]
+  rules: [scenario-flow/シナリオの公開]
 updated: 2026-01-01
 ---
 ```
+
+- **trace の書き方** — その要望が実現したいことを、どのユースケース（`usecases`：[中核のユースケース](../architecture/use-cases.md)の ID）・画面（`screens`：`routes.ts` のパス。まだ無い画面は導線図の点線のノードのラベル）・ルールの節（`rules`：ルールのテストのタグから `rule:` を除いたもの）で確かめられるかを書く。3つのリストは省略してよい（全部が無いのは不可）。開発の基盤のように、つなぐ先が無い要望は `none: <理由>` を書く（リストとは一緒に書けない）。リストはフロー形式（`[a, b]`）に限り、`#` と引用符は書けない（YAML と読み方が食い違うため）。つなぎ先が実在するか・書き忘れていないかは `pnpm docs:build` が止める（`scripts/check-trace.mjs`）。つなぎ方が正しいかは人間が見る。つながりは[トレースのページ](../architecture/test-report.md)に出る
 
 - **状態の意味** — 未着手＝まだ手を付けていない／検討中＝grilling・プランを作っている／進行中＝実装している／判断待ち＝人間の判断が無いと進めない／完了／見送り
 - **更新する人** — 開発サイクルを回す AI が、プランを作ったとき・マージしたときに更新する（[開発プロセス](../process/index.md)）

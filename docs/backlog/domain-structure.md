@@ -6,6 +6,8 @@ plans:
 cycles:
   - { name: packages/domain のディレクトリ分割, status: 完了, pr: 12 }
 summary: 開発者向け。packages/domain の直下に並んだファイルと、型を全部持つ index.ts を、仕様ページに合わせたドメインごとのディレクトリ（card・scenario・session など）に分け、読みやすくする。振る舞いは変えない。
+trace:
+  none: 開発の基盤（packages/domain の構成）
 updated: 2026-10-03
 ---
 

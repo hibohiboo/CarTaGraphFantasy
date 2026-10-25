@@ -60,6 +60,11 @@ export function parseAggregateEvents(md) {
   }));
 }
 
+/** aggregates.md の「集約の一覧」の表から、集約の名前（2列目）を読む */
+export function parseAggregateNames(md) {
+  return tableRows(section(md, '集約の一覧')).map((c) => c[1] ?? '');
+}
+
 /** event-flows.md の流れの表（イベントの列を持つ表）を { event, aggregate } の配列にする。1行に複数のイベントは「・」で分ける */
 export function parseFlowEvents(md) {
   const out = [];

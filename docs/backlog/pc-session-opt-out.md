@@ -2,6 +2,9 @@
 title: セッションの経験を PC からなかったことにできるようにする
 status: 未着手
 summary: セッションが終わったとき、PC の所有者が、そのセッションの結果（結末タグ・発見など）を自分の PC の経験にせず、なかったことにできるようにする。いまは参加したすべての PC に反映する。
+trace:
+  screens: [/pl/characters/:characterId]
+  rules: [party-and-session/PCの貸し借りとフィードバック]
 updated: 2026-10-16
 ---
 

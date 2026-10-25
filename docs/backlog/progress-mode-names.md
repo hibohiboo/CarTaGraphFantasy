@@ -6,6 +6,10 @@ plans:
   - 2026-10-16-通常進行とじっくり進行.md
 cycles:
   - { name: C1 言い換え, status: 完了 }
+trace:
+  usecases: [PL-7]
+  screens: [/gm/sessions/:sessionId]
+  rules: [party-and-session/通常進行とじっくり進行]
 updated: 2026-10-17
 ---
 

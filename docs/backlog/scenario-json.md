@@ -7,6 +7,10 @@ plans:
   - 2026-10-03-シナリオのJSON管理.md
 cycles:
   - { name: シナリオの JSON 管理, status: 完了, pr: 11 }
+trace:
+  usecases: [SC-8, PL-2]
+  screens: [/pl/village-start]
+  rules: [scenario-flow/シナリオの入手元]
 updated: 2026-10-03
 ---
 

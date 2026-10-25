@@ -7,6 +7,9 @@ plans:
   - 2026-10-03-GMがPLを兼ねて遊ぶ.md
 cycles:
   - { name: GMがPLを兼ねて遊ぶ, status: 完了, pr: 15 }
+trace:
+  usecases: [PL-1, PL-2, PL-4]
+  screens: [/gm/sessions/:sessionId, /pl/sessions/:sessionId/play]
 updated: 2026-10-04
 ---
 

@@ -14,6 +14,10 @@ cycles:
   - { name: C3 村パート（依頼・能力値・お店）, status: 完了, pr: 8 }
   - { name: C4 街道と結末タグ, status: 完了, pr: 9 }
   - { name: C5 見出しアンカーの修正, status: 完了, pr: 10 }
+trace:
+  usecases: [PL-2, PL-6]
+  screens: [/pl/village-start, /pl/sessions/:sessionId/play]
+  rules: [solo-village/達成カード, solo-village/引換カードとお店, auto-combat/解決の手順]
 updated: 2026-09-27
 ---
 

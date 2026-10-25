@@ -6,6 +6,8 @@ plans:
   - 2026-09-21-e2e導入.md
 cycles:
   - { name: Playwright の導入とレポートの公開, status: 完了, pr: 3 }
+trace:
+  none: 開発の基盤（E2E の導入）
 updated: 2026-09-21
 ---
 

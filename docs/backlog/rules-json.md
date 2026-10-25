@@ -7,6 +7,9 @@ plans:
   - 2026-10-10-ルールとカードプールのJSON管理.md
 cycles:
   - { name: ルールと基本カードプールの JSON 管理, status: 完了, pr: 19 }
+trace:
+  screens: [/pl/characters/new]
+  rules: [character-growth/CP予算はハードな制約]
 updated: 2026-10-10
 ---
 

@@ -7,6 +7,8 @@ plans:
   - 2026-10-10-APIスキーマの共用.md
 cycles:
   - { name: リクエストのスキーマ, status: 完了, pr: 22 }
+trace:
+  none: 開発の基盤（API のスキーマ）
 updated: 2026-10-10
 ---
 

@@ -21,13 +21,28 @@ export const ISSUES_FILE = 'docs/screens/issues.md';
 /** 導線図に描かないグループ（遊ぶ人の導線に入らない。docs/screens/index.md に理由を書いている） */
 export const NOT_IN_DIAGRAM = ['admin'];
 
-/** routes.ts から [{ path, group }] を読む */
+/** routes.ts から [{ path, title, group, example? }] を読む（example は動的ルートだけ） */
 export function parseRoutes(source) {
-  return [...source.matchAll(/path:\s*'([^']+)'[\s\S]*?group:\s*'(\w+)'/g)].map(
-    ([, path, group]) => ({
-      path,
-      group,
-    }),
+  const starts = [...source.matchAll(/path:\s*'([^']+)'/g)];
+  return starts.map((m, i) => {
+    const block = source.slice(m.index, starts[i + 1]?.index ?? source.length);
+    const route = {
+      path: m[1],
+      title: block.match(/title:\s*'([^']*)'/)?.[1] ?? '',
+      group: block.match(/group:\s*'(\w+)'/)?.[1] ?? '',
+    };
+    const example = block.match(/example:\s*'([^']+)'/)?.[1];
+    return example ? { ...route, example } : route;
+  });
+}
+
+/** 導線図の、まだ無い画面のノード（`id["ラベル"]:::missing`）のラベルを読む */
+export function parseMissingScreens(md) {
+  const blocks = [...md.matchAll(/^```mermaid\n([\s\S]*?)^```/gm)].map((m) => m[1]);
+  return blocks.flatMap((block) =>
+    [...block.matchAll(/\["([^"]*)"\]:::missing/g)].map(([, label]) =>
+      label.replaceAll('<br/>', ' ').trim(),
+    ),
   );
 }
 

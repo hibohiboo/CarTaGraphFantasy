@@ -6,6 +6,8 @@ plans:
   - 2026-09-22-チュートリアル導線.md
 cycles:
   - { name: 旅立ちの酒場, status: 完了, pr: 4 }
+trace:
+  screens: [/home, /pl/tutorial, /pl/characters/:characterId]
 updated: 2026-09-22
 ---
 
