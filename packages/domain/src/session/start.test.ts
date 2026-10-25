@@ -224,9 +224,9 @@ describe('checkPlayFromRecruitment（GM 不在の募集から始められるか�
   });
 });
 
-describe('checkResume（中断したセッションを再開できるか。docs/cartagraph/party-and-session.md「中断」）', {
-  tags: ['rule:party-and-session/非同期セッションの進行'],
-}, () => {
+// 仕様は「ドライバーも GM も再開できる」。いまはドライバーだけ（known-issues.md「中断と再開の権限が仕様と食い違っている」）。
+// そのため、ルールのタグは仕様どおりの振る舞いを確かめる it だけに付ける
+describe('checkResume（中断したセッションを再開できるか。docs/cartagraph/party-and-session.md「中断」）', () => {
   const driver = { userId: 'u-me', role: 'driver' as const };
   const gm = { userId: 'u-kirino', role: 'gm' as const };
   const session = (
@@ -243,7 +243,9 @@ describe('checkResume（中断したセッションを再開できるか。docs/
     ...over,
   });
 
-  it('中断中で、裁定待ちの提案が無く、自分がドライバーなら再開できる', () => {
+  it('中断中で、裁定待ちの提案が無く、自分がドライバーなら再開できる', {
+    tags: ['rule:party-and-session/非同期セッションの進行'],
+  }, () => {
     expect(checkResume(session(), 'u-me')).toEqual({ ok: true });
   });
 
@@ -255,7 +257,7 @@ describe('checkResume（中断したセッションを再開できるか。docs/
     });
   });
 
-  it('進行中・終了なら 422', () => {
+  it('進行中・終了なら 422', { tags: ['rule:party-and-session/非同期セッションの進行'] }, () => {
     for (const status of ['playing', 'ended'] as const)
       expect(checkResume(session({ status }), 'u-me')).toEqual({
         ok: false,
@@ -264,7 +266,9 @@ describe('checkResume（中断したセッションを再開できるか。docs/
       });
   });
 
-  it('無反応による中断（仕様から外した）は 422', () => {
+  it('無反応による中断（仕様から外した）は 422', {
+    tags: ['rule:party-and-session/非同期セッションの進行'],
+  }, () => {
     expect(checkResume(session({ suspendedFor: 'inactivity' }), 'u-me')).toEqual({
       ok: false,
       status: 422,
@@ -272,7 +276,9 @@ describe('checkResume（中断したセッションを再開できるか。docs/
     });
   });
 
-  it('裁定待ちの提案が残っていれば 422', () => {
+  it('裁定待ちの提案が残っていれば 422', {
+    tags: ['rule:party-and-session/非同期セッションの進行'],
+  }, () => {
     expect(checkResume(session({ proposals: [{ status: 'pending' }] }), 'u-me')).toEqual({
       ok: false,
       status: 422,

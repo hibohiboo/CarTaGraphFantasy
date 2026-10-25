@@ -216,6 +216,28 @@ describe('parseExclusions / isExcluded', () => {
     );
   });
 
+  it('表の行があるのに見出しの行が崩れていると例外（宣言が黙って消えないように）', () => {
+    assert.throws(
+      () => parseExclusions('| ページ | 見出し | 理由 |\n|---|---|---|\n| index | | r |\n'),
+      /見出しの行/,
+    );
+  });
+
+  it('区切りの行が無いと例外（先頭のデータ行を読み落とさないように）', () => {
+    assert.throws(
+      () => parseExclusions('| ページ | 節 | 理由 |\n| index | | r |\n| check | 節 | r |\n'),
+      /区切りの行/,
+    );
+  });
+
+  it('表の途中の空行・行頭の空白で、後ろの行が黙って落ちないように例外', () => {
+    const head = '| ページ | 節 | 理由 |\n|---|---|---|\n| index | | r |\n';
+    assert.throws(() => parseExclusions(`${head}\n| check | 節 | r |\n`), /途中/);
+    assert.throws(() => parseExclusions(`${head}  | check | 節 | r |\n`), /途中/);
+    // 表の後ろの、表でない本文は読まない
+    assert.equal(parseExclusions(`${head}\n本文\n`).length, 1);
+  });
+
   it('ページ全体の対象外は全節に効き、節の対象外はその節だけに効く', () => {
     const ex = parseExclusions(md);
     assert.equal(isExcluded({ page: 'index', heading: 'なんでも' }, ex), true);

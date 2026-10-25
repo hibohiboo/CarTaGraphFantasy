@@ -17,7 +17,7 @@ const seq =
   () =>
     values.length > 1 ? (values.shift() as number) : values[0];
 
-describe('rollDice', { tags: ['rule:auto-combat/解決の手順'] }, () => {
+describe('rollDice', () => {
   it('乱数が常に0なら全ダイスが1になり、合計は count + bonus', () => {
     expect(rollDice({ count: 2, sides: 6, bonus: 3 }, seq(0))).toEqual({ rolls: [1, 1], total: 5 });
   });

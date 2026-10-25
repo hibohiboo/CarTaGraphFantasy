@@ -383,12 +383,15 @@ describe('CLI（T15）', () => {
       join(root, 'packages/domain/vitest-results/results.json'),
       readFileSync(new URL('./fixtures/vitest-results.json', import.meta.url)),
     );
+    // schemas は JSON として読めない（書きかけで止まった等）
+    mkdirSync(join(root, 'packages/schemas/vitest-results'), { recursive: true });
+    writeFileSync(join(root, 'packages/schemas/vitest-results/results.json'), '{"testResults": [');
     const out = join(dir, 'index.html');
     const script = fileURLToPath(new URL('./build-rule-test-report.mjs', import.meta.url));
     const r = spawnSync('node', [script, '--out', out, '--root', root], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr);
     const html = readFileSync(out, 'utf8');
-    // domain は読めた。schemas・web は結果なし
+    // domain は読めた。schemas（壊れている）・web（無い）は結果なし
     assert.match(html, /結果なし：schemas、web/);
     assert.match(html, /確認済/);
   });

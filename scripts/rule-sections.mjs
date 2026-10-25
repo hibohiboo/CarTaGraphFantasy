@@ -108,25 +108,48 @@ export function readRuleSections(dir = RULES_DIR) {
   return readRulePages(dir).flatMap((p) => p.sections);
 }
 
-/** 対象外の一覧の表から [{ page, heading（ページ全体なら null）, reason }] を読む。列が足りない行は例外 */
+const TABLE_LINE = /^\s*\|/;
+
+/**
+ * 対象外の一覧の表から [{ page, heading（ページ全体なら null）, reason }] を読む。
+ * 表が無ければ空。見出し・区切りの行の崩れ、表の途中の空行・行頭の空白、列が足りない行は例外にする
+ * （読み落とすと対象外の宣言が黙って消え、検査も通ってしまうため）
+ */
 export function parseExclusions(md) {
   const lines = md.split(/\r?\n/);
   const head = lines.findIndex((l) => /^\|\s*ページ\s*\|\s*節\s*\|\s*理由\s*\|\s*$/.test(l));
-  if (head < 0) return [];
-  const rows = [];
-  for (const [i, line] of lines.slice(head + 2).entries()) {
-    if (!line.startsWith('|')) break;
-    const cells = line
-      .replace(/^\||\|\s*$/g, '')
-      .split('|')
-      .map((c) => c.trim());
-    if (cells.length !== 3 || !cells[0])
+  if (head < 0) {
+    if (lines.some((l) => TABLE_LINE.test(l)))
       throw new Error(
-        `rule-test-exclusions.md の表の ${head + 3 + i} 行目：列が「ページ｜節｜理由」の3つにそろっていない`,
+        'rule-test-exclusions.md の表の見出しの行が「| ページ | 節 | 理由 |」になっていない',
       );
-    rows.push({ page: cells[0], heading: cells[1] || null, reason: cells[2] });
+    return [];
   }
-  return rows;
+  if (!/^\|[\s:|-]+\|\s*$/.test(lines[head + 1] ?? ''))
+    throw new Error(
+      `rule-test-exclusions.md の表の ${head + 2} 行目：区切りの行（|---|---|---|）が無い`,
+    );
+  const body = lines.slice(head + 2);
+  const end = body.findIndex((l) => !l.startsWith('|'));
+  const tableRows = end < 0 ? body : body.slice(0, end);
+  const after = end < 0 ? -1 : body.slice(end).findIndex((l) => TABLE_LINE.test(l));
+  if (after >= 0)
+    throw new Error(
+      `rule-test-exclusions.md の ${head + 3 + end + after} 行目：表の途中に空行か行頭の空白があり、後ろの行が表から外れる`,
+    );
+  return tableRows.map((line, i) => parseExclusionRow(line, head + 3 + i));
+}
+
+function parseExclusionRow(line, lineNo) {
+  const cells = line
+    .replace(/^\||\|\s*$/g, '')
+    .split('|')
+    .map((c) => c.trim());
+  if (cells.length !== 3 || !cells[0])
+    throw new Error(
+      `rule-test-exclusions.md の ${lineNo} 行目：列が「ページ｜節｜理由」の3つにそろっていない（理由に | は書けない）`,
+    );
+  return { page: cells[0], heading: cells[1] || null, reason: cells[2] };
 }
 
 export function readExclusions(file = EXCLUSIONS_FILE) {
