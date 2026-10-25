@@ -274,7 +274,12 @@
 ## 見送った軽微な指摘（P2）
 
 レビューの P2 は、その場では直さず、ここに1行で書く（[レビュールール](../process/rules/review.md)「指摘の優先度分類」）。書式は「- 何が起きるか（ファイル。見つけたプラン・PR）」。同じ箇所を触るときに直して、その行を消す。
-- ルールとテストの結果（P4）：閉じていないフェンスで以降の見出しを黙って捨てる・HTML コメントの中の見出しを読む（`rule-sections.mjs`）。`relativeFile` がリポジトリの置き場所に `apps`・`packages` を含むと表示が狂う、`tags` が配列でない JSON、CLI の引数の値の欠け、`--root` を渡しても見出しはリポジトリ本体から読む、収集の失敗のメッセージの ANSI エスケープ（`build-rule-test-report.mjs`）。「（仮…）」の印がタグ名に入るので、仮が外れるとタグを書き直す。共用の CSS でユースケースのページにも使わないセレクタが入る。`session/transition.test.ts` の結末での終了の3件に `party-and-session/非同期セッションの進行` のタグが無い。`creationStats` のタグ（`character-growth/PCが持つデータ`）は、値の決め方が仮ルールの側（`docs/plans/2026-10-25-P4-ルールとテストの結果.md` 11章）
+- 閉じていないフェンスで、以降の見出しを黙って捨てる。HTML コメントの中の見出しを読む（`scripts/rule-sections.mjs`。`docs/plans/2026-10-25-P4-ルールとテストの結果.md` 11章）
+- 対象外の表の後ろに別の表や、行頭に空白のある `|` の行を足すと、表の途中の崩れとして止まる。見出し・区切りだけでデータ行が0件の表は、例外にならず空として読む（`scripts/rule-sections.mjs` の `parseExclusions`。同上）
+- 「（仮…）」の印がタグ名に入るので、仮が外れると、その節のタグを付けたテストを書き直す（`scripts/rule-sections.mjs`。同上）
+- `relativeFile` が、リポジトリの置き場所に `apps`・`packages` を含むと表示が狂う。`tags` が配列でない JSON で部分一致になる。CLI の引数の値の欠けを見ない。`--root` を渡しても見出しはリポジトリ本体から読む。収集の失敗のメッセージの ANSI エスケープがそのまま出る（`scripts/build-rule-test-report.mjs`。同上）
+- 共用の CSS で、ユースケースのページにも使わないセレクタ（`.skipped`・`.excluded`）が入る（`scripts/report-html.mjs`。同上）
+- `session/transition.test.ts` の、結末のノードでの終了の3件に `party-and-session/非同期セッションの進行` のタグが無い。`creationStats` のタグ（`character-growth/PCが持つデータ`）は、値の決め方が仮ルールの側にある（`packages/domain`。同上）
 - 敵の HP・能力の非公開と開示の論点が、`notes/architecture/prototype-handover.md` と `open-questions.md` の両方に文で書かれている。ノート側はリンク1行にできる（docs の1ファイル1責務のレビュー）
 - TanStack Query の「実測してから見直す」が `notes/architecture/web-app.md` と `open-questions.md` に二重にある。Redoc のハイドレーションの誤り（#418・#423）も `notes/architecture/web-app.md` と本ページに二重にある（同上）
 - Lambda／ECS 等の構成の未決が `open-questions.md`「開発の仕組み」と `notes/architecture/index.md`「将来の拡張候補」に二重にある（同上）
