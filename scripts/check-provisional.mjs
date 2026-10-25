@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 const SPEC_DIR = 'docs/cartagraph';
 const PROVISIONAL_DIR = 'docs/provisional';
 /** 生成した参考資料は仕様ページとして見ない */
-const NOT_SPEC = ['auto-combat-simulation.md'];
+export const NOT_SPEC = ['auto-combat-simulation.md'];
 
 /** 見出し（# で始まる行）に「（仮…）」の印があるか */
 export function hasProvisionalMark(md) {

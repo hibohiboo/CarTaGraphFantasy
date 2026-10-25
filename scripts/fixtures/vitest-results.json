@@ -1,0 +1,57 @@
+{
+  "success": false,
+  "startTime": 0,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["probe"],
+          "fullName": "probe passes",
+          "status": "passed",
+          "title": "passes",
+          "duration": 0,
+          "failureMessages": [],
+          "meta": {},
+          "tags": ["rule:check/判定の基本メカニズム"]
+        },
+        {
+          "ancestorTitles": ["probe"],
+          "fullName": "probe fails",
+          "status": "failed",
+          "title": "fails",
+          "duration": 0,
+          "failureMessages": [
+            "AssertionError: expected 1 to be 2 // Object.is equality\n    at D:/projects/cartagraph/CarTaGraphFantasy/packages/domain/src/zz-probe.test.ts:5:64\n    at file:///D:/projects/cartagraph/CarTaGraphFantasy/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///D:/projects/cartagraph/CarTaGraphFantasy/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///D:/projects/cartagraph/CarTaGraphFantasy/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///D:/projects/cartagraph/CarTaGraphFantasy/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///D:/projects/cartagraph/CarTaGraphFantasy/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///D:/projects/cartagraph/CarTaGraphFantasy/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///D:/projects/cartagraph/CarTaGraphFantasy/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64"
+          ],
+          "meta": {},
+          "tags": ["rule:check/判定の基本メカニズム", "rule:check/失敗時の扱い"]
+        },
+        {
+          "ancestorTitles": ["probe"],
+          "fullName": "probe skipped",
+          "status": "skipped",
+          "title": "skipped",
+          "failureMessages": [],
+          "meta": {},
+          "tags": ["rule:check/判定の基本メカニズム"],
+          "duration": 0
+        },
+        {
+          "ancestorTitles": ["probe"],
+          "fullName": "probe todo",
+          "status": "todo",
+          "title": "todo",
+          "failureMessages": [],
+          "meta": {},
+          "tags": ["rule:check/判定の基本メカニズム"],
+          "duration": 0
+        }
+      ],
+      "startTime": 0,
+      "endTime": 0,
+      "status": "failed",
+      "message": "",
+      "name": "packages/domain/src/zz-probe.test.ts"
+    }
+  ]
+}
