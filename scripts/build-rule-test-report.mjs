@@ -118,7 +118,7 @@ export function readAnchors(html) {
   return [...html.matchAll(/<h([23])\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g)].map((m) => ({
     id: decode(m[2]),
     text: decode(m[3].replace(/<[^>]+>/g, ''))
-      .replaceAll('​', '')
+      .replaceAll('\u200b', '') // VitePress の見出しのアンカーに入るゼロ幅スペース
       .trim(),
   }));
 }
