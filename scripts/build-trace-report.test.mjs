@@ -299,6 +299,19 @@ describe('T12: 結果が読めない', () => {
     assert.equal(node(failed, 'rule:rule:check/判定').state, 'failed');
   });
 
+  it('スキップ・todo のみの節はテストなし。スキップのみの smoke は画面がテストなし', () => {
+    const skipped = buildGraph(
+      inputs({ vitest: vitestOf([assertion('skipped'), assertion('todo')]) }),
+    );
+    assert.equal(node(skipped, 'rule:rule:check/判定').state, 'none');
+    const smoke = buildGraph(
+      inputs({
+        e2eJson: e2e(spec('製作（/creator）が描画できる', 'smoke.test.ts', [], 'skipped')),
+      }),
+    );
+    assert.equal(node(smoke, 'screen:/creator').state, 'none');
+  });
+
   it('全パッケージが読めて、節にテストが無ければテストなし', () => {
     const all = {
       domain: { testResults: [] },

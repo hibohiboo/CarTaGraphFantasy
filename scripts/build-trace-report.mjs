@@ -317,9 +317,9 @@ function addScreenNodes(ctx, { routes, missingScreens }, e2e) {
 /** 要望が指している節だけを要素にする */
 function addRuleNodes(ctx, { pages }, vitest, referenced) {
   const sections = pages.flatMap((p) => p.sections);
-  for (const tag of referenced) {
-    const section = sections.find((s) => s.tag === tag);
-    if (!section) continue;
+  // ルールのページの順（サイドバーの順ではなく、ファイル名順のページと節の出てくる順）に並べる
+  for (const section of sections.filter((s) => referenced.includes(s.tag))) {
+    const tag = section.tag;
     ctx.add({
       id: `rule:${tag}`,
       kind: 'rule',

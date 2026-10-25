@@ -119,6 +119,7 @@ pnpm web:dev:agent   # http://localhost:5174。エージェントがブラウザ
 pnpm web:test        # vitest（MSW の node サーバーで全ページを描画）
 pnpm web:e2e         # Playwright（Chromium）。ビルド→vite previewに対して、全ルートを実ブラウザで巡回し、ユースケースの通し（e2e/usecases/）を流す
 pnpm usecase:report  # 上の結果から、ユースケースごとの結果のページ apps/web/usecase-report/index.html を作る（落ちたときこそ見たいので `pnpm web:e2e; pnpm usecase:report`）
+pnpm trace:report    # 要望・ユースケース・画面・ルールの節・テスト・集約・イベントのつながりの図のページ trace-report/index.html を作る（`pnpm docs:build; pnpm web:e2e; pnpm test:report; pnpm trace:report`）
 pnpm web:typecheck
 pnpm domain:test     # vitest（packages/domain の純粋関数。自動戦闘・シーン遷移など）
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）

@@ -300,3 +300,10 @@
 - `sceneCheck.ts` が「ノードの注意」と「つながりの移り先」の2つを持つ。名前を変えるか分ける。「形が誤っている」の見出しが `readiness.ts` と `file.ts` に重ねてある。畳む欄の見出しのインラインスタイルが2か所で同じ。`LocationPanel.tsx` の切り出しがプランの G5 に書かれていない（同上）
 - ④の「開く」は済みの後に消える。T14 は案内の段の途中経過を見ていない。プラン4章の「開く」手順の追従を書いた本文が、状態の欄（実ブラウザで確かめる）と食い違っている（同上）
 - `use-cases.md` の SC-5「行き止まりを見つける」に、公開の前の確かめで製作者も同じ注意を見られることと「導入から届かない」注意が無い。注意の前提「GM 不在で遊ぶと」が `play-and-field.md` の「GM が後から裁定」の募集（提案を採用して抜けられる）と言い回しがずれる（同上）
+- 要望の `trace` の読み手が、YAML と食い違う入力（`usecases: [a: b]`・`none: [x]`）を文字列として通す。読点の `,` や `#`・引用符を含む節の見出しは `rules` に書けない（`scripts/trace.mjs`。`docs/plans/2026-10-26-P5-アイデアから実装までのトレース.md`）
+- `docs/backlog/` が空でも `check-trace.mjs` が成功する。`readBacklog`（`build-trace-report.mjs`）は `trace` の誤りで例外になり、ページ全体が作られない（`docs:build` が先に止めるので実害は小さい。同上）
+- `parseMissingScreens` は `id(["x"]):::missing`・`class a missing` の書き方と `<br>` を拾わない。ラベルに `・` を含むと UC の表の画面の列に書けない（`scripts/check-screens.mjs`・`scripts/usecases.mjs`。同上）
+- `collectSpecs` は `suites` が配列でない JSON で TypeError になる（`build-usecase-report.mjs`。Playwright は出さない形。同上）
+- トレースのページ：`requestLinks` が要望のファイル名をエンコードしない。`BACKLOG_DIR`・`AGGREGATES_FILE` と要望を読む処理が `check-trace.mjs` と `build-trace-report.mjs` に二重にある。`CLIENT_SCRIPT`・`EXTRA_CSS` を別ファイルにできる（同上）
+- トレースのページ：スキップのみの E2E の UC が「落ちた」になる（usecase-report の `runStates` が手前で止まったにするため。D20 を優先）。幅 390px ではパネルが図の下に出て、要素を押しても画面に入らない（同上）
+- UC の表の SC-1 の画面に概要を書く `/creator/scenarios/:scenarioId`、PL-4 の画面にシステムの自動解決の `/pl/sessions/:sessionId/play` が無い。要望の `trace` は `scenario-json`・`pc-session-opt-out`・`rules-json`・`progress-mode-names`・`play-immersion`（PL-6）・`gm-home`（PL-4）に足せるつなぎ先がある（`docs/architecture/use-cases.md`・`docs/backlog/`。同上）
