@@ -1,12 +1,12 @@
 ---
 title: ルールのページとテストの結果を紐づける
-status: 進行中
+status: 完了
 summary: ルールのページ（docs/cartagraph/）の節ごとに、それを確かめる Vitest のテストと最新の結果を一覧にしたページを GitHub Pages に載せ、どのルールがテストで守られているかを見られるようにする。
 plans:
   - 2026-10-25-P4-ルールとテストの結果.md
 cycles:
-  - { name: ルールとテストの結果, status: 進行中 }
-updated: 2026-10-25
+  - { name: ルールとテストの結果, status: 完了, pr: 29 }
+updated: 2026-10-26
 ---
 
 # ルールのページとテストの結果を紐づける
