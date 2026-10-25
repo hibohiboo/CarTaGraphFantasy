@@ -588,7 +588,7 @@ const CLIENT_SCRIPT = `
   function renderPanel(up, down) {
     panel.textContent = '';
     var n = selected && byId[selected];
-    if (!n) { line(panel, 'p', '要素を押すと、そこから上流（なぜ作るか）と下流（どこで確かめているか）だけが濃くなります。もう一度押すか、図の外を押すと戻ります。'); return; }
+    if (!n) { line(panel, 'p', '要素を押すと、そこから上流（なぜ作るか）と下流（どこで確かめているか）だけが濃くなります。もう一度押すか、図の余白を押すと戻ります。'); return; }
     line(panel, 'h3', n.label);
     line(panel, 'p', data.kindLabels[n.kind] + (n.sub ? '：' + n.sub : '') + (n.full ? '：' + n.full : ''));
     if (n.state) line(panel, 'p', '状態：' + data.stateLabels[n.state] + (n.unreached ? '（未達：完了なのに確認済でない）' : ''));
@@ -708,8 +708,14 @@ ${CLIENT_SCRIPT}
 // ファイルの読み込みと CLI
 // ---------------------------------------------------------------------------
 
-const frontmatterValue = (source, key) =>
-  source.match(new RegExp(`^${key}:\\s*(.+?)\\s*$`, 'm'))?.[1] ?? '';
+/** frontmatter の `キー: 値` の値。YAML と同じく、全体を囲む引用符と ` #コメント` を外す */
+export function frontmatterValue(source, key) {
+  const end = source.indexOf('\n---', 4);
+  const frontmatter = source.startsWith('---') && end > 0 ? source.slice(0, end) : '';
+  const raw = frontmatter.match(new RegExp(`^${key}:[ \\t]*(.*?)[ \\t]*$`, 'm'))?.[1] ?? '';
+  const quoted = raw.match(/^(['"])(.*)\1(?:\s+#.*)?$/);
+  return quoted ? quoted[2] : raw.replace(/\s+#.*$/, '');
+}
 
 /** docs/backlog/ の要望を [{ name, title, status, trace }] で読む（trace が無い・誤りのときは例外。docs:build の検査が先に止める） */
 export function readBacklog(dir = BACKLOG_DIR) {

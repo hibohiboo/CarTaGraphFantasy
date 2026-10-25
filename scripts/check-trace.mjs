@@ -25,6 +25,8 @@ import { parseUseCases, USE_CASES_FILE } from './usecases.mjs';
 
 export const BACKLOG_DIR = 'docs/backlog';
 const AGGREGATES_FILE = 'docs/architecture/aggregates.md';
+/** 中核の表に要る列（見出しの名前で読むので、直して消えると線が黙って消える） */
+const REQUIRED_COLUMNS = ['アクター', '画面', '書き換える集約', '起きるイベント'];
 const NOWHERE = `${ROUTES_FILE} にも導線図のまだ無い画面にも無い`;
 
 /** 入力（読み込み済みのデータ）から、問題の文の配列を返す（無ければ空） */
@@ -103,12 +105,17 @@ function duplicates(values) {
 /** use-cases.md の中核の表（将来を除く）の画面・集約・イベントの列の問題 */
 function findUseCaseTableProblems({ useCases, screenNames, aggregateNames, eventNames }) {
   const core = useCases.filter((u) => !u.future);
+  // 列が無い表（見出しの書き直しで黙って線が消える）。表の単位（業務領域）で1回ずつ知らせる
   const lacking = [
-    ...new Set(core.filter((u) => !u.columns.includes('画面')).map((u) => u.domain)),
-  ];
+    ...new Set(
+      core.flatMap((u) =>
+        REQUIRED_COLUMNS.filter((c) => !u.columns.includes(c)).map((c) => `${u.domain}\t${c}`),
+      ),
+    ),
+  ].map((key) => key.split('\t'));
   const at = (u) => `${USE_CASES_FILE} の ${u.id} の`;
   return [
-    ...lacking.map((d) => `${USE_CASES_FILE} の「${d}」の表に「画面」の列が無い`),
+    ...lacking.map(([d, c]) => `${USE_CASES_FILE} の「${d}」の表に「${c}」の列が無い`),
     ...core.flatMap((u) => [
       ...u.screens.filter((s) => !screenNames.has(s)).map((s) => `${at(u)}画面 ${s} が ${NOWHERE}`),
       ...u.aggregates

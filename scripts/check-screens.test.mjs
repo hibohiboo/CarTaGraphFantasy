@@ -86,6 +86,22 @@ describe('読み取り', () => {
     ]);
   });
 
+  it('description の文章やコメントの中の title:・path: を拾わず、配列の後ろのコードも読まない', () => {
+    const source = `
+export const routes = [
+  {
+    path: '/a',
+    title: 'It\\'s',
+    group: 'pl',
+    description: 'メモ title: 'x' 風 group: 'gm'',
+  },
+  // path: '/commented'
+];
+const other = { path: '/c', group: 'zzz' };
+`;
+    assert.deepEqual(parseRoutes(source), [{ path: '/a', title: "It\\'s", group: 'pl' }]);
+  });
+
   it('導線図の、まだ無い画面のラベルを読む（実在する画面のノードは読まない）', () => {
     assert.deepEqual(parseMissingScreens(screensMd), ['GM のホーム（未実装）']);
     assert.deepEqual(

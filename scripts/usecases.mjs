@@ -64,7 +64,8 @@ function readRow(cells, headers, { domain, future }) {
     future,
     columns: headers,
     screens: splitList(cell('画面')).map((s) => s.replace(/^`|`$/g, '')),
-    actors: normalizeActors(cell('アクター')),
+    // 列が無いときに「システム」にしない（列を足し損ねた表は check-trace.mjs が止める）
+    actors: headers.includes('アクター') ? normalizeActors(cell('アクター')) : [],
     aggregates: splitList(cell('書き換える集約')),
     events: splitList(cell('起きるイベント')),
   };

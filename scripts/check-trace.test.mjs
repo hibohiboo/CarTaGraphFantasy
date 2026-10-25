@@ -116,6 +116,17 @@ describe('T6: 止めるもの', () => {
     assert.match(wrong[0], /SC-1.*\/creator\/nothing/);
   });
 
+  it('UC の表の集約・イベント・アクターの列が無い（見出しの書き直しで線が黙って消えるのを止める）', () => {
+    const found = problems((i) => {
+      i.useCasesMd = USE_CASES_MD.replace('| 書き換える集約 |', '| 集約 |').replace(
+        '| アクター |',
+        '| 担当 |',
+      );
+    });
+    assert.ok(found.some((p) => /シナリオ製作.*「書き換える集約」の列が無い/.test(p)));
+    assert.ok(found.some((p) => /シナリオ製作.*「アクター」の列が無い/.test(p)));
+  });
+
   it('UC の表の集約・イベントの名前が aggregates.md に無い（D25）', () => {
     const agg = problems((i) => {
       i.useCasesMd = USE_CASES_MD.replace('| シナリオ | — |\n| SC-6', '| シナリオ集 | — |\n| SC-6');

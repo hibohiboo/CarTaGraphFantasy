@@ -9,7 +9,7 @@ cycles:
   - { name: 募集からのセッション開始, status: 完了, pr: 14 }
 trace:
   usecases: [SC-8]
-  screens: [/gm/scenarios/:scenarioId, /gm/sessions, /gm/sessions/:sessionId]
+  screens: [/gm/scenarios, /gm/scenarios/:scenarioId, /pl/sessions, /gm/sessions, /gm/sessions/:sessionId]
   rules: [scenario-flow/募集とセッション, scenario-flow/セッション開始までの全体フロー]
 updated: 2026-10-03
 ---

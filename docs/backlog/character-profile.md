@@ -7,7 +7,7 @@ decisions:
   - CP を使った成長を、いつできるようにするか（セッションの外ならいつでも／決まった場面だけ）
 trace:
   screens: [/pl/characters/new, /pl/characters/:characterId]
-  rules: [character-growth/PCが持つデータ]
+  rules: [character-growth/PCが持つデータ, character-growth/成長の基本メカニズム]
 updated: 2026-10-10
 ---
 

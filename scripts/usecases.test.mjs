@@ -159,6 +159,13 @@ test('T3: —（画面・イベント）と（読むだけ）（集約）は空�
   assert.equal(byId['GR-5'].future, true);
 });
 
+test('アクター・集約・イベントの列が無い表は、アクターを「システム」にせず、空で読む', () => {
+  const md = '## 表\n\n| ID | ユースケース | 画面 |\n|---|---|---|\n| SC-1 | 下書き | `/a` |\n';
+  const [u] = parseUseCases(md);
+  assert.deepEqual([u.actors, u.aggregates, u.events], [[], [], []]);
+  assert.deepEqual(u.columns, ['ID', 'ユースケース', '画面']);
+});
+
 test('T4: アクターの正規化（・で区切る／（…）を除く／注記だけはシステム／誰でもはそのまま）', () => {
   assert.deepEqual(normalizeActors('シナリオ製作者・GM'), ['シナリオ製作者', 'GM']);
   assert.deepEqual(normalizeActors('GM（自動解決ならシステム）'), ['GM']);

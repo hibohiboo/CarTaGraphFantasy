@@ -3,7 +3,7 @@ title: 後続シナリオの前提を、結末タグを得たシナリオまで�
 status: 未着手
 summary: シナリオのコピーで作った別のシナリオで結末タグを得ても、元のシナリオの続きの前提を満たしてしまう。前提の突き合わせで、タグの名前だけでなく、どのシナリオで得たかも見られるようにする。
 trace:
-  usecases: [SC-3]
+  screens: [/pl/sessions, /gm/scenarios/:scenarioId]
   rules: [scenario-flow/前提条件チェックの扱い, scenario-flow/連作・キャンペーンの表現：結末タグ]
 updated: 2026-10-17
 ---
