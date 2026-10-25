@@ -27,6 +27,10 @@ export function readRulePages(dir?: string): RulePage[];
 export function readRuleSections(dir?: string): RuleSection[];
 export function parseExclusions(md: string): Exclusion[];
 export function readExclusions(file?: string): Exclusion[];
+export function findExclusion(
+  section: { page: string; heading: string },
+  exclusions: Exclusion[],
+): Exclusion | undefined;
 export function isExcluded(
   section: { page: string; heading: string },
   exclusions: Exclusion[],

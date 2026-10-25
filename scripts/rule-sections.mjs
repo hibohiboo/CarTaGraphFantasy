@@ -133,11 +133,15 @@ export function readExclusions(file = EXCLUSIONS_FILE) {
   return parseExclusions(readFileSync(file, 'utf8'));
 }
 
-/** 節（{ page, heading }）が対象外の一覧に載っているか（節が null の行はページ全体） */
-export function isExcluded(section, exclusions) {
-  return exclusions.some(
+/** 節（{ page, heading }）が載っている対象外の一覧の行（節が null の行はページ全体）。載っていなければ undefined */
+export function findExclusion(section, exclusions) {
+  return exclusions.find(
     (e) => e.page === section.page && (e.heading === null || e.heading === section.heading),
   );
+}
+
+export function isExcluded(section, exclusions) {
+  return findExclusion(section, exclusions) !== undefined;
 }
 
 /** Vitest の設定の test.tags に渡す一覧。対象外の節は入れない（付けたテストは「not defined」で落ちる） */

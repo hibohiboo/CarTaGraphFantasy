@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "test:report": "vitest run --reporter=default --reporter=html --outputFile.html=vitest-report/index.html",
+    "test:report": "vitest run --reporter=default --reporter=html --reporter=json --outputFile.html=vitest-report/index.html --outputFile.json=vitest-results/results.json",
     "e2e": "playwright test",
     "check:publish": "node e2e/dev/scenario-publish.mjs",
     "check:character": "node e2e/dev/character-rules.mjs",

@@ -12,6 +12,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { escapeHtml, reportPage } from './report-html.mjs';
 import { parseUseCases, STEP_ID_RE, USE_CASES_FILE } from './usecases.mjs';
 
 export const RESULTS_FILE = 'apps/web/e2e-results/results.json';
@@ -118,14 +119,6 @@ export function anchorFor(useCase, ids) {
   return ids.has(domain) ? domain : null;
 }
 
-const escapeHtml = (s) =>
-  String(s)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-
 const LABELS = {
   passed: '確認済',
   failed: '落ちた',
@@ -184,38 +177,13 @@ export function buildReportHtml({ useCases, states, json, ids, generatedAt, sha 
     .filter(Boolean)
     .join(' ／ ');
 
-  return `<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ユースケースと E2E の結果</title>
-<style>
-:root { --bg:#fff; --fg:#213547; --muted:#67676c; --line:#e2e2e3; --link:#3451b2; --passed:#18794e; --failed:#b8272c; --stopped:#915930; --none:#67676c; --noresult:#67676c; }
-@media (prefers-color-scheme: dark) { :root { --bg:#1b1b1f; --fg:#dfdfd6; --muted:#98989f; --line:#2e2e32; --link:#a8b1ff; --passed:#3dd68c; --failed:#f66f81; --stopped:#f9b44e; --none:#98989f; --noresult:#98989f; } }
-body { margin:0 auto; max-width:1000px; padding:24px 16px 48px; background:var(--bg); color:var(--fg); font:16px/1.7 system-ui, sans-serif; }
-a { color:var(--link); }
-h1 { font-size:1.6rem; } h2 { font-size:1.2rem; margin-top:2rem; border-top:1px solid var(--line); padding-top:1rem; }
-table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; }
-th, td { border:1px solid var(--line); padding:6px 10px; text-align:left; vertical-align:top; font-size:.9rem; }
-td.id { white-space:nowrap; font-family:ui-monospace, monospace; }
-ul { margin:0; padding-left:1.2em; }
-.badge { white-space:nowrap; font-weight:600; }
-.badge.passed, .sub.passed { color:var(--passed); } .badge.failed, .sub.failed { color:var(--failed); }
-.badge.stopped, .sub.stopped { color:var(--stopped); } .badge.none, .badge.noresult { color:var(--none); }
-.sub { font-size:.8rem; } .meta, .lead { color:var(--muted); font-size:.9rem; }
-.notice { border:1px solid var(--failed); border-radius:6px; padding:8px 12px; color:var(--failed); }
-</style>
-</head>
-<body>
-<h1>ユースケースと E2E の結果</h1>
-<p class="lead">中核のユースケース（<a href="../architecture/use-cases.html">一覧</a>）ごとに、それを確かめる E2E のテストの最新の結果。「確認済」は、そのユースケースの正常パス（タグを付けたステップの主な流れ）を E2E で確認したという意味で、ほかの流れ（断る・分かれる）までは確認していない。テストの題から Playwright のレポートへ飛べる（<a href="../architecture/test-report.html">テストレポート</a>）。</p>
-<p class="meta">${meta}</p>
-${notice}
-${sections}
-</body>
-</html>
-`;
+  return reportPage({
+    title: 'ユースケースと E2E の結果',
+    lead: '中核のユースケース（<a href="../architecture/use-cases.html">一覧</a>）ごとに、それを確かめる E2E のテストの最新の結果。「確認済」は、そのユースケースの正常パス（タグを付けたステップの主な流れ）を E2E で確認したという意味で、ほかの流れ（断る・分かれる）までは確認していない。テストの題から Playwright のレポートへ飛べる（<a href="../architecture/test-report.html">テストレポート</a>）。',
+    meta,
+    notice,
+    body: sections,
+  });
 }
 
 /** use-cases.html の id の集合。ビルド結果が無ければ null */

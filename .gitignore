@@ -6,6 +6,9 @@ apps/web/playwright-report/
 apps/web/test-results/
 # Vitest の HTML レポート（pnpm test:report。deploy.yml が Pages に載せる）
 */*/vitest-report/
+# Vitest の JSON（pnpm test:report。ルールとテストの結果のページの入力）と、そのページ（pnpm rule:report）
+*/*/vitest-results/
+/rule-test-report/
 *.log
 # 開発サーバーの書き込みの口が書いている途中の一時ファイル（apps/web/vite/scenarioFilePlugin.ts）
 scenarios/.*.tmp
