@@ -58,7 +58,7 @@ function apply(c: Character, effect: Parameters<typeof applySoloEffect>[1], s = 
   return r;
 }
 
-describe('heldCards', () => {
+describe('heldCards', { tags: ['rule:solo-village/配る条件・使える条件'] }, () => {
   it('キャラクターデッキと、GM専用ゾーンの「達成」タグのカードだけを含む', () => {
     const gmSecret = card('npc-secret', ['正体は裏'], { kind: 'npc' });
     const onTable = card('en', ['戦闘不能'], { kind: 'enemy' });
@@ -67,7 +67,7 @@ describe('heldCards', () => {
   });
 });
 
-describe('unplayableReason', () => {
+describe('unplayableReason', { tags: ['rule:solo-village/配る条件・使える条件'] }, () => {
   it('使える条件が無ければ null', () => {
     expect(unplayableReason(card('x', []), [])).toBeNull();
   });
@@ -94,7 +94,7 @@ describe('unplayableReason', () => {
   });
 });
 
-describe('applySoloEffect：能力値', () => {
+describe('applySoloEffect：能力値', { tags: ['rule:solo-village/能力値の上がり方'] }, () => {
   it.each<[keyof Abilities, Abilities, string]>([
     ['body', { body: 4, skill: 3, mind: 3 }, '体が1上がった（体 4）'],
     ['skill', { body: 3, skill: 4, mind: 3 }, '技が1上がった（技 4）'],
@@ -134,7 +134,7 @@ describe('applySoloEffect：能力値', () => {
   });
 });
 
-describe('applySoloEffect：HP・行動値', () => {
+describe('applySoloEffect：HP・行動値', { tags: ['rule:solo-village/能力値の上がり方'] }, () => {
   it('すでに HP を持っていれば変えない', () => {
     const c = pc({ hp: { current: 15, max: 15 } });
     expect(apply(c, { raiseAbility: 'body' }).character.hp).toEqual({ current: 15, max: 15 });
@@ -151,7 +151,7 @@ describe('applySoloEffect：HP・行動値', () => {
   });
 });
 
-describe('resolveGainCards', () => {
+describe('resolveGainCards', { tags: ['rule:solo-village/成長の効果'] }, () => {
   it('gainCards → gainCardIds の順に、深く複製して返す', () => {
     const r = resolveGainCards({ gainCards: [voucher()], gainCardIds: ['c-slash'] }, system.cards);
     if (!r.ok) throw new Error(r.error);
@@ -172,7 +172,7 @@ describe('resolveGainCards', () => {
   });
 });
 
-describe('applySoloEffect：カードの出入り', () => {
+describe('applySoloEffect：カードの出入り', { tags: ['rule:solo-village/成長の効果'] }, () => {
   it('gainCardIds の戦闘スキルは一覧から引いて「習った」、スキルでないカードは「受け取った」', () => {
     const { character, lines } = apply(pc(), { gainCardIds: ['c-slash', 'c-lantern'] });
     expect(character.deck).toEqual([slash, lantern]);
@@ -220,7 +220,7 @@ describe('applySoloEffect：カードの出入り', () => {
     expect(apply(pc(), { gainCards: [voucher()] }).lines).toContain('『v1からの報酬』を受け取った');
   });
 
-  it('文には達成カードの名前・タグを書かない', () => {
+  it('文には達成カードの名前・タグを書かない', { tags: ['rule:solo-village/達成カード'] }, () => {
     const { lines } = apply(pc(), {
       raiseAbility: 'body',
       gainCards: [voucher()],
@@ -242,7 +242,9 @@ describe('applySoloEffect：カードの出入り', () => {
   });
 });
 
-describe('endingCard・grantEndingCard（結末タグのカードと即時反映。仮ルール）', () => {
+describe('endingCard・grantEndingCard（結末タグのカードと即時反映。仮ルール）', {
+  tags: ['rule:solo-village/結末タグ', 'rule:solo-village/即時反映（例外）'],
+}, () => {
   const scenario = { id: 'sc-1', title: '村はずれの一歩' };
   const ok = { id: 'e-ok', name: '旅立ち', grantsTag: '冒険者になった', noReplay: true };
   const made = (e = ok, id = 'c-end') => endingCard(scenario, e, id);

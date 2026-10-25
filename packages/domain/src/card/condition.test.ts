@@ -19,7 +19,7 @@ const achievement = card('ach-boar', ['達成', '達成:猪'], {
   name: '猪の件を片づけた',
 });
 
-describe('meetsCondition', () => {
+describe('meetsCondition', { tags: ['rule:solo-village/配る条件・使える条件'] }, () => {
   const held = [voucher(), slash];
   it('条件が無ければ真', () => {
     expect(meetsCondition(undefined, held)).toBe(true);

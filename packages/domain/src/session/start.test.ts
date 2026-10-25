@@ -34,7 +34,9 @@ const rc = (over: Partial<Recruitment> = {}) => ({
   ...over,
 });
 
-describe('checkStart（募集からセッションを始められるか。docs/cartagraph/scenario-flow.md「全体フロー」5）', () => {
+describe('checkStart（募集からセッションを始められるか。docs/cartagraph/scenario-flow.md「全体フロー」5）', {
+  tags: ['rule:scenario-flow/セッション開始までの全体フロー'],
+}, () => {
   it('受付中の募集で、応募1件をドライバーのPCに選べば開始できる（想定人数の内側なら注意なし）', () => {
     expect(
       checkStart(rc({ partySize: { min: 1, max: 1 } }), {
@@ -127,7 +129,9 @@ describe('defaultPartyName', () => {
   });
 });
 
-describe('buildParticipants（docs/cartagraph/party-and-session.md「ドライバーとナビゲーター」）', () => {
+describe('buildParticipants（docs/cartagraph/party-and-session.md「ドライバーとナビゲーター」）', {
+  tags: ['rule:party-and-session/ドライバーとナビゲーター'],
+}, () => {
   const at = '2026-10-03T12:00:00.000Z';
   const gm = { userId: 'u-me', name: 'ユウ' };
 
@@ -172,7 +176,9 @@ describe('buildParticipants（docs/cartagraph/party-and-session.md「ドライ�
   });
 });
 
-describe('checkPlayFromRecruitment（GM 不在の募集から始められるか。docs/cartagraph/scenario-flow.md「募集とセッション」）', () => {
+describe('checkPlayFromRecruitment（GM 不在の募集から始められるか。docs/cartagraph/scenario-flow.md「募集とセッション」）', {
+  tags: ['rule:scenario-flow/募集とセッション'],
+}, () => {
   const gmless = { kind: 'gmless' as const };
   const mine = { name: 'ジン', ownerId: 'u-me' };
   const cleared = {
@@ -188,7 +194,9 @@ describe('checkPlayFromRecruitment（GM 不在の募集から始められるか�
     });
   });
 
-  it('通常の募集・借りた PC・再挑戦不可は、それぞれ断る', () => {
+  it('通常の募集・借りた PC・再挑戦不可は、それぞれ断る', {
+    tags: ['rule:scenario-flow/連作・キャンペーンの表現：結末タグ'],
+  }, () => {
     expect(
       checkPlayFromRecruitment({ kind: 'normal' }, mine, { meId: 'u-me', blockedBy: null }),
     ).toEqual({ ok: false, error: 'この募集は GM 不在の募集ではありません' });
@@ -216,7 +224,9 @@ describe('checkPlayFromRecruitment（GM 不在の募集から始められるか�
   });
 });
 
-describe('checkResume（中断したセッションを再開できるか。docs/cartagraph/party-and-session.md「中断」）', () => {
+describe('checkResume（中断したセッションを再開できるか。docs/cartagraph/party-and-session.md「中断」）', {
+  tags: ['rule:party-and-session/非同期セッションの進行'],
+}, () => {
   const driver = { userId: 'u-me', role: 'driver' as const };
   const gm = { userId: 'u-kirino', role: 'gm' as const };
   const session = (

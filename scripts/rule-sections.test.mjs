@@ -181,6 +181,12 @@ describe('実物の docs/cartagraph', () => {
     assert.ok(check, '判定の基本メカニズムのタグがある');
     assert.equal(check.description, '判定ルール「判定の基本メカニズム」');
     assert.equal(new Set(tags.map((t) => t.name)).size, tags.length);
+    // 対象外の一覧（docs/architecture/rule-test-exclusions.md）の節は入らない（ページ全体・節の両方）
+    const names = new Set(tags.map((t) => t.name));
+    assert.equal(names.has('rule:index/概要'), false);
+    assert.equal(names.has('rule:balance/スコープ'), false);
+    assert.equal(names.has('rule:character-growth/この章の設計原則'), false);
+    assert.equal(names.has('rule:character-growth/成長の基本メカニズム'), true);
   });
 });
 
