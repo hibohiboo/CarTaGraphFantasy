@@ -103,3 +103,18 @@ expect(toDictionaryForm('扉を破壊する')).toBe('扉を破壊する'); // �
 - `e2e/usecases/` で：タグにあってステップに無い ID／その逆、`test.step` の最初の引数が文字列の直書きでない（テンプレート文字列・変数）、題の中のタグ（`test('… @SC-1')`）・`test.describe` へのタグ（静的に読めない）、`test.skip`・`test.fixme`・`test.only`・`test.fail`・`test.slow`・`test.step.skip`・`expect.soft`（skip したステップは結果で「確認済」に見えるため）、同じ ID のステップが複数、1ファイルに `test(` が2本以上。CI では `forbidOnly` も効く
 
 `apps/web/e2e/` を触ったら `pnpm docs:build` も通す。ステップに入れない確かめ（`web:check:*` など、CI で回らない通し）は `apps/web/e2e/dev/`（[ウェブアプリ](../../architecture/web-app.md)）。
+
+## ルールのテストのタグ
+
+[ルールのページ](../../cartagraph/index.md)の節（`##`・`###`）ごとの、それを確かめる Vitest のテストと最新の結果は、デプロイが作るページ（[テストレポート](../../architecture/test-report.md)「ルールとの対応の見方」）で見られる（2026-10-25導入）。ここには書き方と、止めるものを書く。
+
+- **紐づけはテストの側に書く。** `describe` か `it` に Vitest のタグ（`{ tags: ['rule:check/判定の基本メカニズム'] }`）を付ける。名前は `rule:<ページのファイル名（.md なし）>/<見出しの文字そのまま>`。`###` も親を書かず、見出しだけで指す。`describe` のタグは中のテストに引き継がれる。タグの文字列は直書きする（検索で見出しから引けるように）
+- **付けるのは、そのテストが節に書いたルールを実際に確かめているときだけ。** モジュール単位で機械的に付けない（「確認済」が水増しになる）。型の形・複製・入力の検査など、ルールでないものには付けない。既存のコメントの出典（`docs/cartagraph/xxx.md「節」`）は、説明として要るものは残してよい
+- **付けられるのは Vitest の3パッケージ（domain・schemas・web）。** E2E は上の「ユースケースの E2E」が担う
+- **テストで確かめる性質でない節**（設計原則など）は、[対象外の一覧](../../architecture/rule-test-exclusions.md)で宣言する。対象外の節にはタグを付けられない。迷う節は載せず、ページで「テストなし」と出す
+
+止めるもの：
+
+- 見出しに無いタグ・対象外の節のタグを付けたテストは、Vitest が実行時に「The tag "…" is not defined in the configuration」で落とす（ファイルごと落ちる）。**ルールのページの見出しを直す・消すと、そのタグを付けたテストが落ちる**。`grep -rn "rule:<ページ>/<見出し>" packages apps` でテストを探して、タグを新しい見出しに直す
+- 見出しの書式（空白・`! * & | ( )`・`{#id}`・インラインの記法）、同じページの同じ見出し、対象外の一覧と見出しの食い違いは `pnpm docs:build` が止める（`scripts/rule-sections.mjs`・`scripts/check-rule-test-exclusions.mjs`）
+- タグの打ち間違いでファイルが落ちたことは、結果のページの先頭の「収集で落ちたファイル」に出る

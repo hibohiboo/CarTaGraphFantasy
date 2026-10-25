@@ -32,3 +32,4 @@ paths:
 - 実装のパスを指している（`scripts/check-spec-paths.mjs`。生成した参考資料 `auto-combat-simulation.md` は見ない）
 - 「仮」の印と仮ルールのファイルの食い違い（`scripts/check-provisional.mjs`。中身は[仮ルール](../../provisional/index.md)「機械で止めること」）
 - 用語の旧称（`scripts/check-terms.mjs`。用語の正は[用語集](../../glossary.md)）
+- 見出し（`##`・`###`）の書式（空白・`( )` など。`scripts/rule-sections.mjs`）。見出しを直す・消すと、その節のタグを付けた `packages/domain` などのテストが `pnpm domain:test` で落ちる。直し方は[テストのルール](testing.md)の「ルールのテストのタグ」

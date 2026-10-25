@@ -130,6 +130,7 @@ export default withMermaid(
             { text: '体制の進化ログ', link: '/process/evolution' },
             { text: '体制の進化のタイムライン', link: '/process/timeline' },
             { text: 'テストレポート', link: '/architecture/test-report' },
+            { text: 'ルールのテストの対象外', link: '/architecture/rule-test-exclusions' },
             // Redoc の HTML 1枚（pnpm api:docs が dist に作る。docs:dev には無い。docs/architecture/web-app.md「API ドキュメント」）
             { text: 'API ドキュメント', link: '/api-docs/', target: '_self' },
           ],

@@ -43,7 +43,7 @@ scenarios/                公開したことのあるシナリオの JSON（非�
                           読み込み・検査・画面からの公開は Webアプリの仕組み「シナリオの JSON」）
 rules/                    システム製作者のルールの JSON（システムのカード一覧・キャラクター作成のルール。シードの一部。
                           読み込み・検査は Webアプリの仕組み「ルールの JSON」）
-scripts/                  ビルド補助（GitHub Pages へのコピー、API ドキュメントの生成、自動戦闘のシミュレーション）。biome/ は Biome の GritQL のプラグイン
+scripts/                  ビルド補助（GitHub Pages へのコピー、API ドキュメントの生成、自動戦闘のシミュレーション、ルールのテストのタグの一覧と結果のページ）。biome/ は Biome の GritQL のプラグイン
                           （docs/process/rules/static-analysis.md「GritQL のプラグイン」）
 ```
 
@@ -66,8 +66,12 @@ apps/web ──→ packages/domain ──→ zod
    └──→ rules/*.json（mocks/rulesFiles.ts が読み、packages/domain の検査を通す。scripts/ のシミュレーションも読む）
 
 scripts/build-api-docs.ts ──→ packages/schemas（API の一覧から OpenAPI の文書を作る）
+
+packages/*/vitest.config.ts・apps/web/vite.config.ts ──→ scripts/rule-sections.mjs ──→ docs/cartagraph/*.md
+                                                         （見出しからルールのテストのタグの一覧を作る）
 ```
 
+- **Vitest の設定から読む `scripts/rule-sections.mjs`** — 3パッケージの Vitest の設定がタグの一覧を作るために読む。設定は Vite がバンドルして読むので、Node が解決できない import をしない（`apps/web/vite/` と同じ）。Vitest は cwd がパッケージのディレクトリで動くので、読む場所は `import.meta.url` から組み立てたリポジトリの直下を基準にする。`apps/web/vite.config.ts` は tsc の対象なので、型は `scripts/rule-sections.d.mts` に置く。使い方は[テストのルール](testing.md)の「ルールのテストのタグ」
 - **パッケージの間** — `apps/web` は `packages/domain` を参照してよい。逆は禁止。`packages/domain` は React・DOM・MSW に依存しない（下の「境界」）。`packages/schemas` は `packages/domain` を参照してよく、`apps/web` が参照する。`packages/domain` から `packages/schemas` は参照しない（domain は依存を宣言していないので、import すると解決に失敗して止まる）
 - **`@cartagraph/schemas` を import してよい層** — `entities`（mutation の本文の型と、domain に無い応答の型）と、層の外の `mocks`（ハンドラの検査）・`test` だけ。ほかの層（app・pages・widgets・features・shared）からは Biome で止める（`biome.json` の層ごとの `noRestrictedImports`。後ろの override は前の override の禁止を置き換えるので、層の直下のファイル用の override にも書く）
 - **packages/domain の中** — 下の層だけを import してよい（下の「packages/domain の中の置き場所」の図と表。Biome で機械的に止める）
