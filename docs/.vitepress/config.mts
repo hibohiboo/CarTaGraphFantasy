@@ -175,6 +175,7 @@ export default withMermaid(
                 { text: '中核のユースケース', link: '/notes/architecture/use-cases' },
                 { text: 'イベントの流れ', link: '/notes/architecture/event-flows' },
                 { text: '実装パターン', link: '/notes/architecture/implementation-patterns' },
+                { text: 'テストレポート', link: '/notes/architecture/test-report' },
                 { text: 'ロードマップ', link: '/notes/roadmap' },
               ],
             },

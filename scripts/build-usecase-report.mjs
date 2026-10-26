@@ -187,7 +187,7 @@ export function buildReportHtml({ useCases, states, json, ids, generatedAt, sha 
 }
 
 /** use-cases.html の id の集合。ビルド結果が無ければ null */
-function readAnchorIds(file) {
+export function readAnchorIds(file) {
   if (!existsSync(file)) return null;
   return new Set(
     [...readFileSync(file, 'utf8').matchAll(/\sid="([^"]+)"/g)].map((m) =>
@@ -200,7 +200,7 @@ function readAnchorIds(file) {
 }
 
 /** JSON を読む。無い・壊れているときは null */
-function readResults(file) {
+export function readResults(file) {
   try {
     return JSON.parse(readFileSync(file, 'utf8'));
   } catch {

@@ -5,6 +5,8 @@ summary: 今は1本の E2E が7つのユースケースをまとめて確かめ�
 decisions:
   - Gherkin（playwright-bdd などで .feature に書く）にするか、Playwright のまま1ユースケース1テストに分けるか（Cucumber にこだわらない）
   - 流れの細部の正を、.feature（またはテスト）と use-cases.md のどちらに置くか
+trace:
+  none: 開発の基盤（E2E の運用）
 updated: 2026-10-18
 ---
 

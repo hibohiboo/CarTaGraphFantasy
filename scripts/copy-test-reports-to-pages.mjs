@@ -16,6 +16,8 @@ const reports = [
   ['apps/web/usecase-report', 'usecase-report'],
   // ルールのページの節ごとのテストの結果（scripts/build-rule-test-report.mjs。deploy.yml が Vitest の後に作る）
   ['rule-test-report', 'rule-test-report'],
+  // 要望からテストまでのつながりの図（scripts/build-trace-report.mjs。deploy.yml が上の2つの後に作る）
+  ['trace-report', 'trace-report'],
   // Vitest（pnpm test:report）
   ['apps/web/vitest-report', 'vitest-report/web'],
   ['packages/domain/vitest-report', 'vitest-report/domain'],

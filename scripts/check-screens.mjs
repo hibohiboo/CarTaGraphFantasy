@@ -21,13 +21,34 @@ export const ISSUES_FILE = 'docs/screens/issues.md';
 /** 導線図に描かないグループ（遊ぶ人の導線に入らない。docs/screens/index.md に理由を書いている） */
 export const NOT_IN_DIAGRAM = ['admin'];
 
-/** routes.ts から [{ path, group }] を読む */
+/** routes.ts から [{ path, title, group, example? }] を読む（example は動的ルートだけ） */
 export function parseRoutes(source) {
-  return [...source.matchAll(/path:\s*'([^']+)'[\s\S]*?group:\s*'(\w+)'/g)].map(
-    ([, path, group]) => ({
-      path,
-      group,
-    }),
+  // 行頭のキーだけを読む（description の文章やコメントの中の `title: '…'` `path: '…'` を拾わない）。
+  // ルートの { … } は2文字インデントの `}` で閉じるので、配列の後ろのコードは読まない。group の無いものはルートとみなさない
+  const starts = [...source.matchAll(/^\s*path:\s*'([^']+)'/gm)];
+  return starts
+    .map((m, i) => {
+      const rest = source.slice(m.index, starts[i + 1]?.index ?? source.length);
+      const block = rest.split(/^ {2}\}/m)[0];
+      const field = (key, value) => block.match(new RegExp(`^\\s*${key}:\\s*'${value}'`, 'm'))?.[1];
+      const route = {
+        path: m[1],
+        title: field('title', String.raw`((?:\\.|[^'\\])*)`) ?? '',
+        group: field('group', String.raw`(\w+)`) ?? '',
+      };
+      const example = field('example', "([^']+)");
+      return example ? { ...route, example } : route;
+    })
+    .filter((route) => route.group !== '');
+}
+
+/** 導線図の、まだ無い画面のノード（`id["ラベル"]:::missing`）のラベルを読む */
+export function parseMissingScreens(md) {
+  const blocks = [...md.matchAll(/^```mermaid\n([\s\S]*?)^```/gm)].map((m) => m[1]);
+  return blocks.flatMap((block) =>
+    [...block.matchAll(/\["([^"]*)"\]:::missing/g)].map(([, label]) =>
+      label.replaceAll('<br/>', ' ').trim(),
+    ),
   );
 }
 

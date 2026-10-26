@@ -3,6 +3,8 @@ title: ルールブックを、目次から少しずつ読めるようにする
 milestone: ui-polish
 status: 未着手
 summary: PL が、ルールブックの各ページを目次から節ごとに読め、どこまで読んだかが印で分かる。
+trace:
+  screens: [/rulebook, /rulebook/how-to-play, /rulebook/checks, /rulebook/library]
 updated: 2026-10-10
 ---
 

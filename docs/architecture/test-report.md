@@ -7,6 +7,7 @@ main への push ごとに、デプロイ（`.github/workflows/deploy.yml`）が
 | [E2E（Playwright）](https://hibohiboo.github.io/CarTaGraphFantasy/e2e-report/) | ビルドした画面をブラウザで操作するテスト。スクリーンショット付き | `pnpm web:e2e` |
 | [ユースケースとの対応](https://hibohiboo.github.io/CarTaGraphFantasy/usecase-report/) | [中核のユースケース](use-cases.md)ごとの、E2E のテストと最新の結果。上の E2E のレポートの、そのテストへ飛べる | `pnpm web:e2e; pnpm usecase:report` |
 | [ルールとの対応](https://hibohiboo.github.io/CarTaGraphFantasy/rule-test-report/) | [ルールのページ](../cartagraph/index.md)の節（`##`・`###`）ごとの、Vitest のテストと最新の結果。下の Vitest のレポートへ飛べる | `pnpm docs:build; pnpm test:report; pnpm rule:report`（`docs:build` が無いと、節のリンクがページまでになり、並びがファイル名順になる） |
+| [トレース](https://hibohiboo.github.io/CarTaGraphFantasy/trace-report/) | 要望から、ユースケース・画面・ルールの節・テスト・集約・イベントまでのつながりを、層ごとの列に並べた図。押した要素の上流と下流がたどれ、要望ごとに届き具合が出る | `pnpm docs:build; pnpm web:e2e; pnpm test:report; pnpm trace:report`（`docs:build` が無いと、元の文書へのリンクがページまでになる） |
 | [Vitest：Webアプリ](https://hibohiboo.github.io/CarTaGraphFantasy/vitest-report/web/) | `apps/web` のテスト（MSW の node サーバーで全ページを描画） | `pnpm web:test` |
 | [Vitest：ドメイン](https://hibohiboo.github.io/CarTaGraphFantasy/vitest-report/domain/) | `packages/domain` の純粋関数のテスト | `pnpm domain:test` |
 | [Vitest：API のスキーマ](https://hibohiboo.github.io/CarTaGraphFantasy/vitest-report/schemas/) | `packages/schemas` のテスト | `pnpm schemas:test` |
@@ -43,5 +44,28 @@ main への push ごとに、デプロイ（`.github/workflows/deploy.yml`）が
 - 同じ節に複数のテスト・パッケージが当たるときは、対象外 ＞ 落ちた ＞ 確認済 ＞ スキップのみ ＞ テストなし の順で強いものを出す。`##` の行には、その節に直接付いたテストだけを数える（子の `###` は混ぜない）
 - ページの先頭に「結果なし」が出たときは、そのパッケージの JSON が読めなかった。「収集で落ちたファイル」が出たときは、タグの打ち間違いなどでそのファイルが丸ごと落ちていて、そのファイルのテストは節に出ない
 - ページはデプロイ時に作る（`scripts/build-rule-test-report.mjs`）。タグの書き方・付ける基準は[テストのルール](../process/rules/testing.md)の「ルールのテストのタグ」
+
+## トレースの見方
+
+アイデア（要望）が実装とテストまで届いているかを見るページ。左から、アクター・要望・ユースケース・画面とルールの節・テスト・集約・イベントの列に並べる。要素を押すと、その要素の祖先（左へ。なぜ作るか）と子孫（右へ。どこで確かめているか）だけが濃くなり、横のパネルに名前・状態・元の文書やテストのレポートへのリンクが出る。同じ要素か図の余白をもう一度押すと戻る。
+
+つながりは書き写さず、既にある文書から組み立てる。要望の先頭（frontmatter）の `trace`（[要望の書き方](../backlog/index.md)）、[中核のユースケース](use-cases.md)の表のアクター・画面・集約・イベントの列、[画面一覧と導線](../screens/index.md)とルート定義、[集約とドメインイベント](aggregates.md)、ルールのページ、テストの結果。線の元（ユースケース・画面・節）から、それを確かめるテストのファイルへ線を引く（ユースケースは E2E のタグ、画面は smoke の題、節はルールのテストのタグ）。
+
+| 状態 | 意味 |
+|---|---|
+| 確認済 | つなぐ先のテストが通った |
+| テストなし | つなぐ先のテストが無い（スキップのみを含む） |
+| 未実装 | 将来のユースケース、またはまだ無い画面 |
+| 結果なし | E2E・Vitest が起動できなかった等で、結果が読めなかった |
+| 落ちた | つなぐ先のテストが落ちた（手前で止まったを含む） |
+| つなぐ先なし | 開発の基盤など、要望の `trace` が `none` |
+| 見送り | 要望の状態が見送り（届き具合を計算しない） |
+
+- 要望の色（届き具合）は、つなぐ先の状態のうち、悪い順（落ちた ＞ 結果なし ＞ 未実装 ＞ テストなし ＞ 確認済）にいちばん悪いもの。つなぐ先のどれか1つでも確認済でなければ、要望は確認済にならない
+- **未達** — 要望の状態が「完了」なのに、届き具合が確認済でないもの。ページの先頭に件数と一覧が出る。つなぎ先の追加漏れか、テストの不足か、`trace` の書き間違いかを見る合図で、判定ではない
+- 「確認済」は、つなぐ先のテストが通ったという意味にとどまり、要望の中身を全部確かめたという意味ではない。つなぎ方が正しいか（要望が実現したいことを、そのユースケース・画面・節で本当に確かめられるか）は、人間が `trace` の変更を見て確かめる
+- 先頭の案内：結果が読めないもの（E2E・Vitest のパッケージ。Vitest が1つでも読めないときは、「テストなし」の節を「結果なし」に上げる）、収集で落ちたファイル（どの節のテストか分からないので状態に入れない）、当たらないルート（smoke の題の書き方が変わり、画面が黙って「テストなし」になるのを止める）
+- 枠の色は業務領域・コンテキスト。要素の中の文字（「落ちた」など）にも状態を出し、色だけに頼らない
+- ページはデプロイ時に作る（`scripts/build-trace-report.mjs`）。`trace` と表の列の検査は `pnpm docs:build`（`scripts/check-trace.mjs`）。決めた理由は[デザイナーノート](../notes/architecture/test-report.md)
 
 Vitest の HTML レポートを手元で作るときは `pnpm test:report`（各パッケージの `vitest-report/` に HTML、`vitest-results/` に JSON を書く。git には載せない）。レポートを dist に写すのは `scripts/copy-test-reports-to-pages.mjs`。テストの書き方は[テストのルール](../process/rules/testing.md)。

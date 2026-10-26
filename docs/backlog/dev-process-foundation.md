@@ -12,6 +12,8 @@ cycles:
   - { name: C4 新プロセスで1機能を完走（シーン構築画面）, status: 完了 }
   - { name: C5 定期リファクタリング, status: 完了, pr: 2 }
   - { name: C6 PR 運用の開始, status: 完了 }
+trace:
+  none: 開発の基盤（開発プロセス）
 updated: 2026-09-27
 ---
 

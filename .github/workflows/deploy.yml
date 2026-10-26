@@ -79,6 +79,11 @@ jobs:
         run: node scripts/build-rule-test-report.mjs
         continue-on-error: true
 
+      - name: Build trace report (report only, does not block deploy)
+        if: always()
+        run: node scripts/build-trace-report.mjs
+        continue-on-error: true
+
       - name: Copy test reports into Pages dist
         if: always()
         run: node scripts/copy-test-reports-to-pages.mjs

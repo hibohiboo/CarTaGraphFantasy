@@ -9,6 +9,9 @@ cycles:
   - { name: C1 仕様, status: 完了 }
   - { name: C2 シナリオタイプ, status: 完了, pr: 20 }
   - { name: C3 作成時から冒険者, status: 完了, pr: 21 }
+trace:
+  screens: [/pl/characters/new, /pl/characters/:characterId]
+  rules: [scenario-type/PCはすべて冒険者, character-growth/PCが持つデータ]
 updated: 2026-10-10
 ---
 

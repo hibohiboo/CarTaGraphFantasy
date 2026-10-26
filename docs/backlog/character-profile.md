@@ -5,6 +5,9 @@ status: 未着手
 summary: PL が、作るときも作った後も、PC の容姿・設定を任意で書き、画像を設定できる。キャラクターシートから CP を使って PC を成長させられる。
 decisions:
   - CP を使った成長を、いつできるようにするか（セッションの外ならいつでも／決まった場面だけ）
+trace:
+  screens: [/pl/characters/new, /pl/characters/:characterId]
+  rules: [character-growth/PCが持つデータ, character-growth/成長の基本メカニズム]
 updated: 2026-10-10
 ---
 

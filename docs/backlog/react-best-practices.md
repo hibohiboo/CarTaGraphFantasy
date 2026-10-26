@@ -4,6 +4,8 @@ status: 完了
 summary: Vercel Labs が公開している React のベストプラクティスに沿って、アプリのコードを見直す。
 plans:
   - 2026-09-22-react-best-practices適用.md
+trace:
+  none: 開発の基盤（コードの書き方）
 updated: 2026-09-23
 ---
 

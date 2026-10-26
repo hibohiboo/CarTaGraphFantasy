@@ -7,6 +7,8 @@ plans:
   - 2026-10-11-APIドキュメント.md
 cycles:
   - { name: API ドキュメント, status: 完了, pr: 23 }
+trace:
+  none: 開発の基盤（API ドキュメント）
 updated: 2026-10-11
 ---
 

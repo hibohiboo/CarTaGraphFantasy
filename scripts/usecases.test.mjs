@@ -1,7 +1,28 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { parseTestFile, parseUseCases, USE_CASES_FILE } from './usecases.mjs';
+import { normalizeActors, parseTestFile, parseUseCases, USE_CASES_FILE } from './usecases.mjs';
+
+const COLUMNS_MD = `## シナリオ製作
+
+| ID | ユースケース | アクター | 画面 | 書き換える集約 | 起きるイベント |
+|---|---|---|---|---|---|
+| SC-6 | 公開する | シナリオ製作者 | \`/creator/scenarios/:scenarioId\`・GM のホーム | シナリオ | シナリオを公開した・シナリオ集から外した |
+| SC-5 | 行き止まり | シナリオ製作者・GM | \`/gm/scenarios\` | （読むだけ） | — |
+| SC-9 | 自動 | GM（自動解決ならシステム） | — | — | — |
+
+## プレイ
+
+| ID | 画面 | ユースケース | 起きるイベント | 書き換える集約 | アクター |
+|---|---|---|---|---|---|
+| PL-2 | \`/pl/play\` | プレイする | 結末に達した | セッションスナップショット | ドライバー |
+
+## グラフ（将来）
+
+| ID | ユースケース | アクター | 起きること |
+|---|---|---|---|
+| GR-5 | 取り込む | （セッションの正常終了） | PC 発見グラフが増える |
+`;
 
 const MD = `# 中核のユースケース
 
@@ -113,4 +134,45 @@ test('T7: 文字列の直書きでない test.step・題のタグ・describe の
     'test.step.skip',
   ]);
   assert.equal(t.testCount, 1);
+});
+
+test('T3: 画面・アクター・集約・イベントの列を見出しの名前で読む（列の順が違っても読める）', () => {
+  const byId = Object.fromEntries(parseUseCases(COLUMNS_MD).map((u) => [u.id, u]));
+  assert.deepEqual(byId['SC-6'].screens, ['/creator/scenarios/:scenarioId', 'GM のホーム']);
+  assert.deepEqual(byId['SC-6'].aggregates, ['シナリオ']);
+  assert.deepEqual(byId['SC-6'].events, ['シナリオを公開した', 'シナリオ集から外した']);
+  assert.deepEqual(byId['PL-2'].screens, ['/pl/play']);
+  assert.deepEqual(byId['PL-2'].aggregates, ['セッションスナップショット']);
+  assert.deepEqual(byId['PL-2'].events, ['結末に達した']);
+  assert.deepEqual(byId['PL-2'].actors, ['ドライバー']);
+  assert.equal(byId['PL-2'].name, 'プレイする');
+});
+
+test('T3: —（画面・イベント）と（読むだけ）（集約）は空。将来の表は画面・集約・イベントが空で読める', () => {
+  const byId = Object.fromEntries(parseUseCases(COLUMNS_MD).map((u) => [u.id, u]));
+  assert.deepEqual(byId['SC-5'].aggregates, []);
+  assert.deepEqual(byId['SC-5'].events, []);
+  assert.deepEqual(byId['SC-9'].screens, []);
+  assert.deepEqual(byId['GR-5'].screens, []);
+  assert.deepEqual(byId['GR-5'].aggregates, []);
+  assert.deepEqual(byId['GR-5'].events, []);
+  assert.equal(byId['GR-5'].future, true);
+});
+
+test('アクター・集約・イベントの列が無い表は、アクターを「システム」にせず、空で読む', () => {
+  const md = '## 表\n\n| ID | ユースケース | 画面 |\n|---|---|---|\n| SC-1 | 下書き | `/a` |\n';
+  const [u] = parseUseCases(md);
+  assert.deepEqual([u.actors, u.aggregates, u.events], [[], [], []]);
+  assert.deepEqual(u.columns, ['ID', 'ユースケース', '画面']);
+});
+
+test('T4: アクターの正規化（・で区切る／（…）を除く／注記だけはシステム／誰でもはそのまま）', () => {
+  assert.deepEqual(normalizeActors('シナリオ製作者・GM'), ['シナリオ製作者', 'GM']);
+  assert.deepEqual(normalizeActors('GM（自動解決ならシステム）'), ['GM']);
+  assert.deepEqual(normalizeActors('（セッションの正常終了）'), ['システム']);
+  assert.deepEqual(normalizeActors('誰でも'), ['誰でも']);
+  assert.deepEqual(normalizeActors('GM・PL（後から誰でも）'), ['GM', 'PL']);
+  const byId = Object.fromEntries(parseUseCases(COLUMNS_MD).map((u) => [u.id, u]));
+  assert.deepEqual(byId['SC-9'].actors, ['GM']);
+  assert.deepEqual(byId['GR-5'].actors, ['システム']);
 });

@@ -6,6 +6,8 @@ plans:
   - 2026-10-18-P2-ユースケースとE2Eの結果.md
 cycles:
   - { name: ユースケースと E2E の結果, status: 完了, pr: 28 }
+trace:
+  none: 開発の基盤（ユースケースと E2E の結果のページ）
 updated: 2026-10-18
 ---
 

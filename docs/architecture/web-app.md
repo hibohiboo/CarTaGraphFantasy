@@ -20,9 +20,10 @@ API ドキュメント：`https://hibohiboo.github.io/CarTaGraphFantasy/api-docs
 コードのディレクトリ構成と依存の向きは、[アーキテクチャルール](../process/rules/architecture.md)の「構造」「依存の向き」が正。ここでは、そこに書いていない GitHub Pages 用のスクリプトだけを挙げる。
 
 - `scripts/copy-web-to-pages.mjs` … ビルド成果物を docs の dist 配下 `app/` へコピー
-- `scripts/copy-test-reports-to-pages.mjs` … Playwright・Vitest の HTML レポートを docs の dist 配下 `e2e-report/`・`usecase-report/`・`rule-test-report/`・`vitest-report/` へコピー
+- `scripts/copy-test-reports-to-pages.mjs` … Playwright・Vitest の HTML レポートを docs の dist 配下 `e2e-report/`・`usecase-report/`・`rule-test-report/`・`trace-report/`・`vitest-report/` へコピー
 - `scripts/build-usecase-report.mjs` … E2E の結果（`apps/web/e2e-results/results.json`）と use-cases.md の表から、ユースケースごとの結果のページ `apps/web/usecase-report/index.html` を作る。デプロイが E2E の後に流し、`copy-test-reports-to-pages.mjs` が dist 配下 `usecase-report/` へ写す（表の読み取りは `scripts/usecases.mjs`、タグの検査は `scripts/check-usecase-tags.mjs`。[テストレポート](test-report.md)）
 - `scripts/build-rule-test-report.mjs` … 3パッケージの Vitest の JSON（`vitest-results/results.json`）とルールのページの見出し（`scripts/rule-sections.mjs`）から、節ごとのテストの結果のページ `rule-test-report/index.html` を作る。デプロイが Vitest の後に流し、`copy-test-reports-to-pages.mjs` が dist 配下 `rule-test-report/` へ写す（対象外の一覧は [rule-test-exclusions.md](rule-test-exclusions.md)、検査は `scripts/check-rule-test-exclusions.mjs`。[テストレポート](test-report.md)）
+- `scripts/build-trace-report.mjs` … 要望（`docs/backlog/` の `trace`）・ユースケースの表・画面・ルールの節・集約・イベントと、E2E・Vitest の結果から、つながりを図にしたページ `trace-report/index.html` を作る（`pnpm trace:report`）。状態の計算は `build-usecase-report.mjs`・`build-rule-test-report.mjs` の関数を共用する。デプロイがその2つの後に流し、`copy-test-reports-to-pages.mjs` が dist 配下 `trace-report/` へ写す（`trace` の読み手は `scripts/trace.mjs`、検査は `scripts/check-trace.mjs`。`docs:build` で流れる。[テストレポート](test-report.md)「トレースの見方」）
 - `scripts/build-api-docs.ts` … API ドキュメント（OpenAPI の文書と Redoc の HTML）を docs の dist 配下 `api-docs/` に作る（下の「API ドキュメント」）
 
 ## シナリオの JSON
@@ -118,6 +119,7 @@ pnpm web:dev:agent   # http://localhost:5174。エージェントがブラウザ
 pnpm web:test        # vitest（MSW の node サーバーで全ページを描画）
 pnpm web:e2e         # Playwright（Chromium）。ビルド→vite previewに対して、全ルートを実ブラウザで巡回し、ユースケースの通し（e2e/usecases/）を流す
 pnpm usecase:report  # 上の結果から、ユースケースごとの結果のページ apps/web/usecase-report/index.html を作る（落ちたときこそ見たいので `pnpm web:e2e; pnpm usecase:report`）
+pnpm trace:report    # 要望・ユースケース・画面・ルールの節・テスト・集約・イベントのつながりの図のページ trace-report/index.html を作る（`pnpm docs:build; pnpm web:e2e; pnpm test:report; pnpm trace:report`）
 pnpm web:typecheck
 pnpm domain:test     # vitest（packages/domain の純粋関数。自動戦闘・シーン遷移など）
 pnpm domain:typecheck # tsc（packages/domain。テストファイルも含む）

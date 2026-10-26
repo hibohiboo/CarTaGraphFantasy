@@ -6,6 +6,8 @@ plans:
   - 2026-09-27-試作HTMLの整理.md
 cycles:
   - { name: 試作 HTML 10画面の削除, status: 完了, pr: 7 }
+trace:
+  none: 開発の基盤（試作 HTML の整理）
 updated: 2026-09-27
 ---
 

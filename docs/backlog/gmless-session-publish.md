@@ -7,6 +7,10 @@ plans:
   - 2026-10-04-GM不在の募集.md
 cycles:
   - { name: GM不在の募集, status: 完了, pr: 16 }
+trace:
+  usecases: [SC-8, PL-2, PL-3, PL-4]
+  screens: [/gm/scenarios/:scenarioId, /gm/sessions, /pl/sessions, /pl/sessions/:sessionId/play]
+  rules: [play-and-field/GMレスセッションでの提案の扱い, scenario-flow/募集とセッション]
 updated: 2026-10-05
 ---
 

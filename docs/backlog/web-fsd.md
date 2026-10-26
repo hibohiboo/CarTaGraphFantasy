@@ -6,6 +6,8 @@ plans:
   - 2026-10-03-webのFSD移行.md
 cycles:
   - { name: apps/web の FSD 移行, status: 完了, pr: 13 }
+trace:
+  none: 開発の基盤（apps/web のディレクトリ構成）
 updated: 2026-10-03
 ---
 

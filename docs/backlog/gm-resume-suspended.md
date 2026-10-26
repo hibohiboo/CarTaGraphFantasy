@@ -3,6 +3,10 @@ title: セッションの中断と再開をドライバーと GM の両方から
 milestone: backend-1on1
 status: 未着手
 summary: ドライバーも GM もセッションを中断・再開でき、GM はセッション管理で中断中のセッションだけに絞って確かめられる。提案の裁定待ちは GM が裁定するまで解けない。
+trace:
+  usecases: [PL-4]
+  screens: [/gm/sessions, /gm/sessions/:sessionId, /pl/sessions/:sessionId/play]
+  rules: [party-and-session/非同期セッションの進行]
 updated: 2026-10-10
 ---
 

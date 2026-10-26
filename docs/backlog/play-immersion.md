@@ -5,6 +5,9 @@ status: 未着手
 summary: セッションが始まると、アプリのヘッダ・フッタや他の画面へのリンクが消え、場・手札・パーティのカード・プレイマットだけで遊べる。戦闘の結果や案内が重ならずに読める。
 decisions:
   - プレイ画面から抜ける操作（中断してホームへ戻る など）をどこに置くか
+trace:
+  usecases: [PL-2]
+  screens: [/pl/sessions/:sessionId/play]
 updated: 2026-10-10
 ---
 
