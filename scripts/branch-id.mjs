@@ -7,7 +7,8 @@
 // Co-Authored-By などのトレーラーを崩さないため。
 //
 // 使い方:
-//   node scripts/branch-id.mjs new <種類> <名前> [--id P12]  # 次の id でブランチを切る（例：feat/P12-scenario-copy）
+//   node scripts/branch-id.mjs new <種類> <名前> [--id P12]  # 次の id でブランチを切る（例：feat/P12-scenario-copy）。
+//                                                             # 新しい id のときは、main のプランの後片付けの漏れで止める
 //   node scripts/branch-id.mjs next                           # 次の id を出すだけ
 //   node scripts/branch-id.mjs pre-commit                     # main へのコミットと、id の無いブランチでのコミットを止める
 //   node scripts/branch-id.mjs commit-msg <ファイル>          # メッセージの1行目に id を付ける
@@ -82,6 +83,36 @@ export function checkCommitBranch({ branch, merging }) {
   return null;
 }
 
+/** 後片付けを確かめるプランの日付の下限。これより前のプランは書き方がそろっていないので見ない（2026-10-27） */
+export const CLOSEOUT_FROM = '2026-10-27';
+
+/** 後片付けが済んでいない要望の状態（マージの後は完了・進行中・見送りのどれかにする） */
+const OPEN_BACKLOG_STATUSES = ['未着手', '検討中', '判断待ち'];
+
+/**
+ * main に取り込まれたプランの後片付けの漏れを、人が読む行の配列で返す（無ければ空）。
+ * plans は [{ file（docs/plans/ からの名前）, text }]、backlogStatus は要望の名前 → frontmatter の status。
+ * 「PR 下書き」の節があるプランを、マージまで済んだものとみなす。マージの後に「人間レビューの結果」を書かず、
+ * 要望の状態も直さないまま振り返りへ進むことが3回続いたため、次のサイクルのブランチを切る前に止める（2026-10-27）
+ */
+export function findUnclosedPlans(plans, backlogStatus) {
+  const problems = [];
+  for (const { file, text } of plans) {
+    if (file.slice(0, 10) < CLOSEOUT_FROM || !/^## .*PR 下書き/m.test(text)) continue;
+    if (!/^## .*人間レビューの結果/m.test(text))
+      problems.push(`docs/plans/${file} に「人間レビューの結果」の節が無い`);
+    const backlogLine = text.match(/^要望：.*$/m)?.[0] ?? '';
+    for (const [, name] of backlogLine.matchAll(/\(\.\.\/backlog\/([^)#]+)\.md\)/g)) {
+      const status = backlogStatus.get(name);
+      if (OPEN_BACKLOG_STATUSES.includes(status))
+        problems.push(
+          `docs/backlog/${name}.md の status が「${status}」のまま（docs/plans/${file} はマージ済み）`,
+        );
+    }
+  }
+  return problems;
+}
+
 /** メッセージの1行目（# のコメント行と空行を飛ばした最初の行）の末尾に「 #P12」を付ける。付いていれば変えない */
 export function appendId(message, id) {
   const lines = message.split('\n');
@@ -125,9 +156,42 @@ function addIdToMessage(file) {
   if (next !== message) writeFileSync(file, next);
 }
 
-function createBranch(args) {
+/** main の docs/plans/ と docs/backlog/ を読む（作業中のブランチではなく、取り込まれたものを見る） */
+async function readMergedPlans() {
+  const { frontmatterValue } = await import('./build-trace-report.mjs');
+  const ls = (dir) =>
+    git(['-c', 'core.quotePath=false', 'ls-tree', '--name-only', 'main', '--', dir])
+      .stdout.split('\n')
+      .filter(Boolean);
+  const show = (path) => git(['show', `main:${path}`]).stdout;
+  const plans = ls('docs/plans/')
+    .filter((p) => p.endsWith('.md'))
+    .map((p) => ({ file: p.slice('docs/plans/'.length), text: show(p) }));
+  const backlogStatus = new Map(
+    ls('docs/backlog/')
+      .filter((p) => p.endsWith('.md'))
+      .map((p) => [p.slice('docs/backlog/'.length, -3), frontmatterValue(show(p), 'status')]),
+  );
+  return { plans, backlogStatus };
+}
+
+async function createBranch(args) {
   const [type, name] = args;
   const idFlag = args.indexOf('--id');
+  // 新しい id を切るときだけ、前のサイクルの後片付けを確かめる（--id で同じ id の続きを切るときは、その後片付けをするため止めない）
+  if (idFlag === -1) {
+    const { plans, backlogStatus } = await readMergedPlans();
+    const problems = findUnclosedPlans(plans, backlogStatus);
+    if (problems.length)
+      fail(
+        [
+          'マージ済みのサイクルの後片付けが済んでいません。',
+          ...problems.map((p) => `  - ${p}`),
+          '同じ id のブランチ（node scripts/branch-id.mjs new docs <名前> --id P<id>）で、プランに「人間レビューの結果」の節を書き、',
+          '要望の status・cycles・updated を直して main に取り込んでから、次のブランチを切ってください（docs/process/index.md の手順8）。',
+        ].join('\n'),
+      );
+  }
   const id = idFlag === -1 ? nextId(collectUsed()) : args[idFlag + 1];
   let branch;
   try {
@@ -140,7 +204,7 @@ function createBranch(args) {
   console.log(`${branch} を切りました（id ${id}。プランは docs/plans/<日付>-${id}-<機能>.md）`);
 }
 
-function main([command, ...args]) {
+async function main([command, ...args]) {
   switch (command) {
     case 'pre-commit': {
       const error = checkCommitBranch({ branch: currentBranch(), merging: merging() });
@@ -154,7 +218,7 @@ function main([command, ...args]) {
       console.log(nextId(collectUsed()));
       return;
     case 'new':
-      createBranch(args);
+      await createBranch(args);
       return;
     default:
       fail(

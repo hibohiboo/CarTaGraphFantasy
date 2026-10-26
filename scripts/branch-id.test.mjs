@@ -7,6 +7,7 @@ import {
   branchId,
   branchName,
   checkCommitBranch,
+  findUnclosedPlans,
   nextId,
   planIdNumber,
 } from './branch-id.mjs';
@@ -119,5 +120,52 @@ describe('appendId', () => {
   it('空のメッセージ・コメントだけのメッセージは変えない（git が中止する）', () => {
     assert.equal(appendId('', 'P1'), '');
     assert.equal(appendId('# コメント\n\n', 'P1'), '# コメント\n\n');
+  });
+});
+
+describe('findUnclosedPlans', () => {
+  const plan = (sections) =>
+    [
+      '# 機能',
+      '',
+      '要望：[何か](../backlog/some-wish.md)',
+      '',
+      ...sections.map((s) => `## ${s}`),
+    ].join('\n');
+  const done = new Map([['some-wish', '完了']]);
+
+  it('PR 下書きのあるプランに、人間レビューの結果の節が無ければ止める', () => {
+    const plans = [{ file: '2026-10-27-P6-x.md', text: plan(['11. PR 下書き']) }];
+    assert.deepEqual(findUnclosedPlans(plans, done), [
+      'docs/plans/2026-10-27-P6-x.md に「人間レビューの結果」の節が無い',
+    ]);
+  });
+
+  it('要望の status が未着手・検討中・判断待ちのままなら止める', () => {
+    const text = plan(['11. PR 下書き', '12. 人間レビューの結果（2026-10-28）']);
+    for (const status of ['未着手', '検討中', '判断待ち'])
+      assert.deepEqual(
+        findUnclosedPlans([{ file: '2026-10-27-P6-x.md', text }], new Map([['some-wish', status]])),
+        [
+          `docs/backlog/some-wish.md の status が「${status}」のまま（docs/plans/2026-10-27-P6-x.md はマージ済み）`,
+        ],
+      );
+  });
+
+  it('後片付けが済んでいる（完了・進行中・見送り）なら通す', () => {
+    const text = plan(['11. PR 下書き', '12. 人間レビューの結果']);
+    for (const status of ['完了', '進行中', '見送り'])
+      assert.deepEqual(
+        findUnclosedPlans([{ file: '2026-10-27-P6-x.md', text }], new Map([['some-wish', status]])),
+        [],
+      );
+  });
+
+  it('PR 下書きの無いプラン・2026-10-27 より前のプランは見ない', () => {
+    const plans = [
+      { file: '2026-10-27-P6-x.md', text: plan(['3. 詳細設計']) },
+      { file: '2026-10-26-P5-y.md', text: plan(['11. PR 下書き']) },
+    ];
+    assert.deepEqual(findUnclosedPlans(plans, new Map([['some-wish', '検討中']])), []);
   });
 });
