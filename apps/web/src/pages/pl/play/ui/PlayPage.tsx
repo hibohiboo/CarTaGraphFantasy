@@ -193,9 +193,7 @@ export function PlayPage() {
           <span className="u-dim u-small">結末タグの即時反映は仮ルール（GM不在）</span>
         )}
         {usesSoloRules && !ended && (
-          <span className="u-dim u-small">
-            能力値の上がり方・お店・選べないカードの条件・シーンに入ったときの描写は仮ルール（GM不在）
-          </span>
+          <span className="u-dim u-small">仮ルール（GM不在）：成長・お店・選べない条件・描写</span>
         )}
         {play.error && <ErrorNote error={play.error} />}
         {propose.error && <ErrorNote error={propose.error} />}
