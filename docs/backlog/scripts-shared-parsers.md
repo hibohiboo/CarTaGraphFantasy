@@ -21,7 +21,7 @@ updated: 2026-10-27
 
 ## 考えていること（プランで詰める）
 
-- 対象：`check-events.mjs`・`check-screens.mjs`・`check-provisional.mjs`・`rule-sections.mjs`・`sync-claude-rules.mjs`・`usecases.mjs`・`trace.mjs`・`build-trace-report.mjs`（`branch-id.mjs` も `frontmatterValue` を使う）
+- 対象：`check-events.mjs`・`check-screens.mjs`・`check-provisional.mjs`・`rule-sections.mjs`・`sync-claude-rules.mjs`・`usecases.mjs`・`trace.mjs`（`frontmatterValue`・`readBacklog`。P6 で `build-trace-report.mjs` から移し、`branch-id.mjs`・`check-usecase-tags.mjs`・`build-usecase-report.mjs` も使う）
 - Markdown の表は、見出しの名前で列を引き、列の数の合わない行・区切りの行の欠けは例外にする
 - frontmatter は、YAML のライブラリを入れるか、受け付ける形を絞った読み手1つにするか（P5 の D21 は、ライブラリを足さず形を絞った）
 - `routes.ts` は、正規表現でなく TypeScript の構文木で読むか

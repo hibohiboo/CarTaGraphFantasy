@@ -17,6 +17,7 @@
 import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { frontmatterValue } from './trace.mjs';
 
 /** コミットを止めるブランチ */
 export const PROTECTED_BRANCHES = ['main', 'master'];
@@ -157,8 +158,7 @@ function addIdToMessage(file) {
 }
 
 /** main の docs/plans/ と docs/backlog/ を読む（作業中のブランチではなく、取り込まれたものを見る） */
-async function readMergedPlans() {
-  const { frontmatterValue } = await import('./build-trace-report.mjs');
+function readMergedPlans() {
   const ls = (dir) =>
     git(['-c', 'core.quotePath=false', 'ls-tree', '--name-only', 'main', '--', dir])
       .stdout.split('\n')
@@ -175,12 +175,12 @@ async function readMergedPlans() {
   return { plans, backlogStatus };
 }
 
-async function createBranch(args) {
+function createBranch(args) {
   const [type, name] = args;
   const idFlag = args.indexOf('--id');
   // 新しい id を切るときだけ、前のサイクルの後片付けを確かめる（--id で同じ id の続きを切るときは、その後片付けをするため止めない）
   if (idFlag === -1) {
-    const { plans, backlogStatus } = await readMergedPlans();
+    const { plans, backlogStatus } = readMergedPlans();
     const problems = findUnclosedPlans(plans, backlogStatus);
     if (problems.length)
       fail(
@@ -204,7 +204,7 @@ async function createBranch(args) {
   console.log(`${branch} を切りました（id ${id}。プランは docs/plans/<日付>-${id}-<機能>.md）`);
 }
 
-async function main([command, ...args]) {
+function main([command, ...args]) {
   switch (command) {
     case 'pre-commit': {
       const error = checkCommitBranch({ branch: currentBranch(), merging: merging() });
@@ -218,7 +218,7 @@ async function main([command, ...args]) {
       console.log(nextId(collectUsed()));
       return;
     case 'new':
-      await createBranch(args);
+      createBranch(args);
       return;
     default:
       fail(

@@ -12,7 +12,8 @@ import {
   buildTraceReportHtml,
   computeNodeStates,
   embedJson,
-  frontmatterValue,
+  STATE_LABELS,
+  STATE_ORDER,
   traceFrom,
 } from './build-trace-report.mjs';
 import { computeStates } from './build-usecase-report.mjs';
@@ -354,14 +355,21 @@ describe('T12: 結果が読めない', () => {
 });
 
 describe('T13: usecase-report・rule-test-report と同じ状態', () => {
-  it('UC の状態が computeStates と同じ（同じ fixtures）', () => {
-    const json = fixture('playwright-results.json');
-    const useCases = [uc('SC-1'), uc('SC-2'), uc('SC-3')];
-    const graph = buildGraph(inputs({ useCases, e2eJson: json, routes: [] }));
-    const expected = computeStates(useCases, json);
-    for (const u of useCases) {
-      const s = expected.get(u.id).state;
-      assert.equal(node(graph, `uc:${u.id}`).state, s === 'stopped' ? 'failed' : s, u.id);
+  it('UC の状態が computeStates と同じ（同じ fixtures。スキップ入りの実物も）', () => {
+    const cases = [
+      ['playwright-results.json', ['SC-1', 'SC-2', 'SC-3']],
+      ['playwright-results-skipped.json', ['PL-1', 'PL-2', 'SC-1']],
+    ];
+    for (const [file, ids] of cases) {
+      const json = fixture(file);
+      const useCases = ids.map((id) => uc(id));
+      const graph = buildGraph(inputs({ useCases, e2eJson: json, routes: [] }));
+      const expected = computeStates(useCases, json);
+      for (const u of useCases) {
+        const s = expected.get(u.id).state;
+        assert.equal(node(graph, `uc:${u.id}`).state, s === 'stopped' ? 'failed' : s, u.id);
+      }
+      if (file.includes('skipped')) assert.equal(node(graph, 'uc:PL-1').state, 'skipped');
     }
   });
 
@@ -392,13 +400,141 @@ describe('T13: usecase-report・rule-test-report と同じ状態', () => {
   });
 });
 
-describe('frontmatterValue', () => {
-  it('引用符・コメントを外し、frontmatter の外（本文）は読まない', () => {
-    const md = '---\ntitle: "題 #1"\nstatus: 完了 # 暫定\n---\n\nstatus: 本文\nsummary: x\n';
-    assert.equal(frontmatterValue(md, 'title'), '題 #1');
-    assert.equal(frontmatterValue(md, 'status'), '完了');
-    assert.equal(frontmatterValue(md, 'summary'), '');
-    assert.equal(frontmatterValue('status: 完了\n', 'status'), '');
+// ---- 全スキップ（docs/plans/2026-10-27-P6-不安定なE2Eのスキップ.md T5・T7） ----
+
+/** 直す要望の注記付きで宣言のスキップにした spec（Playwright が足す skip の注記も付ける） */
+const skippedSpec = (title, file, tags) => ({
+  title,
+  id: `id-${title}`,
+  file,
+  tags,
+  tests: [
+    {
+      annotations: [{ type: 'backlog', description: 'docs/backlog/fix-me.md' }, { type: 'skip' }],
+      results: [{ status: 'skipped', steps: [] }],
+    },
+  ],
+});
+
+describe('T5: 全スキップ（トレース）', () => {
+  const skippedInputs = (over = {}) =>
+    inputs({
+      e2eJson: e2e(
+        skippedSpec('一', 'usecases/a.test.ts', ['SC-1']),
+        spec('製作（/creator）が描画できる', 'smoke.test.ts', [], 'passed'),
+        spec('詳細（/p/one）が描画できる', 'smoke.test.ts', [], 'passed'),
+      ),
+      ...over,
+    });
+
+  it('UC が全スキップ、それを確かめるテストのファイルの要素も全スキップ', () => {
+    const g = buildGraph(skippedInputs());
+    assert.equal(node(g, 'uc:SC-1').state, 'skipped');
+    assert.equal(node(g, 'test:e2e:usecases/a.test.ts').state, 'skipped');
+  });
+
+  it('要望の届き具合：落ちた ＞ 全スキップ ＞ 結果なし・未実装・テストなし・確認済', () => {
+    const mk = (targetStates) => ({
+      nodes: [
+        { id: 'req:x', kind: 'req', reqStatus: '進行中' },
+        ...targetStates.map((state, i) => ({ id: `uc:${i}`, kind: 'uc', state })),
+      ],
+      edges: targetStates.map((_, i) => ['req:x', `uc:${i}`]),
+    });
+    const stateOf = (states) => computeNodeStates(mk(states)).get('req:x').state;
+    assert.equal(stateOf(['skipped', 'failed']), 'failed');
+    for (const other of ['passed', 'noresult', 'planned', 'none']) {
+      assert.equal(stateOf([other, 'skipped']), 'skipped', other);
+    }
+  });
+
+  it('完了の要望が全スキップなら未達が付く。手前で止まったは今どおり落ちた', () => {
+    const g = buildGraph(skippedInputs({ backlog: [req('a', { trace: { usecases: ['SC-1'] } })] }));
+    assert.deepEqual([node(g, 'req:a').state, node(g, 'req:a').unreached], ['skipped', true]);
+    const stopped = buildGraph(
+      inputs({
+        e2eJson: e2e(spec('一', 'usecases/a.test.ts', ['SC-1', 'SC-2'], 'failed', [])),
+        useCases: [uc('SC-1'), uc('SC-2')],
+      }),
+    );
+    assert.equal(node(stopped, 'uc:SC-2').state, 'failed');
+  });
+
+  it('要望の並び（悪い順）で全スキップは落ちたの次、結果なしの前', () => {
+    assert.deepEqual(STATE_ORDER.slice(0, 3), ['failed', 'skipped', 'noresult']);
+    const g = buildGraph(
+      skippedInputs({
+        backlog: [
+          req('a-none', { trace: { usecases: ['GR-1'] } }),
+          req('b-skip', { trace: { usecases: ['SC-1'] } }),
+        ],
+      }),
+    );
+    assert.deepEqual(
+      g.nodes.filter((n) => n.kind === 'req').map((n) => n.id),
+      ['req:b-skip', 'req:a-none'],
+    );
+  });
+
+  it('ページ：.s-skipped の色がライト・ダークの CSS にあり、凡例に全スキップ。先頭の案内にスキップ中の数と要望へのリンク', () => {
+    const page = buildTraceReportHtml({
+      graph: buildGraph(
+        skippedInputs({
+          backlog: [
+            req('a', { trace: { usecases: ['SC-1'] } }),
+            req('fix-me', { title: '直す要望', status: '未着手', trace: { usecases: ['SC-1'] } }),
+          ],
+        }),
+      ),
+      generatedAt: 'x',
+    });
+    const [light, dark] = page.split('@media (prefers-color-scheme: dark)').slice(-2);
+    assert.match(light, /\.s-skipped rect \{ fill:#[0-9a-f]{6}; \}/);
+    assert.match(dark, /\.s-skipped rect \{ fill:#[0-9a-f]{6}; \}/);
+    assert.match(page, /<span>全スキップ 2<\/span>/);
+    assert.match(page, /スキップ中のテストが 1 件/);
+    assert.match(page, /<li><a href="\.\.\/backlog\/fix-me\.html">直す要望<\/a>：一<\/li>/);
+    assert.equal(STATE_LABELS.skipped, '全スキップ');
+  });
+});
+
+describe('T7: 実物の JSON からページまでの通し（CLI）', () => {
+  const run = (script, args) =>
+    spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' });
+
+  it('ユースケースの結果のページとトレースのページに全スキップが出る', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'skip-'));
+    const e2eFile = 'scripts/fixtures/playwright-results-skipped.json';
+    try {
+      const ucOut = join(dir, 'uc.html');
+      const ucRun = run('scripts/build-usecase-report.mjs', ['--e2e', e2eFile, '--out', ucOut]);
+      assert.equal(ucRun.status, 0, ucRun.stderr);
+      assert.match(ucRun.stdout, /全スキップ 1・/);
+      const ucHtml = readFileSync(ucOut, 'utf8');
+      const row = (id) => ucHtml.match(new RegExp(`<tr><td class="id">${id}</td>.*?</tr>`))[0];
+      assert.match(row('PL-1'), /badge skipped">全スキップ/);
+      assert.match(row('PL-2'), /badge passed">確認済/);
+      assert.match(row('PL-2'), /スキップ中（<a href="\.\.\/backlog\/e2e-flaky-skip\.html">/);
+
+      const traceOut = join(dir, 'trace.html');
+      const traceRun = run('scripts/build-trace-report.mjs', ['--e2e', e2eFile, '--out', traceOut]);
+      assert.equal(traceRun.status, 0, traceRun.stderr);
+      const data = JSON.parse(
+        readFileSync(traceOut, 'utf8').match(
+          /<script type="application\/json" id="trace-data">([\s\S]*?)<\/script>/,
+        )[1],
+      );
+      const byId = (id) => data.nodes.find((n) => n.id === id);
+      assert.equal(byId('uc:PL-1').state, 'skipped');
+      assert.equal(byId('uc:PL-2').state, 'passed');
+      assert.deepEqual(
+        [byId('req:gm-play-as-pl').state, byId('req:gm-play-as-pl').unreached],
+        ['skipped', true],
+      );
+      assert.notEqual(byId('req:play-immersion').state, 'skipped');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

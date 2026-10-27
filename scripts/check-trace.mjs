@@ -20,10 +20,9 @@ import { fileURLToPath } from 'node:url';
 import { parseAggregateEvents, parseAggregateNames } from './check-events.mjs';
 import { parseMissingScreens, parseRoutes, ROUTES_FILE, SCREENS_FILE } from './check-screens.mjs';
 import { findExclusion, readExclusions, readRulePages } from './rule-sections.mjs';
-import { parseTrace, TRACE_LIST_KEYS } from './trace.mjs';
+import { BACKLOG_DIR, parseTrace, TRACE_LIST_KEYS } from './trace.mjs';
 import { parseUseCases, USE_CASES_FILE } from './usecases.mjs';
 
-export const BACKLOG_DIR = 'docs/backlog';
 const AGGREGATES_FILE = 'docs/architecture/aggregates.md';
 /** 中核の表に要る列（見出しの名前で読むので、直して消えると線が黙って消える） */
 const REQUIRED_COLUMNS = ['アクター', '画面', '書き換える集約', '起きるイベント'];

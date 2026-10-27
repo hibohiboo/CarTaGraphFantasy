@@ -278,7 +278,7 @@
 - 対象外の表の後ろに別の表や、行頭に空白のある `|` の行を足すと、表の途中の崩れとして止まる。見出し・区切りだけでデータ行が0件の表は、例外にならず空として読む（`scripts/rule-sections.mjs` の `parseExclusions`。同上）
 - 「（仮…）」の印がタグ名に入るので、仮が外れると、その節のタグを付けたテストを書き直す（`scripts/rule-sections.mjs`。同上）
 - `relativeFile` が、リポジトリの置き場所に `apps`・`packages` を含むと表示が狂う。`tags` が配列でない JSON で部分一致になる。CLI の引数の値の欠けを見ない。`--root` を渡しても見出しはリポジトリ本体から読む。収集の失敗のメッセージの ANSI エスケープがそのまま出る（`scripts/build-rule-test-report.mjs`。同上）
-- 共用の CSS で、ユースケースのページにも使わないセレクタ（`.skipped`・`.excluded`）が入る（`scripts/report-html.mjs`。同上）
+- 共用の CSS で、ユースケースのページにも使わないセレクタ（`.excluded`）が入る（`scripts/report-html.mjs`。同上）
 - `session/transition.test.ts` の、結末のノードでの終了の3件に `party-and-session/非同期セッションの進行` のタグが無い。`creationStats` のタグ（`character-growth/PCが持つデータ`）は、値の決め方が仮ルールの側にある（`packages/domain`。同上）
 - 敵の HP・能力の非公開と開示の論点が、`notes/architecture/prototype-handover.md` と `open-questions.md` の両方に文で書かれている。ノート側はリンク1行にできる（docs の1ファイル1責務のレビュー）
 - TanStack Query の「実測してから見直す」が `notes/architecture/web-app.md` と `open-questions.md` に二重にある。Redoc のハイドレーションの誤り（#418・#423）も `notes/architecture/web-app.md` と本ページに二重にある（同上）
@@ -301,9 +301,12 @@
 - ④の「開く」は済みの後に消える。T14 は案内の段の途中経過を見ていない。プラン4章の「開く」手順の追従を書いた本文が、状態の欄（実ブラウザで確かめる）と食い違っている（同上）
 - `use-cases.md` の SC-5「行き止まりを見つける」に、公開の前の確かめで製作者も同じ注意を見られることと「導入から届かない」注意が無い。注意の前提「GM 不在で遊ぶと」が `play-and-field.md` の「GM が後から裁定」の募集（提案を採用して抜けられる）と言い回しがずれる（同上）
 - 要望の `trace` の読み手が、YAML と食い違う入力（`usecases: [a: b]`・`none: [x]`）を文字列として通す。読点の `,` や `#`・引用符を含む節の見出しは `rules` に書けない（`scripts/trace.mjs`。`docs/plans/2026-10-26-P5-アイデアから実装までのトレース.md`）
-- `docs/backlog/` が空でも `check-trace.mjs` が成功する。`readBacklog`（`build-trace-report.mjs`）は `trace` の誤りで例外になり、ページ全体が作られない（`docs:build` が先に止めるので実害は小さい。同上）
+- `docs/backlog/` が空でも `check-trace.mjs` が成功する。`readBacklog`（`trace.mjs`）は `trace` の誤りで例外になり、トレースのページ全体が作られず、`check-usecase-tags.mjs` もスキップの有無に関わらずスタックトレースで落ちる（`docs:build` では `check-trace.mjs` が先に止めるので実害は小さい。同上・`docs/plans/2026-10-27-P6-不安定なE2Eのスキップ.md`）
 - `parseMissingScreens` は `id(["x"]):::missing`・`class a missing` の書き方と `<br>` を拾わない。ラベルに `・` を含むと UC の表の画面の列に書けない（`scripts/check-screens.mjs`・`scripts/usecases.mjs`。同上）
 - `collectSpecs` は `suites` が配列でない JSON で TypeError になる（`build-usecase-report.mjs`。Playwright は出さない形。同上）
-- トレースのページ：`requestLinks` が要望のファイル名をエンコードしない。`BACKLOG_DIR`・`AGGREGATES_FILE` と要望を読む処理が `check-trace.mjs` と `build-trace-report.mjs` に二重にある。`CLIENT_SCRIPT`・`EXTRA_CSS` を別ファイルにできる（同上）
-- トレースのページ：スキップのみの E2E の UC が「落ちた」になる（usecase-report の `runStates` が手前で止まったにするため。D20 を優先）。幅 390px ではパネルが図の下に出て、要素を押しても画面に入らない（同上）
+- トレースのページ：`requestLinks` が要望のファイル名をエンコードしない。`AGGREGATES_FILE` が `check-trace.mjs` と `build-trace-report.mjs` に、要望のファイルを並べる処理が `check-trace.mjs` の `readTraceInputs` と `trace.mjs` の `readBacklog` に二重にある。`CLIENT_SCRIPT`・`EXTRA_CSS` を別ファイルにできる（同上）
+- トレースのページ：幅 390px ではパネルが図の下に出て、要素を押しても画面に入らない（同上）
 - UC の表の SC-1 の画面に概要を書く `/creator/scenarios/:scenarioId`、PL-4 の画面にシステムの自動解決の `/pl/sessions/:sessionId/play` が無い。要望の `trace` は `scenario-json`・`pc-session-opt-out`・`rules-json`・`progress-mode-names`・`play-immersion`（PL-6）・`gm-home`（PL-4）に足せるつなぎ先がある（`docs/architecture/use-cases.md`・`docs/backlog/`。同上）
+- 不安定な E2E のスキップを足すブランチと、その直す要望を閉じるドキュメントだけのブランチが別々に main に入ると、単独ではどちらも通るのに、組み合わさって main の `docs:build` が落ちうる（`scripts/check-usecase-tags.mjs`。`docs/plans/2026-10-27-P6-不安定なE2Eのスキップ.md` 8章。頻度が低いので見送り）
+- ユースケースの結果のページの CLI が、`--out`・`--e2e` の値の欠け（`--out --e2e x.json`）を見ず、存在しない `--e2e` のファイルを「結果なし」のページにして成功する（`scripts/build-usecase-report.mjs`。トレースの CLI と同じ形。デプロイは引数を渡さない。同上の実装レビュー）
+- E2E のテストのファイルの静的な読みが、文字列の中の `test.skip(`・`annotation:`・`// biome-ignore …noSkippedTests` を本物として数える。同じ行の末尾の抑制コメントを消し忘れと見なす。本文の中の `test.skip('x')`（文字列1つ）を宣言のスキップとして数え、誤りの文が「注記が無い」「test が2本」になる。どれも止める側に倒れる（`scripts/usecases.mjs`。同上）

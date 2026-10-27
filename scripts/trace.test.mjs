@@ -1,8 +1,18 @@
-// trace.mjs（要望の frontmatter の trace の読み手）のテスト（pnpm tools:test）
+// trace.mjs（要望の frontmatter の読み手）のテスト（pnpm tools:test）
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { parseTrace } from './trace.mjs';
+import { frontmatterValue, parseTrace } from './trace.mjs';
+
+describe('frontmatterValue', () => {
+  it('引用符・コメントを外し、frontmatter の外（本文）は読まない', () => {
+    const md = '---\ntitle: "題 #1"\nstatus: 完了 # 暫定\n---\n\nstatus: 本文\nsummary: x\n';
+    assert.equal(frontmatterValue(md, 'title'), '題 #1');
+    assert.equal(frontmatterValue(md, 'status'), '完了');
+    assert.equal(frontmatterValue(md, 'summary'), '');
+    assert.equal(frontmatterValue('status: 完了\n', 'status'), '');
+  });
+});
 
 const doc = (traceLines) => `---\nstatus: 完了\n${traceLines}\ntitle: 題\n---\n\n本文\n`;
 const FILE = 'docs/backlog/x.md';

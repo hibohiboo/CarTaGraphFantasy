@@ -72,7 +72,12 @@ packages/*/vitest.config.ts・apps/web/vite.config.ts ──→ scripts/rule-sec
 
 scripts/build-trace-report.mjs ──→ scripts/build-usecase-report.mjs・scripts/build-rule-test-report.mjs（テストの結果の状態の計算を共用する）
                               └──→ docs/backlog/・docs/architecture/・docs/screens/・routes.ts（つながりの元。読むだけ）
+
+scripts/check-usecase-tags.mjs・build-usecase-report.mjs・build-trace-report.mjs・check-trace.mjs・branch-id.mjs
+                              ──→ scripts/trace.mjs ──→ docs/backlog/（要望の frontmatter の読み手。ほかの scripts を import しない）
 ```
+
+- **要望を読む `scripts/trace.mjs`** — 要望の frontmatter（`trace`・`title`・`status`）の読み手を1つにする。`check-usecase-tags.mjs` はスキップしたテストの直す要望の状態と `trace` を、`build-usecase-report.mjs` は「スキップ中」のリンクの文字（要望の `title`）を読む。`trace.mjs` がほかの scripts を import すると、`build-trace-report.mjs` との間で循環になる（`noImportCycles`）
 
 - **Vitest の設定から読む `scripts/rule-sections.mjs`** — 3パッケージの Vitest の設定がタグの一覧を作るために読む。設定は Vite がバンドルして読むので、Node が解決できない import をしない（`apps/web/vite/` と同じ）。Vitest は cwd がパッケージのディレクトリで動くので、読む場所は `import.meta.url` から組み立てたリポジトリの直下を基準にする。`apps/web/vite.config.ts` は tsc の対象なので、型は `scripts/rule-sections.d.mts` に置く。使い方は[テストのルール](testing.md)の「ルールのテストのタグ」
 - **パッケージの間** — `apps/web` は `packages/domain` を参照してよい。逆は禁止。`packages/domain` は React・DOM・MSW に依存しない（下の「境界」）。`packages/schemas` は `packages/domain` を参照してよく、`apps/web` が参照する。`packages/domain` から `packages/schemas` は参照しない（domain は依存を宣言していないので、import すると解決に失敗して止まる）
