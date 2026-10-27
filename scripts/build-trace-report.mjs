@@ -14,7 +14,7 @@
 // 使い方: pnpm docs:build; pnpm web:e2e; pnpm test:report; pnpm trace:report
 // テストは scripts/build-trace-report.test.mjs（pnpm tools:test）。設計は docs/plans/2026-10-26-P5-アイデアから実装までのトレース.md。
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -28,23 +28,24 @@ import {
   anchorFor as sectionAnchorFor,
 } from './build-rule-test-report.mjs';
 import {
+  backlogLink,
   collectSpecs,
   computeStates,
   hasNoResults,
   RESULTS_FILE,
   readAnchorIds,
   readResults as readE2eResults,
+  skippedSpecs,
   anchorFor as ucAnchorFor,
 } from './build-usecase-report.mjs';
 import { parseAggregateEvents, parseAggregateList } from './check-events.mjs';
 import { parseMissingScreens, parseRoutes, ROUTES_FILE, SCREENS_FILE } from './check-screens.mjs';
 import { escapeHtml, reportPage } from './report-html.mjs';
 import { readExclusions, readRulePages } from './rule-sections.mjs';
-import { parseTrace } from './trace.mjs';
+import { readBacklog } from './trace.mjs';
 import { parseUseCases, USE_CASES_FILE } from './usecases.mjs';
 
 export const OUTPUT_FILE = 'trace-report/index.html';
-const BACKLOG_DIR = 'docs/backlog';
 const AGGREGATES_FILE = 'docs/architecture/aggregates.md';
 const USE_CASES_DIST = 'docs/.vitepress/dist/architecture/use-cases.html';
 const CARTAGRAPH_DIST = 'docs/.vitepress/dist/cartagraph';
@@ -61,10 +62,15 @@ export const COLUMNS = [
 ];
 const COL = { actor: 0, req: 1, uc: 2, screen: 3, rule: 3, test: 4, agg: 5, evt: 6 };
 
-/** 状態の悪い順（D15）。この外の状態（つなぐ先なし・見送り）は届き具合を計算しない */
-export const STATE_ORDER = ['failed', 'noresult', 'planned', 'none', 'passed'];
+/**
+ * 状態の悪い順（D15）。この外の状態（つなぐ先なし・見送り）は届き具合を計算しない。
+ * 全スキップは、壊れていると分かっていて直す要望がある状態なので、落ちたの次に悪い（P6 の D6。UC の段では
+ * スキップがいちばん弱いが、要望の段では向きが逆になる。理由は docs/notes/architecture/test-report.md）
+ */
+export const STATE_ORDER = ['failed', 'skipped', 'noresult', 'planned', 'none', 'passed'];
 export const STATE_LABELS = {
   failed: '落ちた',
+  skipped: '全スキップ',
   noresult: '結果なし',
   planned: '未実装',
   none: 'テストなし',
@@ -94,7 +100,7 @@ function specState(spec) {
   return statuses.every((s) => s === 'passed') ? 'passed' : 'failed';
 }
 
-/** usecase-report の状態（passed・failed・stopped・none・noresult）をこのページの状態にする（手前で止まったは落ちた） */
+/** usecase-report の状態（passed・failed・stopped・skipped・none・noresult）をこのページの状態にする（手前で止まったは落ちた。全スキップはそのまま） */
 const fromUseCaseState = (s) => (s === 'stopped' ? 'failed' : s);
 
 /** smoke.test.ts のテストの題。動的ルートは example */
@@ -136,7 +142,8 @@ function screenLinks(routes, specs, noResult) {
 
 /**
  * E2E の結果から、UC・画面の状態とテストのファイルへの線を作る。
- * 戻り値：{ ucStates: Map<UC の id, 状態>, screenStates: Map<パス, 状態>, links: [{ from, file, state }], unmatchedRoutes, noResult }
+ * 戻り値：{ ucStates: Map<UC の id, 状態>, screenStates: Map<パス, 状態>, links: [{ from, file, state }], unmatchedRoutes,
+ *          skippedTests: [{ title, backlog }]（スキップ中のテスト）, noResult }
  */
 export function collectE2eLinks({ useCases, routes, e2eJson }) {
   const noResult = hasNoResults(e2eJson);
@@ -149,6 +156,7 @@ export function collectE2eLinks({ useCases, routes, e2eJson }) {
     screenStates: screen.states,
     links: [...uc.links, ...screen.links],
     unmatchedRoutes: screen.unmatched,
+    skippedTests: skippedSpecs(e2eJson),
     noResult,
   };
 }
@@ -457,6 +465,8 @@ export function buildGraph(inputs) {
       missingPackages: vitest.missingPackages,
       fileFailures: vitest.fileFailures,
       unmatchedRoutes: e2e.unmatchedRoutes,
+      skippedTests: e2e.skippedTests,
+      backlogTitles: new Map(inputs.backlog.map((b) => [b.name, b.title])),
     },
   };
 }
@@ -528,10 +538,12 @@ const EXTRA_CSS = `body { max-width:1400px; }
 .edge.on { stroke:var(--link); stroke-width:2.2; }
 .s-passed rect { fill:#d6f0e2; } .s-failed rect { fill:#f8d7da; } .s-noresult rect { fill:#e4e4e7; stroke-dasharray:4 3; }
 .s-planned rect { fill:#fff1c9; } .s-none rect { fill:#eceff3; } .s-notarget rect, .s-dropped rect { fill:#f6f6f7; stroke-dasharray:2 3; }
+.s-skipped rect { fill:#ece3fb; }
 .s-nostate rect { fill:var(--bg); }
 @media (prefers-color-scheme: dark) {
   .s-passed rect { fill:#17382a; } .s-failed rect { fill:#4a1d22; } .s-noresult rect { fill:#2a2a2e; }
   .s-planned rect { fill:#443a1c; } .s-none rect { fill:#2a2d33; } .s-notarget rect, .s-dropped rect { fill:#232326; }
+  .s-skipped rect { fill:#33264d; }
 }
 .unreached { color:var(--failed); font-weight:600; }
 .legend span { display:inline-block; margin-right:.8em; }`;
@@ -650,6 +662,16 @@ function noticeHtml({ notices }, summary) {
       `<div class="notice"><p>当たらないルート（smoke の題の書き方が変わった？ 状態は「テストなし」になっています）：</p><ul>${items}</ul></div>`,
     );
   }
+  if (notices.skippedTests.length > 0) {
+    const items = notices.skippedTests
+      .map(
+        (s) => `<li>${backlogLink(s.backlog, notices.backlogTitles)}：${escapeHtml(s.title)}</li>`,
+      )
+      .join('');
+    out.push(
+      `<div class="notice skipped"><p>スキップ中のテストが ${notices.skippedTests.length} 件あります（不安定なためスキップし、直す要望を起こしたもの。確かめる UC は全部スキップなら「全スキップ」）：</p><ul>${items}</ul></div>`,
+    );
+  }
   if (summary.unreached.length > 0) {
     const items = summary.unreached
       .map(
@@ -707,34 +729,6 @@ ${CLIENT_SCRIPT}
 // ---------------------------------------------------------------------------
 // ファイルの読み込みと CLI
 // ---------------------------------------------------------------------------
-
-/** frontmatter の `キー: 値` の値。YAML と同じく、全体を囲む引用符と ` #コメント` を外す */
-export function frontmatterValue(source, key) {
-  const end = source.indexOf('\n---', 4);
-  const frontmatter = source.startsWith('---') && end > 0 ? source.slice(0, end) : '';
-  const raw = frontmatter.match(new RegExp(`^${key}:[ \\t]*(.*?)[ \\t]*$`, 'm'))?.[1] ?? '';
-  const quoted = raw.match(/^(['"])(.*)\1(?:\s+#.*)?$/);
-  return quoted ? quoted[2] : raw.replace(/\s+#.*$/, '');
-}
-
-/** docs/backlog/ の要望を [{ name, title, status, trace }] で読む（trace が無い・誤りのときは例外。docs:build の検査が先に止める） */
-export function readBacklog(dir = BACKLOG_DIR) {
-  return readdirSync(dir)
-    .filter((f) => f.endsWith('.md') && f !== 'index.md')
-    .sort()
-    .map((f) => {
-      const file = `${dir}/${f}`;
-      const source = readFileSync(file, 'utf8');
-      const trace = parseTrace(source, file);
-      if (!trace) throw new Error(`${file} に trace が無い`);
-      return {
-        name: f.slice(0, -3),
-        title: frontmatterValue(source, 'title') || f.slice(0, -3),
-        status: frontmatterValue(source, 'status'),
-        trace,
-      };
-    });
-}
 
 /** ファイルを読んでページを書く。戻り値は書いたファイルと要望の状態ごとの数 */
 export function main({ out = OUTPUT_FILE, e2eFile = RESULTS_FILE } = {}) {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { test } from 'node:test';
+import { describe, it, test } from 'node:test';
 import {
   anchorFor,
   buildReportHtml,
@@ -8,6 +8,7 @@ import {
   idSteps,
   runStates,
 } from './build-usecase-report.mjs';
+import { parseUseCases, USE_CASES_FILE } from './usecases.mjs';
 
 const readFixture = (name) => JSON.parse(readFileSync(`scripts/fixtures/${name}.json`, 'utf8'));
 // 実物の Playwright 1.63 の JSON（タグに @ が付かない・ステップに status が無い形）。
@@ -211,6 +212,179 @@ test('T17: 組み立て（題・レポートへのリンク・見出しへのリ
   assert.ok(!build(null).includes('use-cases.html#'));
   // 結果なしのページは案内が出る
   assert.ok(build(ids, serverFailed).includes('E2E の結果がありません'));
+});
+
+// ---- 全スキップ（docs/plans/2026-10-27-P6-不安定なE2Eのスキップ.md T3・T4・T6） ----
+
+const BACKLOG_NOTE = { type: 'backlog', description: 'docs/backlog/fix-me.md' };
+/** spec 1本ぶん。注記を tests[].annotations（on: 'test'）か results[].annotations（on: 'result'）に置く */
+const annotatedSpec = (title, tags, result, { annotations, on = 'test' }) => ({
+  title,
+  id: `id-${title}`,
+  tags,
+  tests: [
+    {
+      status: 'x',
+      annotations: on === 'test' ? annotations : [],
+      results: [{ ...result, annotations: on === 'result' ? annotations : [] }],
+    },
+  ],
+});
+const skippedRun = { status: 'skipped', steps: [] };
+const skipSpec = (title, tags, on) =>
+  annotatedSpec(title, tags, skippedRun, { annotations: [BACKLOG_NOTE, { type: 'skip' }], on });
+const passSpec = (title, tags) =>
+  specOf(title, tags, { status: 'passed', steps: tags.map((id) => step(`${id} a`)) });
+
+describe('T3: 全スキップ（runStates・computeStates）', () => {
+  it('skipped ＋ backlog の注記で、タグの ID がすべて全スキップ', () => {
+    const json = jsonOf(skipSpec('a', ['SC-1', 'SC-2']));
+    assert.equal(stateOf(json, 'SC-1'), 'skipped');
+    assert.equal(stateOf(json, 'SC-2'), 'skipped');
+  });
+
+  it('注記が tests[].annotations にだけ・results[].annotations にだけあっても全スキップ', () => {
+    assert.equal(stateOf(jsonOf(skipSpec('a', ['SC-1'], 'test')), 'SC-1'), 'skipped');
+    assert.equal(stateOf(jsonOf(skipSpec('a', ['SC-1'], 'result')), 'SC-1'), 'skipped');
+  });
+
+  it('手前で止まったのまま：skip だけ・issue だけの注記の skipped、results が空で注記あり', () => {
+    for (const annotations of [[{ type: 'skip' }], [{ type: 'issue', description: 'x' }]]) {
+      const json = jsonOf(annotatedSpec('a', ['SC-1'], skippedRun, { annotations }));
+      assert.equal(stateOf(json, 'SC-1'), 'stopped');
+    }
+    const empty = jsonOf({
+      title: 'a',
+      id: 'id-a',
+      tags: ['SC-1'],
+      tests: [{ annotations: [BACKLOG_NOTE], results: [] }],
+    });
+    assert.equal(stateOf(empty, 'SC-1'), 'stopped');
+  });
+
+  it('注記があっても failed は落ちた・passed は確認済（注記の消し忘れで落ちたのを隠さない）', () => {
+    const failed = { status: 'failed', steps: [fail('SC-1 a')] };
+    assert.equal(
+      stateOf(
+        jsonOf(annotatedSpec('a', ['SC-1'], failed, { annotations: [BACKLOG_NOTE] })),
+        'SC-1',
+      ),
+      'failed',
+    );
+    const passed = { status: 'passed', steps: [step('SC-1 a')] };
+    assert.equal(
+      stateOf(
+        jsonOf(annotatedSpec('a', ['SC-1'], passed, { annotations: [BACKLOG_NOTE] })),
+        'SC-1',
+      ),
+      'passed',
+    );
+  });
+
+  it('UC の集約：全部スキップは全スキップ、スキップ＋確認済は確認済、＋落ちたは落ちた、＋手前で止まったは手前で止まった（並びに依らない）', () => {
+    const skip = skipSpec('s', ['SC-1']);
+    const failedSpec = specOf('f', ['SC-1'], { status: 'failed', steps: [fail('SC-1 a')] });
+    const stoppedSpec = specOf('t', ['SC-1', 'SC-2'], {
+      status: 'failed',
+      steps: [fail('SC-2 b')],
+    });
+    const cases = [
+      [[skip, skipSpec('s2', ['SC-1'])], 'skipped'],
+      [[skip, passSpec('p', ['SC-1'])], 'passed'],
+      [[skip, failedSpec], 'failed'],
+      [[skip, stoppedSpec], 'stopped'],
+    ];
+    for (const [specs, expected] of cases) {
+      assert.equal(stateOf(jsonOf(...specs), 'SC-1'), expected);
+      assert.equal(stateOf(jsonOf(...[...specs].reverse()), 'SC-1'), expected);
+    }
+  });
+});
+
+describe('T4: 全スキップの組み立て', () => {
+  const json = jsonOf(skipSpec('飛ばす', ['SC-1', 'SC-2']), passSpec('通る', ['SC-2']));
+  const build = (backlogTitles) =>
+    buildReportHtml({
+      useCases: USE_CASES,
+      states: computeStates(USE_CASES, json),
+      json,
+      ids: null,
+      backlogTitles,
+      generatedAt: '2026-10-27T00:00:00Z',
+    });
+  const rowOf = (html, id) => html.match(new RegExp(`<tr><td class="id">${id}</td>.*?</tr>`))[0];
+
+  it('全部スキップの UC に全スキップのバッジ。一部スキップの UC は確認済のまま、スキップしたテストだけがスキップ中', () => {
+    const html = build(new Map([['fix-me', '直す<要望>']]));
+    assert.match(rowOf(html, 'SC-1'), /<span class="badge skipped">全スキップ<\/span>/);
+    const sc2 = rowOf(html, 'SC-2');
+    assert.match(sc2, /<span class="badge passed">確認済<\/span>/);
+    assert.match(
+      sc2,
+      /飛ばす<\/a><span class="sub skipped">（スキップ中（<a href="\.\.\/backlog\/fix-me\.html">直す&lt;要望&gt;<\/a>））<\/span>/,
+    );
+    assert.match(sc2, /通る<\/a><span class="sub passed">（確認済）<\/span>/);
+    assert.equal(sc2.includes('全スキップ'), false);
+  });
+
+  it('要望の title が読めなければファイル名。名前は符号化する', () => {
+    assert.match(build(new Map()), /<a href="\.\.\/backlog\/fix-me\.html">fix-me<\/a>/);
+    const odd = jsonOf(
+      annotatedSpec('a', ['SC-1'], skippedRun, {
+        annotations: [{ type: 'backlog', description: 'docs/backlog/直す 要望.md' }],
+      }),
+    );
+    const html = buildReportHtml({
+      useCases: USE_CASES,
+      states: computeStates(USE_CASES, odd),
+      json: odd,
+      ids: null,
+      generatedAt: 'x',
+    });
+    assert.ok(html.includes(`../backlog/${encodeURIComponent('直す 要望')}.html`));
+  });
+
+  it('全スキップのバッジの色は手前で止まったと別。先頭の案内にスキップ中の数と要望へのリンク', () => {
+    const html = build(new Map([['fix-me', '直す要望']]));
+    assert.match(html, /\.badge\.skipped, \.sub\.skipped \{ color:var\(--skipped\); \}/);
+    assert.match(html, /--skipped:#[0-9a-f]{6}/);
+    assert.equal(/\.badge\.stopped[^}]*\.badge\.skipped/.test(html), false);
+    assert.match(html, /<div class="notice skipped">.*スキップ中のテストが 1 件/s);
+    assert.match(html, /<li><a href="\.\.\/backlog\/fix-me\.html">直す要望<\/a>：飛ばす<\/li>/);
+    // スキップが無ければ案内を出さない
+    const none = jsonOf(passSpec('通る', ['SC-1']));
+    const plain = buildReportHtml({
+      useCases: USE_CASES,
+      states: computeStates(USE_CASES, none),
+      json: none,
+      ids: null,
+      generatedAt: 'x',
+    });
+    assert.equal(plain.includes('スキップ中のテスト'), false);
+  });
+});
+
+describe('T6: 実物の JSON（gm-session.test.ts を宣言のスキップにして流した結果）', () => {
+  const skippedReal = readFixture('playwright-results-skipped');
+  const useCases = parseUseCases(readFileSync(USE_CASES_FILE, 'utf8'));
+  const states = computeStates(useCases, skippedReal);
+
+  it('PL-1 が全スキップ。PL-2 は確認済で、gm-session はスキップ中・scenario-authoring は確認済', () => {
+    assert.equal(states.get('PL-1').state, 'skipped');
+    assert.equal(states.get('PL-2').state, 'passed');
+    const byTitle = Object.fromEntries(states.get('PL-2').tests.map((t) => [t.title, t.state]));
+    assert.equal(
+      byTitle['GM が描写を書いて選択肢を配り・取り下げ、ドライバーとしてプレイする'],
+      'skipped',
+    );
+    assert.equal(byTitle['シナリオを画面だけで作り、公開し、GM 不在で結末まで遊ぶ'], 'passed');
+  });
+
+  it('ほかの UC（元の実行で確認済）は確認済のまま', () => {
+    for (const id of ['SC-1', 'SC-2', 'SC-3', 'SC-5', 'SC-6', 'SC-8']) {
+      assert.equal(states.get(id).state, 'passed', id);
+    }
+  });
 });
 
 test('T17: anchorFor は自分の見出し、無ければ業務領域、どちらも無ければ null', () => {

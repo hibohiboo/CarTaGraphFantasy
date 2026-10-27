@@ -1,0 +1,892 @@
+{
+  "config": {
+    "argv": [
+      "C:/Program Files/nodejs/node.exe",
+      "/repo/apps/web/node_modules/@playwright/test/cli.js",
+      "test"
+    ],
+    "configFile": "/repo/apps/web/playwright.config.ts",
+    "rootDir": "/repo/apps/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 12
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/repo/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 12
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/repo/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": ["**/*.test.ts"],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      ["list", null],
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "e2e-results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 12
+  },
+  "suites": [
+    {
+      "title": "smoke.test.ts",
+      "file": "smoke.test.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "入口（/）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1664,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.388Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-22a631406d606c743c24",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "ホーム（/home）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2289,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.388Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-54dd6f88c3f9a7f080bd",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "セッション選択（/pl/sessions）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 2750,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.371Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-20b54faca53bc2877950",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "プレイページ（/pl/sessions/ss-mansion/play）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 3,
+                  "status": "passed",
+                  "duration": 2522,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.387Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-bd9626e3341d765726f0",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "キャラクター管理（/pl/characters）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 4,
+                  "status": "passed",
+                  "duration": 1954,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.388Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-117111b6c856edd31d13",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "キャラクター作成（/pl/characters/new）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 5,
+                  "status": "passed",
+                  "duration": 2215,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.402Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-9772662afdc5e162592f",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "旅立ちの酒場（/pl/tutorial）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 6,
+                  "status": "passed",
+                  "duration": 2283,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.388Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-93b22977f3982cc091fa",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "村はずれの一歩（/pl/village-start）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 7,
+                  "parallelIndex": 7,
+                  "status": "passed",
+                  "duration": 1761,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.418Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-0305e3a3e2deb63fa5cf",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "キャラクターシート（/pl/characters/pc-jin）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 8,
+                  "status": "passed",
+                  "duration": 2483,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.418Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-e1cd846d29e4aa2fd5cb",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "シナリオ管理（GM）（/gm/scenarios）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 9,
+                  "parallelIndex": 9,
+                  "status": "passed",
+                  "duration": 1872,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.432Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-15ed92febc64906e0631",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "シナリオのカスタマイズと募集（/gm/scenarios/sc-gray-mansion）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 10,
+                  "status": "passed",
+                  "duration": 2031,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.431Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-5ba8b50c806e5224feaf",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "セッション管理（GM）（/gm/sessions）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 11,
+                  "status": "passed",
+                  "duration": 2557,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:36.388Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-14ab837a8ae2402c7c1e",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "セッションの進行管理（/gm/sessions/ss-galleon）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1674,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:38.675Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-1d7432418509b1ee5da6",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "シナリオ管理（製作者）（/creator/scenarios）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 7,
+                  "parallelIndex": 7,
+                  "status": "passed",
+                  "duration": 1459,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:38.759Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-f7742bbd395c1d373814",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "シナリオ編集（/creator/scenarios/sc-galleon）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 9,
+                  "parallelIndex": 9,
+                  "status": "passed",
+                  "duration": 1742,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:38.844Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-d9b29d4eaa9c53f9b431",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "シーン編集（/creator/scenarios/sc-mansion-mine/scenes/d-s2）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 4,
+                  "status": "passed",
+                  "duration": 1612,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:38.973Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-5a0b0c179efe773a8844",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "ルールブック（/rulebook）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 10,
+                  "status": "passed",
+                  "duration": 1672,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:39.044Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-527d5d6ac2d41ea1e73a",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "遊び方（/rulebook/how-to-play）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 5,
+                  "status": "passed",
+                  "duration": 2424,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:39.227Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-64a242cbe29ea086a601",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "判定ルール（/rulebook/checks）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 6,
+                  "status": "passed",
+                  "duration": 1792,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:39.309Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-29ebd14a5b0db4f9c3f0",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "共有設定（/rulebook/library）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1703,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:39.315Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-22dab9198b41bb8a1632",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "サイトマップ（/admin/sitemap）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 8,
+                  "status": "passed",
+                  "duration": 1867,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:39.464Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-253e0449ebb002942279",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "コンポーネントカタログ（/admin/components）が描画できる",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 3,
+                  "status": "passed",
+                  "duration": 1850,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:39.532Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a239ced0e52b6754d8b-d60ff940bd520643ff1a",
+          "file": "smoke.test.ts",
+          "line": 15,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "usecases/gm-session.test.ts",
+      "file": "usecases/gm-session.test.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "GM が描写を書いて選択肢を配り・取り下げ、ドライバーとしてプレイする",
+          "ok": true,
+          "tags": ["PL-1", "PL-2"],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "backlog",
+                  "description": "docs/backlog/e2e-flaky-skip.md"
+                },
+                {
+                  "type": "skip"
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "skipped",
+                  "duration": 0,
+                  "errors": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T12:02:39.569Z",
+                  "annotations": [
+                    {
+                      "type": "backlog",
+                      "description": "docs/backlog/e2e-flaky-skip.md"
+                    },
+                    {
+                      "type": "skip"
+                    }
+                  ]
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "18c203d7fd39bd4395bf-467c239391381f377b1d",
+          "file": "usecases/gm-session.test.ts",
+          "line": 12,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "usecases/scenario-authoring.test.ts",
+      "file": "usecases/scenario-authoring.test.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "シナリオを画面だけで作り、公開し、GM 不在で結末まで遊ぶ",
+          "ok": true,
+          "tags": ["SC-1", "SC-2", "SC-3", "SC-5", "SC-6", "SC-8", "PL-2"],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 11,
+                  "status": "passed",
+                  "duration": 3037,
+                  "errors": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "SC-1 下書きを作る",
+                      "duration": 1139
+                    },
+                    {
+                      "title": "SC-3 結末タグを決める",
+                      "duration": 88
+                    },
+                    {
+                      "title": "SC-5 行き止まりを見つける",
+                      "duration": 261
+                    },
+                    {
+                      "title": "SC-2 導入に選択肢を置き、移り先のシーンは消せず、未保存の確かめが出る",
+                      "duration": 349
+                    },
+                    {
+                      "title": "SC-6 シナリオ集へ公開する",
+                      "duration": 64
+                    },
+                    {
+                      "title": "SC-8 公開した版を読み、GM 不在の募集を出す",
+                      "duration": 202
+                    },
+                    {
+                      "title": "PL-2 GM 不在で、手札のカードをプレイして結末まで進む",
+                      "duration": 348
+                    }
+                  ],
+                  "startTime": "2026-10-27T12:02:39.590Z",
+                  "annotations": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6ebf63c421b9ad0d9ca8-460ebbda1c73f0303574",
+          "file": "usecases/scenario-authoring.test.ts",
+          "line": 39,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-27T12:02:28.950Z",
+    "duration": 13931.786,
+    "expected": 23,
+    "skipped": 1,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

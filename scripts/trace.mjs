@@ -1,4 +1,6 @@
-// 要望（docs/backlog/*.md）の frontmatter の `trace` を読む小さな読み手。
+// 要望（docs/backlog/*.md）の frontmatter を読む小さな読み手（`trace` と、`title`・`status` などの1行の値）。
+// 要望を読むスクリプト（build-trace-report.mjs・check-usecase-tags.mjs・build-usecase-report.mjs・branch-id.mjs）が共用する。
+// ほかの scripts を import しない（循環を作らないため。docs/plans/2026-10-27-P6-不安定なE2Eのスキップ.md D17）。
 // YAML のライブラリは足さない（docs/plans/2026-10-26-P5-アイデアから実装までのトレース.md D21）。
 // 受け付けるのは次の2つの形だけで、ほかは例外にする（ファイル名と理由を付ける）。
 //
@@ -13,6 +15,9 @@
 // VitePress も同じ frontmatter を YAML として読むので、正しい YAML であることは docs:build が確かめる。
 // YAML と読み方が食い違う書き方（`#`、引用符）は、ここで例外にする（D28）。
 
+import { readdirSync, readFileSync } from 'node:fs';
+
+export const BACKLOG_DIR = 'docs/backlog';
 export const TRACE_LIST_KEYS = ['usecases', 'screens', 'rules'];
 
 /**
@@ -102,6 +107,34 @@ function parseFlowList(value, key, fail) {
   const items = inner.split(',').map((s) => s.trim());
   if (items.some((s) => s === '')) fail(`${key} に空の項目がある`);
   return items;
+}
+
+/** frontmatter の `キー: 値` の値。YAML と同じく、全体を囲む引用符と ` #コメント` を外す */
+export function frontmatterValue(source, key) {
+  const end = source.indexOf('\n---', 4);
+  const frontmatter = source.startsWith('---') && end > 0 ? source.slice(0, end) : '';
+  const raw = frontmatter.match(new RegExp(`^${key}:[ \\t]*(.*?)[ \\t]*$`, 'm'))?.[1] ?? '';
+  const quoted = raw.match(/^(['"])(.*)\1(?:\s+#.*)?$/);
+  return quoted ? quoted[2] : raw.replace(/\s+#.*$/, '');
+}
+
+/** docs/backlog/ の要望を [{ name, title, status, trace }] で読む（trace が無い・誤りのときは例外。docs:build の検査が先に止める） */
+export function readBacklog(dir = BACKLOG_DIR) {
+  return readdirSync(dir)
+    .filter((f) => f.endsWith('.md') && f !== 'index.md')
+    .sort()
+    .map((f) => {
+      const file = `${dir}/${f}`;
+      const source = readFileSync(file, 'utf8');
+      const trace = parseTrace(source, file);
+      if (!trace) throw new Error(`${file} に trace が無い`);
+      return {
+        name: f.slice(0, -3),
+        title: frontmatterValue(source, 'title') || f.slice(0, -3),
+        status: frontmatterValue(source, 'status'),
+        trace,
+      };
+    });
 }
 
 /** 先頭の frontmatter（--- と --- の間）の行を返す。無ければ null */

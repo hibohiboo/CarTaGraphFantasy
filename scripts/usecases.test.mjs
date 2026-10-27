@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { test } from 'node:test';
+import { describe, it, test } from 'node:test';
 import { normalizeActors, parseTestFile, parseUseCases, USE_CASES_FILE } from './usecases.mjs';
 
 const COLUMNS_MD = `## シナリオ製作
@@ -119,8 +119,8 @@ test('T7: 文字列の直書きでない test.step・題のタグ・describe の
         await test.step(title, async () => {});
         await test.step.skip('SC-2 飛ばす', async () => {});
         expect.soft(1).toBe(1);
+        test.skip(isMobile, '理由');
       });
-      test.skip('b', async () => {});
       test.fixme('c', async () => {});
     });
   `);
@@ -134,6 +134,109 @@ test('T7: 文字列の直書きでない test.step・題のタグ・describe の
     'test.step.skip',
   ]);
   assert.equal(t.testCount, 1);
+  assert.deepEqual(t.skips, []);
+});
+
+const BACKLOG = "{ type: 'backlog', description: 'docs/backlog/fix.md' }";
+
+describe('T1: 宣言のスキップと注記', () => {
+  it('宣言の test.skip を、テスト1本・タグの持ち主・skips・backlogs として読む', () => {
+    const t = parseTestFile(`
+      // biome-ignore lint/suspicious/noSkippedTests: 不安定なため。直す要望は annotation
+      test.skip('題', { tag: ['@PL-1', '@PL-2'], annotation: ${BACKLOG} }, async () => {
+        await test.step('PL-1 a', async () => {});
+      });
+    `);
+    assert.equal(t.testCount, 1);
+    assert.deepEqual(t.tags, ['PL-1', 'PL-2']);
+    assert.equal(t.describeTagged, false);
+    assert.deepEqual(t.forbidden, []);
+    assert.deepEqual(t.skips, [{ backlogCount: 1 }]);
+    assert.deepEqual(t.backlogs, [{ description: 'docs/backlog/fix.md', skipped: true }]);
+    assert.equal(t.unreadableAnnotations, 0);
+    assert.equal(t.danglingSkipSuppressions, 0);
+  });
+
+  it('注記は配列でも、キーの順が逆でも読む。backlog 以外の注記は backlogs に入れない', () => {
+    const t = parseTestFile(`
+      test.skip("題", {
+        annotation: [
+          { type: 'issue', description: 'https://example.com/1' },
+          { description: "docs/backlog/fix.md", type: "backlog" },
+        ],
+        tag: ['@PL-1'],
+      }, async () => {});
+    `);
+    assert.deepEqual(t.skips, [{ backlogCount: 1 }]);
+    assert.deepEqual(t.backlogs, [{ description: 'docs/backlog/fix.md', skipped: true }]);
+    assert.equal(t.unreadableAnnotations, 0);
+  });
+
+  it('Biome の整形で題が次の行に回る形も読む', () => {
+    const t = parseTestFile(`
+      // biome-ignore lint/suspicious/noSkippedTests: 不安定なため。直す要望は annotation
+      test.skip(
+        'とても長い題',
+        {
+          tag: ['@PL-1'],
+          annotation: {
+            type: 'backlog',
+            description: 'docs/backlog/fix.md',
+          },
+        },
+        async ({ page }) => {},
+      );
+    `);
+    assert.equal(t.testCount, 1);
+    assert.deepEqual(t.tags, ['PL-1']);
+    assert.deepEqual(t.skips, [{ backlogCount: 1 }]);
+    assert.equal(t.danglingSkipSuppressions, 0);
+  });
+
+  it('題の中のタグを拾う。スキップしていないテストの backlog の注記は skipped: false', () => {
+    assert.equal(parseTestFile(`test.skip('題 @PL-1', {}, async () => {});`).titleTagged, true);
+    const t = parseTestFile(`test('題', { annotation: ${BACKLOG} }, async () => {});`);
+    assert.deepEqual(t.skips, []);
+    assert.deepEqual(t.backlogs, [{ description: 'docs/backlog/fix.md', skipped: false }]);
+  });
+
+  it('今どおり forbidden：本文の中の条件付き・テンプレート文字列の題・fixme・describe.skip・step.skip', () => {
+    const forbiddenOf = (source) => parseTestFile(source).forbidden;
+    assert.deepEqual(forbiddenOf('test.skip();'), ['test.skip']);
+    assert.deepEqual(forbiddenOf("test.skip(cond, '理由');"), ['test.skip']);
+    assert.deepEqual(forbiddenOf('test.skip(`題`, {}, async () => {});'), ['test.skip']);
+    assert.deepEqual(forbiddenOf(`test.fixme('題', { annotation: ${BACKLOG} }, fn);`), [
+      'test.fixme',
+    ]);
+    assert.deepEqual(forbiddenOf("test.describe.skip('題', fn);"), ['test.describe.skip']);
+    assert.deepEqual(forbiddenOf("await test.step.skip('PL-1 a', fn);"), ['test.step.skip']);
+    assert.deepEqual(parseTestFile('test.skip(`題`, {}, async () => {});').skips, []);
+  });
+
+  it('直書きでない annotation・type・description は unreadableAnnotations', () => {
+    const unreadable = (annotation) =>
+      parseTestFile(`test.skip('題', { annotation: ${annotation} }, async () => {});`)
+        .unreadableAnnotations;
+    assert.equal(unreadable('notes'), 1);
+    assert.equal(
+      unreadable(["{ type: 'backlog', description: `docs/backlog/$", '{x}.md` }'].join('')),
+      1,
+    );
+    assert.equal(unreadable("{ type: kind, description: 'docs/backlog/fix.md' }"), 1);
+    assert.equal(
+      unreadable("[{ type: 'backlog', description: 'docs/backlog/fix.md' }, ...more]"),
+      1,
+    );
+    assert.equal(unreadable(BACKLOG), 0);
+  });
+
+  it('抑制コメントの次の文が宣言の test.skip( でなければ danglingSkipSuppressions', () => {
+    const dangling = (source) => parseTestFile(source).danglingSkipSuppressions;
+    const ignore = '// biome-ignore lint/suspicious/noSkippedTests: 不安定なため';
+    assert.equal(dangling(`${ignore}\ntest('題', {}, async () => {});`), 1);
+    assert.equal(dangling(`${ignore}\n\ntest.skip('題', {}, async () => {});`), 0);
+    assert.equal(dangling(`${ignore}\ntest.skip(cond, '理由');`), 1);
+  });
 });
 
 test('T3: 画面・アクター・集約・イベントの列を見出しの名前で読む（列の順が違っても読める）', () => {
