@@ -17,7 +17,6 @@ import {
   traceFrom,
 } from './build-trace-report.mjs';
 import { computeStates } from './build-usecase-report.mjs';
-import { frontmatterValue } from './trace.mjs';
 
 const fixture = (name) =>
   JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8'));
@@ -398,16 +397,6 @@ describe('T13: usecase-report・rule-test-report と同じ状態', () => {
       const e = expected.get(s.tag).state;
       assert.equal(node(graph, `rule:${s.tag}`).state, e === 'skipped' ? 'none' : e, s.tag);
     }
-  });
-});
-
-describe('frontmatterValue', () => {
-  it('引用符・コメントを外し、frontmatter の外（本文）は読まない', () => {
-    const md = '---\ntitle: "題 #1"\nstatus: 完了 # 暫定\n---\n\nstatus: 本文\nsummary: x\n';
-    assert.equal(frontmatterValue(md, 'title'), '題 #1');
-    assert.equal(frontmatterValue(md, 'status'), '完了');
-    assert.equal(frontmatterValue(md, 'summary'), '');
-    assert.equal(frontmatterValue('status: 完了\n', 'status'), '');
   });
 });
 

@@ -19,7 +19,7 @@ updated: 2026-10-27
 - 人間の判断：CI を止め続けず、不安定なテストはいったんスキップにし、直す要望を起票する
 - 起きた不安定
   - 2026-10-26、[アイデアから実装までをたどれるようにする](trace-report.md)（P5）の実装中に、`gm-session.test.ts` が `Failed to load resource: net::ERR_FAILED` で1度落ちた（単独で流すと通る。アプリは変えていない）
-- 今は `scripts/check-usecase-tags.mjs` が `e2e/usecases/` の `test.skip`・`test.fixme` を止めている（スキップしたステップが結果で「確認済」に見えるため）。要望へのリンクを添えたスキップだけを通し、結果のページで「スキップ中」と分けて出す形に変える
+- 起票したとき（P6 の前）は、`scripts/check-usecase-tags.mjs` が `e2e/usecases/` の `test.skip`・`test.fixme` を止めていた（スキップしたステップが結果で「確認済」に見えるため）。要望へのリンクを添えたスキップだけを通し、結果のページで「スキップ中」と分けて出す形に変える
 
 ## 考えていること（プランで詰める）
 

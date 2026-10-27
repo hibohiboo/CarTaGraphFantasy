@@ -1,5 +1,5 @@
 // 要望（docs/backlog/*.md）の frontmatter を読む小さな読み手（`trace` と、`title`・`status` などの1行の値）。
-// 要望を読むスクリプト（build-trace-report.mjs・check-usecase-tags.mjs・build-usecase-report.mjs・branch-id.mjs）が共用する。
+// 要望を読むスクリプト（build-trace-report.mjs・check-trace.mjs・check-usecase-tags.mjs・build-usecase-report.mjs・branch-id.mjs）が共用する。
 // ほかの scripts を import しない（循環を作らないため。docs/plans/2026-10-27-P6-不安定なE2Eのスキップ.md D17）。
 // YAML のライブラリは足さない（docs/plans/2026-10-26-P5-アイデアから実装までのトレース.md D21）。
 // 受け付けるのは次の2つの形だけで、ほかは例外にする（ファイル名と理由を付ける）。

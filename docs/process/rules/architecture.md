@@ -73,7 +73,7 @@ packages/*/vitest.config.ts・apps/web/vite.config.ts ──→ scripts/rule-sec
 scripts/build-trace-report.mjs ──→ scripts/build-usecase-report.mjs・scripts/build-rule-test-report.mjs（テストの結果の状態の計算を共用する）
                               └──→ docs/backlog/・docs/architecture/・docs/screens/・routes.ts（つながりの元。読むだけ）
 
-scripts/check-usecase-tags.mjs・build-usecase-report.mjs・build-trace-report.mjs・branch-id.mjs
+scripts/check-usecase-tags.mjs・build-usecase-report.mjs・build-trace-report.mjs・check-trace.mjs・branch-id.mjs
                               ──→ scripts/trace.mjs ──→ docs/backlog/（要望の frontmatter の読み手。ほかの scripts を import しない）
 ```
 
