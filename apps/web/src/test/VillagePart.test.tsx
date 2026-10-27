@@ -398,7 +398,9 @@ describe('村パート：依頼', () => {
     const s = await start('sc-village-always-win');
     renderAt(`/pl/sessions/${s.id}/play`);
     await card(/村の広場へ向かう/);
-    expect(screen.getByText(/シーンに入ったときの描写は仮ルール/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/仮ルール（GM不在）：成長・お店・選べない条件・描写/),
+    ).toBeInTheDocument();
   });
 
   it('条件・効果・説明文つきの遷移カードの無い手札では、仮ルールの表示を出さない', async () => {
