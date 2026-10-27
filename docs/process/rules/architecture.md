@@ -18,7 +18,7 @@ apps/web/                 Vite + React + react-router + TanStack Query + MSW
                 app の中のサブフォルダに TS を置くなら、app の中も @/app/… で import する
     pages/<グループ>/<ページ>/   1ページ1スライス（グループはルートのグループ＝pl / gm / creator / rulebook / admin。
                 グループの無いページは pages/<ページ>/）。ui/ にページと、そのページだけで使う部品
-    widgets/    複数のページで使う、画面の大きなまとまり（play-screen：プレイ画面の HUD・卓・手札・名乗り）
+    widgets/    複数のページで使う、画面の大きなまとまり（play-screen：チュートリアル・村スタートと共用する台詞カード・卓・手札・名乗り）
     features/   利用者の操作と UI が対になったもの（いまは無い。必要になったら作る）
     entities/<エンティティ>/   card・character・scenario・session・library・user。
                 api/（queries.ts：取得、mutations.ts：変更）と ui/（GameCard・DeckTree など）

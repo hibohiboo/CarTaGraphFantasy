@@ -1,73 +1,30 @@
 import type { CardDef } from '@cartagraph/domain/card/model';
-import type { Session } from '@cartagraph/domain/session/model';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { CARD_KIND_ICONS } from '@/entities/card/ui/cardKindIcons';
 import { GameCard } from '@/entities/card/ui/GameCard';
-import { Avatar, RoleBadge } from '@/shared/ui/ui';
 import s from './play.module.css';
-
-/** 1画面完結レイアウトの外枠（HUD＋卓＋手札） */
-export function PlayScreen({ children }: { children: ReactNode }) {
-  return <div className={s.screen}>{children}</div>;
-}
-
-export function Hud({
-  session,
-  viewer,
-  links,
-}: {
-  session: Session;
-  viewer: 'driver' | 'gm';
-  links?: ReactNode;
-}) {
-  const driver = session.participants.find((p) => p.role === 'driver');
-  const others = session.participants.filter((p) => p.role !== 'driver' && p.role !== 'gm');
-  return (
-    <header className={s.hud}>
-      <h1 className={s.hudTitle}>{session.scenarioTitle}</h1>
-      <span className={s.hudScene}>{session.currentScene.path}</span>
-      {viewer === 'driver' ? (
-        <RoleBadge badgeRole="driver">
-          {driver?.characterName ?? driver?.name}（ドライバー）
-        </RoleBadge>
-      ) : (
-        <RoleBadge badgeRole="gm">{session.gmName}（GM）</RoleBadge>
-      )}
-      <RoleBadge badgeRole="mode">
-        {session.mode === 'dense' ? 'じっくり進行' : '通常進行'}
-      </RoleBadge>
-      <div className={s.hudParty}>
-        {others.map((p) => (
-          <Avatar
-            key={`${p.userId}-${p.role}-${p.characterId ?? ''}`}
-            name={p.characterName ?? p.name}
-            avatarRole={p.role}
-          />
-        ))}
-        {links}
-      </div>
-    </header>
-  );
-}
 
 /** 台詞・地の文を出す「台詞カード」。GameCard（5:7）を横向きにした比率（7:5）。
  * 発言者名はGameCardと同じくカード左上を維持し、その下に肖像（あれば）＋台詞欄を横並びで置く。
  * speakerCard（NPCの台詞など）は肖像つきの発言者、speaker（GMの情景描写など）は
  * 肖像なしでラベルだけ出す。onClickを渡すとカード全体がボタンになり、右下に次へ進む合図を出す
- * （2026-09-22ユーザー指定：台詞は1枚ずつ出し、クリックで次のカードへ進める） */
-export function Table({
+ * （2026-09-22ユーザー指定：台詞は1枚ずつ出し、クリックで次のカードへ進める）。
+ * `<main>` は使わない（AppShell の `<main>` と入れ子になるため。チュートリアルなどは Table が包む）。
+ * ラベルがあるときは、ラベルを名前にした `section` として出す */
+export function SpeechCard({
   speaker,
   speakerCard,
   flavor,
   hint,
-  mystery,
+  heading,
   onClick,
 }: {
   speaker?: string;
   speakerCard?: Pick<CardDef, 'name' | 'kind'> & Partial<CardDef>;
   flavor: string;
   hint?: string;
-  mystery?: CardDef[];
+  /** 札の中の見出し（結末など） */
+  heading?: ReactNode;
   /** 次の台詞があるときだけ渡す。カード全体がクリック可能になる */
   onClick?: () => void;
 }) {
@@ -75,6 +32,7 @@ export function Table({
   const body = (
     <>
       {label && <div className={s.speaker}>{label}</div>}
+      {heading}
       <div className={s.speechRow}>
         {speakerCard && (
           <div
@@ -97,22 +55,25 @@ export function Table({
       {onClick && <span className={s.speechNext}>次へ ▶</span>}
     </>
   );
+  if (onClick) {
+    return (
+      <button type="button" className={s.speechCard} onClick={onClick}>
+        {body}
+      </button>
+    );
+  }
+  return (
+    <section className={s.speechCard} aria-label={label}>
+      {body}
+    </section>
+  );
+}
+
+/** チュートリアル・村スタートの卓。台詞カードを中央に1枚置く */
+export function Table(props: Parameters<typeof SpeechCard>[0]) {
   return (
     <main className={s.table}>
-      {onClick ? (
-        <button type="button" className={s.speechCard} onClick={onClick}>
-          {body}
-        </button>
-      ) : (
-        <div className={s.speechCard}>{body}</div>
-      )}
-      {mystery && mystery.length > 0 && (
-        <div className={s.mystery}>
-          {mystery.map((c) => (
-            <GameCard key={c.id} card={c} width={56} />
-          ))}
-        </div>
-      )}
+      <SpeechCard {...props} />
     </main>
   );
 }
@@ -125,7 +86,18 @@ export function ProposeForm({ children }: { children: ReactNode }) {
   return <div className={s.proposeForm}>{children}</div>;
 }
 
-/** 横スクロールの手札列。選択肢とそれ以外を区切り線で分ける */
+/** 扇形の手札で、札ごとの傾きと沈み（hover で揃う）。n 枚のうち i 番目 */
+function fanStyle(i: number, n: number): CSSProperties {
+  const mid = (n - 1) / 2;
+  const offset = i - mid;
+  return {
+    '--rot': `${offset * 3}deg`,
+    '--drop': `${Math.abs(offset) ** 2 * 1.5}px`,
+  } as CSSProperties;
+}
+
+/** 横スクロールの手札列。選択肢とそれ以外を区切り線で分ける。
+ * layout='fan' は卓の手札（札を扇形に重ねる）。awaiting は「選べる札があって待っている」合図（縁の明滅） */
 export function HandDock({
   hand,
   onPlay,
@@ -133,6 +105,8 @@ export function HandDock({
   disabled,
   extra,
   unplayableReason,
+  layout = 'row',
+  awaiting,
 }: {
   hand: CardDef[];
   onPlay: (card: CardDef) => void;
@@ -142,15 +116,31 @@ export function HandDock({
   extra?: ReactNode;
   /** 選べない選択肢カードの理由（GM不在のソロの使える条件。docs/cartagraph/solo-village.md、仮ルール） */
   unplayableReason?: (card: CardDef) => string | null;
+  layout?: 'row' | 'fan';
+  awaiting?: boolean;
 }) {
   const choices = hand.filter((c) => c.kind === 'choice');
   const rest = hand.filter((c) => c.kind !== 'choice');
+  const fan = layout === 'fan';
+  // 扇形では、札を1枚ずつ傾きの付く枠に入れる。区切り線は扇では出さない
+  const total = choices.length + (extra ? 1 : 0) + rest.length;
+  let slotIndex = 0;
+  const slot = (key: string, node: ReactNode) => {
+    if (!fan) return node;
+    const style = fanStyle(slotIndex++, total);
+    return (
+      <div key={key} className={s.fanSlot} style={style}>
+        {node}
+      </div>
+    );
+  };
   return (
-    <div className={s.dock}>
+    <div className={s.dock} data-layout={layout} data-awaiting={awaiting ? 'true' : undefined}>
       <div className={s.dockRow}>
         {choices.map((c) => {
           const reason = unplayableReason?.(c) ?? null;
-          return (
+          return slot(
+            c.id,
             <GameCard
               key={c.id}
               card={c}
@@ -163,23 +153,26 @@ export function HandDock({
               showCost="action"
             >
               {reason && <span className={s.unplayable}>{reason}</span>}
-            </GameCard>
+            </GameCard>,
           );
         })}
-        {extra}
-        {rest.length > 0 && <div className={s.dockDivider} />}
-        {rest.map((c) => (
-          <GameCard
-            key={c.id}
-            card={c}
-            width={110}
-            centerName
-            onClick={() => onPlay(c)}
-            selected={c.id === selectedId}
-            disabled={disabled}
-            showCost="action"
-          />
-        ))}
+        {extra && slot('extra', extra)}
+        {!fan && rest.length > 0 && <div className={s.dockDivider} />}
+        {rest.map((c) =>
+          slot(
+            c.id,
+            <GameCard
+              key={c.id}
+              card={c}
+              width={110}
+              centerName
+              onClick={() => onPlay(c)}
+              selected={c.id === selectedId}
+              disabled={disabled}
+              showCost="action"
+            />,
+          ),
+        )}
       </div>
     </div>
   );

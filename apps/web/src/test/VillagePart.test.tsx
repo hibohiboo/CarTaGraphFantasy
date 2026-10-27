@@ -204,7 +204,12 @@ describe('村パート：画面から最後まで通す（GM不在の1人プレ�
     await user.click(within(panel).getByRole('button', { name: '「斬撃」をリストに入れる' }));
     let won = false;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !won; attempt++) {
-      await user.click(within(panel).getByRole('button', { name: '戦闘を始める' }));
+      // 負けた後は「もう一度挑む」を選ぶとパネルが開く（優先順位は残る）
+      if (attempt > 1) {
+        await user.click(await screen.findByRole('button', { name: /もう一度挑む/ }));
+      }
+      const open = await screen.findByRole('region', { name: '戦い方を決める' });
+      await user.click(within(open).getByRole('button', { name: '戦闘を始める' }));
       const headline = await screen.findByText(new RegExp(`^${attempt}回目：\\d+ラウンドで`));
       won = /試験官に勝利した$/.test(headline.textContent ?? '');
       expectNoWaitingForGm();

@@ -1,0 +1,43 @@
+.tab {
+  width: 36px;
+  height: 92px;
+  border: none;
+  border-radius: 4px 4px 14px 14px;
+  background: var(--seal);
+  color: var(--seal-ink);
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  writing-mode: vertical-rl;
+  cursor: pointer;
+  box-shadow: var(--shadow-card-sm);
+}
+.tab:hover,
+.tab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 112px;
+  aspect-ratio: var(--card-ratio);
+  padding: 8px;
+  background: var(--card);
+  color: var(--ink);
+  border: none;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  font: inherit;
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+.item:hover,
+.item:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}

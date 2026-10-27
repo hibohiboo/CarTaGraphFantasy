@@ -52,8 +52,8 @@ test('GM が描写を書いて選択肢を配り・取り下げ、ドライバ�
 
   await test.step('PL-2 ドライバーとして、手札のカードをプレイする', async () => {
     await page.getByRole('link', { name: 'ドライバーとしてプレイ画面へ' }).click();
-    // 描写は GM の画面にも出るので、プレイ画面にしか無いリンクが出るのを待ってから確かめる
-    await expect(page.getByRole('link', { name: 'GMの画面へ' })).toBeVisible();
+    // 描写は GM の画面にも出るので、プレイ画面にしか無い栞のボタンが出るのを待ってから確かめる
+    await expect(page.getByRole('button', { name: '栞を開く' })).toBeVisible();
     await expect(page.getByText('静かな夜だ。')).toBeVisible();
     // 手札は名前をそのまま指定して探す（「選択肢＋新たな選択肢を提案」も「選択肢」で始まる）
     await expect(page.getByRole('button', { name: /耳を澄ます/ })).toBeVisible();

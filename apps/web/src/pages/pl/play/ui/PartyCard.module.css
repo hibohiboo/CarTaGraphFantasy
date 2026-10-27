@@ -1,0 +1,35 @@
+.card {
+  list-style: none;
+  width: 130px;
+  padding: 8px 10px;
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.name {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.role {
+  font-size: 0.68rem;
+  color: var(--ink-soft);
+}
+.stats {
+  margin: 4px 0 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 8px;
+  font-size: 0.74rem;
+}
+.stats dt {
+  color: var(--ink-soft);
+}
+.stats dd {
+  margin: 0;
+  text-align: right;
+}

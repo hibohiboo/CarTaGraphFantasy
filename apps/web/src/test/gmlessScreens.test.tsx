@@ -15,6 +15,7 @@ import {
   recruitCard,
   recruitPanel,
 } from './gmlessHelpers';
+import { bookmarkLink } from './playHelpers';
 import { renderAt } from './renderAt';
 
 /** シードの GM 不在の募集（rc-gmless）のメモ。題名と GM が同じ募集と見分けるのに使う */
@@ -279,8 +280,10 @@ describe('GM 不在の募集', () => {
     await user.type(screen.getByLabelText('提案する行動'), '鍬を借りたい');
     await user.click(screen.getByRole('button', { name: '提案を送る' }));
     await screen.findByText('GM の裁定を待っています（中断中）');
+    // 中断中は選べる手札があっても、手札の合図（data-awaiting）を付けない
+    expect(document.querySelector('[data-awaiting="true"]')).toBeNull();
 
-    await user.click(screen.getByRole('link', { name: 'GMの画面へ' }));
+    await user.click(await bookmarkLink(user, 'GMの画面へ'));
     const ticket = (await screen.findByText('鍬を借りたい')).closest('article')!;
     await user.click(within(ticket).getByRole('button', { name: '採用してカード化' }));
     await within(ticket).findByText('採用済み');

@@ -1,42 +1,4 @@
-/* プレイ画面用のレイアウト部品：HUD・卓・手札ドック（1画面完結レイアウト） */
-
-/* nav と同じ理由でラップさせず横スクロールにする（スマホ幅で縦の予算を圧迫させない） */
-.hud {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding-block: 10px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.hudTitle {
-  flex: none;
-  font-family: var(--font-serif);
-  font-size: 1.1rem;
-  font-weight: 600;
-  white-space: nowrap;
-  margin: 0;
-}
-.hudScene {
-  flex: none;
-  font-size: 0.82rem;
-  color: var(--parchment-text-dim);
-  white-space: nowrap;
-}
-.hudParty {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto;
-}
-.hudParty a {
-  font-size: 0.76rem;
-  margin-left: 6px;
-  white-space: nowrap;
-}
+/* プレイ画面用のレイアウト部品：台詞カード・卓（チュートリアル・村スタート）・手札ドック */
 
 .table {
   flex: 1 1 auto;
@@ -144,13 +106,6 @@ button.speechCard:focus-visible {
   font-size: 0.82rem;
   color: var(--parchment-text-dim);
 }
-.mystery {
-  position: absolute;
-  right: clamp(4px, 2vw, 28px);
-  bottom: 6px;
-  display: flex;
-  gap: 6px;
-}
 
 .statusLine {
   flex: none;
@@ -194,14 +149,6 @@ button.speechCard:focus-visible {
   margin-block: 6px;
 }
 
-/* 1画面完結：ページ全体を縦flexにして中央だけ伸ばす */
-.screen {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
 .proposeForm {
   flex: none;
   display: flex;
@@ -213,4 +160,52 @@ button.speechCard:focus-visible {
 }
 .proposeForm input {
   max-width: 360px;
+}
+
+/* 扇形の手札（プレイ画面）。札ごとの --rot・--drop は HandDock が付け、カーソルが乗ったら揃える */
+.dock[data-layout="fan"] .dockRow {
+  align-items: flex-end;
+  padding-top: 18px;
+}
+.fanSlot {
+  flex: none;
+  margin-inline: -10px;
+  transform: translateY(var(--drop, 0)) rotate(var(--rot, 0deg));
+  transform-origin: 50% 120%;
+  transition: transform 160ms ease;
+}
+.dock[data-layout="fan"] .dockRow:hover .fanSlot,
+.dock[data-layout="fan"] .dockRow:focus-within .fanSlot {
+  transform: none;
+}
+.dock[data-layout="fan"] .dockRow .fanSlot:hover,
+.dock[data-layout="fan"] .dockRow .fanSlot:focus-within {
+  position: relative;
+  z-index: 1;
+  transform: translateY(-10px);
+}
+
+/* 選べる札があって待っているとき、札の縁をゆっくり明滅させる（reduced-motion では global.css が止める）。
+ * 札の位置は動かさない（動かすと Playwright が「要素が安定しない」と待ち続けてクリックできない） */
+@keyframes awaitingGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(217, 184, 119, 0.35),
+      0 0 6px rgba(217, 184, 119, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(217, 184, 119, 0.8),
+      0 0 18px rgba(217, 184, 119, 0.55);
+  }
+}
+.dock[data-awaiting="true"] button:not(:disabled) {
+  animation: awaitingGlow 2.4s ease-in-out infinite;
+}
+
+/* 札（明るい地）の中の見出しは、暗い背景用の薄い色にしない */
+.speechCard h2 {
+  margin: 0;
+  color: var(--ink);
 }

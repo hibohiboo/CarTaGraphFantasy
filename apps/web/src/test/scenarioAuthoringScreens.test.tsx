@@ -15,6 +15,7 @@ import { api } from '@/shared/api/api';
 import { setScenarioFileStore } from '../mocks/handlers';
 import { characterCreation } from '../mocks/rulesFiles';
 import { DEAD_END, recruitCard, recruitPanel } from './gmlessHelpers';
+import { bookmarkLink } from './playHelpers';
 import { deckNodeName, renderAt } from './renderAt';
 
 /** 製作者の下書き（保存の結果はここに入る。公開版は公開し直すまで変わらない） */
@@ -550,7 +551,7 @@ describe('通し：画面だけで作る → 公開 → GM 不在で募集 → P
     await playThrough('pc-jin');
     expect(screen.getAllByText(/結末タグ『村を見た』を得た。/).length).toBeGreaterThan(0);
 
-    await user.click(screen.getByRole('link', { name: 'キャラクターシート' }));
+    await user.click(await bookmarkLink(user, 'キャラクターシートを見る'));
     // 結末タグの欄と、デッキの特徴カードの両方に出る
     expect((await screen.findAllByText('村を見た')).length).toBeGreaterThanOrEqual(1);
 

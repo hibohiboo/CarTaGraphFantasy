@@ -52,7 +52,7 @@ export const routes: RouteMeta[] = [
     title: 'プレイページ',
     group: 'pl',
     description:
-      'ドライバーとして手札からカードをプレイし、セッションに干渉する。1画面完結レイアウト',
+      'ドライバーとして手札からカードをプレイし、セッションに干渉する。ヘッダ・フッタの無い卓のレイアウト',
     example: '/pl/sessions/ss-mansion/play',
   },
   {

@@ -12,8 +12,8 @@ const footerGroupOrder: RouteGroup[] = ['gm', 'creator'];
 
 export function AppShell() {
   const location = useLocation();
-  // プレイページは1画面完結レイアウトなので、main を縦に埋める
-  const fill = /^\/pl\/sessions\/[^/]+\/play$/.test(location.pathname);
+  // プレイ画面は卓そのものなので、ヘッダー・フッターとも出さない（画面から出る操作は卓の栞にまとめる）
+  const isPlay = /^\/pl\/sessions\/[^/]+\/play$/.test(location.pathname);
   // 入口（扉のカード1枚だけの最初の画面）はヘッダーを出さない
   const isEntrance = location.pathname === '/';
   // チュートリアル（旅立ちの酒場）はNPCとの問答に集中させるため、ヘッダー・フッターとも出さない
@@ -21,7 +21,7 @@ export function AppShell() {
 
   return (
     <div className={s.shell}>
-      {!isEntrance && !isTutorial && (
+      {!isEntrance && !isTutorial && !isPlay && (
         <nav className={[s.nav, s.inner].join(' ')} aria-label="主要ナビゲーション">
           <NavLink to="/" className={s.brand}>
             カルタグラフ
@@ -45,12 +45,12 @@ export function AppShell() {
           </span>
         </nav>
       )}
-      <main className={s.main} data-fill={fill ? 'true' : undefined}>
+      <main className={s.main}>
         <div className={s.inner}>
           <Outlet />
         </div>
       </main>
-      {!fill && !isTutorial && (
+      {!isPlay && !isTutorial && (
         <footer className={[s.footer, s.inner].join(' ')}>
           <p>
             仕様の正は <a href={DOCS_URL}>設計ドキュメント（docs）</a>

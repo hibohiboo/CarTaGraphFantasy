@@ -82,14 +82,16 @@ API ドキュメント：`https://hibohiboo.github.io/CarTaGraphFantasy/api-docs
 
 ### UIパターン
 
-- **1画面完結レイアウト**（プレイ画面・戦闘画面）：`body { height: 100dvh; overflow-y: auto; display: flex; flex-direction: column; }` とし、可変の中央コンテンツは `flex: 1 1 auto; min-height: 0`。ナビ・HUDは**折り返さず横スクロール**（`flex-wrap: nowrap; overflow-x: auto`）にする。折り返すとスマホ幅で縦方向の予算を圧迫して表示が崩れるため
-- **プレイマット式の奥行き表現**：GMが用意するもの（シーン・場に出たカード）を上（奥）、PLが操作するもの（選択肢・パーティー）を下（手前）に配置する縦積みレイアウト
+- **卓のレイアウト**（プレイ画面）：卓そのものをプレイマットにし、領域を CSS grid で組む（上段「場面の札｜場のボタン｜栞」、中段「語りの札（戦闘の記録・ステータスの行・提案フォームもここ）」、下段「扇形の手札」とその下の「パーティの札」。場のゾーンは常時は出さず、「場」のボタンで開くダイアログ）。縦に収まらなければページごとスクロールする（1画面に収めようとして重なったのが、自動戦闘の設定中の崩れの原因だった）。プレイ画面ではアプリのヘッダ・フッタを出さず、画面から抜ける操作は右上の栞（`role="dialog"` の札のダイアログ）にまとめる
+- **1画面完結レイアウト**（試作の戦闘画面）：`body { height: 100dvh; overflow-y: auto; display: flex; flex-direction: column; }` とし、可変の中央コンテンツは `flex: 1 1 auto; min-height: 0`。ナビ・HUDは**折り返さず横スクロール**（`flex-wrap: nowrap; overflow-x: auto`）にする。折り返すとスマホ幅で縦方向の予算を圧迫して表示が崩れるため
+- **プレイマット式の奥行き表現**：GMが用意するもの（場面の札・語りの札・場のゾーン）を上（奥）、PLが操作するもの（選択肢の手札・パーティの札）を下（手前）に配置する。プレイ画面では、場のゾーン（プレイマット）を「場」のボタンで開くダイアログにし、PL可視ゾーンの札だけを置く（裏の札は札の裏だけ。GM専用ゾーンの札は出さない）
 
 ### コンポーネントの境界
 
 - `Card`（5:7比率、`.card-portrait`込み。種類バリアント：用語／場／手札／ロケーション／プール）
-- `HandDock`（横スクロールの手札列）
-- `Hud` / `ProtoNav`（横スクロール1行の固定ヘッダー）
+- `HandDock`（横スクロールの手札列。プレイ画面は `layout="fan"` の扇形、選べる札があって待っているときは `awaiting` で縁をゆっくり明滅させる）・`SpeechCard`（台詞カード。チュートリアル・村スタートは `Table` が包む）— `widgets/play-screen/ui/`
+- プレイ画面だけの部品 — `pages/pl/play/ui/`：`TableLayout`（grid の外枠）・`Placard`（場面の札：シナリオ名・場所・進行）・`Bookmark`（栞）・`PartyCard`（パーティの札。PC 1人1枚）・`FieldZone`（場のゾーン。ボタンで開く）・`ModalLayer`（栞と場のゾーンが共用するダイアログ）・`AutoCombatPanel`（戦い方）と戦闘の記録の札
+- `ProtoNav`（試作の横スクロール1行の固定ヘッダー）
 - `TurnChips`（行動順表示、クリックで表示中PC切り替え）
 - `MatZone` / `PlayMat`（奥行き順の簡易俯瞰）
 - `ZonePill`・`RoleBadge`・`StatusPill`（状態表示の小部品）
