@@ -1,0 +1,26 @@
+.placard {
+  display: inline-block;
+  max-width: 100%;
+  padding: 8px 12px;
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card-sm);
+}
+.title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.scene {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+.mode {
+  margin: 2px 0 0;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+}

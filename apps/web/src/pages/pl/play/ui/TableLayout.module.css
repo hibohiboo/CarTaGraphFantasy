@@ -1,0 +1,59 @@
+/* プレイ画面の卓。卓そのものをプレイマットにし、領域は grid で組む。縦に収まらなければページごとスクロールする */
+.table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "placard field bookmark"
+    "story story story"
+    "hand hand hand"
+    "party party party";
+  gap: 14px 18px;
+  align-items: start;
+  padding-block: 14px 24px;
+}
+.placard {
+  grid-area: placard;
+  min-width: 0;
+}
+.bookmark {
+  grid-area: bookmark;
+  justify-self: end;
+}
+.field {
+  grid-area: field;
+  min-width: 0;
+}
+.story {
+  grid-area: story;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.hand {
+  grid-area: hand;
+  min-width: 0;
+}
+.party {
+  grid-area: party;
+  min-width: 0;
+}
+.party > ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 700px) {
+  .table {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "placard field bookmark"
+      "story story story"
+      "hand hand hand"
+      "party party party";
+  }
+}

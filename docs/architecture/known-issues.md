@@ -8,13 +8,6 @@
 
 ## 画面
 
-### 自動戦闘の設定中に、プレイ画面のレイアウトが崩れる
-
-- **起きること** — 自動戦闘のシーン（村スタートの冒険者試験）で、「戦い方を決める」パネルの上に、卓上の描写（GMの台詞カード）が重なって表示される。本来は台詞カードの下に出る案内文（「戦い方を決めて、戦闘を始めよう。」）も、台詞カードの横に出る
-- **見つけた経緯** — 2026-09-27、PR #6（C2）の人間レビューで、ブラウザで確認して発見
-- **原因の見立て（未調査）** — プレイ画面は HUD・卓・手札を1画面に収める縦並びのレイアウト（[Webアプリの仕組み](web-app.md#uiパターン)「1画面完結レイアウト」）。自動戦闘のときだけ、手札の代わりに高さのある `AutoCombatPanel` が入り、1画面に収まらずに卓と重なっていると思われる
-- **直すときの目安** — パネルを下からのシートに出す、またはこの状態の画面だけスクロールできるようにする。E2E か目視で崩れないことを確かめる
-
 ### 自動戦闘の全挑戦の記録を見る画面が無い
 
 - **起きること** — 全挑戦の経過は `Session.combatHistory` に残るが、画面に出るのは直前の挑戦（`autoCombat.lastResult`）だけ。結末へ進むと、それも見えなくなる
@@ -46,6 +39,18 @@
 - **起きること** — デモ用の下書き（`fixtureOnlyScenarioIds`。涸れ井戸など）は、公開しても `scenarios/` に書けず 422 になる。公開の前の確かめ（`publishErrors`）はこの事情を見ないので、「問題はありません」と出ても公開は 422 になる
 - **見つけた経緯** — 2026-10-17、シナリオ製作の導線のプラン（スコープ外とした）
 - **直すときの目安** — モックだけの事情なので画面では扱わない。デモ用の下書きを別の置き場に分けるとき（上の「テスト専用のシナリオが、本番のシナリオ一覧のデータに入っている」と一緒に）に直す
+
+### PL 向けのセッションの応答に、GM専用ゾーンの札と伏せ札の中身が入っている
+
+- **起きること** — `GET /api/sessions/:id`（MSW）は、PL にもセッションをまるごと返す。`field.gmOnly` の札と、伏せ札の名前・説明も PL のブラウザに届く。プレイ画面は PL可視ゾーンだけを出し、裏の札は中身を DOM に出さないので画面では見えないが、通信の中身には入っている（[場のゾーン構造](../cartagraph/card-face-back.md#場のゾーン構造)の「PL はその存在を知らない」と食い違う）。あわせて、PL がほかの参加者のキャラクター（パーティの札）を読むときの認可も、いまは何も確かめていない
+- **見つけた経緯** — 2026-10-27、プレイ画面を卓にする P7 のプランのレビュー（場のゾーンの設計）
+- **直すときの目安** — backend-1on1 で、応答から `gmOnly` と伏せ札の中身を除く（PL と GM で応答の形を分ける）。参加者のキャラクターを読む認可もあわせて決める
+
+### ナビゲーターや GM だけの人がプレイ画面を開くと、手札を押せる
+
+- **起きること** — `/play`（カードを出す API）は、押した人がドライバーかを確かめない。ナビゲーターや、PC を持たない GM がプレイ画面を開くと、手札が押せてしまう
+- **見つけた経緯** — 2026-10-27、P7 のプランのレビュー（もとからある問題。今回は直さない）
+- **直すときの目安** — 認証を作るときに、押せるのはドライバーだけにする（画面では手札を押せない見せ方にする）
 
 ### 提案の採用・却下で、GM 本人かを確かめていない
 
@@ -239,7 +244,7 @@
 ### 複雑度・行数の上限を超える既存のコード
 
 - **起きること** — [静的解析ルール](../process/rules/static-analysis.md)「コードの複雑さ」の上限を超える箇所が14件あり、`biome-ignore` で個別に抑えている。数字は導入時の値
-  - 認知的複雑度（上限15）：`mocks/handlers.ts` の4つのハンドラ（`/api/sessions/:id/play` 73・`/auto-combat` 27・`/api/scenarios/:id/recruitments` 21・`/api/recruitments/:id/start` 19）、`TutorialPage` 60、`GameCard` 52、`PlayPage` 49、`SessionBrowsePage` の `RecruitCard` 46、`resolveAutoCombat`（`packages/domain/src/autoCombat/resolve.ts`）29、`GmSessionManagePage` 20 とその `ProposalTicket` 16、`vite/scenarioFilePlugin.ts` の書き込みの口 19
+  - 認知的複雑度（上限15）：`mocks/handlers.ts` の4つのハンドラ（`/api/sessions/:id/play` 73・`/auto-combat` 27・`/api/scenarios/:id/recruitments` 21・`/api/recruitments/:id/start` 19）、`TutorialPage` 60、`GameCard` 52、`PlayPage` 42、`SessionBrowsePage` の `RecruitCard` 46、`resolveAutoCombat`（`packages/domain/src/autoCombat/resolve.ts`）29、`GmSessionManagePage` 20 とその `ProposalTicket` 16、`vite/scenarioFilePlugin.ts` の書き込みの口 19
   - 関数の行数（上限200）：`TutorialPage` 235行
   - ファイルの行数（上限1000）：`apps/web/src/mocks/handlers.ts`（1433行）
 - **見つけた経緯** — 2026-10-09、SonarJS 相当のルールを Biome で有効にしたとき

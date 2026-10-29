@@ -1,0 +1,122 @@
+.zone {
+  position: relative;
+  width: min(520px, 100%);
+  min-height: 110px;
+  background: var(--felt-panel);
+  padding: 22px 10px 10px;
+  border: 2px dashed var(--thread-dim);
+  border-radius: var(--radius-panel);
+}
+.mark {
+  position: absolute;
+  top: 2px;
+  left: 10px;
+  font-family: var(--font-serif);
+  font-size: 0.8rem;
+  color: var(--thread);
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.card,
+.back {
+  position: relative;
+  width: 84px;
+  aspect-ratio: var(--card-ratio);
+  border-radius: 6px;
+  box-shadow: var(--shadow-card-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px;
+}
+.card {
+  background: var(--card);
+  color: var(--ink);
+}
+.back {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--seal),
+    var(--seal) 6px,
+    #8a281f 6px,
+    #8a281f 12px
+  );
+  color: var(--seal-ink);
+  align-items: center;
+  justify-content: center;
+}
+.backMark {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+}
+.name {
+  font-family: var(--font-serif);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.tag {
+  font-size: 0.6rem;
+  border: 1px solid var(--ink-soft);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* 卓に置く「場」の札のボタン。枚数を添える */
+.tab {
+  position: relative;
+  width: 64px;
+  height: 92px;
+  border: 2px dashed var(--thread-dim);
+  border-radius: var(--radius-card);
+  background: transparent;
+  color: var(--thread);
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.tab:hover,
+.tab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.count {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--parchment-text-dim);
+}
+.empty {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  color: var(--parchment-text-dim);
+}
+.close {
+  align-self: center;
+  padding: 8px 14px;
+  background: var(--card);
+  color: var(--ink);
+  border: none;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card-sm);
+  font: inherit;
+  cursor: pointer;
+}

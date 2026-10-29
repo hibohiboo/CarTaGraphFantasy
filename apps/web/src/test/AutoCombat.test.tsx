@@ -13,6 +13,7 @@ import { routeObjects } from '@/app/router';
 import { api } from '@/shared/api/api';
 import { scenarios } from '../mocks/fixtures';
 import { characterCreation } from '../mocks/rulesFiles';
+import { runAutoCombat, startAtExam } from './autoCombatHelpers';
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -25,27 +26,8 @@ function renderAt(path: string) {
   return router;
 }
 
-const PREFIX: Record<string, string> = {
-  'sc-exam-always-win': 'aw',
-  'sc-exam-always-lose': 'al',
-  'sc-exam-always-timeout': 'at',
-  'sc-exam-no-starter': 'ns',
-};
-
-/** ソロで開始し、試験シーン（自動戦闘）まで API で進める */
-async function startAtExam(scenarioId: string) {
-  const s = await api.post<Session>(`/scenarios/${scenarioId}/start-solo`, { name: '新人' });
-  return api.post<Session>(`/sessions/${s.id}/play`, { cardId: `${PREFIX[scenarioId]}-to-guild` });
-}
-
 const characterOf = (s: Session) =>
   api.get<Character>(`/characters/${s.participants.find((p) => p.role === 'driver')?.characterId}`);
-
-/** 優先順位（カードID）を、すべて条件「いつでも」で送る */
-const runAutoCombat = (s: Session, cardIds: string[]) =>
-  api.post<Session>(`/sessions/${s.id}/auto-combat`, {
-    priority: cardIds.map((cardId) => ({ cardId, when: 'always' })),
-  });
 
 // 「必ず勝つ／負ける」は、PL の HP・行動値（作成時の値。rules/character-creation.json）に頼っている。
 // ルールの値を変えて前提が崩れたら、勝敗が乱数次第になる前にここで気づく
@@ -249,8 +231,10 @@ describe('自動戦闘（敗北・時間切れ）', () => {
       max: characterCreation.initialHp,
     });
 
-    // 設定画面に戻っていて、もう一度挑戦できる
-    await user.click(within(panel).getByRole('button', { name: '戦闘を始める' }));
+    // 設定に戻っていて、「もう一度挑む」を選ぶとパネルが開く。前回の優先順位が残っているので、入れ直さずに挑戦できる
+    await user.click(await screen.findByRole('button', { name: /もう一度挑む/ }));
+    const panel2 = await screen.findByRole('region', { name: '戦い方を決める' });
+    await user.click(within(panel2).getByRole('button', { name: '戦闘を始める' }));
     await screen.findByText(/2回目/);
     const pc2 = await characterOf(s);
     expect(pc2.deck.filter((c) => c.name === '再挑戦の記憶')).toHaveLength(1);

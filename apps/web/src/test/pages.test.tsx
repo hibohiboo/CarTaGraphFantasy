@@ -13,6 +13,7 @@ import { ApiError, api } from '@/shared/api/api';
 import { routes } from '@/shared/routes/routes';
 import { server } from '../mocks/node';
 import { characterCreation } from '../mocks/rulesFiles';
+import { bookmarkLink, openBookmark } from './playHelpers';
 import { renderAt } from './renderAt';
 import { cardsCosting } from './rulesHelpers';
 
@@ -70,7 +71,7 @@ describe('プレイページ', () => {
   it('卓上の描写は「GM」の台詞カードとして出る（人間GMのセッションでも）', async () => {
     renderAt('/pl/sessions/ss-mansion/play');
     const flavor = await screen.findByText('古びた扉の向こうから、かすかな音が聞こえる。');
-    expect(within(flavor.closest('main') as HTMLElement).getByText('GM')).toBeInTheDocument();
+    expect(within(flavor.closest('section') as HTMLElement).getByText('GM')).toBeInTheDocument();
   });
 
   it('選択肢をプレイすると卓の描写が変わり、提案は「今回は未使用」になる', async () => {
@@ -353,6 +354,7 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
   });
 
   it('GM が PL を兼ねるときだけ、GM の画面とプレイ画面を行き来するリンクが出る', async () => {
+    const user = userEvent.setup();
     const s = await startMansion();
     renderAt(`/gm/sessions/${s.id}`);
     expect(
@@ -360,10 +362,7 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     ).toHaveAttribute('href', `/pl/sessions/${s.id}/play`);
     cleanup();
     renderAt(`/pl/sessions/${s.id}/play`);
-    expect(await screen.findByRole('link', { name: 'GMの画面へ' })).toHaveAttribute(
-      'href',
-      `/gm/sessions/${s.id}`,
-    );
+    expect(await bookmarkLink(user, 'GMの画面へ')).toHaveAttribute('href', `/gm/sessions/${s.id}`);
     cleanup();
     // GM は自分だがドライバーは柊／ドライバーは自分だが GM は霧乃
     for (const id of ['ss-galleon', 'ss-mansion']) {
@@ -376,6 +375,7 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     }
     renderAt('/pl/sessions/ss-mansion/play');
     await screen.findByText('古びた扉の向こうから、かすかな音が聞こえる。');
+    await openBookmark(user);
     expect(screen.queryByRole('link', { name: 'GMの画面へ' })).not.toBeInTheDocument();
   });
 
@@ -400,7 +400,7 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     // ドライバー：描写と配られたカードが見え、提案を送る
     await user.click(screen.getByRole('link', { name: 'ドライバーとしてプレイ画面へ' }));
     // 描写は GM の画面にも出るので、プレイ画面にしか無いリンクが出るのを待ってから確かめる
-    await screen.findByRole('link', { name: 'GMの画面へ' });
+    await screen.findByRole('button', { name: '栞を開く' });
     expect(screen.getByText('湿った石段が、地下へ続いている。')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^選択肢\s*地下へ降りる/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /新たな選択肢を提案/ }));
@@ -409,7 +409,7 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     await screen.findByText('GM裁定待ち');
 
     // GM：提案を採用する
-    await user.click(screen.getByRole('link', { name: 'GMの画面へ' }));
+    await user.click(await bookmarkLink(user, 'GMの画面へ'));
     const ticket = (await screen.findByText('灯りを掲げてみたい')).closest('article')!;
     await user.click(within(ticket).getByRole('button', { name: '採用してカード化' }));
     await within(ticket).findByText('採用済み');
@@ -423,7 +423,7 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     await screen.findByText('3-1 地下回廊へ進んだ。');
 
     // GM：シーンが進んでいる。結末へ移る選択肢を配る
-    await user.click(screen.getByRole('link', { name: 'GMの画面へ' }));
+    await user.click(await bookmarkLink(user, 'GMの画面へ'));
     expect(await screen.findByText('3-1 / 6')).toBeInTheDocument();
     expect(screen.getByText('「3-1 地下回廊」へ進んだ')).toBeInTheDocument();
     p = await panel();
@@ -439,7 +439,7 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     await screen.findByText('結末へ進んだ。');
 
     // GM：結末の案内が出る。結末の描写を書いて、終了する
-    await user.click(screen.getByRole('link', { name: 'GMの画面へ' }));
+    await user.click(await bookmarkLink(user, 'GMの画面へ'));
     expect(
       await screen.findByText('結末「結末」に着いた。結末の描写を書いて、セッションを終了できる。'),
     ).toBeInTheDocument();
@@ -457,6 +457,8 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     expect(await screen.findByText('このセッションは終了しています。')).toBeInTheDocument();
     expect(screen.getByText('夜が明け、館は静まり返った。')).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: '結末「結末」' })).toBeInTheDocument();
+    // 結末に着いて終わったセッションでは、語りの札のラベルが「結末」になる
+    expect(screen.getByRole('region', { name: '結末' })).toBeInTheDocument();
     confirm.mockRestore();
   });
 
@@ -465,7 +467,7 @@ describe('GMのセッション管理：描写と選択肢を配る（GM が PL �
     await api.post(`/sessions/${s.id}/end`);
     renderAt(`/pl/sessions/${s.id}/play`);
     expect(await screen.findByText('このセッションは終了しています。')).toBeInTheDocument();
-    await screen.findByRole('link', { name: 'GMの画面へ' });
+    await screen.findByRole('button', { name: '栞を開く' });
     expect(screen.queryByRole('heading', { name: /^結末「/ })).not.toBeInTheDocument();
   });
 

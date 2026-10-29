@@ -7,7 +7,7 @@ import {
 import { validatePriority } from '@cartagraph/domain/autoCombat/resolve';
 import type { CardDef } from '@cartagraph/domain/card/model';
 import type { Session } from '@cartagraph/domain/session/model';
-import { useState } from 'react';
+import { GameCard } from '@/entities/card/ui/GameCard';
 import { useCharacter } from '@/entities/character/api/queries';
 import { useRunAutoCombat } from '@/entities/session/api/mutations';
 import { Button, ErrorNote, Loading } from '@/shared/ui/ui';
@@ -15,13 +15,31 @@ import s from './AutoCombatPanel.module.css';
 
 // 自動戦闘（docs/cartagraph/auto-combat.md、仮ルール）の操作と経過の表示。PlayPage でだけ使う。
 
-/** 戦い方（優先順位リスト）を決めて戦闘を始めるパネル。自動戦闘の設定中だけ手札の代わりに出す */
-export function AutoCombatPanel({ session }: { session: Session }) {
+/** 優先順位の各行（カードIDと使う条件） */
+export type PriorityRow = { id: string; when: HpCondition };
+
+/** 自動戦闘の仮ルールの注記。パネル（初回）と戦闘の記録の札（結果が出た後）に出す */
+const AUTO_COMBAT_NOTE =
+  '仮ルール：自分の番が来ると、リストの上から「いま使えるカード」が自動で選ばれ、決着まで進む。各行の「使う条件」を満たし、残り行動値がコスト以上のカードだけが使える（回復は傷ついているときだけ）。';
+
+/** 戦い方（優先順位リスト）を決めて戦闘を始めるパネル。自動戦闘の設定中だけ手札の代わりに出す。
+ * 優先順位は PlayPage が持つ（パネルを閉じても、再挑戦で前のリストが残る）。
+ * 仮ルールの注記は、戦闘の記録の札が出ているとき（結果が出た後）はそちらに出すので、showNote で消す */
+export function AutoCombatPanel({
+  session,
+  priority,
+  onPriorityChange,
+  showNote,
+}: {
+  session: Session;
+  priority: PriorityRow[];
+  onPriorityChange: (next: PriorityRow[]) => void;
+  showNote: boolean;
+}) {
   const characterId = session.participants.find((p) => p.role === 'driver')?.characterId ?? '';
   const character = useCharacter(characterId);
   const run = useRunAutoCombat();
-  // 優先順位の各行（カードIDと使う条件）
-  const [priority, setPriority] = useState<{ id: string; when: HpCondition }[]>([]);
+  const setPriority = onPriorityChange;
 
   // 優先順位リストに入れられるカード（自動戦闘の効果と正しいコストを持つもの）だけが候補になる。
   // 基準はサーバーと同じ validatePriority（補助・移動や装備は入れられない）
@@ -59,10 +77,7 @@ export function AutoCombatPanel({ session }: { session: Session }) {
       <h2 id="auto-combat-title" className={s.title}>
         戦い方を決める
       </h2>
-      <p className={s.note}>
-        仮ルール：自分の番が来ると、リストの上から「いま使えるカード」が自動で選ばれ、決着まで進む。
-        各行の「使う条件」を満たし、残り行動値がコスト以上のカードだけが使える（回復は傷ついているときだけ）。
-      </p>
+      {showNote && <p className={s.note}>{AUTO_COMBAT_NOTE}</p>}
       <div className={s.columns}>
         <div>
           <h3 className={s.subTitle}>優先順位</h3>
@@ -157,7 +172,21 @@ export function AutoCombatPanel({ session }: { session: Session }) {
   );
 }
 
-/** 直前の戦闘の結果と、1手ごとの経過 */
+/** 負けた後に手札の場所へ出す「もう一度挑む」の札。選ぶと戦い方のパネルが開く */
+export function RetryCard({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className={s.retry}>
+      <GameCard
+        card={{ id: 'retry', kind: 'choice', name: 'もう一度挑む', tags: [] }}
+        width={110}
+        centerName
+        onClick={onRetry}
+      />
+    </div>
+  );
+}
+
+/** 直前の戦闘の結果と、1手ごとの経過を出す「戦闘の記録」の札。仮ルールの注記も出す（勝った後・負けた後も「仮」を残す） */
 export function AutoCombatLog({
   state,
   plName,
@@ -176,7 +205,10 @@ export function AutoCombatLog({
         ? `${enemyName}に敗れた`
         : `決着がつかず、${enemyName}に敗れた`;
   return (
-    <div className={s.log}>
+    <section className={s.log} aria-labelledby="auto-combat-log-title">
+      <h2 id="auto-combat-log-title" className={s.logTitle}>
+        戦闘の記録
+      </h2>
       <p className={s.headline}>
         {state.attempts}回目：{result.rounds}ラウンドで{headline}
       </p>
@@ -187,7 +219,8 @@ export function AutoCombatLog({
           <li key={i}>{describe(e, plName, enemyName)}</li>
         ))}
       </ol>
-    </div>
+      <p className={s.logNote}>{AUTO_COMBAT_NOTE}</p>
+    </section>
   );
 }
 
